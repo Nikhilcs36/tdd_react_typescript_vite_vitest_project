@@ -1,4 +1,46 @@
-# React + TypeScript + Vite
+# Front-End Development: Test-Driven Development (TDD) with React, TypeScript, Vite, and Vitest
+
+### Status: Work in Progress
+
+## Description
+
+The objective of this project is to build a robust front-end application while strictly following TDD methodologies. The approach ensures high-quality code by writing tests before implementing features.
+
+## Tech Stack
+
+- **React**: Library for building user interfaces
+- **TypeScript**: Enhances JavaScript with static typing
+- **Vite**: Fast and lightweight build tool
+- **Vitest**: Testing framework optimized for Vite
+
+## Features
+
+- 🧪 Test-first development process
+- ⚡ Fast builds and hot module replacement with Vite
+- 🔒 Type safety with TypeScript
+
+## How to Run
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Nikhilcs36/tdd_react_typescript_vite_vitest_project.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd tdd_react_typescript_vite_vitest_project
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+5. Run tests:
+   ```bash
+   npm run test
+   ```
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
@@ -48,3 +90,6 @@ export default tseslint.config({
   },
 })
 ```
+## License
+
+This project is licensed under the [MIT License](LICENSE).
