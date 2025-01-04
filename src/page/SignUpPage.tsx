@@ -16,20 +16,9 @@ class SignUpPage extends Component<{}, SignUpState> {
     passwordRepeat: "",
   };
 
-  onChangeUsername = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ username: event.target.value });
-  };
-
-  onChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ email: event.target.value });
-  };
-
-  onChangePassword = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ password: event.target.value });
-  };
-
-  onChangePasswordRepeat = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ passwordRepeat: event.target.value });
+  handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = event.target;
+    this.setState({ [id]: value } as Pick<SignUpState, keyof SignUpState>);
   };
 
   isDisabled = () => {
@@ -50,20 +39,16 @@ class SignUpPage extends Component<{}, SignUpState> {
         <form onSubmit={this.submit}>
           <h1>Sign Up</h1>
           <label htmlFor="username">Username</label>
-          <input id="username" onChange={this.onChangeUsername} />
+          <input id="username" onChange={this.handleChange} />
           <label htmlFor="email">E-mail</label>
-          <input id="email" onChange={this.onChangeEmail} />
+          <input id="email" onChange={this.handleChange} />
           <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            onChange={this.onChangePassword}
-          />
+          <input id="password" type="password" onChange={this.handleChange} />
           <label htmlFor="passwordRepeat">Password Repeat</label>
           <input
             id="passwordRepeat"
             type="password"
-            onChange={this.onChangePasswordRepeat}
+            onChange={this.handleChange}
           />
           <button disabled={this.isDisabled()}>Sign Up</button>
         </form>
