@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import SignUpPage from "./SignUpPage";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import axios from "axios";
+import { vi } from "vitest";
+
+vi.mock("axios");
 
 describe("signup page", () => {
   describe("layout", () => {
@@ -60,6 +64,29 @@ describe("signup page", () => {
 
       const button = screen.getByRole("button", { name: "Sign Up" });
       expect(button).toBeEnabled();
+    });
+    it("sends username, email and password to backend after submit a button", async () => {
+      render(<SignUpPage />);
+      const usernameInput = screen.getByLabelText("Username");
+      const emailInput = screen.getByLabelText("E-mail");
+      const passwordInput = screen.getByLabelText("Password");
+      const passwordRepeatInput = screen.getByLabelText("Password Repeat");
+
+      await userEvent.type(usernameInput, "user1");
+      await userEvent.type(emailInput, "user1@gmail.com");
+      await userEvent.type(passwordInput, "Password1");
+      await userEvent.type(passwordRepeatInput, "Password1");
+
+      const button = screen.getByRole("button", { name: "Sign Up" });
+      await userEvent.click(button);
+
+      // Assert axios post call
+      expect(axios.post).toHaveBeenCalledWith("/api/1.0/users", {
+        username: "user1",
+        email: "user1@gmail.com",
+        password: "Password1",
+        passwordRepeat: "Password1",
+      });
     });
   });
 });
