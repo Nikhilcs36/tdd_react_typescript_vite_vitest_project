@@ -26,11 +26,16 @@ class SignUpPage extends Component<{}, SignUpState> {
     return !(password && passwordRepeat && password === passwordRepeat);
   };
 
-  submit = (event: React.FormEvent<HTMLFormElement>) => {
+  submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const { username, email, password, passwordRepeat } = this.state;
     const body = { username, email, password, passwordRepeat };
-    axios.post("/api/1.0/users", body);
+    try {
+      const response = await axios.post("/api/1.0/users", body);
+      console.log(response.data); // Log success response
+    } catch (error: any) {
+      console.error(error.response?.data || error.message); // Log error response
+    }
   };
 
   render() {
