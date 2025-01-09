@@ -1,5 +1,13 @@
 import axios from "axios";
 import { Component } from "react";
+import tw from "twin.macro";
+
+const FormWrapper = tw.div`min-h-screen flex items-center justify-center bg-gray-100`;
+const Form = tw.form`bg-white p-6 rounded-lg shadow-md w-full max-w-md`;
+const Title = tw.h2`text-2xl font-bold mb-4`;
+const Label = tw.label`block text-gray-700 font-medium mb-2`;
+const Input = tw.input`w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none`;
+const Button = tw.button`py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600`;
 
 interface SignUpState {
   username: string;
@@ -40,74 +48,32 @@ class SignUpPage extends Component<{}, SignUpState> {
 
   render() {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <form
-          className="w-full max-w-md p-6 bg-white rounded-lg shadow-md"
-          onSubmit={this.submit}
-        >
-          <h2 className="mb-4 text-2xl font-bold">Sign Up</h2>
+      <FormWrapper>
+        <Form onSubmit={this.submit}>
+          <Title>Sign Up</Title>
           <div className="mb-4">
-            <label
-              className="block mb-2 font-medium text-gray-700"
-              htmlFor="username"
-            >
-              Username
-            </label>
-            <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              id="username"
-              onChange={this.handleChange}
-            />
+            <Label htmlFor="username">Username</Label>
+            <Input id="username" onChange={this.handleChange} />
           </div>
           <div className="mb-4">
-            <label
-              className="block mb-2 font-medium text-gray-700"
-              htmlFor="email"
-            >
-              E-mail
-            </label>
-            <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              id="email"
-              onChange={this.handleChange}
-            />
+            <Label htmlFor="email">E-mail</Label>
+            <Input id="email" onChange={this.handleChange} />
           </div>
           <div className="mb-4">
-            <label
-              className="block mb-2 font-medium text-gray-700"
-              htmlFor="password"
-            >
-              Password
-            </label>
-            <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              id="password"
-              type="password"
-              onChange={this.handleChange}
-            />
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" type="password" onChange={this.handleChange} />
           </div>
           <div className="mb-4">
-            <label
-              className="block mb-2 font-medium text-gray-700"
-              htmlFor="passwordRepeat"
-            >
-              Password Repeat
-            </label>
-            <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            <Label htmlFor="passwordRepeat">Password Repeat</Label>
+            <Input
               id="passwordRepeat"
               type="password"
               onChange={this.handleChange}
             />
           </div>
-          <button
-            className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
-            disabled={this.isDisabled()}
-          >
-            Sign Up
-          </button>
-        </form>
-      </div>
+          <Button disabled={this.isDisabled()}>Sign Up</Button>
+        </Form>
+      </FormWrapper>
     );
   }
 }
