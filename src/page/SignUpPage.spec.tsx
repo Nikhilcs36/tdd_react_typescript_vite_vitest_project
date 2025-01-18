@@ -6,6 +6,7 @@ import axios from "axios";
 import { vi } from "vitest";
 
 vi.mock("axios");
+const mockedAxios = vi.mocked(axios, { deep: true });
 
 describe("signup page", () => {
   describe("layout", () => {
@@ -53,6 +54,38 @@ describe("signup page", () => {
       expect(button).toBeDisabled();
     });
   });
+  describe("style Tailwind", () => {
+    it("has a signup button styled correctly when disabled", () => {
+      render(<SignUpPage />);
+      const button = screen.getByRole("button", { name: "Sign Up" });
+    
+      // Expect the button to be disabled
+      expect(button).toBeDisabled();
+    
+      // Test specific styles applied when disabled
+      expect(button).toHaveStyleRule("background-color", "rgb(156 163 175 / var(--tw-bg-opacity, 1))"); // Tailwind gray-400
+      expect(button).toHaveStyleRule("cursor", "not-allowed");
+      expect(button).toHaveStyleRule("background-color", "rgb(156 163 175 / var(--tw-bg-opacity, 1))",{modifier:":hover"}); // Tailwind gray-400
+    });
+    it("has a signup button styled correctly when enabled", async () => {
+      render(<SignUpPage />);
+      const button = screen.getByRole("button", { name: "Sign Up" });
+
+      const passwordInput = screen.getByLabelText("Password");
+      const passwordRepeatInput = screen.getByLabelText("Password Repeat");
+
+      await userEvent.type(passwordInput, "Password1");
+      await userEvent.type(passwordRepeatInput, "Password1");
+
+      // Expect the button to be enabled
+      expect(button).toBeEnabled();
+
+      // Test specific styles applied when enabled
+      expect(button).toHaveStyleRule("background-color", "rgb(59 130 246 / var(--tw-bg-opacity, 1))"); // Tailwind gray-400
+      expect(button).toHaveStyleRule("border-radius", "0.25rem");
+      expect(button).toHaveStyleRule("background-color", "rgb(37 99 235 / var(--tw-bg-opacity, 1))",{modifier:":hover"}); // Tailwind gray-400
+    });    
+  });
   describe("Interactions", () => {
     it("enables the button when password and password repeat fields have the same value", async () => {
       render(<SignUpPage />);
@@ -88,5 +121,88 @@ describe("signup page", () => {
         passwordRepeat: "Password1",
       });
     });
+    it("re-enables the button when the API call fails", async () => {
+      // Simulate failed API response
+      mockedAxios.post.mockRejectedValue({ 
+        response: { 
+          data: { 
+            path: '/api/1.0/users',
+            timestamp: 1737216419142,
+            message: 'Validation Failure',
+            validationErrors: { email: 'E-mail is not valid' }
+          } 
+        } 
+      });
+
+      render(<SignUpPage />);
+      const usernameInput = screen.getByLabelText("Username");
+      const emailInput = screen.getByLabelText("E-mail");
+      const passwordInput = screen.getByLabelText("Password");
+      const passwordRepeatInput = screen.getByLabelText("Password Repeat");
+
+      await userEvent.type(usernameInput, "user1");
+      await userEvent.type(emailInput, "user1@");
+      await userEvent.type(passwordInput, "Password1");
+      await userEvent.type(passwordRepeatInput, "Password1");
+
+      const button = screen.getByRole("button", { name: "Sign Up" });
+      await userEvent.click(button);
+
+      
+      expect(button).toBeEnabled();
+    });
+    it("disables the button when the API call succeeds", async () => {
+      mockedAxios.post.mockResolvedValue({ data: { message: "User created successfully" } }); // successful API response
+    
+      render(<SignUpPage />);
+      const usernameInput = screen.getByLabelText("Username");
+      const emailInput = screen.getByLabelText("E-mail");
+      const passwordInput = screen.getByLabelText("Password");
+      const passwordRepeatInput = screen.getByLabelText("Password Repeat");
+    
+      await userEvent.type(usernameInput, "user1");
+      await userEvent.type(emailInput, "user1@gmail.com");
+      await userEvent.type(passwordInput, "Password1");
+      await userEvent.type(passwordRepeatInput, "Password1");
+    
+      const button = screen.getByRole("button", { name: "Sign Up" });
+      await userEvent.click(button);
+    
+      expect(mockedAxios.post).toHaveBeenCalledWith("/api/1.0/users", {
+        username: "user1",
+        email: "user1@gmail.com",
+        password: "Password1",
+        passwordRepeat: "Password1",
+      });
+    
+      expect(button).toBeDisabled();
+    });
+    it("re-enables the button when a network error occurs", async () => {
+      mockedAxios.post.mockRejectedValue(new Error("Network Error")); // network error
+    
+      render(<SignUpPage />);
+      const usernameInput = screen.getByLabelText("Username");
+      const emailInput = screen.getByLabelText("E-mail");
+      const passwordInput = screen.getByLabelText("Password");
+      const passwordRepeatInput = screen.getByLabelText("Password Repeat");
+    
+      await userEvent.type(usernameInput, "user1");
+      await userEvent.type(emailInput, "user1@gmail.com");
+      await userEvent.type(passwordInput, "Password1");
+      await userEvent.type(passwordRepeatInput, "Password1");
+    
+      const button = screen.getByRole("button", { name: "Sign Up" });
+      await userEvent.click(button);
+    
+      expect(mockedAxios.post).toHaveBeenCalledWith("/api/1.0/users", {
+        username: "user1",
+        email: "user1@gmail.com",
+        password: "Password1",
+        passwordRepeat: "Password1",
+      });
+    
+      expect(button).toBeEnabled();
+    });
+    
   });
 });

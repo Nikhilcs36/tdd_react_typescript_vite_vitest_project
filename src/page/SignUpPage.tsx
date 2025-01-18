@@ -1,19 +1,23 @@
 import axios from "axios";
 import { Component } from "react";
-import tw from "twin.macro";
+import tw, { styled } from "twin.macro";
 
 const FormWrapper = tw.div`min-h-screen flex items-center justify-center bg-gray-100`;
 const Form = tw.form`bg-white p-6 rounded-lg shadow-md w-full max-w-md`;
 const Title = tw.h2`text-2xl font-bold mb-4`;
 const Label = tw.label`block text-gray-700 font-medium mb-2`;
 const Input = tw.input`w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none`;
-const Button = tw.button`py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600`;
+const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
+  tw`px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600`,
+  disabled && tw`bg-gray-400 cursor-not-allowed hover:bg-gray-400`,
+]);
 
 interface SignUpState {
   username: string;
   email: string;
   password: string;
   passwordRepeat: string;
+  isSubmitting: boolean;
 }
 
 class SignUpPage extends Component<{}, SignUpState> {
@@ -22,16 +26,27 @@ class SignUpPage extends Component<{}, SignUpState> {
     email: "",
     password: "",
     passwordRepeat: "",
+    isSubmitting: false,
   };
 
   handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
-    this.setState({ [id]: value } as Pick<SignUpState, keyof SignUpState>);
+
+    // Ensure the ID is a key of SignUpState before updating
+    if (id in this.state) {
+      this.setState((prevState) => ({
+        ...prevState, // Keep existing state properties
+        [id]: value, // Update the changed field
+      }));
+    }
   };
 
   isDisabled = () => {
-    const { password, passwordRepeat } = this.state;
-    return !(password && passwordRepeat && password === passwordRepeat);
+    const { password, passwordRepeat, isSubmitting } = this.state;
+    return (
+      !(password && passwordRepeat && password === passwordRepeat) ||
+      isSubmitting === true
+    );
   };
 
   submit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -41,9 +56,11 @@ class SignUpPage extends Component<{}, SignUpState> {
     try {
       const response = await axios.post("/api/1.0/users", body);
       console.log(response.data); // Log success response
+      this.setState({ isSubmitting: true });
     } catch (error: any) {
       console.error(error.response?.data || error.message); // Log error response
-    }
+      this.setState({ isSubmitting: false });
+    } 
   };
 
   render() {
