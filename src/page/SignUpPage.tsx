@@ -60,7 +60,7 @@ class SignUpPage extends Component<{}, SignUpState> {
     } catch (error: any) {
       console.error(error.response?.data || error.message); // Log error response
       this.setState({ isSubmitting: false });
-    } 
+    }
   };
 
   render() {
