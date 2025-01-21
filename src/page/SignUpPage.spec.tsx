@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import SignUpPage from "./SignUpPage";
-import { render, screen } from "@testing-library/react";
+import { render, screen} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
 import { vi } from "vitest";
@@ -193,6 +193,27 @@ describe("signup page", () => {
 
       const button = screen.getByRole("button", { name: "Sign Up" });
       expect(button).toBeEnabled();
+    });
+    it("displays a success message after successful signup", async () => {
+      mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
+    
+      render(<SignUpPage />);
+    
+      const formData = {
+        username: "user1",
+        email: "user1@gmail.com",
+        password: "Password1",
+        passwordRepeat: "Password1",
+      };
+    
+      await fillAndSubmitSignUpForm(formData);
+    
+      // Query the success message by test ID
+      const successMessage = screen.getByTestId("success-message");
+
+      // Verify the content
+      expect(successMessage).toHaveTextContent("User created successfully!");
+      expect(successMessage).toHaveTextContent("Check your email for verification.");
     });
   });
 });
