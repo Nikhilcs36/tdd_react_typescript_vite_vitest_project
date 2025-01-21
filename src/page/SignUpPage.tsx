@@ -11,6 +11,7 @@ const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
   tw`px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600`,
   disabled && tw`bg-gray-400 cursor-not-allowed hover:bg-gray-400`,
 ]);
+const SuccessMessage = tw.div`mt-4 p-4 text-green-700 bg-green-100 rounded [text-align: center]`;
 
 interface SignUpState {
   username: string;
@@ -18,6 +19,7 @@ interface SignUpState {
   password: string;
   passwordRepeat: string;
   isSubmitting: boolean;
+  successMessage: string | boolean | null;
 }
 
 class SignUpPage extends Component<{}, SignUpState> {
@@ -27,6 +29,7 @@ class SignUpPage extends Component<{}, SignUpState> {
     password: "",
     passwordRepeat: "",
     isSubmitting: false,
+    successMessage: null,
   };
 
   handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,10 +56,11 @@ class SignUpPage extends Component<{}, SignUpState> {
     event.preventDefault();
     const { username, email, password, passwordRepeat } = this.state;
     const body = { username, email, password, passwordRepeat };
+    this.setState({ isSubmitting: true });
     try {
       const response = await axios.post("/api/1.0/users", body);
       console.log(response.data); // Log success response
-      this.setState({ isSubmitting: true });
+      this.setState({ successMessage: true });
     } catch (error: any) {
       console.error(error.response?.data || error.message); // Log error response
       this.setState({ isSubmitting: false });
@@ -64,6 +68,7 @@ class SignUpPage extends Component<{}, SignUpState> {
   };
 
   render() {
+    const { successMessage } = this.state;
     return (
       <FormWrapper>
         <Form onSubmit={this.submit}>
@@ -89,6 +94,13 @@ class SignUpPage extends Component<{}, SignUpState> {
             />
           </div>
           <Button disabled={this.isDisabled()}>Sign Up</Button>
+          {/* Success Message */}
+          {successMessage && (
+            <SuccessMessage data-testid="success-message">
+              <p>User created successfully!</p>
+              <p>Check your email for verification.</p>
+            </SuccessMessage>
+          )}
         </Form>
       </FormWrapper>
     );
