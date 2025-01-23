@@ -215,5 +215,20 @@ describe("signup page", () => {
       expect(successMessage).toHaveTextContent("User created successfully!");
       expect(successMessage).toHaveTextContent("Check your email for verification.");
     });
+    it('intercepts API requests and returns mock data', async () => {
+      const response = await fetch('/api/1.0/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: '',
+          email: 'invalid-email',
+          password: 'short',
+          passwordRepeat: 'short',
+        }),
+      });
+      const data = await response.json();
+      console.log("test msw",data)
+      expect(data.message).toBe('Username is required');
+    });    
   });
 });
