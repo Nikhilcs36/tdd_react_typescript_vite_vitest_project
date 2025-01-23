@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import SignUpPage from "./SignUpPage";
-import { render, screen} from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
 import { vi } from "vitest";
@@ -196,39 +196,173 @@ describe("signup page", () => {
     });
     it("displays a success message after successful signup", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
-    
+
       render(<SignUpPage />);
-    
+
       const formData = {
         username: "user1",
         email: "user1@gmail.com",
         password: "Password1",
         passwordRepeat: "Password1",
       };
-    
+
       await fillAndSubmitSignUpForm(formData);
-    
+
       // Query the success message by test ID
       const successMessage = screen.getByTestId("success-message");
 
       // Verify the content
       expect(successMessage).toHaveTextContent("User created successfully!");
-      expect(successMessage).toHaveTextContent("Check your email for verification.");
+      expect(successMessage).toHaveTextContent(
+        "Check your email for verification."
+      );
     });
-    it('intercepts API requests and returns mock data', async () => {
-      const response = await fetch('/api/1.0/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: '',
-          email: 'invalid-email',
-          password: 'short',
-          passwordRepeat: 'short',
-        }),
+    describe("validationErrors", () => {
+      it("intercepts API requests and returns mock data with username, email, password validation errors", async () => {
+        const response = await fetch("/api/1.0/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "",
+            email: "invalid-email",
+            password: "short",
+            passwordRepeat: "short",
+          }),
+        });
+        const data = await response.json();
+        expect(data.message).toBe("Validation Failure");
+
+        // Assertions for the overall response
+        expect(response.status).toBe(400); // Ensure the status is 400 for validation errors
+        expect(data.message).toBe("Validation Failure");
+
+        // Assertions for validation errors
+        expect(data.validationErrors).toEqual({
+          username: "Username cannot be null",
+          email: "E-mail is not valid",
+          password: "Password must have at least 6 characters",
+        });
       });
-      const data = await response.json();
-      console.log("test msw",data)
-      expect(data.message).toBe('Username is required');
-    });    
+
+      it("returns validation error for email in use", async () => {
+        const response = await fetch("/api/1.0/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "validUsername",
+            email: "existing@example.com", // same email is added in mock handler
+            password: "Valid123",
+            passwordRepeat: "Valid123",
+          }),
+        });
+
+        const data = await response.json();
+
+        // Assertions for the overall response
+        expect(response.status).toBe(400);
+        expect(data.message).toBe("Validation Failure");
+
+        // Assertions for validation errors
+        expect(data.validationErrors).toEqual({
+          email: "E-mail in use",
+        });
+      });
+
+      it("returns validation error for username length", async () => {
+        const response = await fetch("/api/1.0/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "usr",
+            email: "valid@example.com",
+            password: "Valid123",
+            passwordRepeat: "Valid123",
+          }),
+        });
+
+        const data = await response.json();
+
+        // Assertions for the overall response
+        expect(response.status).toBe(400);
+        expect(data.message).toBe("Validation Failure");
+
+        // Assertions for validation errors
+        expect(data.validationErrors).toEqual({
+          username: "Must have min 4 and max 32 characters",
+        });
+      });
+
+      it("returns validation error for password complexity", async () => {
+        const response = await fetch("/api/1.0/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "validUsername",
+            email: "valid@example.com",
+            password: "simple",
+            passwordRepeat: "simple",
+          }),
+        });
+
+        const data = await response.json();
+
+        // Assertions for the overall response
+        expect(response.status).toBe(400);
+        expect(data.message).toBe("Validation Failure");
+
+        // Assertions for validation errors
+        expect(data.validationErrors).toEqual({
+          password:
+            "Password must have at least 1 uppercase, 1 lowercase letter and 1 number",
+        });
+      });
+      it("returns validation error for password mismatch", async () => {
+        const response = await fetch("/api/1.0/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "validUsername",
+            email: "valid@example.com",
+            password: "ComplexPass1",
+            passwordRepeat: "MismatchPass1",
+          }),
+        });
+
+        const data = await response.json();
+
+        // Assertions for the overall response
+        expect(response.status).toBe(400);
+        expect(data.message).toBe("Validation Failure");
+
+        // Assertions for validation errors
+        expect(data.validationErrors).toEqual({
+          passwordRepeat: "password_mismatch",
+        });
+      });
+      it("returns validation error when password is null", async () => {
+        const response = await fetch("/api/1.0/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "validUsername",
+            email: "valid@example.com",
+            password: null, // Password is explicitly set to null
+            passwordRepeat: null,
+          }),
+        });
+
+        const data = await response.json();
+
+        // Assertions for the overall response
+        expect(response.status).toBe(400);
+        expect(data.message).toBe("Validation Failure");
+
+        // Assertions for validation errors
+        expect(data.validationErrors).toEqual({
+          password: "Password cannot be null",
+          passwordRepeat: "password_repeat_null",
+        });
+      });
+    });
   });
 });
