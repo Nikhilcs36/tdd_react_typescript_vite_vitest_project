@@ -3,16 +3,25 @@ import SignUpPage from "./SignUpPage";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
-import { vi } from "vitest";
+import { vi, beforeEach } from "vitest";
 import { fillAndSubmitSignUpForm } from "../tests/testUtils";
+import {
+  defaultService,
+  axiosApiService,
+  fetchApiService,
+} from "../services/apiService";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
 
+beforeEach(() => {
+  vi.resetAllMocks();
+});
+
 describe("signup page", () => {
   describe("layout", () => {
     it("has header", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       // const header = screen.queryByRole('heading', { name: 'sign up1' });
       const header = screen.getByRole("heading", { name: "Sign Up" });
       /*  getByRole is more appropriate than queryByRole. If the element isn't found, getByRole
@@ -20,44 +29,44 @@ describe("signup page", () => {
       expect(header).toBeInTheDocument();
     });
     it("has user name", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const input = screen.getByLabelText("Username");
       expect(input).toBeInTheDocument();
     });
     it("has user email", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const input = screen.getByLabelText("E-mail");
       expect(input).toBeInTheDocument();
     });
     it("has user password", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const input = screen.getByLabelText("Password");
       expect(input).toBeInTheDocument();
     });
     it("has password type for password input", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const input = screen.getByLabelText<HTMLInputElement>("Password");
       expect(input.type).toBe("password");
     });
     it("has password type for password repeat input", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const input = screen.getByLabelText<HTMLInputElement>("Password Repeat");
       expect(input.type).toBe("password");
     });
     it("has signup button", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const button = screen.queryByRole("button", { name: "Sign Up" });
       expect(button).toBeInTheDocument();
     });
     it("disable the button initially", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const button = screen.queryByRole("button", { name: "Sign Up" });
       expect(button).toBeDisabled();
     });
   });
   describe("style Tailwind (twin.macro)", () => {
     it("has a signup button styled correctly when disabled", () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const button = screen.getByRole("button", { name: "Sign Up" });
 
       // Expect the button to be disabled
@@ -76,7 +85,7 @@ describe("signup page", () => {
       ); // Tailwind gray-400
     });
     it("has a signup button styled correctly when enabled", async () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const button = screen.getByRole("button", { name: "Sign Up" });
 
       const passwordInput = screen.getByLabelText("Password");
@@ -103,7 +112,7 @@ describe("signup page", () => {
   });
   describe("Interactions", () => {
     it("enables the button when password and password repeat fields have the same value", async () => {
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={defaultService} />);
       const passwordInput = screen.getByLabelText("Password");
       const passwordRepeatInput = screen.getByLabelText("Password Repeat");
 
@@ -115,7 +124,7 @@ describe("signup page", () => {
     });
     it("sends username, email and password to backend after submit a button", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } });
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={axiosApiService} />);
 
       const formData = {
         username: "user1",
@@ -141,7 +150,7 @@ describe("signup page", () => {
         },
       });
 
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={axiosApiService} />);
 
       const formData = {
         username: "user1",
@@ -160,7 +169,7 @@ describe("signup page", () => {
     it("disables the button when the API call succeeds", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
 
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={axiosApiService} />);
 
       const formData = {
         username: "user1",
@@ -179,7 +188,7 @@ describe("signup page", () => {
     it("re-enables the button when a network error occurs", async () => {
       mockedAxios.post.mockRejectedValue(new Error("Network Error")); // network error
 
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={axiosApiService} />);
       const formData = {
         username: "user1",
         email: "user1@",
@@ -197,7 +206,7 @@ describe("signup page", () => {
     it("displays a success message after successful signup", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
 
-      render(<SignUpPage />);
+      render(<SignUpPage apiService={axiosApiService} />);
 
       const formData = {
         username: "user1",
@@ -217,7 +226,7 @@ describe("signup page", () => {
         "Check your email for verification."
       );
     });
-    describe("validationErrors", () => {
+    describe("validationErrors ensure the backend API works as expected", () => {
       it("intercepts API requests and returns mock data with username, email, password validation errors", async () => {
         const response = await fetch("/api/1.0/users", {
           method: "POST",
@@ -362,6 +371,78 @@ describe("signup page", () => {
           password: "Password cannot be null",
           passwordRepeat: "password_repeat_null",
         });
+      });
+    });
+    describe("validationErrors ensure the frontend test works as expected", () => {
+      it("shows an error message when username username.length", async () => {
+        // Mock Axios POST response to simulate username mismatch validation error
+        const validationErrors = {
+          username: "Must have min 4 and max 32 characters",
+        };
+        mockedAxios.post.mockRejectedValue({
+          response: { data: { validationErrors } },
+        });
+
+        // Render the component
+        render(<SignUpPage apiService={axiosApiService} />);
+
+        const formData = {
+          username: "av",
+          email: "user1@gmail.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        };
+
+        await fillAndSubmitSignUpForm(formData);
+
+        const button = screen.getByRole("button", { name: "Sign Up" });
+        expect(button).toBeEnabled();
+
+        expect(mockedAxios.post).toHaveBeenCalledWith(
+          "/api/1.0/users",
+          formData
+        );
+
+        // Wait for the error message to appear
+        const errorMessage = await screen.findByTestId("username-error");
+        expect(errorMessage).toBeInTheDocument();
+        expect(errorMessage).toHaveTextContent(
+          "Must have min 4 and max 32 characters"
+        );
+      });
+      it("shows an error message when username length is invalid", async () => {
+        // Render the component
+        render(<SignUpPage apiService={fetchApiService} />);
+
+        const formData = {
+          username: "av", // Invalid username length
+          email: "user1@gmail.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        };
+
+        // Simulate filling out the form and submitting
+        await fillAndSubmitSignUpForm(formData);
+
+        const button = screen.getByRole("button", { name: "Sign Up" });
+        expect(button).toBeEnabled();
+
+        const response = await fetch("/api/1.0/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const data = await response.json();
+        // Assertions for the overall response
+        expect(response.status).toBe(400);
+        expect(data.message).toBe("Validation Failure");
+
+        // Wait for the error message to appear
+        const errorMessage = await screen.findByTestId("username-error");
+        expect(errorMessage).toBeInTheDocument();
+        expect(errorMessage).toHaveTextContent(
+          "Must have min 4 and max 32 characters"
+        );
       });
     });
   });
