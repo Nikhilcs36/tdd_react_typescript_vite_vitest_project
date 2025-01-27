@@ -8,10 +8,10 @@ import { userEvent } from "@testing-library/user-event";
  */
 export const fillAndSubmitSignUpForm = async (
   formData: {
-    username: string;
-    email: string;
-    password: string;
-    passwordRepeat: string;
+    username?: string;
+    email?: string;
+    password?: string;
+    passwordRepeat?: string;
   },
   submit: boolean = true
 ) => {
@@ -20,10 +20,19 @@ export const fillAndSubmitSignUpForm = async (
   const passwordInput = screen.getByLabelText("Password");
   const passwordRepeatInput = screen.getByLabelText("Password Repeat");
 
-  await userEvent.type(usernameInput, formData.username);
-  await userEvent.type(emailInput, formData.email);
-  await userEvent.type(passwordInput, formData.password);
-  await userEvent.type(passwordRepeatInput, formData.passwordRepeat);
+  // Check and fill Username input if present
+  if (usernameInput && formData.username) {
+    await userEvent.type(usernameInput, formData.username);
+  }
+  if (emailInput && formData.email) {
+    await userEvent.type(emailInput, formData.email);
+  }
+  if (passwordInput && formData.password) {
+    await userEvent.type(passwordInput, formData.password);
+  }
+  if (passwordRepeatInput && formData.passwordRepeat) {
+    await userEvent.type(passwordRepeatInput, formData.passwordRepeat);
+  }
 
   if (submit) {
     const button = screen.getByRole("button", { name: "Sign Up" });

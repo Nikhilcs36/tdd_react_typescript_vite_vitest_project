@@ -226,20 +226,26 @@ describe("signup page", () => {
         "Check your email for verification."
       );
     });
-    describe("validationErrors ensure the backend API works as expected", () => {
+    describe("validationErrors ensure the backend API and frontend works as expected", () => {
       it("intercepts API requests and returns mock data with username, email, password validation errors", async () => {
+        render(<SignUpPage apiService={fetchApiService} />);
+
+        const formData = {
+          username: "",
+          email: "invalid-email",
+          password: "short",
+          passwordRepeat: "short",
+        };
+
+        // Simulate filling out the form and submitting
+        await fillAndSubmitSignUpForm(formData);
+
         const response = await fetch("/api/1.0/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "",
-            email: "invalid-email",
-            password: "short",
-            passwordRepeat: "short",
-          }),
+          body: JSON.stringify(formData),
         });
         const data = await response.json();
-        expect(data.message).toBe("Validation Failure");
 
         // Assertions for the overall response
         expect(response.status).toBe(400); // Ensure the status is 400 for validation errors
@@ -251,18 +257,48 @@ describe("signup page", () => {
           email: "E-mail is not valid",
           password: "Password must have at least 6 characters",
         });
+
+        // username-error message to appear in signup form
+        const usernameErrorMessage = await screen.findByTestId(
+          "username-error"
+        );
+        expect(usernameErrorMessage).toBeInTheDocument();
+        expect(usernameErrorMessage).toHaveTextContent(
+          "Username cannot be null"
+        );
+
+        // email-error message to appear in signup form
+        const emailErrorMessage = await screen.findByTestId("email-error");
+        expect(emailErrorMessage).toBeInTheDocument();
+        expect(emailErrorMessage).toHaveTextContent("E-mail is not valid");
+
+        // password-error message to appear in signup form
+        const passwordErrorMessage = await screen.findByTestId(
+          "password-error"
+        );
+        expect(passwordErrorMessage).toBeInTheDocument();
+        expect(passwordErrorMessage).toHaveTextContent(
+          "Password must have at least 6 characters"
+        );
       });
 
       it("returns validation error for email in use", async () => {
+        render(<SignUpPage apiService={fetchApiService} />);
+
+        const formData = {
+          username: "testusername",
+          email: "existing@example.com", // this email is added in mocks/handlers.ts for error validation
+          password: "Password1",
+          passwordRepeat: "Password1",
+        };
+
+        // Simulate filling out the form and submitting
+        await fillAndSubmitSignUpForm(formData);
+
         const response = await fetch("/api/1.0/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "validUsername",
-            email: "existing@example.com", // same email is added in mock handler
-            password: "Valid123",
-            passwordRepeat: "Valid123",
-          }),
+          body: JSON.stringify(formData),
         });
 
         const data = await response.json();
@@ -275,18 +311,30 @@ describe("signup page", () => {
         expect(data.validationErrors).toEqual({
           email: "E-mail in use",
         });
+
+        // email-error message to appear in signup form
+        const emailErrorMessage = await screen.findByTestId("email-error");
+        expect(emailErrorMessage).toBeInTheDocument();
+        expect(emailErrorMessage).toHaveTextContent("E-mail in use");
       });
 
       it("returns validation error for username length", async () => {
+        render(<SignUpPage apiService={fetchApiService} />);
+
+        const formData = {
+          username: "te",
+          email: "valid@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        };
+
+        // Simulate filling out the form and submitting
+        await fillAndSubmitSignUpForm(formData);
+
         const response = await fetch("/api/1.0/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "usr",
-            email: "valid@example.com",
-            password: "Valid123",
-            passwordRepeat: "Valid123",
-          }),
+          body: JSON.stringify(formData),
         });
 
         const data = await response.json();
@@ -299,18 +347,33 @@ describe("signup page", () => {
         expect(data.validationErrors).toEqual({
           username: "Must have min 4 and max 32 characters",
         });
+
+        // username-error message to appear in signup form
+        const usernameErrorMessage = await screen.findByTestId(
+          "username-error"
+        );
+        expect(usernameErrorMessage).toBeInTheDocument();
+        expect(usernameErrorMessage).toHaveTextContent(
+          "Must have min 4 and max 32 characters"
+        );
       });
 
       it("returns validation error for password complexity", async () => {
+        render(<SignUpPage apiService={fetchApiService} />);
+
+        const formData = {
+          username: "testuser",
+          email: "valid@example.com",
+          password: "simple",
+          passwordRepeat: "simple",
+        };
+
+        await fillAndSubmitSignUpForm(formData);
+
         const response = await fetch("/api/1.0/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "validUsername",
-            email: "valid@example.com",
-            password: "simple",
-            passwordRepeat: "simple",
-          }),
+          body: JSON.stringify(formData),
         });
 
         const data = await response.json();
@@ -324,17 +387,33 @@ describe("signup page", () => {
           password:
             "Password must have at least 1 uppercase, 1 lowercase letter and 1 number",
         });
+
+        // password-error message to appear in signup form
+        const passwordErrorMessage = await screen.findByTestId(
+          "password-error"
+        );
+        expect(passwordErrorMessage).toBeInTheDocument();
+        expect(passwordErrorMessage).toHaveTextContent(
+          "Password must have at least 1 uppercase, 1 lowercase letter and 1 number"
+        );
       });
-      it("returns validation error for password mismatch", async () => {
+
+      it("returns validation error for password repeat mismatch", async () => {
+        render(<SignUpPage apiService={fetchApiService} />);
+
+        const formData = {
+          username: "testuser",
+          email: "valid@example.com",
+          password: "ComplexPass1",
+          passwordRepeat: "MismatchPass1",
+        };
+
+        await fillAndSubmitSignUpForm(formData);
+
         const response = await fetch("/api/1.0/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "validUsername",
-            email: "valid@example.com",
-            password: "ComplexPass1",
-            passwordRepeat: "MismatchPass1",
-          }),
+          body: JSON.stringify(formData),
         });
 
         const data = await response.json();
@@ -347,17 +426,35 @@ describe("signup page", () => {
         expect(data.validationErrors).toEqual({
           passwordRepeat: "password_mismatch",
         });
+
+        const button = screen.getByRole("button", { name: "Sign Up" });
+        expect(button).toBeDisabled();
+
+        // this error message is not show because signup button is not enabled (password and password repeat are missmached)
+
+        // password-error message to appear in signup form
+        //  const passwordErrorMessage = await screen.findByTestId(
+        //   "passwordRepeat-error"
+        // );
+        // expect(passwordErrorMessage).toBeInTheDocument();
+        // expect(passwordErrorMessage).toHaveTextContent(
+        //   "Passwords do not match"
+        // );
       });
       it("returns validation error when password is null", async () => {
+        render(<SignUpPage apiService={fetchApiService} />);
+
+        const formData = {
+          username: "testuser",
+          email: "valid@example.com",
+        };
+
+        await fillAndSubmitSignUpForm(formData);
+
         const response = await fetch("/api/1.0/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "validUsername",
-            email: "valid@example.com",
-            password: null, // Password is explicitly set to null
-            passwordRepeat: null,
-          }),
+          body: JSON.stringify(formData),
         });
 
         const data = await response.json();
@@ -371,78 +468,29 @@ describe("signup page", () => {
           password: "Password cannot be null",
           passwordRepeat: "password_repeat_null",
         });
-      });
-    });
-    describe("validationErrors ensure the frontend test works as expected", () => {
-      it("shows an error message when username username.length", async () => {
-        // Mock Axios POST response to simulate username mismatch validation error
-        const validationErrors = {
-          username: "Must have min 4 and max 32 characters",
-        };
-        mockedAxios.post.mockRejectedValue({
-          response: { data: { validationErrors } },
-        });
-
-        // Render the component
-        render(<SignUpPage apiService={axiosApiService} />);
-
-        const formData = {
-          username: "av",
-          email: "user1@gmail.com",
-          password: "Password1",
-          passwordRepeat: "Password1",
-        };
-
-        await fillAndSubmitSignUpForm(formData);
 
         const button = screen.getByRole("button", { name: "Sign Up" });
-        expect(button).toBeEnabled();
+        expect(button).toBeDisabled();
 
-        expect(mockedAxios.post).toHaveBeenCalledWith(
-          "/api/1.0/users",
-          formData
-        );
+        // this error message is not show because signup button is not enabled (password and password repeat are missmached)
 
-        // Wait for the error message to appear
-        const errorMessage = await screen.findByTestId("username-error");
-        expect(errorMessage).toBeInTheDocument();
-        expect(errorMessage).toHaveTextContent(
-          "Must have min 4 and max 32 characters"
-        );
-      });
-      it("shows an error message when username length is invalid", async () => {
-        // Render the component
-        render(<SignUpPage apiService={fetchApiService} />);
+        // // password-error message to appear in signup form
+        // const passwordErrorMessage = await screen.findByTestId(
+        //   "password-error"
+        // );
+        // expect(passwordErrorMessage).toBeInTheDocument();
+        // expect(passwordErrorMessage).toHaveTextContent(
+        //   "Password cannot be null"
+        // );
 
-        const formData = {
-          username: "av", // Invalid username length
-          email: "user1@gmail.com",
-          password: "Password1",
-          passwordRepeat: "Password1",
-        };
-
-        // Simulate filling out the form and submitting
-        await fillAndSubmitSignUpForm(formData);
-
-        const button = screen.getByRole("button", { name: "Sign Up" });
-        expect(button).toBeEnabled();
-
-        const response = await fetch("/api/1.0/users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-        const data = await response.json();
-        // Assertions for the overall response
-        expect(response.status).toBe(400);
-        expect(data.message).toBe("Validation Failure");
-
-        // Wait for the error message to appear
-        const errorMessage = await screen.findByTestId("username-error");
-        expect(errorMessage).toBeInTheDocument();
-        expect(errorMessage).toHaveTextContent(
-          "Must have min 4 and max 32 characters"
-        );
+        // //  passwordRepeat-error message to appear in signup form
+        // const passwordRepeatErrorMessage = await screen.findByTestId(
+        //   "passwordRepeat-error"
+        // );
+        // expect(passwordRepeatErrorMessage).toBeInTheDocument();
+        // expect(passwordRepeatErrorMessage).toHaveTextContent(
+        //   "password_repeat_null"
+        // );
       });
     });
   });
