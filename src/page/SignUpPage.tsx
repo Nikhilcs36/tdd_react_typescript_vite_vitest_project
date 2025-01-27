@@ -1,6 +1,6 @@
-import axios from "axios";
 import { Component } from "react";
 import tw, { styled } from "twin.macro";
+import { ApiService } from "../services/apiService";
 
 const FormWrapper = tw.div`min-h-screen flex items-center justify-center bg-gray-100`;
 const Form = tw.form`bg-white p-6 rounded-lg shadow-md w-full max-w-md`;
@@ -12,6 +12,7 @@ const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
   disabled && tw`bg-gray-400 cursor-not-allowed hover:bg-gray-400`,
 ]);
 const SuccessMessage = tw.div`mt-4 p-4 text-green-700 bg-green-100 rounded [text-align: center]`;
+const ErrorMessage = tw.div`mt-2 text-red-700`;
 
 interface SignUpState {
   username: string;
@@ -20,9 +21,19 @@ interface SignUpState {
   passwordRepeat: string;
   isSubmitting: boolean;
   successMessage: string | boolean | null;
+  validationErrors: Record<string, string>;
 }
 
-class SignUpPage extends Component<{}, SignUpState> {
+interface SignUpPageProps {
+  apiService: ApiService;
+}
+
+const errorMessages: Record<string, string> = {
+  password_mismatch: "Passwords do not match",
+  password_null: "Password cannot be null",
+};
+
+class SignUpPage extends Component<SignUpPageProps, SignUpState> {
   state: SignUpState = {
     username: "",
     email: "",
@@ -30,18 +41,27 @@ class SignUpPage extends Component<{}, SignUpState> {
     passwordRepeat: "",
     isSubmitting: false,
     successMessage: null,
+    validationErrors: {},
   };
+
+  // handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { id, value } = event.target;
+
+  //   // Ensure the ID is a key of SignUpState before updating
+  //   if (id in this.state) {
+  //     this.setState((prevState) => ({
+  //       ...prevState, // Keep existing state properties
+  //       [id]: value, // Update the changed field
+  //     }));
+  //   }
+  // };
 
   handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
-
-    // Ensure the ID is a key of SignUpState before updating
-    if (id in this.state) {
-      this.setState((prevState) => ({
-        ...prevState, // Keep existing state properties
-        [id]: value, // Update the changed field
-      }));
-    }
+    this.setState({ [id]: value, validationErrors: {} } as Pick<
+      SignUpState,
+      keyof SignUpState
+    >);
   };
 
   isDisabled = () => {
@@ -56,19 +76,30 @@ class SignUpPage extends Component<{}, SignUpState> {
     event.preventDefault();
     const { username, email, password, passwordRepeat } = this.state;
     const body = { username, email, password, passwordRepeat };
-    this.setState({ isSubmitting: true });
+    //this.setState({ isSubmitting: true });
+    this.setState({
+      isSubmitting: true,
+      successMessage: null,
+      validationErrors: {},
+    });
     try {
-      const response = await axios.post("/api/1.0/users", body);
+      const response = await this.props.apiService.post("/api/1.0/users", body);
       console.log(response.data); // Log success response
       this.setState({ successMessage: true });
     } catch (error: any) {
-      console.error(error.response?.data || error.message); // Log error response
-      this.setState({ isSubmitting: false });
+      console.error("Error details:", {
+        responseData: error.response?.data,
+        message: error.message, //Axios or fetch
+      });
+
+      const validationErrors =
+        error.response?.data?.validationErrors || error.validationErrors || {};
+      this.setState({ validationErrors, isSubmitting: false });
     }
   };
 
   render() {
-    const { successMessage } = this.state;
+    const { successMessage, validationErrors } = this.state;
     return (
       <FormWrapper>
         <Form onSubmit={this.submit}>
@@ -76,14 +107,32 @@ class SignUpPage extends Component<{}, SignUpState> {
           <div className="mb-4">
             <Label htmlFor="username">Username</Label>
             <Input id="username" onChange={this.handleChange} />
+            {validationErrors.username && (
+              <ErrorMessage data-testid="username-error">
+                {errorMessages[validationErrors.username] ||
+                  validationErrors.username}
+              </ErrorMessage>
+            )}
           </div>
           <div className="mb-4">
             <Label htmlFor="email">E-mail</Label>
             <Input id="email" onChange={this.handleChange} />
+            {validationErrors.email && (
+              <ErrorMessage data-testid="email-error">
+                {errorMessages[validationErrors.email] ||
+                  validationErrors.email}
+              </ErrorMessage>
+            )}
           </div>
           <div className="mb-4">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" onChange={this.handleChange} />
+            {validationErrors.password && (
+              <ErrorMessage data-testid="password-error">
+                {errorMessages[validationErrors.password] ||
+                  validationErrors.password}
+              </ErrorMessage>
+            )}
           </div>
           <div className="mb-4">
             <Label htmlFor="passwordRepeat">Password Repeat</Label>
@@ -92,6 +141,12 @@ class SignUpPage extends Component<{}, SignUpState> {
               type="password"
               onChange={this.handleChange}
             />
+            {validationErrors.passwordRepeat && (
+              <ErrorMessage data-testid="passwordRepeat-error">
+                {errorMessages[validationErrors.passwordRepeat] ||
+                  validationErrors.passwordRepeat}
+              </ErrorMessage>
+            )}
           </div>
           <Button disabled={this.isDisabled()}>Sign Up</Button>
           {/* Success Message */}

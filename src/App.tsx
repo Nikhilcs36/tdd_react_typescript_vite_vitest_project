@@ -1,8 +1,9 @@
 import SignUpPage from "./page/SignUpPage"
+import { axiosApiService } from "./services/apiService";
 
 function App() {
   return (
-    <SignUpPage />
+    <SignUpPage apiService={axiosApiService}/>
   )
 }
 
