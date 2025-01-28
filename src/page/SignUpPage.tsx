@@ -76,7 +76,6 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
     event.preventDefault();
     const { username, email, password, passwordRepeat } = this.state;
     const body = { username, email, password, passwordRepeat };
-    //this.setState({ isSubmitting: true });
     this.setState({
       isSubmitting: true,
       successMessage: null,

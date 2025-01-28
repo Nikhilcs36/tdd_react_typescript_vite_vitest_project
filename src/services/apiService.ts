@@ -1,13 +1,8 @@
 import axios from "axios";
-import { vi } from "vitest";
 
 export interface ApiService {
   post: (url: string, body: Record<string, any>) => Promise<any>;
 }
-
-export const defaultService = {
-  post: vi.fn().mockResolvedValue({}), // Default no-op mock for tests
-};
 
 // Axios implementation
 export const axiosApiService: ApiService = {
