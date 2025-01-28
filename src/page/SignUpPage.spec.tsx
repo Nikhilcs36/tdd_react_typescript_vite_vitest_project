@@ -260,14 +260,14 @@ describe("signup page", () => {
           "username-error"
         );
         expect(usernameErrorMessage).toBeInTheDocument();
-        expect(usernameErrorMessage).toHaveTextContent(
-          "Username cannot be null"
-        );
+        expect(usernameErrorMessage).toHaveTextContent("Username is required.");
 
         // email-error message to appear in signup form
         const emailErrorMessage = await screen.findByTestId("email-error");
         expect(emailErrorMessage).toBeInTheDocument();
-        expect(emailErrorMessage).toHaveTextContent("E-mail is not valid");
+        expect(emailErrorMessage).toHaveTextContent(
+          "Enter a valid email (e.g., user@example.com)."
+        );
 
         // password-error message to appear in signup form
         const passwordErrorMessage = await screen.findByTestId(
@@ -275,7 +275,7 @@ describe("signup page", () => {
         );
         expect(passwordErrorMessage).toBeInTheDocument();
         expect(passwordErrorMessage).toHaveTextContent(
-          "Password must have at least 6 characters"
+          "Password must be 6+ characters."
         );
       });
 
@@ -312,7 +312,7 @@ describe("signup page", () => {
         // email-error message to appear in signup form
         const emailErrorMessage = await screen.findByTestId("email-error");
         expect(emailErrorMessage).toBeInTheDocument();
-        expect(emailErrorMessage).toHaveTextContent("E-mail in use");
+        expect(emailErrorMessage).toHaveTextContent("Email is already in use.");
       });
 
       it("returns validation error for username length", async () => {
@@ -351,7 +351,7 @@ describe("signup page", () => {
         );
         expect(usernameErrorMessage).toBeInTheDocument();
         expect(usernameErrorMessage).toHaveTextContent(
-          "Must have min 4 and max 32 characters"
+          "Username must be 4-32 characters."
         );
       });
 
@@ -391,7 +391,7 @@ describe("signup page", () => {
         );
         expect(passwordErrorMessage).toBeInTheDocument();
         expect(passwordErrorMessage).toHaveTextContent(
-          "Password must have at least 1 uppercase, 1 lowercase letter and 1 number"
+          "Use upper, lower, and a number."
         );
       });
 
@@ -435,7 +435,7 @@ describe("signup page", () => {
         // );
         // expect(passwordErrorMessage).toBeInTheDocument();
         // expect(passwordErrorMessage).toHaveTextContent(
-        //   "Passwords do not match"
+        //   "Passwords don’t match."
         // );
       });
       it("returns validation error when password is null", async () => {
@@ -477,7 +477,7 @@ describe("signup page", () => {
         // );
         // expect(passwordErrorMessage).toBeInTheDocument();
         // expect(passwordErrorMessage).toHaveTextContent(
-        //   "Password cannot be null"
+        //   "Password is required."
         // );
 
         // //  passwordRepeat-error message to appear in signup form
@@ -486,7 +486,7 @@ describe("signup page", () => {
         // );
         // expect(passwordRepeatErrorMessage).toBeInTheDocument();
         // expect(passwordRepeatErrorMessage).toHaveTextContent(
-        //   "password_repeat_null"
+        //   "Confirm your password."
         // );
       });
     });
