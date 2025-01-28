@@ -29,8 +29,17 @@ interface SignUpPageProps {
 }
 
 const errorMessages: Record<string, string> = {
-  password_mismatch: "Passwords do not match",
-  password_null: "Password cannot be null",
+  "Username cannot be null": "Username is required.",
+  "Must have min 4 and max 32 characters": "Username must be 4-32 characters.",
+  "E-mail cannot be null": "Email is required.",
+  "E-mail is not valid": "Enter a valid email (e.g., user@example.com).",
+  "E-mail in use": "Email is already in use.",
+  "Password cannot be null": "Password is required.",
+  "Password must have at least 6 characters": "Password must be 6+ characters.",
+  "Password must have at least 1 uppercase, 1 lowercase letter and 1 number":
+    "Use upper, lower, and a number.",
+  password_repeat_null: "Confirm your password.",
+  password_mismatch: "Passwords don’t match.",
 };
 
 class SignUpPage extends Component<SignUpPageProps, SignUpState> {
