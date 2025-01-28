@@ -5,11 +5,8 @@ import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
 import { vi, beforeEach } from "vitest";
 import { fillAndSubmitSignUpForm } from "../tests/testUtils";
-import {
-  defaultService,
-  axiosApiService,
-  fetchApiService,
-} from "../services/apiService";
+import { axiosApiService, fetchApiService } from "../services/apiService";
+import { defaultService } from "../services/defaultService";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
