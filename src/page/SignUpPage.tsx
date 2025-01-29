@@ -1,6 +1,7 @@
 import { Component } from "react";
 import tw, { styled } from "twin.macro";
 import { ApiService } from "../services/apiService";
+import { validateSignUp } from "../utils/validationRules";
 
 const FormWrapper = tw.div`min-h-screen flex items-center justify-center bg-gray-100`;
 const Form = tw.form`bg-white p-6 rounded-lg shadow-md w-full max-w-md`;
@@ -22,6 +23,12 @@ interface SignUpState {
   isSubmitting: boolean;
   successMessage: string | boolean | null;
   validationErrors: Record<string, string>;
+  touched: {
+    username: boolean;
+    email: boolean;
+    password: boolean;
+    passwordRepeat: boolean;
+  };
 }
 
 interface SignUpPageProps {
@@ -39,10 +46,12 @@ const errorMessages: Record<string, string> = {
   "Password must have at least 1 uppercase, 1 lowercase letter and 1 number":
     "Use upper, lower, and a number.",
   password_repeat_null: "Confirm your password.",
-  password_mismatch: "Passwords don’t match.",
+  password_mismatch: "Passwords don't match.",
 };
 
 class SignUpPage extends Component<SignUpPageProps, SignUpState> {
+  private validationTimeout: number | null = null;
+
   state: SignUpState = {
     username: "",
     email: "",
@@ -51,113 +60,176 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
     isSubmitting: false,
     successMessage: null,
     validationErrors: {},
+    touched: {
+      username: false,
+      email: false,
+      password: false,
+      passwordRepeat: false,
+    },
   };
 
-  // handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { id, value } = event.target;
-
-  //   // Ensure the ID is a key of SignUpState before updating
-  //   if (id in this.state) {
-  //     this.setState((prevState) => ({
-  //       ...prevState, // Keep existing state properties
-  //       [id]: value, // Update the changed field
-  //     }));
-  //   }
-  // };
+  componentWillUnmount() {
+    if (this.validationTimeout) {
+      clearTimeout(this.validationTimeout);
+    }
+  }
 
   handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
-    this.setState({ [id]: value, validationErrors: {} } as Pick<
-      SignUpState,
-      keyof SignUpState
-    >);
+
+    // Explicitly define the state update type
+    const update: Partial<SignUpState> = { [id]: value };
+
+    this.setState(update as Pick<SignUpState, keyof SignUpState>, () => {
+      if (this.validationTimeout) clearTimeout(this.validationTimeout);
+
+      this.validationTimeout = window.setTimeout(() => {
+        this.setState(
+          (prev) => ({
+            touched: { ...prev.touched, [id]: true }, // Only mark current field as touched
+            validationErrors: {},
+          }),
+          this.validateClientSide
+        );
+      }, 1000); // Reduced debounce time to 1000ms
+    });
+  };
+
+  validateClientSide = () => {
+    const { username, email, password, passwordRepeat, touched } = this.state;
+    const errors = validateSignUp({
+      username,
+      email,
+      password,
+      passwordRepeat,
+    });
+
+    // Filter errors to only show for touched fields
+    const filteredErrors = Object.keys(errors).reduce((acc, key) => {
+      if (touched[key as keyof typeof touched]) {
+        acc[key] = errors[key];
+      }
+      return acc;
+    }, {} as Record<string, string>);
+
+    this.setState({ validationErrors: filteredErrors });
   };
 
   isDisabled = () => {
-    const { password, passwordRepeat, isSubmitting } = this.state;
+    const { password, passwordRepeat, isSubmitting, validationErrors } =
+      this.state;
+    const hasErrors = Object.keys(validationErrors).length > 0;
     return (
-      !(password && passwordRepeat && password === passwordRepeat) ||
-      isSubmitting === true
+      !password ||
+      !passwordRepeat ||
+      password !== passwordRepeat ||
+      hasErrors ||
+      isSubmitting
     );
   };
 
   submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const { username, email, password, passwordRepeat } = this.state;
-    const body = { username, email, password, passwordRepeat };
-    this.setState({
-      isSubmitting: true,
-      successMessage: null,
-      validationErrors: {},
-    });
-    try {
-      const response = await this.props.apiService.post("/api/1.0/users", body);
-      console.log(response.data); // Log success response
-      this.setState({ successMessage: true });
-    } catch (error: any) {
-      console.error("Error details:", {
-        responseData: error.response?.data,
-        message: error.message, //Axios or fetch
-      });
+    this.setState(
+      {
+        isSubmitting: true,
+        successMessage: null,
+        validationErrors: {},
+        touched: {
+          // Mark all fields as touched on submit
+          username: true,
+          email: true,
+          password: true,
+          passwordRepeat: true,
+        },
+      },
+      async () => {
+        try {
+          const { username, email, password, passwordRepeat } = this.state;
+          const body = { username, email, password, passwordRepeat };
 
-      const validationErrors =
-        error.response?.data?.validationErrors || error.validationErrors || {};
-      this.setState({ validationErrors, isSubmitting: false });
-    }
+          await this.props.apiService.post("/api/1.0/users", body);
+          this.setState({ successMessage: true });
+        } catch (error: any) {
+          const validationErrors = error.response?.data?.validationErrors || {};
+          this.setState({ validationErrors, isSubmitting: false });
+        }
+      }
+    );
   };
 
   render() {
     const { successMessage, validationErrors } = this.state;
+
     return (
       <FormWrapper>
         <Form onSubmit={this.submit}>
           <Title>Sign Up</Title>
+
+          {/* Username Field */}
           <div className="mb-4">
             <Label htmlFor="username">Username</Label>
-            <Input id="username" onChange={this.handleChange} />
+            <Input
+              id="username"
+              onChange={this.handleChange}
+              data-testid="username"
+            />
             {validationErrors.username && (
               <ErrorMessage data-testid="username-error">
-                {errorMessages[validationErrors.username] ||
-                  validationErrors.username}
+                {errorMessages[validationErrors.username]}
               </ErrorMessage>
             )}
           </div>
+
+          {/* Email Field */}
           <div className="mb-4">
             <Label htmlFor="email">E-mail</Label>
-            <Input id="email" onChange={this.handleChange} />
+            <Input
+              id="email"
+              onChange={this.handleChange}
+              data-testid="email"
+            />
             {validationErrors.email && (
               <ErrorMessage data-testid="email-error">
-                {errorMessages[validationErrors.email] ||
-                  validationErrors.email}
+                {errorMessages[validationErrors.email]}
               </ErrorMessage>
             )}
           </div>
+
+          {/* Password Field */}
           <div className="mb-4">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" onChange={this.handleChange} />
+            <Input
+              id="password"
+              type="password"
+              onChange={this.handleChange}
+              data-testid="password"
+            />
             {validationErrors.password && (
               <ErrorMessage data-testid="password-error">
-                {errorMessages[validationErrors.password] ||
-                  validationErrors.password}
+                {errorMessages[validationErrors.password]}
               </ErrorMessage>
             )}
           </div>
+
+          {/* Password Repeat Field */}
           <div className="mb-4">
             <Label htmlFor="passwordRepeat">Password Repeat</Label>
             <Input
               id="passwordRepeat"
               type="password"
               onChange={this.handleChange}
+              data-testid="passwordRepeat"
             />
             {validationErrors.passwordRepeat && (
               <ErrorMessage data-testid="passwordRepeat-error">
-                {errorMessages[validationErrors.passwordRepeat] ||
-                  validationErrors.passwordRepeat}
+                {errorMessages[validationErrors.passwordRepeat]}
               </ErrorMessage>
             )}
           </div>
+
           <Button disabled={this.isDisabled()}>Sign Up</Button>
-          {/* Success Message */}
+
           {successMessage && (
             <SuccessMessage data-testid="success-message">
               <p>User created successfully!</p>

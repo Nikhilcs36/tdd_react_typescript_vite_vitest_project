@@ -134,35 +134,6 @@ describe("signup page", () => {
 
       expect(mockedAxios.post).toHaveBeenCalledWith("/api/1.0/users", formData);
     });
-    it("re-enables the button when the API call fails", async () => {
-      // Simulate failed API response
-      mockedAxios.post.mockRejectedValue({
-        response: {
-          data: {
-            path: "/api/1.0/users",
-            timestamp: 1737216419142,
-            message: "Validation Failure",
-            validationErrors: { email: "E-mail is not valid" },
-          },
-        },
-      });
-
-      render(<SignUpPage apiService={axiosApiService} />);
-
-      const formData = {
-        username: "user1",
-        email: "user1@",
-        password: "Password1",
-        passwordRepeat: "Password1",
-      };
-
-      await fillAndSubmitSignUpForm(formData);
-
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/1.0/users", formData);
-
-      const button = screen.getByRole("button", { name: "Sign Up" });
-      expect(button).toBeEnabled();
-    });
     it("disables the button when the API call succeeds", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
 
@@ -427,16 +398,14 @@ describe("signup page", () => {
         const button = screen.getByRole("button", { name: "Sign Up" });
         expect(button).toBeDisabled();
 
-        // this error message is not show because signup button is not enabled (password and password repeat are missmached)
-
-        // password-error message to appear in signup form
-        //  const passwordErrorMessage = await screen.findByTestId(
-        //   "passwordRepeat-error"
-        // );
-        // expect(passwordErrorMessage).toBeInTheDocument();
-        // expect(passwordErrorMessage).toHaveTextContent(
-        //   "Passwords don’t match."
-        // );
+        //password-error message to appear in signup form
+        const passwordErrorMessage = await screen.findByTestId(
+          "passwordRepeat-error"
+        );
+        expect(passwordErrorMessage).toBeInTheDocument();
+        expect(passwordErrorMessage).toHaveTextContent(
+          "Passwords don't match."
+        );
       });
       it("returns validation error when password is null", async () => {
         render(<SignUpPage apiService={fetchApiService} />);
@@ -476,9 +445,7 @@ describe("signup page", () => {
         //   "password-error"
         // );
         // expect(passwordErrorMessage).toBeInTheDocument();
-        // expect(passwordErrorMessage).toHaveTextContent(
-        //   "Password is required."
-        // );
+        // expect(passwordErrorMessage).toHaveTextContent("Password is required.");
 
         // //  passwordRepeat-error message to appear in signup form
         // const passwordRepeatErrorMessage = await screen.findByTestId(
@@ -488,6 +455,78 @@ describe("signup page", () => {
         // expect(passwordRepeatErrorMessage).toHaveTextContent(
         //   "Confirm your password."
         // );
+      });
+    });
+    describe("input validationErrors in signup form expected", () => {
+      it("enables the button when the validation username-error in signup form", async () => {
+        render(<SignUpPage apiService={axiosApiService} />);
+
+        const formData = {
+          username: "us",
+          email: "user1@gmail.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        };
+
+        await fillAndSubmitSignUpForm(formData);
+
+        const button = screen.getByRole("button", { name: "Sign Up" });
+        expect(button).toBeEnabled();
+
+        // username-error message to appear in signup form
+        const usernameErrorMessage = await screen.findByTestId(
+          "username-error"
+        );
+        expect(usernameErrorMessage).toBeInTheDocument();
+        expect(usernameErrorMessage).toHaveTextContent(
+          "Username must be 4-32 characters."
+        );
+      });
+      it("enables the button when the validation email-error in signup form", async () => {
+        render(<SignUpPage apiService={axiosApiService} />);
+
+        const formData = {
+          username: "usser253",
+          email: "us",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        };
+
+        await fillAndSubmitSignUpForm(formData);
+
+        const button = screen.getByRole("button", { name: "Sign Up" });
+        expect(button).toBeEnabled();
+
+        // email-error message to appear in signup form
+        const emailErrorMessage = await screen.findByTestId("email-error");
+        expect(emailErrorMessage).toBeInTheDocument();
+        expect(emailErrorMessage).toHaveTextContent(
+          "Enter a valid email (e.g., user@example.com)."
+        );
+      });
+      it("enables the button when the validation passwordRepeat-error in signup form", async () => {
+        render(<SignUpPage apiService={axiosApiService} />);
+
+        const formData = {
+          username: "user1",
+          email: "user3@gmail.com",
+          password: "Password2",
+          passwordRepeat: "Password12",
+        };
+
+        await fillAndSubmitSignUpForm(formData);
+
+        //  passwordRepeat-error message to appear in signup form
+        const passwordRepeatErrorMessage = await screen.findByTestId(
+          "passwordRepeat-error"
+        );
+        expect(passwordRepeatErrorMessage).toBeInTheDocument();
+        expect(passwordRepeatErrorMessage).toHaveTextContent(
+          "Passwords don't match."
+        );
+
+        const button = screen.getByRole("button", { name: "Sign Up" });
+        expect(button).toBeDisabled();
       });
     });
   });
