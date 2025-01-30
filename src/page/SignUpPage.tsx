@@ -4,16 +4,20 @@ import { ApiService } from "../services/apiService";
 import { validateSignUp } from "../utils/validationRules";
 
 const FormWrapper = tw.div`min-h-screen flex items-center justify-center bg-gray-100`;
-const Form = tw.form`bg-white p-6 rounded-lg shadow-md w-full max-w-md`;
-const Title = tw.h2`text-2xl font-bold mb-4`;
-const Label = tw.label`block text-gray-700 font-medium mb-2`;
-const Input = tw.input`w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none`;
+const Form = tw.form`bg-white p-4 rounded-lg shadow-md w-full max-w-sm`;
+const Title = tw.h2`text-xl font-bold mb-3`;
+const Label = tw.label`block text-gray-700 font-medium mb-1`;
+const Input = tw.input`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none`;
+
 const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
-  tw`px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600`,
+  tw`px-4 py-2 mt-2 text-white transition-all bg-blue-500 rounded hover:bg-blue-600`,
   disabled && tw`bg-gray-400 cursor-not-allowed hover:bg-gray-400`,
 ]);
-const SuccessMessage = tw.div`mt-4 p-4 text-green-700 bg-green-100 rounded [text-align: center]`;
-const ErrorMessage = tw.div`mt-2 text-red-700`;
+
+const SuccessMessage = tw.div`mt-3 p-3 text-green-700 bg-green-100 rounded text-center`;
+
+const ErrorWrapper = tw.div`relative mb-6 min-h-[20px]`;
+const ErrorMessage = tw.div`absolute top-full left-0 mt-1 text-red-700 text-sm min-h-[20px] leading-tight`;
 
 interface SignUpState {
   username: string;
@@ -167,7 +171,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
           <Title>Sign Up</Title>
 
           {/* Username Field */}
-          <div className="mb-4">
+          <ErrorWrapper>
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
@@ -179,10 +183,10 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
                 {errorMessages[validationErrors.username]}
               </ErrorMessage>
             )}
-          </div>
+          </ErrorWrapper>
 
           {/* Email Field */}
-          <div className="mb-4">
+          <ErrorWrapper>
             <Label htmlFor="email">E-mail</Label>
             <Input
               id="email"
@@ -194,10 +198,10 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
                 {errorMessages[validationErrors.email]}
               </ErrorMessage>
             )}
-          </div>
+          </ErrorWrapper>
 
           {/* Password Field */}
-          <div className="mb-4">
+          <ErrorWrapper>
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -210,10 +214,10 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
                 {errorMessages[validationErrors.password]}
               </ErrorMessage>
             )}
-          </div>
+          </ErrorWrapper>
 
           {/* Password Repeat Field */}
-          <div className="mb-4">
+          <ErrorWrapper>
             <Label htmlFor="passwordRepeat">Password Repeat</Label>
             <Input
               id="passwordRepeat"
@@ -226,7 +230,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
                 {errorMessages[validationErrors.passwordRepeat]}
               </ErrorMessage>
             )}
-          </div>
+          </ErrorWrapper>
 
           <Button disabled={this.isDisabled()}>Sign Up</Button>
 
