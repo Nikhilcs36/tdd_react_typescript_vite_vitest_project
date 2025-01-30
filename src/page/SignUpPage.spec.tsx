@@ -106,6 +106,64 @@ describe("signup page", () => {
         { modifier: ":hover" }
       ); // Tailwind gray-400
     });
+    it("displays validation error messages styles", async () => {
+      render(<SignUpPage apiService={defaultService} />);
+
+      const fields = [
+        { label: "Username", testId: "username-error", inputValue: "a" },
+        { label: "E-mail", testId: "email-error", inputValue: "invalid-email" },
+        { label: "Password", testId: "password-error", inputValue: "123" },
+        {
+          label: "Password Repeat",
+          testId: "passwordRepeat-error",
+          inputValue: "456",
+        },
+      ];
+
+      for (const field of fields) {
+        const input = screen.getByLabelText(field.label);
+        await userEvent.type(input, field.inputValue);
+
+        // Wait for validation error to appear
+        const errorMessage = await screen.findByTestId(field.testId);
+        expect(errorMessage).toBeInTheDocument();
+
+        // Check styles for validation error message
+        expect(errorMessage).toHaveStyleRule(
+          "color",
+          "rgb(185 28 28 / var(--tw-text-opacity, 1))"
+        ); // Tailwind red-700
+        expect(errorMessage).toHaveStyleRule("font-size", "0.875rem"); // Tailwind text-sm
+      }
+    });
+    it("displays success message styles", async () => {
+      mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
+      render(<SignUpPage apiService={axiosApiService} />);
+
+      const formData = {
+        username: "user1",
+        email: "user10@gmail.com",
+        password: "Password1",
+        passwordRepeat: "Password1",
+      };
+
+      await fillAndSubmitSignUpForm(formData);
+
+      // Query the success message by test ID
+      const successMessage = screen.getByTestId("success-message");
+      expect(successMessage).toBeVisible();
+
+      // Check styles for success message
+      expect(successMessage).toHaveStyleRule(
+        "color",
+        "rgb(21 128 61 / var(--tw-text-opacity, 1))"
+      ); // Tailwind green-700
+      expect(successMessage).toHaveStyleRule(
+        "background-color",
+        "rgb(220 252 231 / var(--tw-bg-opacity, 1))"
+      ); // Tailwind green-100
+      expect(successMessage).toHaveStyleRule("text-align", "center");
+    });
   });
   describe("Interactions", () => {
     it("enables the button when password and password repeat fields have the same value", async () => {
