@@ -168,87 +168,70 @@ describe("signup page", () => {
   });
 
   describe("Interactions", () => {
+    const defaultFormData = {
+      username: "user1",
+      email: "user1@gmail.com",
+      password: "Password1",
+      passwordRepeat: "Password1",
+    };
+
     it("enables the button when password and password repeat fields have the same value", async () => {
       render(<SignUpPage apiService={defaultService} />);
-      const passwordInput = screen.getByLabelText("Password");
-      const passwordRepeatInput = screen.getByLabelText("Password Repeat");
 
-      await userEvent.type(passwordInput, "Password1");
-      await userEvent.type(passwordRepeatInput, "Password1");
+      await userEvent.type(screen.getByLabelText("Password"), "Password1");
+      await userEvent.type(
+        screen.getByLabelText("Password Repeat"),
+        "Password1"
+      );
 
-      const button = screen.getByRole("button", { name: "Sign Up" });
-      expect(button).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Sign Up" })).toBeEnabled();
     });
-    it("sends username, email and password to backend after submit a button", async () => {
+
+    it("sends username, email, and password to backend after submit", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } });
       render(<SignUpPage apiService={axiosApiService} />);
 
-      const formData = {
-        username: "user1",
-        email: "user1@",
-        password: "Password1",
-        passwordRepeat: "Password1",
-      };
+      await fillAndSubmitSignUpForm(defaultFormData);
 
-      await fillAndSubmitSignUpForm(formData);
-
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/1.0/users", formData);
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        "/api/1.0/users",
+        defaultFormData
+      );
     });
-    it("disables the button when the API call succeeds", async () => {
-      mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
 
+    it("disables the button after successful API call", async () => {
+      mockedAxios.post.mockResolvedValue({ data: { message: "User created" } });
       render(<SignUpPage apiService={axiosApiService} />);
 
-      const formData = {
-        username: "user1",
-        email: "user1@gmail.com",
-        password: "Password1",
-        passwordRepeat: "Password1",
-      };
+      await fillAndSubmitSignUpForm(defaultFormData);
 
-      await fillAndSubmitSignUpForm(formData); // test utility function to fill the sign-up form.
-
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/1.0/users", formData);
-
-      const button = screen.getByRole("button", { name: "Sign Up" });
-      expect(button).toBeDisabled();
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        "/api/1.0/users",
+        defaultFormData
+      );
+      expect(screen.getByRole("button", { name: "Sign Up" })).toBeDisabled();
     });
-    it("re-enables the button when a network error occurs", async () => {
-      mockedAxios.post.mockRejectedValue(new Error("Network Error")); // network error
 
-      render(<SignUpPage apiService={axiosApiService} />);
-      const formData = {
-        username: "user1",
-        email: "user1@",
-        password: "Password1",
-        passwordRepeat: "Password1",
-      };
-
-      await fillAndSubmitSignUpForm(formData);
-
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/1.0/users", formData);
-
-      const button = screen.getByRole("button", { name: "Sign Up" });
-      expect(button).toBeEnabled();
-    });
-    it("displays a success message after successful signup", async () => {
-      mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
-
+    it("re-enables the button on network error", async () => {
+      mockedAxios.post.mockRejectedValue(new Error("Network Error"));
       render(<SignUpPage apiService={axiosApiService} />);
 
-      const formData = {
-        username: "user1",
-        email: "user1@gmail.com",
-        password: "Password1",
-        passwordRepeat: "Password1",
-      };
+      await fillAndSubmitSignUpForm(defaultFormData);
 
-      await fillAndSubmitSignUpForm(formData);
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        "/api/1.0/users",
+        defaultFormData
+      );
+      expect(screen.getByRole("button", { name: "Sign Up" })).toBeEnabled();
+    });
 
-      // Query the success message by test ID
+    it("displays success message after successful signup", async () => {
+      mockedAxios.post.mockResolvedValue({ data: { message: "User created" } });
+      render(<SignUpPage apiService={axiosApiService} />);
+
+      await fillAndSubmitSignUpForm(defaultFormData);
+
       const successMessage = screen.getByTestId("success-message");
-
-      // Verify the content
       expect(successMessage).toHaveTextContent("User created successfully!");
       expect(successMessage).toHaveTextContent(
         "Check your email for verification."
