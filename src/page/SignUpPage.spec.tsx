@@ -16,49 +16,35 @@ beforeEach(() => {
 });
 
 describe("signup page", () => {
-  describe("layout", () => {
-    it("has header", () => {
+  describe("Layout", () => {
+    beforeEach(() => {
       render(<SignUpPage apiService={defaultService} />);
-      // const header = screen.queryByRole('heading', { name: 'sign up1' });
-      const header = screen.getByRole("heading", { name: "Sign Up" });
-      /*  getByRole is more appropriate than queryByRole. If the element isn't found, getByRole
-        will throw an error, making debugging easier.*/
-      expect(header).toBeInTheDocument();
     });
-    it("has user name", () => {
-      render(<SignUpPage apiService={defaultService} />);
-      const input = screen.getByLabelText("Username");
-      expect(input).toBeInTheDocument();
+
+    it("displays required elements", () => {
+      expect(
+        screen.getByRole("heading", { name: "Sign Up" })
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Username")).toBeInTheDocument();
+      expect(screen.getByLabelText("E-mail")).toBeInTheDocument();
+      expect(screen.getByLabelText("Password")).toBeInTheDocument();
+      expect(screen.getByLabelText("Password Repeat")).toBeInTheDocument();
     });
-    it("has user email", () => {
-      render(<SignUpPage apiService={defaultService} />);
-      const input = screen.getByLabelText("E-mail");
-      expect(input).toBeInTheDocument();
-    });
-    it("has user password", () => {
-      render(<SignUpPage apiService={defaultService} />);
-      const input = screen.getByLabelText("Password");
-      expect(input).toBeInTheDocument();
-    });
-    it("has password type for password input", () => {
-      render(<SignUpPage apiService={defaultService} />);
-      const input = screen.getByLabelText<HTMLInputElement>("Password");
-      expect(input.type).toBe("password");
-    });
-    it("has password type for password repeat input", () => {
-      render(<SignUpPage apiService={defaultService} />);
-      const input = screen.getByLabelText<HTMLInputElement>("Password Repeat");
-      expect(input.type).toBe("password");
-    });
-    it("has signup button", () => {
-      render(<SignUpPage apiService={defaultService} />);
-      const button = screen.queryByRole("button", { name: "Sign Up" });
-      expect(button).toBeInTheDocument();
-    });
-    it("disable the button initially", () => {
-      render(<SignUpPage apiService={defaultService} />);
-      const button = screen.queryByRole("button", { name: "Sign Up" });
-      expect(button).toBeDisabled();
+
+    it.each(["Password", "Password Repeat"])(
+      "%s field has password type",
+      (label) => {
+        const input = screen.getByLabelText<HTMLInputElement>(label);
+        expect(input.type).toBe("password");
+      }
+    );
+
+    describe("Submit Button", () => {
+      it("exists and is disabled initially", () => {
+        const button = screen.getByRole("button", { name: "Sign Up" });
+        expect(button).toBeInTheDocument();
+        expect(button).toBeDisabled();
+      });
     });
   });
 
