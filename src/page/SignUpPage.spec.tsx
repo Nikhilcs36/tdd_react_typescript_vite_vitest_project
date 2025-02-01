@@ -49,6 +49,13 @@ describe("signup page", () => {
   });
 
   describe("style Tailwind (twin.macro)", () => {
+    const formData = {
+      username: "user1",
+      email: "user10@gmail.com",
+      password: "Password1",
+      passwordRepeat: "Password1",
+    };
+
     it("has a signup button styled correctly when disabled", () => {
       render(<SignUpPage apiService={defaultService} />);
       const button = screen.getByRole("button", { name: "Sign Up" });
@@ -72,11 +79,7 @@ describe("signup page", () => {
       render(<SignUpPage apiService={defaultService} />);
       const button = screen.getByRole("button", { name: "Sign Up" });
 
-      const passwordInput = screen.getByLabelText("Password");
-      const passwordRepeatInput = screen.getByLabelText("Password Repeat");
-
-      await userEvent.type(passwordInput, "Password1");
-      await userEvent.type(passwordRepeatInput, "Password1");
+      await fillAndSubmitSignUpForm(formData, false); // submit set as false
 
       // Expect the button to be enabled
       expect(button).toBeEnabled();
@@ -127,13 +130,6 @@ describe("signup page", () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
       render(<SignUpPage apiService={axiosApiService} />);
 
-      const formData = {
-        username: "user1",
-        email: "user10@gmail.com",
-        password: "Password1",
-        passwordRepeat: "Password1",
-      };
-
       await fillAndSubmitSignUpForm(formData);
 
       // Query the success message by test ID
@@ -161,14 +157,10 @@ describe("signup page", () => {
       passwordRepeat: "Password1",
     };
 
-    it("enables the button when password and password repeat fields have the same value", async () => {
+    it("enables the button when all signup input fields have value", async () => {
       render(<SignUpPage apiService={defaultService} />);
 
-      await userEvent.type(screen.getByLabelText("Password"), "Password1");
-      await userEvent.type(
-        screen.getByLabelText("Password Repeat"),
-        "Password1"
-      );
+      await fillAndSubmitSignUpForm(defaultFormData, false); // submit set as false
 
       expect(screen.getByRole("button", { name: "Sign Up" })).toBeEnabled();
     });
@@ -225,13 +217,10 @@ describe("signup page", () => {
     });
 
     describe("backend and frontend validationErrors in signup form expected", () => {
-      it("returns validation error when password is null", async () => {
+      it("returns validation error when signup form inputs are null", async () => {
         render(<SignUpPage apiService={fetchApiService} />);
 
-        const formData = {
-          username: "testuser",
-          email: "valid@example.com",
-        };
+        const formData = {};
 
         await fillAndSubmitSignUpForm(formData);
 
@@ -249,6 +238,8 @@ describe("signup page", () => {
 
         // Assertions for validation errors
         expect(data.validationErrors).toEqual({
+          username: "Username cannot be null",
+          email: "E-mail cannot be null",
           password: "Password cannot be null",
           passwordRepeat: "password_repeat_null",
         });
@@ -256,7 +247,7 @@ describe("signup page", () => {
         const button = screen.getByRole("button", { name: "Sign Up" });
         expect(button).toBeDisabled();
 
-        // error message is not show because signup button is not enabled (password and password repeat are missmached)
+        // frontend error message is not show because signup button is not enabled (required signup field are null)
       });
       const testCases = [
         {
@@ -271,20 +262,6 @@ describe("signup page", () => {
             key: "username",
             backendError: "Must have min 4 and max 32 characters",
             frontendError: "Username must be 4-32 characters.",
-          },
-        },
-        {
-          //returns validation error for username required
-          formData: {
-            username: "",
-            email: "user@example.com",
-            password: "ValidPass123",
-            passwordRepeat: "ValidPass123",
-          },
-          expectedError: {
-            key: "username",
-            backendError: "Username cannot be null",
-            frontendError: "Username is required.",
           },
         },
         {

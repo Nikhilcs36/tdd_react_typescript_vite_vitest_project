@@ -120,10 +120,18 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
   };
 
   isDisabled = () => {
-    const { password, passwordRepeat, isSubmitting, validationErrors } =
-      this.state;
+    const {
+      username,
+      email,
+      password,
+      passwordRepeat,
+      isSubmitting,
+      validationErrors,
+    } = this.state;
     const hasErrors = Object.keys(validationErrors).length > 0;
     return (
+      !username ||
+      !email ||
       !password ||
       !passwordRepeat ||
       password !== passwordRepeat ||
