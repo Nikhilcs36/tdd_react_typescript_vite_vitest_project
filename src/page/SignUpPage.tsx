@@ -175,7 +175,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
 
     return (
       <FormWrapper>
-        <Form onSubmit={this.submit}>
+        <Form autoComplete="off" onSubmit={this.submit}>
           <Title>Sign Up</Title>
 
           {/* Username Field */}
@@ -185,6 +185,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
               id="username"
               onChange={this.handleChange}
               data-testid="username"
+              autoComplete="off"
             />
             {validationErrors.username && (
               <ErrorMessage data-testid="username-error">
@@ -200,6 +201,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
               id="email"
               onChange={this.handleChange}
               data-testid="email"
+              autoComplete="off"
             />
             {validationErrors.email && (
               <ErrorMessage data-testid="email-error">
