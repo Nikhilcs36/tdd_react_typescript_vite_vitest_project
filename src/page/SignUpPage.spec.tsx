@@ -416,5 +416,19 @@ describe("signup page", () => {
         }
       });
     });
+
+    describe("SignupForm", () => {
+      it("disables autocomplete on username input", () => {
+        render(<SignUpPage apiService={defaultService} />);
+        const usernameInput = screen.getByLabelText("Username");
+        expect(usernameInput).toHaveAttribute("autocomplete", "off");
+      });
+
+      it("disables autocomplete on email input", () => {
+        render(<SignUpPage apiService={defaultService} />);
+        const emailInput = screen.getByLabelText("E-mail");
+        expect(emailInput).toHaveAttribute("autocomplete", "off");
+      });
+    });
   });
 });
