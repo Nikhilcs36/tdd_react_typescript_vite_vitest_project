@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import SignUpPage from "./SignUpPage";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act, fireEvent } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
 import { vi, beforeEach } from "vitest";
 import { fillAndSubmitSignUpForm } from "../tests/testUtils";
 import { axiosApiService, fetchApiService } from "../services/apiService";
 import { defaultService } from "../services/defaultService";
+import "../locale/i18n";
+import LanguageSwitcher from "../locale/languageSwitcher";
+import i18n from "../locale/i18n";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
@@ -430,5 +433,441 @@ describe("signup page", () => {
         expect(emailInput).toHaveAttribute("autocomplete", "off");
       });
     });
+  });
+});
+
+describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
+  beforeEach(() => {
+    // Reset language to default ('en') before each test.
+    act(() => {
+      i18n.changeLanguage("en");
+    });
+  });
+
+  // Default Language Tests
+  describe("Default Language", () => {
+    it("renders SignUpPage in English by default", () => {
+      render(<SignUpPage apiService={defaultService} />);
+      expect(
+        screen.getByRole("heading", { name: "Sign Up" })
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Username")).toBeInTheDocument();
+      expect(screen.getByLabelText("E-mail")).toBeInTheDocument();
+      expect(screen.getByLabelText("Password")).toBeInTheDocument();
+      expect(screen.getByLabelText("Password Repeat")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Sign Up" })
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("Language Change for SignUpPage", () => {
+    it("renders SignUpPage in Malayalam when language is changed", async () => {
+      await act(async () => {
+        await i18n.changeLanguage("ml");
+      });
+      render(<SignUpPage apiService={defaultService} />);
+      expect(
+        screen.getByRole("heading", { name: "രജിസ്റ്റർ ചെയ്യുക" })
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("ഉപയോക്തൃനാമം")).toBeInTheDocument();
+      expect(screen.getByLabelText("ഇമെയിൽ")).toBeInTheDocument();
+      expect(screen.getByLabelText("പാസ്‌വേഡ്")).toBeInTheDocument();
+      expect(
+        screen.getByLabelText("പാസ്‌വേഡ് ആവർത്തിക്കുക")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "രജിസ്റ്റർ ചെയ്യുക" })
+      ).toBeInTheDocument();
+    });
+
+    it("renders SignUpPage in Arabic when language is changed", async () => {
+      await act(async () => {
+        await i18n.changeLanguage("ar");
+      });
+      render(<SignUpPage apiService={defaultService} />);
+      expect(
+        screen.getByRole("heading", { name: "تسجيل حساب جديد" })
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("اسم المستخدم")).toBeInTheDocument();
+      expect(screen.getByLabelText("البريد الإلكتروني")).toBeInTheDocument();
+      expect(screen.getByLabelText("كلمة المرور")).toBeInTheDocument();
+      expect(screen.getByLabelText("تأكيد كلمة المرور")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "تسجيل" })).toBeInTheDocument();
+    });
+  });
+
+  // Error Message Tests..
+  describe("Client-Side Error Translations with language changed", () => {
+    const clientSideTestCases = [
+      // English test cases:
+      {
+        lang: "en",
+        field: "username",
+        input: "a",
+        errorKey: "Must have min 4 and max 32 characters",
+        expectedError: "Username must be 4-32 characters.",
+      },
+      {
+        lang: "en",
+        field: "username",
+        input: "",
+        errorKey: "Username cannot be null",
+        expectedError: "Username is required.",
+      },
+      {
+        lang: "en",
+        field: "email",
+        input: "invalid",
+        errorKey: "E-mail is not valid",
+        expectedError: "Enter a valid email (e.g., user@example.com).",
+      },
+      {
+        lang: "en",
+        field: "email",
+        input: "",
+        errorKey: "E-mail cannot be null",
+        expectedError: "Email is required.",
+      },
+      {
+        lang: "en",
+        field: "password",
+        input: "123",
+        errorKey: "Password must have at least 6 characters",
+        expectedError: "Password must be 6+ characters.",
+      },
+      {
+        lang: "en",
+        field: "password",
+        input: "",
+        errorKey: "Password cannot be null",
+        expectedError: "Password is required.",
+      },
+      {
+        lang: "en",
+        field: "passwordRepeat",
+        input: "456",
+        errorKey: "password_mismatch",
+        expectedError: "Passwords don't match.",
+      },
+      {
+        lang: "en",
+        field: "passwordRepeat",
+        input: "",
+        errorKey: "password_repeat_null",
+        expectedError: "Confirm your password.",
+      },
+
+      // Malayalam test cases:
+      {
+        lang: "ml",
+        field: "username",
+        input: "a",
+        errorKey: "Must have min 4 and max 32 characters",
+        expectedError: "ഉപയോക്തൃനാമം 4-32 പ്രതീകങ്ങൾ ആയിരിക്കണം.",
+      },
+      {
+        lang: "ml",
+        field: "username",
+        input: "",
+        errorKey: "Username cannot be null",
+        expectedError: "ഉപയോക്തൃനാമം ആവശ്യമാണ്.",
+      },
+      {
+        lang: "ml",
+        field: "email",
+        input: "invalid",
+        errorKey: "E-mail is not valid",
+        expectedError: "സാധുവായ ഇമെയിൽ നൽകുക (ഉദാ: user@example.com).",
+      },
+      {
+        lang: "ml",
+        field: "email",
+        input: "",
+        errorKey: "E-mail cannot be null",
+        expectedError: "ഇമെയിൽ ആവശ്യമാണ്.",
+      },
+      {
+        lang: "ml",
+        field: "password",
+        input: "123",
+        errorKey: "Password must have at least 6 characters",
+        expectedError: "പാസ്‌വേഡ് 6+ പ്രതീകങ്ങൾ ആയിരിക്കണം.",
+      },
+      {
+        lang: "ml",
+        field: "password",
+        input: "",
+        errorKey: "Password cannot be null",
+        expectedError: "പാസ്‌വേഡ് ആവശ്യമാണ്.",
+      },
+      {
+        lang: "ml",
+        field: "passwordRepeat",
+        input: "456",
+        errorKey: "password_mismatch",
+        expectedError: "പാസ്‌വേഡുകൾ യോജിക്കുന്നില്ല.",
+      },
+      {
+        lang: "ml",
+        field: "passwordRepeat",
+        input: "",
+        errorKey: "password_repeat_null",
+        expectedError: "പാസ്‌വേഡ് സ്ഥിരീകരിക്കുക.",
+      },
+
+      // Arabic test cases:
+      {
+        lang: "ar",
+        field: "username",
+        input: "a",
+        errorKey: "Must have min 4 and max 32 characters",
+        expectedError: "يجب أن يكون اسم المستخدم بين 4 و32 حرفًا.",
+      },
+      {
+        lang: "ar",
+        field: "username",
+        input: "",
+        errorKey: "Username cannot be null",
+        expectedError: "يرجى إدخال اسم المستخدم.",
+      },
+      {
+        lang: "ar",
+        field: "email",
+        input: "invalid",
+        errorKey: "E-mail is not valid",
+        expectedError:
+          "يرجى إدخال بريد إلكتروني صحيح (مثال: user@example.com).",
+      },
+      {
+        lang: "ar",
+        field: "email",
+        input: "",
+        errorKey: "E-mail cannot be null",
+        expectedError: "يرجى إدخال البريد الإلكتروني.",
+      },
+      {
+        lang: "ar",
+        field: "password",
+        input: "123",
+        errorKey: "Password must have at least 6 characters",
+        expectedError: "يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل.",
+      },
+      {
+        lang: "ar",
+        field: "password",
+        input: "",
+        errorKey: "Password cannot be null",
+        expectedError: "يرجى إدخال كلمة المرور.",
+      },
+      {
+        lang: "ar",
+        field: "passwordRepeat",
+        input: "456",
+        errorKey: "password_mismatch",
+        expectedError: "كلمتا المرور غير متطابقتين.",
+      },
+      {
+        lang: "ar",
+        field: "passwordRepeat",
+        input: "",
+        errorKey: "password_repeat_null",
+        expectedError: "يرجى تأكيد كلمة المرور.",
+      },
+    ];
+
+    it.each(clientSideTestCases)(
+      "$lang: $errorKey",
+      async ({ lang, field, input, expectedError }) => {
+        // Change the current language.
+        await act(async () => {
+          await i18n.changeLanguage(lang);
+        });
+
+        render(<SignUpPage apiService={defaultService} />);
+
+        // Get the translated label text for the field.
+        const labelText = i18n.t(`signup.${field}`);
+        // Query the input using the translated label.
+        const inputField = screen.getByLabelText(labelText);
+
+        if (input) {
+          await userEvent.type(inputField, input);
+        } else {
+          // Type a dummy value so that an onChange event is triggered,
+          // then clear the input.
+          await userEvent.type(inputField, "dummy");
+          await userEvent.clear(inputField);
+        }
+        // Fire a blur event to trigger the validation logic.
+        fireEvent.blur(inputField);
+
+        const error = await screen.findByTestId(`${field}-error`);
+        expect(error).toHaveTextContent(expectedError);
+      }
+    );
+  });
+
+  // Success Message Tests
+
+  describe("Success message in SignUpPage with language changed", () => {
+    const formData = {
+      username: "validUser",
+      email: "valid@example.com",
+      password: "ValidPass123",
+      passwordRepeat: "ValidPass123",
+    };
+
+    const testCases = [
+      {
+        lang: "en",
+        expectedMessages: [
+          "User created successfully!",
+          "Check your email for verification.",
+        ],
+      },
+      {
+        lang: "ml",
+        expectedMessages: [
+          "ഉപയോക്താവിനെ വിജയകരമായി സൃഷ്ടിച്ചു!",
+          "സ്ഥിരീകരണത്തിനായി നിങ്ങളുടെ ഇമെയിൽ പരിശോധിക്കുക.",
+        ],
+      },
+      {
+        lang: "ar",
+        expectedMessages: [
+          "تم إنشاء المستخدم بنجاح!",
+          "يرجى التحقق من بريدك الإلكتروني لإكمال التسجيل.",
+        ],
+      },
+    ];
+
+    it.each(testCases)(
+      "$lang: displays success message after successful signup",
+      async ({ lang, expectedMessages }) => {
+        // Change the language.
+        await act(async () => {
+          await i18n.changeLanguage(lang);
+        });
+
+        // Simulate a successful API response.
+        mockedAxios.post.mockResolvedValueOnce({
+          data: { message: "User created" },
+        });
+
+        render(<SignUpPage apiService={axiosApiService} />);
+
+        // Use the utility function to fill and submit the form.
+        // The utility will change language (if needed) and fill out the form using i18n keys.
+        await fillAndSubmitSignUpForm(formData, true, lang);
+
+        const successMessage = await screen.findByTestId("success-message");
+
+        expectedMessages.forEach((msg) => {
+          expect(successMessage).toHaveTextContent(msg);
+        });
+      }
+    );
+  });
+
+  describe("LanguageSwitcher Style Test", () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      const { container: cont } = render(<LanguageSwitcher />);
+      // The LanguageSwitcher container is the first child.
+      container = cont.firstChild as HTMLElement;
+    });
+
+    // Verify that the container is rendered.
+    it("renders container", () => {
+      expect(container).toBeInTheDocument();
+    });
+
+    // Test container style rules using test.each.
+    const containerStyleRules: Array<[string, string]> = [
+      ["position", "fixed"],
+      ["z-index", "50"],
+      ["top", "1rem"],
+      ["right", "1rem"],
+    ];
+
+    it.each(containerStyleRules)(
+      "container should have %s with value %s",
+      (property, value) => {
+        expect(container).toHaveStyleRule(property, value);
+      }
+    );
+
+    // Define button test cases for each language button.
+    const buttonTestCases = [
+      {
+        name: "English",
+        expected: {
+          "padding-left": "0.75rem", // Tailwind px-3
+          "padding-right": "0.75rem",
+          "padding-top": "0.25rem", // Tailwind py-1
+          "padding-bottom": "0.25rem",
+          "font-size": "0.875rem", // text-sm
+          color: "rgb(30 64 175 / var(--tw-text-opacity, 1))", // text-blue-800
+          "background-color": "rgb(219 234 254 / var(--tw-bg-opacity, 1))", // bg-blue-100
+        },
+      },
+      {
+        name: "മലയാളം",
+        expected: {
+          "padding-left": "0.75rem",
+          "padding-right": "0.75rem",
+          "padding-top": "0.25rem",
+          "padding-bottom": "0.25rem",
+          "font-size": "0.875rem",
+          color: "rgb(22 101 52 / var(--tw-text-opacity, 1))", // text-green-800
+          "background-color": "rgb(220 252 231 / var(--tw-bg-opacity, 1))", // bg-green-100
+        },
+      },
+      {
+        name: "العربية",
+        expected: {
+          "padding-left": "0.75rem",
+          "padding-right": "0.75rem",
+          "padding-top": "0.25rem",
+          "padding-bottom": "0.25rem",
+          "font-size": "0.875rem",
+          color: "rgb(154 52 18 / var(--tw-text-opacity, 1))", // text-orange-800
+          "background-color": "rgb(255 237 213 / var(--tw-bg-opacity, 1))", // bg-orange-100
+        },
+      },
+    ];
+
+    // Test each button's style using test.each.
+    it.each(buttonTestCases)(
+      "$name button has correct style",
+      ({ name, expected }) => {
+        const button = screen.getByRole("button", { name });
+        expect(button).toBeInTheDocument();
+        for (const [prop, value] of Object.entries(expected)) {
+          expect(button).toHaveStyleRule(prop, value);
+        }
+      }
+    );
+  });
+
+  describe("i18n languageChanged event updates document html attributes", () => {
+    it.each([
+      { lang: "en", expectedDir: "ltr" },
+      { lang: "ml", expectedDir: "ltr" },
+      { lang: "ar", expectedDir: "rtl" },
+    ])(
+      "should update document attributes when language is changed to $lang",
+      async ({ lang, expectedDir }) => {
+        // Change the language inside an act() block to ensure all state updates are flushed.
+        await act(async () => {
+          await i18n.changeLanguage(lang);
+        });
+
+        expect(document.documentElement.lang).toBe(lang);
+        expect(document.documentElement.dir).toBe(expectedDir);
+      }
+    );
   });
 });

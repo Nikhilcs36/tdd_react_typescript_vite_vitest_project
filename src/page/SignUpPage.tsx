@@ -2,6 +2,7 @@ import { Component } from "react";
 import tw, { styled } from "twin.macro";
 import { ApiService } from "../services/apiService";
 import { validateSignUp } from "../utils/validationRules";
+import { withTranslation, WithTranslation } from "react-i18next";
 
 const FormWrapper = tw.div`min-h-screen flex items-center justify-center bg-gray-100`;
 const Form = tw.form`bg-white p-4 rounded-lg shadow-md w-full max-w-sm`;
@@ -35,23 +36,9 @@ interface SignUpState {
   };
 }
 
-interface SignUpPageProps {
+interface SignUpPageProps extends WithTranslation {
   apiService: ApiService;
 }
-
-const errorMessages: Record<string, string> = {
-  "Username cannot be null": "Username is required.",
-  "Must have min 4 and max 32 characters": "Username must be 4-32 characters.",
-  "E-mail cannot be null": "Email is required.",
-  "E-mail is not valid": "Enter a valid email (e.g., user@example.com).",
-  "E-mail in use": "Email is already in use.",
-  "Password cannot be null": "Password is required.",
-  "Password must have at least 6 characters": "Password must be 6+ characters.",
-  "Password must have at least 1 uppercase, 1 lowercase letter and 1 number":
-    "Use upper, lower, and a number.",
-  password_repeat_null: "Confirm your password.",
-  password_mismatch: "Passwords don't match.",
-};
 
 class SignUpPage extends Component<SignUpPageProps, SignUpState> {
   private validationTimeout: number | null = null;
@@ -172,15 +159,16 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
 
   render() {
     const { successMessage, validationErrors } = this.state;
+    const { t } = this.props;
 
     return (
       <FormWrapper>
         <Form autoComplete="off" onSubmit={this.submit}>
-          <Title>Sign Up</Title>
+          <Title>{t("signup.title")}</Title>
 
           {/* Username Field */}
           <ErrorWrapper>
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">{t("signup.username")}</Label>
             <Input
               id="username"
               onChange={this.handleChange}
@@ -189,14 +177,14 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
             />
             {validationErrors.username && (
               <ErrorMessage data-testid="username-error">
-                {errorMessages[validationErrors.username]}
+                {t(`signup.errors.${validationErrors.username}`)}
               </ErrorMessage>
             )}
           </ErrorWrapper>
 
           {/* Email Field */}
           <ErrorWrapper>
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email">{t("signup.email")}</Label>
             <Input
               id="email"
               onChange={this.handleChange}
@@ -205,14 +193,14 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
             />
             {validationErrors.email && (
               <ErrorMessage data-testid="email-error">
-                {errorMessages[validationErrors.email]}
+                {t(`signup.errors.${validationErrors.email}`)}
               </ErrorMessage>
             )}
           </ErrorWrapper>
 
           {/* Password Field */}
           <ErrorWrapper>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("signup.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -221,14 +209,14 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
             />
             {validationErrors.password && (
               <ErrorMessage data-testid="password-error">
-                {errorMessages[validationErrors.password]}
+                {t(`signup.errors.${validationErrors.password}`)}
               </ErrorMessage>
             )}
           </ErrorWrapper>
 
           {/* Password Repeat Field */}
           <ErrorWrapper>
-            <Label htmlFor="passwordRepeat">Password Repeat</Label>
+            <Label htmlFor="passwordRepeat">{t("signup.passwordRepeat")}</Label>
             <Input
               id="passwordRepeat"
               type="password"
@@ -237,17 +225,17 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
             />
             {validationErrors.passwordRepeat && (
               <ErrorMessage data-testid="passwordRepeat-error">
-                {errorMessages[validationErrors.passwordRepeat]}
+                {t(`signup.errors.${validationErrors.passwordRepeat}`)}
               </ErrorMessage>
             )}
           </ErrorWrapper>
 
-          <Button disabled={this.isDisabled()}>Sign Up</Button>
+          <Button disabled={this.isDisabled()}>{t("signup.submit")}</Button>
 
           {successMessage && (
             <SuccessMessage data-testid="success-message">
-              <p>User created successfully!</p>
-              <p>Check your email for verification.</p>
+              <p>{t("signup.success.message")}</p>
+              <p>{t("signup.success.verification")}</p>
             </SuccessMessage>
           )}
         </Form>
@@ -256,4 +244,4 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
   }
 }
 
-export default SignUpPage;
+export default withTranslation()(SignUpPage);
