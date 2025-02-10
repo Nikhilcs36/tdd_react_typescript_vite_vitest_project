@@ -759,7 +759,9 @@ describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
 
         // Use the utility function to fill and submit the form.
         // The utility will change language (if needed) and fill out the form using i18n keys.
-        await fillAndSubmitSignUpForm(formData, true, lang);
+        await act(async () => {
+          await fillAndSubmitSignUpForm(formData, true, lang);
+        });
 
         const successMessage = await screen.findByTestId("success-message");
 
