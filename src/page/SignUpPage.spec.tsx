@@ -10,6 +10,7 @@ import { defaultService } from "../services/defaultService";
 import "../locale/i18n";
 import LanguageSwitcher from "../locale/languageSwitcher";
 import i18n from "../locale/i18n";
+import { Form } from "./SignUpPage";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
@@ -149,6 +150,22 @@ describe("signup page", () => {
         "rgb(220 252 231 / var(--tw-bg-opacity, 1))"
       ); // Tailwind green-100
       expect(successMessage).toHaveStyleRule("text-align", "center");
+    });
+
+    describe("Dynamic Form styled component based on language", () => {
+      const testCases = [
+        { lang: "ml", expected: "36rem", label: "max-w-xl" },
+        { lang: "ar", expected: "28rem", label: "max-w-md" },
+        { lang: "en", expected: "24rem", label: "max-w-sm" },
+      ];
+
+      it.each(testCases)(
+        "should have $label ($expected) when lang is $lang",
+        ({ lang, expected }) => {
+          const { container } = render(<Form lang={lang} />);
+          expect(container.firstChild).toHaveStyleRule("max-width", expected);
+        }
+      );
     });
   });
 
