@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import SignUpPage from "./SignUpPage";
-import { render, screen, act, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  act,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
 import { vi, beforeEach } from "vitest";
@@ -257,14 +263,47 @@ describe("signup page", () => {
       it("returns validation error when signup form inputs are null", async () => {
         render(<SignUpPage apiService={fetchApiService} />);
 
-        const formData = {};
+        const fields = [
+          { label: "Username", testId: "username-error" },
+          { label: "E-mail", testId: "email-error" },
+          { label: "Password", testId: "password-error" },
+          { label: "Password Repeat", testId: "passwordRepeat-error" },
+        ];
 
-        await fillAndSubmitSignUpForm(formData);
+        // Handle each field individually with proper sequencing
+        for (const field of fields) {
+          const input = screen.getByLabelText(field.label);
 
+          // Simulate user interaction
+          await userEvent.type(input, "dummy");
+          await userEvent.clear(input);
+          fireEvent.blur(input);
+
+          const error = await screen.findByTestId(field.testId);
+          expect(error).toBeInTheDocument();
+        }
+
+        // Assertions for validation errors frontend
+        await waitFor(() => {
+          expect(screen.getByTestId("username-error")).toHaveTextContent(
+            "Username is required."
+          );
+          expect(screen.getByTestId("email-error")).toHaveTextContent(
+            "Email is required."
+          );
+          expect(screen.getByTestId("password-error")).toHaveTextContent(
+            "Password is required."
+          );
+          expect(screen.getByTestId("passwordRepeat-error")).toHaveTextContent(
+            "Confirm your password."
+          );
+        });
+
+        // backend
         const response = await fetch("/api/1.0/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({}),
         });
 
         const data = await response.json();
@@ -273,7 +312,7 @@ describe("signup page", () => {
         expect(response.status).toBe(400);
         expect(data.message).toBe("Validation Failure");
 
-        // Assertions for validation errors
+        // Assertions for validation errors backend
         expect(data.validationErrors).toEqual({
           username: "Username cannot be null",
           email: "E-mail cannot be null",
@@ -283,9 +322,8 @@ describe("signup page", () => {
 
         const button = screen.getByRole("button", { name: "Sign Up" });
         expect(button).toBeDisabled();
-
-        // frontend error message is not show because signup button is not enabled (required signup field are null)
       });
+
       const testCases = [
         {
           //returns validation error for username length
@@ -375,7 +413,7 @@ describe("signup page", () => {
       ];
 
       testCases.forEach(({ formData, expectedError }) => {
-        it("validationErrors ensure the backend API and frontend works as expected", async () => {
+        it("validationErrors ensure the backend API and frontend works as expected after submit signup", async () => {
           render(<SignUpPage apiService={fetchApiService} />);
 
           await fillAndSubmitSignUpForm(formData);
@@ -408,7 +446,7 @@ describe("signup page", () => {
       });
     });
 
-    describe("input validationErrors in signup form expected", () => {
+    describe("input validationErrors in signup form expected before submit", () => {
       it("signup input validation error messages", async () => {
         render(<SignUpPage apiService={defaultService} />);
 
