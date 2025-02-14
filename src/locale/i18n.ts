@@ -35,8 +35,8 @@ i18n.use(initReactI18next).init({
               "Password must be 6+ characters.",
             "Password must have at least 1 uppercase, 1 lowercase letter and 1 number":
               "Use upper, lower, and a number.",
-            password_repeat_null: "Confirm your password.",
-            password_mismatch: "Passwords don't match.",
+            "password_repeat_null": "Confirm your password.",
+            "password_mismatch": "Passwords don't match.",
           },
         },
       },
@@ -68,8 +68,8 @@ i18n.use(initReactI18next).init({
               "പാസ്‌വേഡ് 6+ പ്രതീകങ്ങൾ ആയിരിക്കണം.",
             "Password must have at least 1 uppercase, 1 lowercase letter and 1 number":
               "ഒരു വലിയക്ഷരം, ചെറിയക്ഷരം, സംഖ്യ എന്നിവ ഉപയോഗിക്കുക.",
-            password_repeat_null: "പാസ്‌വേഡ് സ്ഥിരീകരിക്കുക.",
-            password_mismatch: "പാസ്‌വേഡുകൾ യോജിക്കുന്നില്ല.",
+            "password_repeat_null": "പാസ്‌വേഡ് സ്ഥിരീകരിക്കുക.",
+            "password_mismatch": "പാസ്‌വേഡുകൾ യോജിക്കുന്നില്ല.",
           },
         },
       },
@@ -101,8 +101,8 @@ i18n.use(initReactI18next).init({
               "يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل.",
             "Password must have at least 1 uppercase, 1 lowercase letter and 1 number":
               "يجب أن تحتوي على حرف كبير، حرف صغير، ورقم.",
-            password_repeat_null: "يرجى تأكيد كلمة المرور.",
-            password_mismatch: "كلمتا المرور غير متطابقتين.",
+            "password_repeat_null": "يرجى تأكيد كلمة المرور.",
+            "password_mismatch": "كلمتا المرور غير متطابقتين.",
           },
         },
       },
