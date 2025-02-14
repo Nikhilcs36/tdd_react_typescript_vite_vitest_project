@@ -193,7 +193,12 @@ describe("signup page", () => {
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         "/api/1.0/users",
-        defaultFormData
+        defaultFormData,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "Accept-Language": "en",
+          }),
+        })
       );
     });
 
@@ -205,8 +210,14 @@ describe("signup page", () => {
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         "/api/1.0/users",
-        defaultFormData
+        defaultFormData,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "Accept-Language": "en",
+          }),
+        })
       );
+
       expect(screen.getByRole("button", { name: "Sign Up" })).toBeDisabled();
     });
 
@@ -218,8 +229,14 @@ describe("signup page", () => {
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         "/api/1.0/users",
-        defaultFormData
+        defaultFormData,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "Accept-Language": "en",
+          }),
+        })
       );
+
       expect(screen.getByRole("button", { name: "Sign Up" })).toBeEnabled();
     });
 
@@ -785,6 +802,52 @@ describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
         expectedMessages.forEach((msg) => {
           expect(successMessage).toHaveTextContent(msg);
         });
+      }
+    );
+
+    const languages = ["en", "ml", "ar"];
+    it.each(languages)(
+      "sends Accept-Language header as '%s' using axiosApiService",
+      async (lang) => {
+        await act(async () => {
+          await i18n.changeLanguage(lang);
+        });
+
+        // Setup mock for axios.post.
+        mockedAxios.post.mockResolvedValueOnce({
+          data: { message: "User created" },
+        });
+
+        render(<SignUpPage apiService={axiosApiService} />);
+
+        await fillAndSubmitSignUpForm(formData);
+
+        // Verify that axios.post was called.
+        expect(mockedAxios.post).toHaveBeenCalled();
+
+        const callArgs = mockedAxios.post.mock.calls[0]; // [url, body, config]
+        const config = callArgs[2];
+        expect(config).toBeDefined();
+        expect(config).toHaveProperty("headers.Accept-Language", lang);
+      }
+    );
+    it.each(languages)(
+      "sends Accept-Language header as '%s' using fetch ApiService",
+      async (lang) => {
+        await act(async () => {
+          await i18n.changeLanguage(lang);
+        });
+
+        render(<SignUpPage apiService={fetchApiService} />);
+
+        // Call the API via fetchApiService. MSW will intercept this call
+        // and Accept-Language header as "languageReceived" in the response.(handlers.ts)
+        const responseData = await fetchApiService.post(
+          "/api/1.0/users",
+          formData
+        );
+
+        expect(responseData).toHaveProperty("languageReceived", lang);
       }
     );
   });
