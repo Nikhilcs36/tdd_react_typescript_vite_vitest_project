@@ -172,7 +172,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
     const { t } = this.props;
 
     return (
-      <FormWrapper>
+      <FormWrapper data-testid="signup-page">
         <Form lang={i18n.language} autoComplete="off" onSubmit={this.submit}>
           <Title>{t("signup.title")}</Title>
 

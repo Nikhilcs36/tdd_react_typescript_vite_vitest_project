@@ -3,12 +3,18 @@ import i18n from "./locale/i18n";
 import LanguageSwitcher from "./locale/languageSwitcher";
 import SignUpPage from "./page/SignUpPage";
 import { axiosApiService } from "./services/apiService";
+import HomePage from "./page/homePage";
+import LoginPage from "./page/LoginPage";
+import UserPage from "./page/UserPage";
 
 function App() {
   return (
     <I18nextProvider i18n={i18n}>
+      {window.location.pathname == '/' && <HomePage />}
+      {window.location.pathname == '/signup' && <SignUpPage apiService={axiosApiService} />}
+      {window.location.pathname == '/login' && <LoginPage />}
+      {window.location.pathname.startsWith('/user/') && <UserPage />}
       <LanguageSwitcher />
-      <SignUpPage apiService={axiosApiService} />
     </I18nextProvider>
   );
 }
