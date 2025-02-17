@@ -91,4 +91,19 @@ describe("Routing", () => {
       expect(signUpPage).toBeInTheDocument();
     }
   );
+    // Test the "Login" link
+    it.each([
+      ["Login", "Login", "en"],
+    ])(
+      "displays Login page after clicking 'Login' link in %s language",
+      (_, linkText, lang) => {
+        setup("/", lang);
+  
+        const loginLink = screen.getByRole("link", { name: linkText });
+        fireEvent.click(loginLink);
+  
+        const loginPage = screen.getByTestId("login-page");
+        expect(loginPage).toBeInTheDocument();
+      }
+    );
 });

@@ -33,11 +33,12 @@ function App() {
         <a href="/signup" onClick={onclickLink}>
           {t("signup.title")}
         </a>
+        <a href="/login" onClick={onclickLink}>
+          Login
+        </a>
       </div>
       {path == "/" && <HomePage />}
-      {path == "/signup" && (
-        <SignUpPage apiService={axiosApiService} />
-      )}
+      {path == "/signup" && <SignUpPage apiService={axiosApiService} />}
       {path == "/login" && <LoginPage />}
       {path.startsWith("/user/") && <UserPage />}
       <LanguageSwitcher />
