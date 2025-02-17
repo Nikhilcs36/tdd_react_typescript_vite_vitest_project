@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import App from "./App";
 import i18n from "./locale/i18n";
 
@@ -73,4 +73,22 @@ describe("Routing", () => {
     const link = screen.getByRole("link", { name: linkText });
     expect(link).toBeInTheDocument();
   });
+
+  // Test to check if clicking the "Sign Up" link redirects to the Sign Up page
+  it.each([
+    ["Sign Up", "تسجيل حساب جديد", "ar"],
+    ["Sign Up", "രജിസ്റ്റർ ചെയ്യുക", "ml"],
+    ["Sign Up", "Sign Up", "en"],
+  ])(
+    "displays Sign Up page after clicking 'Sign Up' link in %s language",
+    (_, linkText, lang) => {
+      setup("/", lang); // Render with the given language
+
+      const signUpLink = screen.getByRole("link", { name: linkText });
+      fireEvent.click(signUpLink);
+
+      const signUpPage = screen.getByTestId("signup-page");
+      expect(signUpPage).toBeInTheDocument();
+    }
+  );
 });
