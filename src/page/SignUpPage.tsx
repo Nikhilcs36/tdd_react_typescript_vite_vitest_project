@@ -5,7 +5,7 @@ import { validateSignUp } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
 import i18n from "../locale/i18n";
 
-const FormWrapper = tw.div`min-h-screen flex items-center justify-center bg-gray-100`;
+const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100`;
 
 //Dynamic Form styled width
 export const Form = styled.form.attrs((props: { lang?: string }) => ({
@@ -18,7 +18,7 @@ export const Form = styled.form.attrs((props: { lang?: string }) => ({
 
 const Title = tw.h2`text-xl font-bold mb-3`;
 const Label = tw.label`block text-gray-700 font-medium mb-1`;
-const Input = tw.input`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none`;
+const Input = tw.input`w-full px-3 py-0.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none`;
 
 const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
   tw`px-4 py-2 mt-2 text-white transition-all bg-blue-500 rounded hover:bg-blue-600`,
@@ -174,8 +174,8 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
     return (
       <FormWrapper data-testid="signup-page">
         <Form lang={i18n.language} autoComplete="off" onSubmit={this.submit}>
-        <Title>{t("signup.title")}</Title>  {/* title are mention in i18./n.ts */}
-
+          <Title>{t("signup.title")}</Title>{" "}
+          {/* title are mention in i18./n.ts */}
           {/* Username Field */}
           <ErrorWrapper>
             <Label htmlFor="username">{t("signup.username")}</Label>
@@ -191,7 +191,6 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
               </ErrorMessage>
             )}
           </ErrorWrapper>
-
           {/* Email Field */}
           <ErrorWrapper>
             <Label htmlFor="email">{t("signup.email")}</Label>
@@ -207,7 +206,6 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
               </ErrorMessage>
             )}
           </ErrorWrapper>
-
           {/* Password Field */}
           <ErrorWrapper>
             <Label htmlFor="password">{t("signup.password")}</Label>
@@ -223,7 +221,6 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
               </ErrorMessage>
             )}
           </ErrorWrapper>
-
           {/* Password Repeat Field */}
           <ErrorWrapper>
             <Label htmlFor="passwordRepeat">{t("signup.passwordRepeat")}</Label>
@@ -239,9 +236,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
               </ErrorMessage>
             )}
           </ErrorWrapper>
-
           <Button disabled={this.isDisabled()}>{t("signup.submit")}</Button>
-
           {successMessage && (
             <SuccessMessage data-testid="success-message">
               <p>{t("signup.success.message")}</p>

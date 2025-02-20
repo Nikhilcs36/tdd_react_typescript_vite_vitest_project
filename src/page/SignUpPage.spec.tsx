@@ -908,7 +908,7 @@ describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
     const containerStyleRules: Array<[string, string]> = [
       ["position", "fixed"],
       ["z-index", "50"],
-      ["top", "1rem"],
+      ["bottom", "1rem"],
       ["right", "1rem"],
     ];
 

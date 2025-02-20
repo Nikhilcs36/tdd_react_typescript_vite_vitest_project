@@ -5,7 +5,7 @@ const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
 
   return (
-    <div css={tw`fixed z-50 flex gap-2 top-4 right-4`}>
+    <div css={tw`fixed z-50 flex gap-2 bottom-4 right-4`}>
       <button
         onClick={() => i18n.changeLanguage("en")}
         css={tw`px-3 py-1 text-sm text-blue-800 bg-blue-100 rounded hover:bg-blue-200`}

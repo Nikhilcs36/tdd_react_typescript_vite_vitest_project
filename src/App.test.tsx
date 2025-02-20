@@ -91,19 +91,52 @@ describe("Routing", () => {
       expect(signUpPage).toBeInTheDocument();
     }
   );
-    // Test the "Login" link
-    it.each([
-      ["Login", "Login", "en"],
-    ])(
-      "displays Login page after clicking 'Login' link in %s language",
-      (_, linkText, lang) => {
-        setup("/", lang);
-  
-        const loginLink = screen.getByRole("link", { name: linkText });
-        fireEvent.click(loginLink);
-  
-        const loginPage = screen.getByTestId("login-page");
-        expect(loginPage).toBeInTheDocument();
-      }
-    );
+  // Test the "Login" link
+  it.each([["Login", "Login", "en"]])(
+    "displays Login page after clicking 'Login' link in %s language",
+    (_, linkText, lang) => {
+      setup("/", lang);
+
+      const loginLink = screen.getByRole("link", { name: linkText });
+      fireEvent.click(loginLink);
+
+      const loginPage = screen.getByTestId("login-page");
+      expect(loginPage).toBeInTheDocument();
+    }
+  );
+});
+
+describe("Navbar styling and layout", () => {
+  it("renders a fixed navbar with proper styles", () => {
+    render(<App />);
+    const navbar = document.querySelector("nav");
+
+    // Verify navbar existence
+    expect(navbar).toBeInTheDocument();
+
+    // Layout and positioning
+    expect(navbar).toHaveStyleRule("position", "fixed");
+    expect(navbar).toHaveStyleRule("top", "0px");
+    expect(navbar).toHaveStyleRule("z-index", "20");
+    expect(navbar).toHaveStyleRule("width", "100%");
+
+    // Background and shadow
+    expect(navbar).toHaveStyleRule(
+      "background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1))"
+    ); // bg-gray-400
+    expect(navbar).toHaveStyleRule(
+      "box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),var(--tw-ring-shadow, 0 0 #0000),var(--tw-shadow)"
+    ); // shadow-lg
+
+    // Spacing and padding
+    expect(navbar).toHaveStyleRule("padding-top", "1rem"); // py-4
+    expect(navbar).toHaveStyleRule("padding-bottom", "1rem");
+    expect(navbar).toHaveStyleRule("padding-left", "1.5rem"); // px-6
+    expect(navbar).toHaveStyleRule("padding-right", "1.5rem");
+
+    // Flex layout
+    expect(navbar).toHaveStyleRule("display", "flex");
+    expect(navbar).toHaveStyleRule("align-items", "center");
+    expect(navbar).toHaveStyleRule("justify-content", "space-between");
+  });
 });
