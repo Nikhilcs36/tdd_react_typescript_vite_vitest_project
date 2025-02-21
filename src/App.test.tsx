@@ -125,6 +125,9 @@ describe("Navbar styling and layout", () => {
       "background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1))"
     ); // bg-gray-400
     expect(navbar).toHaveStyleRule(
+      "color: rgb(255 255 255 / var(--tw-bg-opacity, 1))"
+    ); // text-white
+    expect(navbar).toHaveStyleRule(
       "box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),var(--tw-ring-shadow, 0 0 #0000),var(--tw-shadow)"
     ); // shadow-lg
 
@@ -139,4 +142,36 @@ describe("Navbar styling and layout", () => {
     expect(navbar).toHaveStyleRule("align-items", "center");
     expect(navbar).toHaveStyleRule("justify-content", "space-between");
   });
+});
+
+describe("Language & direction tests for Navbar", () => {
+  it.each`
+    lang    | expectedDir | linkTextHome | linkTextSignup         | linkTextLogin
+    ${"en"} | ${"ltr"}    | ${"Home"}    | ${"Sign Up"}           | ${"Login"}
+    ${"ml"} | ${"ltr"}    | ${"Home"}    | ${"രജിസ്റ്റർ ചെയ്യുക"} | ${"Login"}
+    ${"ar"} | ${"rtl"}    | ${"Home"}    | ${"تسجيل حساب جديد"}   | ${"Login"}
+  `(
+    "should set document.dir to $expectedDir and show correct navbar texts in $lang",
+    ({ lang, expectedDir, linkTextHome, linkTextSignup, linkTextLogin }) => {
+      // Change the language before rendering
+      act(() => {
+        i18n.changeLanguage(lang);
+      });
+
+      render(<App />);
+
+      // Check document direction
+      expect(document.documentElement.dir).toBe(expectedDir);
+
+      expect(
+        screen.getByRole("link", { name: linkTextHome })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: linkTextSignup })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: linkTextLogin })
+      ).toBeInTheDocument();
+    }
+  );
 });
