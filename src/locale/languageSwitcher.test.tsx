@@ -1,14 +1,19 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import LanguageSwitcher from "./languageSwitcher";
 import { render, screen } from "@testing-library/react";
+import { I18nextProvider } from "react-i18next";
+import i18n from "./i18n";
 
 describe("LanguageSwitcher Style Test", () => {
   let container: HTMLElement;
 
   beforeEach(() => {
-    const { container: cont } = render(<LanguageSwitcher />);
-    // The LanguageSwitcher container is the first child.
-    container = cont.firstChild as HTMLElement;
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LanguageSwitcher />
+      </I18nextProvider>
+    );
+    container = screen.getByTestId("language-switcher");
   });
 
   // Verify that the container is rendered.
