@@ -68,10 +68,7 @@ function App() {
             />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/user/:id" element={<UserPage />} />
-            <Route
-              path="/activate/:token"
-              element={<AccountActivationPage token={""} />}
-            />
+            <Route path="/activate/:token" element={<AccountActivationPage />} />
           </Routes>
         </Content>
       </Router>
