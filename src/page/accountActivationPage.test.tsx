@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 //import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AccountActivationPage from "./accountActivationPage";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
+import { act } from "@testing-library/react";
 
 // Mock axios API call
 vi.mock("axios");
@@ -22,7 +23,9 @@ describe("Account Activation Page", () => {
 
   it("sends activation request to backend and handles success", async () => {
     // Mock successful API response
-    mockedAxios.post.mockResolvedValue({ data: {} });
+    mockedAxios.post.mockResolvedValue({
+      data: { message: "Account Activated" },
+    });
 
     render(<AccountActivationPage token="12315" />);
 
@@ -47,5 +50,46 @@ describe("Account Activation Page", () => {
     expect(mockedAxios.post).toHaveBeenCalledWith(
       "/api/1.0/users/token/invalid"
     );
+  });
+
+  it("sends activation request after the token changes (first fail, then success)", async () => {
+    // Mock API response for the initial (failed) token
+    mockedAxios.post.mockRejectedValueOnce({
+      response: { status: 400, data: { message: "Activation Failed" } },
+    });
+
+    const { rerender } = render(<AccountActivationPage token="invalid" />);
+
+    // Ensure API call was made for the first token
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        "/api/1.0/users/token/invalid"
+      );
+    });
+
+    // Check that the failure message appears
+    const failMessage = await screen.findByTestId("fail-message");
+    expect(failMessage).toBeInTheDocument();
+
+    // Mock API response for the new (successful) token
+    mockedAxios.post.mockResolvedValueOnce({
+      data: { message: "Account Activated" },
+    });
+
+    // Simulate token change
+    await act(async () => {
+      rerender(<AccountActivationPage token="valid-token" />);
+    });
+
+    // Ensure API call was made for the new token
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        "/api/1.0/users/token/valid-token"
+      );
+    });
+
+    // Check that the success message appears
+    const successMessage = await screen.findByTestId("success-message");
+    expect(successMessage).toBeInTheDocument();
   });
 });
