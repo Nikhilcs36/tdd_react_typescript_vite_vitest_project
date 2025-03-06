@@ -137,4 +137,22 @@ describe("Account Activation Page", () => {
     const failMessagesAgain = await screen.findAllByTestId("fail-message");
     expect(failMessagesAgain.length).toBeGreaterThan(0);
   });
+  
+  it("displays spinner during activation API call", async () => {
+    // Mock API response before rendering
+    mockedAxios.post.mockResolvedValueOnce({
+      data: { message: "Account Activated" },
+    });
+  
+    setup("/activate/5678");
+  
+    // Check if the spinner appears initially
+    expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
+  
+    // Wait for the success message
+    await screen.findByTestId("success-message");
+  
+    // Ensure spinner disappears
+    expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+  });  
 });
