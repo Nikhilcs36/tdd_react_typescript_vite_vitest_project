@@ -3,7 +3,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import AccountActivationPage from "./accountActivationPage";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
-import { act } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 // Mock axios API call
@@ -102,9 +101,7 @@ describe("Account Activation Page", () => {
     });
 
     // Simulate route change by re-rendering with a different entry
-    await act(async () => {
-      setup("/activate/valid-token");
-    });
+    setup("/activate/valid-token");
 
     // Ensure API call was made for the new token
     await waitFor(() => {
@@ -123,9 +120,7 @@ describe("Account Activation Page", () => {
     });
 
     // Simulate another route change with the same success token
-    await act(async () => {
-      setup("/activate/valid-token");
-    });
+    setup("/activate/valid-token");
 
     // Ensure API call was made again for the token
     await waitFor(() => {
@@ -186,7 +181,7 @@ describe("Account Activation Page", () => {
     await waitFor(() => {
       screen.findByTestId("fail-message");
     });
-    
+
     // Ensure the spinner disappears after the second activation attempt
     expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
   });
