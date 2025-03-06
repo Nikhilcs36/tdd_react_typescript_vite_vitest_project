@@ -3,7 +3,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import AccountActivationPage from "./accountActivationPage";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
-import { act } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 // Mock axios API call
@@ -102,9 +101,7 @@ describe("Account Activation Page", () => {
     });
 
     // Simulate route change by re-rendering with a different entry
-    await act(async () => {
-      setup("/activate/valid-token");
-    });
+    setup("/activate/valid-token");
 
     // Ensure API call was made for the new token
     await waitFor(() => {
@@ -123,9 +120,7 @@ describe("Account Activation Page", () => {
     });
 
     // Simulate another route change with the same success token
-    await act(async () => {
-      setup("/activate/valid-token");
-    });
+    setup("/activate/valid-token");
 
     // Ensure API call was made again for the token
     await waitFor(() => {
@@ -133,8 +128,62 @@ describe("Account Activation Page", () => {
         "/api/1.0/users/token/valid-token"
       );
     });
-    
+
     const failMessagesAgain = await screen.findAllByTestId("fail-message");
     expect(failMessagesAgain.length).toBeGreaterThan(0);
   });
+
+  it("displays spinner during activation API call", async () => {
+    // Mock API response before rendering
+    mockedAxios.post.mockResolvedValueOnce({
+      data: { message: "Account Activated" },
+    });
+
+    setup("/activate/5678");
+
+    // Check if the spinner appears initially
+    expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
+
+    // Wait for the success messageḍ
+    await screen.findByTestId("success-message");
+
+    // Ensure spinner disappears
+    expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+  });
+
+  it("displays spinner during second activation API call to the changed token", async () => {
+    // Mock API response for the first activation attempt
+    mockedAxios.post.mockResolvedValueOnce({
+      data: { message: "Account Activated" },
+    });
+  
+    setup("/activate/1234");
+  
+    // Wait for the spinner to appear
+    await screen.findByTestId("loading-spinner");
+  
+    // Wait for the success message to confirm activation
+    await screen.findByTestId("success-message");
+  
+    // Ensure spinner disappears after the first activation
+    expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+  
+    // Mock API response for the second activation attempt
+    mockedAxios.post.mockResolvedValueOnce({
+      data: { message: "Activation failure" },
+    });
+  
+    // Simulate route change by re-rendering with a different token
+    setup("/activate/5678");
+  
+    await screen.findByTestId("loading-spinner");
+    
+    await waitFor(() => {
+      screen.findByTestId("fail-message");
+    });
+
+    // Ensure the spinner disappears after the second activation attempt
+    expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+  });
+  
 });
