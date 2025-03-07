@@ -11,7 +11,7 @@ import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
 import { vi, beforeEach } from "vitest";
 import { fillAndSubmitSignUpForm } from "../tests/testUtils";
-import { axiosApiService, fetchApiService } from "../services/apiService";
+import { axiosApiServiceSignUp, fetchApiServiceSignUp } from "../services/apiService";
 import { defaultService } from "../services/defaultService";
 import "../locale/i18n";
 import i18n from "../locale/i18n";
@@ -137,7 +137,7 @@ describe("signup page", () => {
     });
     it("displays success message styles", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
-      render(<SignUpPage apiService={axiosApiService} />);
+      render(<SignUpPage apiService={axiosApiServiceSignUp} />);
 
       await fillAndSubmitSignUpForm(formData);
 
@@ -192,7 +192,7 @@ describe("signup page", () => {
 
     it("sends username, email, and password to backend after submit", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } });
-      render(<SignUpPage apiService={axiosApiService} />);
+      render(<SignUpPage apiService={axiosApiServiceSignUp} />);
 
       await fillAndSubmitSignUpForm(defaultFormData);
 
@@ -209,7 +209,7 @@ describe("signup page", () => {
 
     it("disables the button after successful API call", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } });
-      render(<SignUpPage apiService={axiosApiService} />);
+      render(<SignUpPage apiService={axiosApiServiceSignUp} />);
 
       await fillAndSubmitSignUpForm(defaultFormData);
 
@@ -228,7 +228,7 @@ describe("signup page", () => {
 
     it("re-enables the button on network error", async () => {
       mockedAxios.post.mockRejectedValue(new Error("Network Error"));
-      render(<SignUpPage apiService={axiosApiService} />);
+      render(<SignUpPage apiService={axiosApiServiceSignUp} />);
 
       await fillAndSubmitSignUpForm(defaultFormData);
 
@@ -247,7 +247,7 @@ describe("signup page", () => {
 
     it("displays success message after successful signup", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } });
-      render(<SignUpPage apiService={axiosApiService} />);
+      render(<SignUpPage apiService={axiosApiServiceSignUp} />);
 
       await fillAndSubmitSignUpForm(defaultFormData);
 
@@ -260,7 +260,7 @@ describe("signup page", () => {
 
     describe("backend and frontend validationErrors in signup form expected", () => {
       it("returns validation error when signup form inputs are null", async () => {
-        render(<SignUpPage apiService={fetchApiService} />);
+        render(<SignUpPage apiService={fetchApiServiceSignUp} />);
 
         const fields = [
           { label: "Username", testId: "username-error" },
@@ -413,7 +413,7 @@ describe("signup page", () => {
 
       testCases.forEach(({ formData, expectedError }) => {
         it("validationErrors ensure the backend API and frontend works as expected after submit signup", async () => {
-          render(<SignUpPage apiService={fetchApiService} />);
+          render(<SignUpPage apiService={fetchApiServiceSignUp} />);
 
           await fillAndSubmitSignUpForm(formData);
 
@@ -826,7 +826,7 @@ describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
           data: { message: "User created" },
         });
 
-        render(<SignUpPage apiService={axiosApiService} />);
+        render(<SignUpPage apiService={axiosApiServiceSignUp} />);
 
         // Use the utility function to fill and submit the form.
         // The utility will change language (if needed) and fill out the form using i18n keys.
@@ -855,7 +855,7 @@ describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
           data: { message: "User created" },
         });
 
-        render(<SignUpPage apiService={axiosApiService} />);
+        render(<SignUpPage apiService={axiosApiServiceSignUp} />);
 
         await fillAndSubmitSignUpForm(formData);
 
@@ -875,11 +875,11 @@ describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
           await i18n.changeLanguage(lang);
         });
 
-        render(<SignUpPage apiService={fetchApiService} />);
+        render(<SignUpPage apiService={fetchApiServiceSignUp} />);
 
-        // Call the API via fetchApiService. MSW will intercept this call
+        // Call the API via fetchApiServiceSignUp. MSW will intercept this call
         // and Accept-Language header as "languageReceived" in the response.(handlers.ts)
-        const responseData = await fetchApiService.post(
+        const responseData = await fetchApiServiceSignUp.post(
           "/api/1.0/users",
           formData
         );
