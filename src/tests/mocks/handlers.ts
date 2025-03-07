@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import { SignUpRequestBody, validateSignUp } from "../../utils/validationRules";
 
 export const handlers = [
-  // Mock API for user signup
+  // Mock API for user signup (msw)
   http.post("/api/1.0/users", async ({ request }) => {
     // Capture the Accept-Language header from the request.
     const acceptLanguage = request.headers.get("Accept-Language");
@@ -32,19 +32,22 @@ export const handlers = [
     );
   }),
 
-  // Mock API for account activation
-  http.post("/api/1.0/users/token/:token", async ({ params }) => {
+  // Mock API for account activation (msw)
+  http.post("/api/1.0/users/token/:token", async ({ request, params }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
     // Extract the token from request parameters
     const { token } = params;
 
-    // Simulate activation success if the token is not 'invalid'
-    if (token === "invalid") {
+    if (!token || token === "invalid") {
       return HttpResponse.json(
-        { message: "Activation Failed" },
+        { message: "Activation failed", languageReceived: acceptLanguage },
         { status: 400 }
       );
     }
 
-    return HttpResponse.json({ message: "Account Activated" }, { status: 200 });
+    return HttpResponse.json(
+      { message: "Account activated", languageReceived: acceptLanguage },
+      { status: 200 }
+    );
   }),
 ];

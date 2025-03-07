@@ -7,7 +7,7 @@ import HomePage from "./page/HomePage";
 import LoginPage from "./page/LoginPage";
 import UserPage from "./page/UserPage";
 import AccountActivationPage from "./page/accountActivationPage";
-import { axiosApiService } from "./services/apiService";
+import { axiosApiServiceActivation, axiosApiServiceSignUp } from "./services/apiService";
 import tw from "twin.macro";
 
 // Navbar styled components
@@ -64,11 +64,11 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route
               path="/signup"
-              element={<SignUpPage apiService={axiosApiService} />}
+              element={<SignUpPage apiService={axiosApiServiceSignUp} />}
             />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/user/:id" element={<UserPage />} />
-            <Route path="/activate/:token" element={<AccountActivationPage />} />
+            <Route path="/activate/:token" element={<AccountActivationPage apiService={axiosApiServiceActivation} />} />
           </Routes>
         </Content>
       </Router>
