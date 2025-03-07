@@ -5,8 +5,8 @@ export interface ApiService {
   post: (url: string, body: Record<string, any>) => Promise<any>;
 }
 
-// Axios implementation
-export const axiosApiService: ApiService = {
+// Axios implementation signup
+export const axiosApiServiceSignUp: ApiService = {
   post: async (url, body) => {
     const response = await axios.post(url, body, {
       headers: {
@@ -17,8 +17,8 @@ export const axiosApiService: ApiService = {
   },
 };
 
-// msw Fetch implementation
-export const fetchApiService: ApiService = {
+// msw Fetch implementation signup
+export const fetchApiServiceSignUp: ApiService = {
   post: async (url, body) => {
     const response = await fetch(url, {
       method: "POST",
