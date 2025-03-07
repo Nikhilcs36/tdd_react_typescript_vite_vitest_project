@@ -1,16 +1,20 @@
 import { render, screen, waitFor } from "@testing-library/react";
-//import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AccountActivationPage from "./accountActivationPage";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import {
+  ApiService,
+  axiosApiServiceActivation,
+  fetchApiServiceActivation,
+} from "../services/apiService";
 
 // Mock axios API call
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
 
 beforeEach(() => {
-  vi.resetAllMocks();
+  vi.restoreAllMocks(); // Clears all spies/mocks before each test
 });
 
 /**
@@ -27,11 +31,14 @@ beforeEach(() => {
  * - This helps us test route-based behavior (e.g., extracting the token from the URL).
  */
 
-const setup = (initialPath: string) => {
+const setup = (initialPath: string, apiService: ApiService) => {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
-        <Route path="/activate/:token" element={<AccountActivationPage />} />
+        <Route
+          path="/activate/:token"
+          element={<AccountActivationPage apiService={apiService} />}
+        />
       </Routes>
     </MemoryRouter>
   );
@@ -39,107 +46,140 @@ const setup = (initialPath: string) => {
 
 describe("Account Activation Page", () => {
   it("displays activation success message when token is valid", async () => {
-    setup("/activate/123");
+    setup("/activate/123", fetchApiServiceActivation);
 
     const message = await screen.findByText("Account is Activated");
     expect(message).toBeInTheDocument();
   });
 
-  it("sends activation request to backend and handles success", async () => {
+  it("sends activation request to backend and handles success Unit tests (isolating the component logic)", async () => {
     // Mock successful API response
     mockedAxios.post.mockResolvedValue({
       data: { message: "Account Activated" },
     });
 
-    setup("/activate/12315");
+    setup("/activate/12315", axiosApiServiceActivation);
 
     // Wait for success message
     const message = await screen.findByTestId("success-message");
     expect(message).toBeInTheDocument();
 
-    expect(mockedAxios.post).toHaveBeenCalledWith("/api/1.0/users/token/12315");
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      "/api/1.0/users/token/12315",
+      expect.objectContaining({}),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "Accept-Language": "en",
+        }),
+      })
+    );
   });
 
-  it("sends activation request to backend and handles failure", async () => {
+  it("sends activation request to backend and handles success Integration tests (validating API interaction)", async () => {
+    // Spy on the API call
+    const apiSpy = vi.spyOn(fetchApiServiceActivation, "post");
+
+    // Setup component with actual API service
+    setup("/activate/12315", fetchApiServiceActivation);
+
+    // Wait for success message
+    const message = await screen.findByTestId("success-message");
+    expect(message).toBeInTheDocument();
+
+    // Ensure API function was called with the correct URL
+    expect(apiSpy).toHaveBeenCalledWith("/api/1.0/users/token/12315");
+
+    // Capture the return value of the spied function
+    const response = await apiSpy.mock.results[0].value; // Get the first call's result
+
+    // Validate the response data
+    expect(response).toEqual(
+      expect.objectContaining({ languageReceived: "en" })
+    );
+    expect(response).toEqual(
+      expect.objectContaining({ message: "Account activated" })
+    );
+  });
+
+  it("sends activation request to backend and handles failure unit test", async () => {
     // Mock failed API response
     mockedAxios.post.mockRejectedValue({
       response: { status: 400, data: { message: "Activation Failed" } },
     });
 
-    setup("/activate/invalid");
+    setup("/activate/invalid", axiosApiServiceActivation);
 
     const message = await screen.findByTestId("fail-message");
     expect(message).toBeInTheDocument();
 
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      "/api/1.0/users/token/invalid"
+      "/api/1.0/users/token/invalid",
+      expect.objectContaining({}),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "Accept-Language": "en",
+        }),
+      })
     );
   });
 
-  it("sends activation request after the token changes (first fail, then success, then fail again)", async () => {
-    // Mock API response for the initial (failed) token
-    mockedAxios.post.mockRejectedValueOnce({
-      response: { status: 400, data: { message: "Activation Failed" } },
-    });
+  it("sends activation request to backend and handles failure Integration tests", async () => {
+    // Spy on the actual API call (without mocking return values)
+    const apiSpy = vi.spyOn(fetchApiServiceActivation, "post");
 
-    setup("/activate/invalid");
+    setup("/activate/invalid", fetchApiServiceActivation);
+
+    // Wait for failure message to appear
+    const message = await screen.findByTestId("fail-message");
+    expect(message).toBeInTheDocument();
+
+    // Ensure API function was called with the correct URL
+    expect(apiSpy).toHaveBeenCalledWith("/api/1.0/users/token/invalid");
+
+    // Check that the API call actually returned an error response
+    await expect(apiSpy.mock.results[0].value).rejects.toEqual(
+      expect.objectContaining({
+        message: "Activation failed",
+        languageReceived: "en",
+      })
+    );
+  });
+
+  it("sends activation request after the token changes (first fail, then success, then fail again) Integration tests- MSW", async () => {
+    const apiSpy = vi.spyOn(fetchApiServiceActivation, "post");
+
+    // Start with an invalid token (fail case)
+    setup("/activate/invalid", fetchApiServiceActivation);
 
     // Ensure API call was made for the first token
-    await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        "/api/1.0/users/token/invalid"
-      );
-    });
+    expect(apiSpy).toHaveBeenCalledWith("/api/1.0/users/token/invalid");
 
     // Check that the failure message appears
     const failMessages = await screen.findAllByTestId("fail-message");
     expect(failMessages.length).toBeGreaterThan(0);
 
-    // Mock API response for the new (successful) token
-    mockedAxios.post.mockResolvedValueOnce({
-      data: { message: "Account Activated" },
-    });
-
-    // Simulate route change by re-rendering with a different entry
-    setup("/activate/valid-token");
+    // Simulate a new request with a valid token (success case)
+    setup("/activate/valid-token", fetchApiServiceActivation);
 
     // Ensure API call was made for the new token
-    await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        "/api/1.0/users/token/valid-token"
-      );
-    });
+    expect(apiSpy).toHaveBeenCalledWith("/api/1.0/users/token/valid-token");
 
     // Check that the success message appears
     const successMessage = await screen.findByTestId("success-message");
     expect(successMessage).toBeInTheDocument();
 
-    // Mock API response for the new (failed) token
-    mockedAxios.post.mockRejectedValueOnce({
-      response: { status: 400, data: { message: "Activation Failed" } },
-    });
+    // Simulate another request where the same valid token now fails (fail case again)
+    setup("/activate/valid-token", fetchApiServiceActivation);
 
-    // Simulate another route change with the same success token
-    setup("/activate/valid-token");
-
-    // Ensure API call was made again for the token
-    await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        "/api/1.0/users/token/valid-token"
-      );
-    });
+    // Ensure API call was made again for the same token
+    expect(apiSpy).toHaveBeenCalledWith("/api/1.0/users/token/valid-token");
 
     const failMessagesAgain = await screen.findAllByTestId("fail-message");
     expect(failMessagesAgain.length).toBeGreaterThan(0);
   });
 
   it("displays spinner during activation API call", async () => {
-    // Mock API response before rendering
-    mockedAxios.post.mockResolvedValueOnce({
-      data: { message: "Account Activated" },
-    });
-
-    setup("/activate/5678");
+    setup("/activate/5678", fetchApiServiceActivation);
 
     // Check if the spinner appears initially
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
@@ -152,32 +192,22 @@ describe("Account Activation Page", () => {
   });
 
   it("displays spinner during second activation API call to the changed token", async () => {
-    // Mock API response for the first activation attempt
-    mockedAxios.post.mockResolvedValueOnce({
-      data: { message: "Account Activated" },
-    });
-  
-    setup("/activate/1234");
-  
+    setup("/activate/1234", fetchApiServiceActivation);
+
     // Wait for the spinner to appear
     await screen.findByTestId("loading-spinner");
-  
+
     // Wait for the success message to confirm activation
     await screen.findByTestId("success-message");
-  
+
     // Ensure spinner disappears after the first activation
     expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
-  
-    // Mock API response for the second activation attempt
-    mockedAxios.post.mockResolvedValueOnce({
-      data: { message: "Activation failure" },
-    });
-  
+
     // Simulate route change by re-rendering with a different token
-    setup("/activate/5678");
-  
+    setup("/activate/5678", fetchApiServiceActivation);
+
     await screen.findByTestId("loading-spinner");
-    
+
     await waitFor(() => {
       screen.findByTestId("fail-message");
     });
@@ -185,5 +215,4 @@ describe("Account Activation Page", () => {
     // Ensure the spinner disappears after the second activation attempt
     expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
   });
-  
 });
