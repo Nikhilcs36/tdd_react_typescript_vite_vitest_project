@@ -11,7 +11,10 @@ import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
 import { vi, beforeEach } from "vitest";
 import { fillAndSubmitSignUpForm } from "../tests/testUtils";
-import { axiosApiServiceSignUp, fetchApiServiceSignUp } from "../services/apiService";
+import {
+  axiosApiServiceSignUp,
+  fetchApiServiceSignUp,
+} from "../services/apiService";
 import { defaultService } from "../services/defaultService";
 import "../locale/i18n";
 import i18n from "../locale/i18n";
@@ -155,6 +158,7 @@ describe("signup page", () => {
         "rgb(220 252 231 / var(--tw-bg-opacity, 1))"
       ); // Tailwind green-100
       expect(successMessage).toHaveStyleRule("text-align", "center");
+      expect(successMessage).toHaveStyleRule("border-radius", "0.25rem"); // Tailwind rounded (default)
     });
 
     describe("Dynamic Form styled component based on language", () => {

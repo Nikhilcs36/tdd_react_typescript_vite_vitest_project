@@ -216,3 +216,65 @@ describe("Account Activation Page", () => {
     expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
   });
 });
+
+it("account activation success message styles", async () => {
+  setup("/activate/56789", fetchApiServiceActivation);
+
+  // Query the success message by test ID (await the Promise)
+  const successMessage = await screen.findByTestId("success-message");
+
+  expect(successMessage).toBeVisible();
+
+  // Check styles for success message
+  expect(successMessage).toHaveStyleRule(
+    "color",
+    "rgb(21 128 61 / var(--tw-text-opacity, 1))"
+  ); // Tailwind green-700
+  expect(successMessage).toHaveStyleRule(
+    "background-color",
+    "rgb(220 252 231 / var(--tw-bg-opacity, 1))"
+  ); // Tailwind green-100
+  expect(successMessage).toHaveStyleRule("text-align", "center");
+  expect(successMessage).toHaveStyleRule("border-radius", "0.25rem"); // Tailwind rounded (default)
+});
+
+it("account activation error message styles", async () => {
+  setup("/activate/invalid", fetchApiServiceActivation);
+
+  // Query the success message by test ID (await the Promise)
+  const errorMessage = await screen.findByTestId("fail-message");
+
+  expect(errorMessage).toBeVisible();
+
+  // Check styles for success message
+  expect(errorMessage).toHaveStyleRule(
+    "color",
+    "rgb(185 28 28 / var(--tw-text-opacity, 1))"
+  ); // Tailwind red-700
+  expect(errorMessage).toHaveStyleRule(
+    "background-color",
+    "rgb(254 226 226 / var(--tw-bg-opacity, 1))"
+  ); // Tailwind red-100
+  expect(errorMessage).toHaveStyleRule("text-align", "center");
+  expect(errorMessage).toHaveStyleRule("border-radius", "0.25rem"); // Tailwind rounded (default)
+});
+
+it("account activation spinner message styles", async () => {
+  setup("/activate/345", fetchApiServiceActivation);
+
+  const spinner = screen.queryByTestId("loading-spinner");
+  expect(spinner).toBeInTheDocument();
+
+  expect(spinner).toHaveStyleRule("width", "1.5rem"); // w-6
+  expect(spinner).toHaveStyleRule("height", "1.5rem"); // h-6
+  expect(spinner).toHaveStyleRule("border-width", "4px"); // border-4
+  expect(spinner).toHaveStyleRule(
+    "border-color",
+    "rgb(59 130 246 / var(--tw-border-opacity, 1))"
+  ); // border-blue-500
+  expect(spinner).toHaveStyleRule("border-top-color", "transparent"); // border-t-transparent
+  expect(spinner).toHaveStyleRule("border-radius", "9999px"); // rounded-full
+  expect(spinner).toHaveStyleRule("animation", "spin 1s linear infinite"); // animate-spin
+  expect(spinner).toHaveStyleRule("margin-left", "auto"); // mx-auto
+  expect(spinner).toHaveStyleRule("margin-right", "auto"); // mx-auto
+});
