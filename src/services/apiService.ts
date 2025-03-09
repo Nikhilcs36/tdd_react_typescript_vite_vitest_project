@@ -5,6 +5,10 @@ export interface ApiService {
   post: (url: string, body?: Record<string, any>) => Promise<any>;
 }
 
+export interface ApiGetService {
+  get: (url: string) => Promise<any>;
+}
+
 // Axios implementation signup
 export const axiosApiServiceSignUp: ApiService = {
   post: async (url, body) => {
@@ -65,6 +69,33 @@ export const fetchApiServiceActivation: ApiService = {
       const errorData = await response.json(); // Extract the actual error message
       throw errorData; // Throw the full error object
     }
+    return response.json();
+  },
+};
+
+// Axios implementation for load Userlist
+export const axiosApiServiceLoadUserList: ApiGetService = {
+  get: async (url) => {
+    const response = await axios.get(url);
+    return response.data;
+  },
+};
+
+// fetch implementation for load Userlist (for MSW testing)
+export const fetchApiServiceLoadUserList: ApiGetService = {
+  get: async (url) => {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Accept-Language": i18n.language, // Attach the current language header
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+
     return response.json();
   },
 };
