@@ -1,8 +1,32 @@
 import { http, HttpResponse } from "msw";
 import { SignUpRequestBody, validateSignUp } from "../../utils/validationRules";
 
+// Mock API for userlist page(msw)
+const page1 = {
+  content: [
+    {
+      id: 1,
+      username: "user1",
+      email: "user1@mail.com",
+    },
+    {
+      id: 2,
+      username: "user2",
+      email: "user2@mail.com",
+    },
+    {
+      id: 3,
+      username: "user3",
+      email: "user3@mail.com",
+    },
+  ],
+  page: 0,
+  size: 3,
+  totalPages: 9,
+};
+
 export const handlers = [
-  // Mock API for user signup (msw)
+  // Mock API for user signup (msw) ----(1)
   http.post("/api/1.0/users", async ({ request }) => {
     // Capture the Accept-Language header from the request.
     const acceptLanguage = request.headers.get("Accept-Language");
@@ -32,7 +56,7 @@ export const handlers = [
     );
   }),
 
-  // Mock API for account activation (msw)
+  // Mock API for account activation (msw) ----(2)
   http.post("/api/1.0/users/token/:token", async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     // Extract the token from request parameters
@@ -47,6 +71,15 @@ export const handlers = [
 
     return HttpResponse.json(
       { message: "Account activated", languageReceived: acceptLanguage },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for userlist (msw) ----(3)
+  http.get("/api/1.0/users", async ({ request }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    return HttpResponse.json(
+      { ...page1, languageReceived: acceptLanguage }, // Spread page1 so it matches expected structure
       { status: 200 }
     );
   }),
