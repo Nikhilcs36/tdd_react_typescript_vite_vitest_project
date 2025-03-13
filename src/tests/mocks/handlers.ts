@@ -19,6 +19,26 @@ const page1 = {
       username: "user3",
       email: "user3@mail.com",
     },
+    {
+      id: 4,
+      username: "user4",
+      email: "user4@mail.com",
+    },
+    {
+      id: 5,
+      username: "user5",
+      email: "user5@mail.com",
+    },
+    {
+      id: 6,
+      username: "user6",
+      email: "user6@mail.com",
+    },
+    {
+      id: 7,
+      username: "user7",
+      email: "user7@mail.com",
+    },
   ],
   page: 0,
   size: 3,
@@ -77,9 +97,24 @@ export const handlers = [
 
   // Mock API for userlist (msw) ----(3)
   http.get("/api/1.0/users", async ({ request }) => {
+    const url = new URL(request.url);
+    const page = Number(url.searchParams.get("page")) || 0;
+    const size = Number(url.searchParams.get("size")) || 3;
     const acceptLanguage = request.headers.get("Accept-Language");
+
+    // Apply slice on `page1.content`
+    const startIndex = page * size;
+    const endIndex = startIndex + size;
+    const paginatedUsers = page1.content.slice(startIndex, endIndex);
+
     return HttpResponse.json(
-      { ...page1, languageReceived: acceptLanguage }, // Spread page1 so it matches expected structure
+      {
+        content: paginatedUsers,
+        page,
+        size,
+        totalPages: Math.ceil(page1.content.length / size),
+        languageReceived: acceptLanguage,
+      },
       { status: 200 }
     );
   }),
