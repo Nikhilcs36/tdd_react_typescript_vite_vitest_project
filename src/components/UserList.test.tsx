@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import UserList from "./UserList";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -20,6 +20,27 @@ beforeEach(() => {
 
 const setup = () => {
   render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+};
+
+// Helper functions for checking button styles
+const expectEnabled = (button: HTMLElement) => {
+  expect(button).not.toBeDisabled();
+  expect(button).toHaveStyleRule(
+    "background-color",
+    "rgb(59 130 246 / var(--tw-bg-opacity, 1))"
+  ); // Tailwind blue-500
+};
+
+const expectDisabled = (button: HTMLElement) => {
+  expect(button).toBeDisabled();
+  // Wait a short time before checking disabled styles to avoid testing during transition
+  waitFor(
+    () =>
+      expect(button).toHaveStyleRule(
+        "background-color",
+        "rgb(209 213 219 / var(--tw-bg-opacity, 1))"
+      ) // Tailwind gray-300
+  );
 };
 
 describe("User List", () => {
@@ -108,5 +129,84 @@ describe("User List", () => {
     setup();
     const noUsersMessage = await screen.findByText("No users found");
     expect(noUsersMessage).toBeInTheDocument();
+  });
+
+  it("disables and re-enables 'Next' button while loading", async () => {
+    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+
+    const nextButton = await screen.findByTestId("next-button");
+
+    // Ensure button is initially enabled
+    await waitFor(() => expect(nextButton).not.toBeDisabled());
+
+    // Click Next page
+    userEvent.click(nextButton);
+
+    // Wait for the button to become disabled (loading state)
+    await waitFor(() => expect(nextButton).toBeDisabled());
+
+    // Wait for next page to load
+    await screen.findByText("user4");
+
+    // Ensure button is enabled again
+    await waitFor(() => expect(nextButton).not.toBeDisabled());
+  });
+
+  it("disables and re-enables 'Previous' button while loading", async () => {
+    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+
+    const nextButton = await screen.findByTestId("next-button");
+    const prevButton = screen.getByTestId("prev-button");
+
+    // Ensure Previous button is disabled initially (first page)
+    expect(prevButton).toBeDisabled();
+
+    // Click Next page
+    userEvent.click(nextButton);
+
+    // Wait for the new page to load
+    await screen.findByText("user4");
+
+    // Ensure Previous button is now enabled
+    await waitFor(() => expect(prevButton).not.toBeDisabled());
+
+    // Click Previous page
+    userEvent.click(prevButton);
+
+    // Wait for the button to become disabled (loading state)
+    await waitFor(() => expect(prevButton).toBeDisabled());
+
+    // Wait for page 1 to load
+    await screen.findByText("user1");
+
+    // Ensure Previous button is disabled again
+    await waitFor(() => expect(prevButton).toBeDisabled());
+  });
+
+  it("applies correct styles when buttons are enabled and disabled", async () => {
+    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+
+    const nextButton = await screen.findByTestId("next-button");
+    const prevButton = screen.getByTestId("prev-button");
+
+    //Initial State: Next enabled, Previous disabled
+    expectEnabled(nextButton);
+    expectDisabled(prevButton);
+
+    // Click 'Next' - Next should become disabled during loading
+    userEvent.click(nextButton);
+    await waitFor(() => expectDisabled(nextButton));
+
+    // Wait for next page - Previous should become enabled
+    await screen.findByText("user4");
+    await waitFor(() => expectEnabled(prevButton));
+
+    // Click 'Previous' - Previous should become disabled during loading
+    userEvent.click(prevButton);
+    await waitFor(() => expectDisabled(prevButton));
+
+    // Wait for page 1 - Next enabled again
+    await screen.findByText("user1");
+    await waitFor(() => expectEnabled(nextButton));
   });
 });
