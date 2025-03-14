@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import UserList from "./UserList";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -108,5 +108,57 @@ describe("User List", () => {
     setup();
     const noUsersMessage = await screen.findByText("No users found");
     expect(noUsersMessage).toBeInTheDocument();
+  });
+
+  it("disables and re-enables 'Next' button while loading", async () => {
+    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+
+    const nextButton = await screen.findByTestId("next-button");
+
+    // Ensure button is initially enabled
+    await waitFor(() => expect(nextButton).not.toBeDisabled());
+
+    // Click Next page
+    userEvent.click(nextButton);
+
+    // Wait for the button to become disabled (loading state)
+    await waitFor(() => expect(nextButton).toBeDisabled());
+
+    // Wait for next page to load
+    await screen.findByText("user4");
+
+    // Ensure button is enabled again
+    await waitFor(() => expect(nextButton).not.toBeDisabled());
+  });
+
+  it("disables and re-enables 'Previous' button while loading", async () => {
+    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+
+    const nextButton = await screen.findByTestId("next-button");
+    const prevButton = screen.getByTestId("prev-button");
+
+    // Ensure Previous button is disabled initially (first page)
+    expect(prevButton).toBeDisabled();
+
+    // Click Next page
+    userEvent.click(nextButton);
+
+    // Wait for the new page to load
+    await screen.findByText("user4");
+
+    // Ensure Previous button is now enabled
+    await waitFor(() => expect(prevButton).not.toBeDisabled());
+
+    // Click Previous page
+    userEvent.click(prevButton);
+
+    // Wait for the button to become disabled (loading state)
+    await waitFor(() => expect(prevButton).toBeDisabled());
+
+    // Wait for page 1 to load
+    await screen.findByText("user1");
+
+    // Ensure Previous button is disabled again
+    await waitFor(() => expect(prevButton).toBeDisabled());
   });
 });
