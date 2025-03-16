@@ -119,7 +119,7 @@ describe("Routing", () => {
   it("navigates to user page when clicking the username on user list", async () => {
     setup("/", "en");
     
-    const user = await screen.findByText("user-in-list");
+    const user = await screen.findByText("user2");
     userEvent.click(user);
     
     // Check if the user page loads
