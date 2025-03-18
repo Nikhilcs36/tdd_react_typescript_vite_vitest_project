@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import axios from "axios";
 import { server } from "../tests/mocks/server";
 import { http, HttpResponse } from "msw";
+import { MemoryRouter } from "react-router-dom";
 
 // Mock axios API call
 vi.mock("axios");
@@ -19,7 +20,11 @@ beforeEach(() => {
 });
 
 const setup = () => {
-  render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+  render(
+    <MemoryRouter>
+      <UserList ApiGetService={fetchApiServiceLoadUserList} />
+    </MemoryRouter>
+  );
 };
 
 // Helper functions for checking button styles
@@ -108,7 +113,11 @@ describe("User List", () => {
       },
     });
 
-    render(<UserList ApiGetService={axiosApiServiceLoadUserList} />);
+    render(
+      <MemoryRouter>
+        <UserList ApiGetService={axiosApiServiceLoadUserList} />
+      </MemoryRouter>
+    );
     const noUsersMessage = await screen.findByText("No users found");
     expect(noUsersMessage).toBeInTheDocument();
   });
@@ -132,7 +141,7 @@ describe("User List", () => {
   });
 
   it("disables and re-enables 'Next' button while loading", async () => {
-    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+    setup();
 
     const nextButton = await screen.findByTestId("next-button");
 
@@ -153,7 +162,7 @@ describe("User List", () => {
   });
 
   it("disables and re-enables 'Previous' button while loading", async () => {
-    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+    setup();
 
     const nextButton = await screen.findByTestId("next-button");
     const prevButton = screen.getByTestId("prev-button");
@@ -184,7 +193,7 @@ describe("User List", () => {
   });
 
   it("applies correct styles when buttons are enabled and disabled", async () => {
-    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+    setup();
 
     const nextButton = await screen.findByTestId("next-button");
     const prevButton = screen.getByTestId("prev-button");
