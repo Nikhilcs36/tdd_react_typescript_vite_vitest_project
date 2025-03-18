@@ -122,10 +122,10 @@ class UserList extends Component<UserListPageProps, UserListState> {
     );
   }
 }
-
+// Wrapper component to inject `useNavigate` for class component
 export default function UserListWithRouter(
   props: Omit<UserListPageProps, "navigate">
 ) {
-  const navigate = useNavigate();
-  return <UserList {...props} navigate={navigate} />;
+  const navigate = useNavigate(); // useNavigate hook to get navigation function
+  return <UserList {...props} navigate={navigate} />; //Pass navigate as a prop
 }
