@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import App from "./App";
 import i18n from "./locale/i18n";
+import userEvent from "@testing-library/user-event";
 
 describe("App", () => {
   it("renders the App component", () => {
@@ -114,6 +115,17 @@ describe("Routing", () => {
       expect(loginPage).toBeInTheDocument();
     }
   );
+  // user page link test
+  it("navigates to user page when clicking the username on user list", async () => {
+    setup("/", "en");
+    
+    const user = await screen.findByText("user2");
+    userEvent.click(user);
+    
+    // Check if the user page loads
+    const page = await screen.findByTestId("user-page");
+    expect(page).toBeInTheDocument();
+  });
 });
 
 describe("Navbar styling and layout", () => {
