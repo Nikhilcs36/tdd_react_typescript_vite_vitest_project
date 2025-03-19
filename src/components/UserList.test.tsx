@@ -9,6 +9,8 @@ import userEvent from "@testing-library/user-event";
 import axios from "axios";
 import { server } from "../tests/mocks/server";
 import { http, HttpResponse } from "msw";
+import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
+import UserListWithRouter from "./UserList";
 
 // Mock axios API call
 vi.mock("axios");
@@ -19,7 +21,11 @@ beforeEach(() => {
 });
 
 const setup = () => {
-  render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+  render(
+    <MemoryRouter>
+      <UserList ApiGetService={fetchApiServiceLoadUserList} />
+    </MemoryRouter>
+  );
 };
 
 // Helper functions for checking button styles
@@ -108,7 +114,11 @@ describe("User List", () => {
       },
     });
 
-    render(<UserList ApiGetService={axiosApiServiceLoadUserList} />);
+    render(
+      <MemoryRouter>
+        <UserList ApiGetService={axiosApiServiceLoadUserList} />
+      </MemoryRouter>
+    );
     const noUsersMessage = await screen.findByText("No users found");
     expect(noUsersMessage).toBeInTheDocument();
   });
@@ -132,7 +142,7 @@ describe("User List", () => {
   });
 
   it("disables and re-enables 'Next' button while loading", async () => {
-    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+    setup();
 
     const nextButton = await screen.findByTestId("next-button");
 
@@ -153,7 +163,7 @@ describe("User List", () => {
   });
 
   it("disables and re-enables 'Previous' button while loading", async () => {
-    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+    setup();
 
     const nextButton = await screen.findByTestId("next-button");
     const prevButton = screen.getByTestId("prev-button");
@@ -184,7 +194,7 @@ describe("User List", () => {
   });
 
   it("applies correct styles when buttons are enabled and disabled", async () => {
-    render(<UserList ApiGetService={fetchApiServiceLoadUserList} />);
+    setup();
 
     const nextButton = await screen.findByTestId("next-button");
     const prevButton = screen.getByTestId("prev-button");
@@ -208,5 +218,35 @@ describe("User List", () => {
     // Wait for page 1 - Next enabled again
     await screen.findByText("user1");
     await waitFor(() => expectEnabled(nextButton));
+  });
+
+  it("navigates to the correct user ID when clicking a user (Check Rendered Page)", async () => {
+    const UserPageMock = () => {
+      const { id } = useParams(); // Get the ID from the URL
+      return <p>{id}</p>;
+    };
+
+    // Simulate a real page transition using MemoryRouter and Routes
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <UserListWithRouter ApiGetService={fetchApiServiceLoadUserList} />
+            }
+          />
+          <Route path="/user/:id" element={<UserPageMock />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText("user1");
+
+    // Click on user1
+    userEvent.click(screen.getByText("user1"));
+
+    // Verify correct user ID is displayed on the new page url
+    expect(await screen.findByText("1")).toBeInTheDocument();
   });
 });
