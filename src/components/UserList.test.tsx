@@ -220,7 +220,7 @@ describe("User List", () => {
     await waitFor(() => expectEnabled(nextButton));
   });
 
-  it("navigates to the correct user ID when clicking a user (Check Rendered Page)", async () => {
+  it("navigates to the correct user ID when clicking a user (Check Rendered UserPage)", async () => {
     const UserPageMock = () => {
       const { id } = useParams(); // Get the ID from the URL
       return <p>{id}</p>;
