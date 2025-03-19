@@ -102,21 +102,17 @@ export const handlers = [
     const size = Number(url.searchParams.get("size")) || 3;
     const acceptLanguage = request.headers.get("Accept-Language");
 
-    const allUsers = [
-      ...page1.content, // Keep existing users
-    ];
-
     // Apply slice on `page1.content`
     const startIndex = page * size;
     const endIndex = startIndex + size;
-    const paginatedUsers = allUsers.slice(startIndex, endIndex);
+    const paginatedUsers = page1.content.slice(startIndex, endIndex);
 
     return HttpResponse.json(
       {
         content: paginatedUsers,
         page,
         size,
-        totalPages: Math.ceil(allUsers.length / size),
+        totalPages: Math.ceil(page1.content.length / size),
         languageReceived: acceptLanguage,
       },
       { status: 200 }

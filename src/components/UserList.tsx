@@ -1,5 +1,4 @@
 import { Component } from "react";
-import { NavigateFunction, useNavigate } from "react-router-dom";
 import tw from "twin.macro";
 import { ApiGetService } from "../services/apiService";
 
@@ -9,7 +8,6 @@ const Title = tw.h3`text-xl font-semibold`;
 const UserContainer = tw.div`mt-4 flex flex-col items-center gap-2 h-40 overflow-auto`;
 const ButtonGroup = tw.div`flex justify-center mt-4 gap-2`;
 const Button = tw.button`px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300`;
-const UserButton = tw.button`text-blue-600 cursor-pointer`;
 
 interface User {
   id: number;
@@ -26,7 +24,6 @@ interface Page {
 
 interface UserListPageProps {
   ApiGetService: ApiGetService;
-  navigate: NavigateFunction; // Pass navigate function as a prop
 }
 
 interface UserListState {
@@ -45,8 +42,8 @@ class UserList extends Component<UserListPageProps, UserListState> {
     loading: false,
   };
 
-  componentDidMount() {
-    this.fetchUsers(0);
+  async componentDidMount() {
+    this.fetchUsers(this.state.page.page);
   }
 
   fetchUsers = async (pageNumber: number) => {
@@ -56,9 +53,10 @@ class UserList extends Component<UserListPageProps, UserListState> {
       const response = await this.props.ApiGetService.get(
         `/api/1.0/users?page=${pageNumber}&size=${this.state.page.size}`
       );
+      // console.log("Fetched Data:", response);
       this.setState({ page: response, loading: false });
     } catch (error) {
-      console.error("Error fetching users:", error);
+      // console.error("Error fetching users:", error);
       this.setState({ loading: false });
     }
   };
@@ -75,10 +73,6 @@ class UserList extends Component<UserListPageProps, UserListState> {
     }
   };
 
-  handleUserClick = (id: number) => {
-    this.props.navigate(`/user/${id}`); // Use navigate function from props
-  };
-
   render() {
     return (
       <Card>
@@ -88,15 +82,10 @@ class UserList extends Component<UserListPageProps, UserListState> {
         <UserContainer>
           {this.state.page.content.length > 0 ? (
             this.state.page.content.map((user) => (
-              <UserButton
-                key={user.id}
-                onClick={() => this.handleUserClick(user.id)}
-              >
-                {user.username}
-              </UserButton>
+              <span key={user.id}>{user.username}</span>
             ))
           ) : (
-            <p>No users found</p>
+            <p>No users found</p> // message when the list is empty
           )}
         </UserContainer>
         <ButtonGroup>
@@ -122,10 +111,5 @@ class UserList extends Component<UserListPageProps, UserListState> {
     );
   }
 }
-// Wrapper component to inject `useNavigate` for class component
-export default function UserListWithRouter(
-  props: Omit<UserListPageProps, "navigate">
-) {
-  const navigate = useNavigate(); // useNavigate hook to get navigation function
-  return <UserList {...props} navigate={navigate} />; //Pass navigate as a prop
-}
+
+export default UserList;
