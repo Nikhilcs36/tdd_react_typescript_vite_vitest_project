@@ -9,7 +9,8 @@ import userEvent from "@testing-library/user-event";
 import axios from "axios";
 import { server } from "../tests/mocks/server";
 import { http, HttpResponse } from "msw";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
+import UserListWithRouter from "./UserList";
 
 // Mock axios API call
 vi.mock("axios");
@@ -217,5 +218,35 @@ describe("User List", () => {
     // Wait for page 1 - Next enabled again
     await screen.findByText("user1");
     await waitFor(() => expectEnabled(nextButton));
+  });
+
+  it("navigates to the correct user ID when clicking a user (Check Rendered Page)", async () => {
+    const UserPageMock = () => {
+      const { id } = useParams(); // Get the ID from the URL
+      return <p>{id}</p>;
+    };
+
+    // Simulate a real page transition using MemoryRouter and Routes
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <UserListWithRouter ApiGetService={fetchApiServiceLoadUserList} />
+            }
+          />
+          <Route path="/user/:id" element={<UserPageMock />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText("user1");
+
+    // Click on user1
+    userEvent.click(screen.getByText("user1"));
+
+    // Verify correct user ID is displayed on the new page url
+    expect(await screen.findByText("1")).toBeInTheDocument();
   });
 });
