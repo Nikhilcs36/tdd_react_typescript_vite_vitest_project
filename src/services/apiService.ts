@@ -6,7 +6,7 @@ export interface ApiService {
 }
 
 export interface ApiGetService {
-  get: (url: string) => Promise<any>;
+  get: <T>(url: string) => Promise<T>;
 }
 
 // Axios implementation signup
