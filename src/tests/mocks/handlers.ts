@@ -14,7 +14,7 @@ const page1 = {
       id: 2,
       username: "user2",
       email: "user2@mail.com",
-      image: null,
+      image: "https://test.com/user1.jpg",
     },
     {
       id: 3,

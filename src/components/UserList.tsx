@@ -11,10 +11,11 @@ const UserContainer = tw.div`mt-4 flex flex-col items-center gap-2 h-40 overflow
 const ButtonGroup = tw.div`flex justify-center mt-4 gap-2`;
 const Button = tw.button`px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300`;
 
-interface User {
+export interface User {
   id: number;
   username: string;
   email: string;
+  image?: string | null;
 }
 
 interface Page {

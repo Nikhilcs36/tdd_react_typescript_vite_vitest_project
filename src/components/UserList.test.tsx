@@ -251,21 +251,27 @@ describe("User List", () => {
     expect(await screen.findByText("1")).toBeInTheDocument();
   });
 
-  it("renders default profile image", async () => {
+  it("renders default profile image and user profile image", async () => {
     setup();
 
     // Ensure users are loaded first
     await screen.findByText("user1");
 
-    // Now check if the default profile image exists
+    // Get all profile images
     const profileImages = screen.getAllByAltText(
       "Profile"
     ) as HTMLImageElement[];
-    expect(profileImages.length).toBeGreaterThan(0);
 
-    // Ensure the default image is used
-    profileImages.forEach((img) => {
-      expect(img.src).toContain(defaultProfileImage);
-    });
+    // Check that we have at least 3 images (since we load 3 users per page)
+    expect(profileImages.length).toBeGreaterThanOrEqual(3);
+
+    // Ensure user1 (no image) uses default
+    expect(profileImages[0].src).toContain(defaultProfileImage);
+
+    // Ensure user2 (has image) uses its actual image URL
+    expect(profileImages[1].src).toBe("https://test.com/user1.jpg");
+
+    // Ensure user3 (no image) uses default
+    expect(profileImages[2].src).toContain(defaultProfileImage);
   });
 });
