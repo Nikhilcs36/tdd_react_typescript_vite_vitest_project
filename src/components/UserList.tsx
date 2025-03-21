@@ -2,6 +2,7 @@ import { Component } from "react";
 import { NavigateFunction, useNavigate } from "react-router-dom";
 import tw from "twin.macro";
 import { ApiGetService } from "../services/apiService";
+import UserListItem from "./UserListItem";
 
 const Card = tw.div`bg-white shadow-lg rounded-lg p-4`;
 const CardHeader = tw.div`text-center border-b pb-2`;
@@ -9,12 +10,12 @@ const Title = tw.h3`text-xl font-semibold`;
 const UserContainer = tw.div`mt-4 flex flex-col items-center gap-2 h-40 overflow-auto`;
 const ButtonGroup = tw.div`flex justify-center mt-4 gap-2`;
 const Button = tw.button`px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300`;
-const UserButton = tw.button`text-blue-600 cursor-pointer`;
 
-interface User {
+export interface User {
   id: number;
   username: string;
   email: string;
+  image?: string | null;
 }
 
 interface Page {
@@ -53,7 +54,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
     this.setState({ loading: true });
 
     try {
-      const response = await this.props.ApiGetService.get(
+      const response = await this.props.ApiGetService.get<Page>(
         `/api/1.0/users?page=${pageNumber}&size=${this.state.page.size}`
       );
       this.setState({ page: response, loading: false });
@@ -88,12 +89,9 @@ class UserList extends Component<UserListPageProps, UserListState> {
         <UserContainer>
           {this.state.page.content.length > 0 ? (
             this.state.page.content.map((user) => (
-              <UserButton
-                key={user.id}
-                onClick={() => this.handleUserClick(user.id)}
-              >
-                {user.username}
-              </UserButton>
+              <div key={user.id}>
+                <UserListItem user={user} onClick={this.handleUserClick} />
+              </div>
             ))
           ) : (
             <p>No users found</p>

@@ -11,6 +11,7 @@ import { server } from "../tests/mocks/server";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
 import UserListWithRouter from "./UserList";
+import defaultProfileImage from "../assets/profile.png";
 
 // Mock axios API call
 vi.mock("axios");
@@ -248,5 +249,29 @@ describe("User List", () => {
 
     // Verify correct user ID is displayed on the new page url
     expect(await screen.findByText("1")).toBeInTheDocument();
+  });
+
+  it("renders default profile image and user profile image", async () => {
+    setup();
+
+    // Ensure users are loaded first
+    await screen.findByText("user1");
+
+    // Get all profile images
+    const profileImages = screen.getAllByAltText(
+      "Profile"
+    ) as HTMLImageElement[];
+
+    // Check that we have at least 3 images (since we load 3 users per page)
+    expect(profileImages.length).toBeGreaterThanOrEqual(3);
+
+    // Ensure user1 (no image) uses default
+    expect(profileImages[0].src).toContain(defaultProfileImage);
+
+    // Ensure user2 (has image) uses its actual image URL
+    expect(profileImages[1].src).toBe("https://test.com/user1.jpg");
+
+    // Ensure user3 (no image) uses default
+    expect(profileImages[2].src).toContain(defaultProfileImage);
   });
 });
