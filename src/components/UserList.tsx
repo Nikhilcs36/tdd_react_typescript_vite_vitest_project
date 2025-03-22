@@ -3,6 +3,7 @@ import { NavigateFunction, useNavigate } from "react-router-dom";
 import tw from "twin.macro";
 import { ApiGetService } from "../services/apiService";
 import UserListItem from "./UserListItem";
+import { withTranslation, WithTranslation } from "react-i18next";
 
 const Card = tw.div`bg-white shadow-lg rounded-lg p-4`;
 const CardHeader = tw.div`text-center border-b pb-2`;
@@ -25,7 +26,7 @@ interface Page {
   totalPages: number;
 }
 
-interface UserListPageProps {
+interface UserListPageProps extends WithTranslation {
   ApiGetService: ApiGetService;
   navigate: NavigateFunction; // Pass navigate function as a prop
 }
@@ -81,10 +82,11 @@ class UserList extends Component<UserListPageProps, UserListState> {
   };
 
   render() {
+    const { t } = this.props;
     return (
       <Card>
         <CardHeader>
-          <Title>User List</Title>
+          <Title>{t("userlist.title")}</Title>
         </CardHeader>
         <UserContainer>
           {this.state.page.content.length > 0 ? (
@@ -94,7 +96,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
               </div>
             ))
           ) : (
-            <p>No users found</p>
+            <p>{t("userlist.emptyPageMessage")}</p>
           )}
         </UserContainer>
         <ButtonGroup>
@@ -103,7 +105,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
             onClick={this.handlePrevPage}
             disabled={this.state.page.page === 0 || this.state.loading}
           >
-            Previous
+            {t("userlist.buttonPrevious")}
           </Button>
           <Button
             data-testid="next-button"
@@ -113,17 +115,18 @@ class UserList extends Component<UserListPageProps, UserListState> {
               this.state.loading
             }
           >
-            Next
+            {t("userlist.buttonNext")}
           </Button>
         </ButtonGroup>
       </Card>
     );
   }
 }
+
 // Wrapper component to inject `useNavigate` for class component
-export default function UserListWithRouter(
-  props: Omit<UserListPageProps, "navigate">
-) {
+function UserListWithRouter(props: Omit<UserListPageProps, "navigate">) {
   const navigate = useNavigate(); // useNavigate hook to get navigation function
   return <UserList {...props} navigate={navigate} />; //Pass navigate as a prop
 }
+
+export default withTranslation()(UserListWithRouter);
