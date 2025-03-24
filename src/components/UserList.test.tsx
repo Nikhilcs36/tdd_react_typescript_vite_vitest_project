@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import UserList from "./UserList";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -12,6 +12,7 @@ import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
 import UserListWithRouter from "./UserList";
 import defaultProfileImage from "../assets/profile.png";
+import i18n from "../locale/i18n";
 
 // Mock axios API call
 vi.mock("axios");
@@ -273,5 +274,49 @@ describe("User List", () => {
 
     // Ensure user3 (no image) uses default
     expect(profileImages[2].src).toContain(defaultProfileImage);
+  });
+
+  describe("i18n Integration for Userlist and LanguageSwitcher", () => {
+    beforeEach(() => {
+      // Reset language to default ('en') before each test.
+      act(() => {
+        i18n.changeLanguage("en");
+      });
+    });
+
+    // Default Language Tests
+    describe("Default Language", () => {
+      it("renders userlist in English by default", async () => {
+        setup();
+        await screen.findByText("user1");
+        expect(screen.getByText("User List")).toBeInTheDocument();
+        expect(screen.getByText("Next")).toBeInTheDocument();
+        expect(screen.getByText("Previous")).toBeInTheDocument();
+      });
+    });
+
+    describe("Language Change for userlist", () => {
+      it("renders userlist in Malayalam when language is changed", async () => {
+        await act(async () => {
+          await i18n.changeLanguage("ml");
+        });
+        setup();
+        await screen.findByText("user1");
+        expect(screen.getByText("ഉപയോക്തൃ പട്ടിക")).toBeInTheDocument();
+        expect(screen.getByText("അടുത്തത്")).toBeInTheDocument();
+        expect(screen.getByText("മുമ്പത്തേത്")).toBeInTheDocument();
+      });
+
+      it("renders userlist in Arabic when language is changed", async () => {
+        await act(async () => {
+          await i18n.changeLanguage("ar");
+        });
+        setup();
+        await screen.findByText("user1");
+        expect(screen.getByText("قائمة المستخدمين")).toBeInTheDocument();
+        expect(screen.getByText("التالي")).toBeInTheDocument();
+        expect(screen.getByText("السابق")).toBeInTheDocument();
+      });
+    });
   });
 });
