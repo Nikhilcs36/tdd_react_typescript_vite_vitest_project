@@ -30,6 +30,20 @@ const setup = () => {
   );
 };
 
+const emptyListAPISetup = () => {
+  // Override the API response (in mocks/handlers.ts) to return an empty list just for this test
+  server.use(
+    http.get("/api/1.0/users", async () => {
+      return HttpResponse.json({
+        content: [],
+        page: 0,
+        size: 3,
+        totalPages: 0,
+      });
+    })
+  );
+};
+
 // Helper functions for checking button styles
 const expectEnabled = (button: HTMLElement) => {
   expect(button).not.toBeDisabled();
@@ -126,18 +140,7 @@ describe("User List", () => {
   });
 
   it('displays "No users found" when the list is empty ( Integration Test for verifies API + Component Integration)', async () => {
-    // Override the API response to return an empty list just for this test
-    server.use(
-      http.get("/api/1.0/users", async () => {
-        return HttpResponse.json({
-          content: [],
-          page: 0,
-          size: 3,
-          totalPages: 0,
-        });
-      })
-    );
-
+    emptyListAPISetup();
     setup();
     const noUsersMessage = await screen.findByText("No users found");
     expect(noUsersMessage).toBeInTheDocument();
@@ -293,6 +296,13 @@ describe("User List", () => {
         expect(screen.getByText("Next")).toBeInTheDocument();
         expect(screen.getByText("Previous")).toBeInTheDocument();
       });
+
+      it("renders userlist emptyPageMessage in English by default", async () => {
+        emptyListAPISetup();
+        setup();
+        const noUsersMessage = await screen.findByText("No users found");
+        expect(noUsersMessage).toBeInTheDocument();
+      });
     });
 
     describe("Language Change for userlist", () => {
@@ -307,6 +317,18 @@ describe("User List", () => {
         expect(screen.getByText("മുമ്പത്തേത്")).toBeInTheDocument();
       });
 
+      it("renders userlist emptyPageMessage in Malayalam when language is changed", async () => {
+        await act(async () => {
+          await i18n.changeLanguage("ml");
+        });
+        emptyListAPISetup();
+        setup();
+        const noUsersMessage = await screen.findByText(
+          "ഉപയോക്താക്കളെയൊന്നും കണ്ടെത്തിയില്ല"
+        );
+        expect(noUsersMessage).toBeInTheDocument();
+      });
+
       it("renders userlist in Arabic when language is changed", async () => {
         await act(async () => {
           await i18n.changeLanguage("ar");
@@ -316,6 +338,18 @@ describe("User List", () => {
         expect(screen.getByText("قائمة المستخدمين")).toBeInTheDocument();
         expect(screen.getByText("التالي")).toBeInTheDocument();
         expect(screen.getByText("السابق")).toBeInTheDocument();
+      });
+
+      it("renders userlist emptyPageMessage in Arabic when language is changed", async () => {
+        await act(async () => {
+          await i18n.changeLanguage("ar");
+        });
+        emptyListAPISetup();
+        setup();
+        const noUsersMessage = await screen.findByText(
+          "لم يتم العثور على أي مستخدمين"
+        );
+        expect(noUsersMessage).toBeInTheDocument();
       });
     });
   });
