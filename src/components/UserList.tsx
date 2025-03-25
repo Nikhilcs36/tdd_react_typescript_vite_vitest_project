@@ -11,6 +11,7 @@ const Title = tw.h3`text-xl font-semibold`;
 const UserContainer = tw.div`mt-4 flex flex-col items-center gap-2 h-40 overflow-auto`;
 const ButtonGroup = tw.div`flex justify-center mt-4 gap-2`;
 const Button = tw.button`px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300`;
+const Spinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin`;
 
 export interface User {
   id: number;
@@ -34,6 +35,7 @@ interface UserListPageProps extends WithTranslation {
 interface UserListState {
   page: Page;
   loading: boolean;
+  showSpinner: boolean;
 }
 
 class UserList extends Component<UserListPageProps, UserListState> {
@@ -45,6 +47,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
       totalPages: 0,
     },
     loading: false,
+    showSpinner: false,
   };
 
   componentDidMount() {
@@ -54,14 +57,22 @@ class UserList extends Component<UserListPageProps, UserListState> {
   fetchUsers = async (pageNumber: number) => {
     this.setState({ loading: true });
 
+    // Delay the spinner activation by 300ms
+    const spinnerTimeout = setTimeout(() => {
+      this.setState({ showSpinner: true });
+    }, 300);
+
     try {
       const response = await this.props.ApiGetService.get<Page>(
         `/api/1.0/users?page=${pageNumber}&size=${this.state.page.size}`
       );
-      this.setState({ page: response, loading: false });
+
+      clearTimeout(spinnerTimeout); // Clear timeout if API is fast
+      this.setState({ page: response, loading: false, showSpinner: false });
     } catch (error) {
+      clearTimeout(spinnerTimeout);
       console.error("Error fetching users:", error);
-      this.setState({ loading: false });
+      this.setState({ loading: false, showSpinner: false });
     }
   };
 
@@ -89,7 +100,9 @@ class UserList extends Component<UserListPageProps, UserListState> {
           <Title>{t("userlist.title")}</Title>
         </CardHeader>
         <UserContainer>
-          {this.state.page.content.length > 0 ? (
+          {this.state.loading && this.state.showSpinner ? (
+            <Spinner data-testid="spinner" />
+          ) : this.state.page.content.length > 0 ? (
             this.state.page.content.map((user) => (
               <div key={user.id}>
                 <UserListItem user={user} onClick={this.handleUserClick} />

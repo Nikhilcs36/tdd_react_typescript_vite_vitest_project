@@ -13,6 +13,7 @@ import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
 import UserListWithRouter from "./UserList";
 import defaultProfileImage from "../assets/profile.png";
 import i18n from "../locale/i18n";
+import { createUserListHandler } from "../tests/testUtils";
 
 // Mock axios API call
 vi.mock("axios");
@@ -45,23 +46,23 @@ const emptyListAPISetup = () => {
 };
 
 // Helper functions for checking button styles
-const expectEnabled = (button: HTMLElement) => {
-  expect(button).not.toBeDisabled();
-  expect(button).toHaveStyleRule(
-    "background-color",
-    "rgb(59 130 246 / var(--tw-bg-opacity, 1))"
-  ); // Tailwind blue-500
+const expectEnabled = async (button: HTMLElement) => {
+  await waitFor(
+    () => {
+      expect(button).not.toBeDisabled();
+      expect(button).toHaveStyle({ backgroundColor: "rgb(59 130 246)" }); // Tailwind blue-500
+    },
+    { timeout: 1000 }
+  );
 };
 
-const expectDisabled = (button: HTMLElement) => {
-  expect(button).toBeDisabled();
-  // Wait a short time before checking disabled styles to avoid testing during transition
-  waitFor(
-    () =>
-      expect(button).toHaveStyleRule(
-        "background-color",
-        "rgb(209 213 219 / var(--tw-bg-opacity, 1))"
-      ) // Tailwind gray-300
+const expectDisabled = async (button: HTMLElement) => {
+  await waitFor(
+    () => {
+      expect(button).toBeDisabled();
+      expect(button).toHaveStyle({ backgroundColor: "rgb(209 213 219)" }); // Tailwind gray-300
+    },
+    { timeout: 1000 }
   );
 };
 
@@ -350,6 +351,60 @@ describe("User List", () => {
           "لم يتم العثور على أي مستخدمين"
         );
         expect(noUsersMessage).toBeInTheDocument();
+      });
+
+      describe("Spinner and Loading States", () => {
+        beforeEach(() => {
+          server.resetHandlers();
+        });
+
+        it("shows spinner after 300ms delay when API is slow", async () => {
+          server.use(
+            createUserListHandler({
+              delayPage: 1, // Only delay page 1 requests
+              delayMs: 500,
+            })
+          );
+
+          setup();
+
+          // Initial page load
+          await screen.findByText("user1");
+          const nextButton = screen.getByTestId("next-button");
+
+          userEvent.click(nextButton);
+
+          // Verify loading states
+          await expectDisabled(nextButton);
+          await waitFor(
+            () => expect(screen.getByTestId("spinner")).toBeInTheDocument(),
+            { timeout: 500 }
+          );
+
+          // Verify new page
+          await screen.findByText("user4");
+          await expectEnabled(nextButton);
+        });
+
+        it("does not show spinner when API completes quickly", async () => {
+          server.use(
+            createUserListHandler({
+              delayPage: 1,
+              delayMs: 100, // Shorter than spinner threshold
+            })
+          );
+
+          setup();
+
+          await screen.findByText("user1");
+          const nextButton = screen.getByTestId("next-button");
+
+          userEvent.click(nextButton);
+          await screen.findByText("user4");
+
+          expect(screen.queryByTestId("spinner")).not.toBeInTheDocument();
+          await expectEnabled(nextButton);
+        });
       });
     });
   });

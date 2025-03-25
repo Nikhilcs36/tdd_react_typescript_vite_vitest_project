@@ -1,6 +1,8 @@
 import { screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import i18n from "../locale/i18n";
+import { http, HttpResponse, delay, HttpHandler } from "msw";
+import { page1 } from "../tests/mocks/handlers";
 
 /**
  * Utility function to fill the sign-up form and optionally submit it.
@@ -52,4 +54,44 @@ export const fillAndSubmitSignUpForm = async (
     const button = screen.getByRole("button", { name: submitText });
     await userEvent.click(button);
   }
+};
+
+/**
+ * Delay mock handler for user list API endpoints
+ * @param options - Configuration options
+ * @param options.delayPage - Specific page number to delay
+ * @param options.delayMs - Delay duration in milliseconds
+ *
+ * @example
+ * // Delay page 1 requests by 500ms
+ * server.use(createUserListHandler({ delayPage: 1, delayMs: 500 }));
+ */
+export const createUserListHandler = (options?: {
+  delayPage?: number;
+  delayMs?: number;
+}): HttpHandler => {
+  return http.get("/api/1.0/users", async ({ request }) => {
+    const url = new URL(request.url);
+    const page = Number(url.searchParams.get("page")) || 0;
+    const size = Number(url.searchParams.get("size")) || 3;
+
+    // Apply artificial delay for specific pages to test loading states
+    if (options?.delayPage === page && options?.delayMs) {
+      await delay(options.delayMs);
+    }
+
+    // Reuse mock data structure from mocks/handlers.ts for consistency
+    const allUsers = [...page1.content];
+
+    // Calculate pagination using same logic as real API ()
+    const startIndex = page * size;
+    const endIndex = startIndex + size;
+
+    return HttpResponse.json({
+      content: allUsers.slice(startIndex, endIndex),
+      page,
+      size,
+      totalPages: Math.ceil(allUsers.length / size),
+    });
+  });
 };
