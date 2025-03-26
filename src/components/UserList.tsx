@@ -36,6 +36,7 @@ interface UserListState {
   page: Page;
   loading: boolean;
   showSpinner: boolean;
+  showButtonDisabled: boolean;
 }
 
 class UserList extends Component<UserListPageProps, UserListState> {
@@ -48,18 +49,37 @@ class UserList extends Component<UserListPageProps, UserListState> {
     },
     loading: false,
     showSpinner: false,
+    showButtonDisabled: false,
   };
+
+  // Browser-compatible timeout IDs
+  private spinnerTimeout = 0;
+  private buttonTimeout = 0;
 
   componentDidMount() {
     this.fetchUsers(0);
   }
 
-  fetchUsers = async (pageNumber: number) => {
-    this.setState({ loading: true });
+  componentWillUnmount() {
+    // Cleanup timeouts on component unmount
+    clearTimeout(this.spinnerTimeout);
+    clearTimeout(this.buttonTimeout);
+  }
 
-    // Delay the spinner activation by 300ms
-    const spinnerTimeout = setTimeout(() => {
+  fetchUsers = async (pageNumber: number) => {
+    this.setState({
+      loading: true,
+      showSpinner: false,
+      showButtonDisabled: false,
+    });
+
+    // Set up delayed UI states
+    this.spinnerTimeout = window.setTimeout(() => {
       this.setState({ showSpinner: true });
+    }, 300);
+
+    this.buttonTimeout = window.setTimeout(() => {
+      this.setState({ showButtonDisabled: true });
     }, 300);
 
     try {
@@ -67,23 +87,39 @@ class UserList extends Component<UserListPageProps, UserListState> {
         `/api/1.0/users?page=${pageNumber}&size=${this.state.page.size}`
       );
 
-      clearTimeout(spinnerTimeout); // Clear timeout if API is fast
-      this.setState({ page: response, loading: false, showSpinner: false });
+      // Clear timeouts if request completes before delay
+      clearTimeout(this.spinnerTimeout);
+      clearTimeout(this.buttonTimeout);
+
+      this.setState({
+        page: response,
+        loading: false,
+        showSpinner: false,
+        showButtonDisabled: false,
+      });
     } catch (error) {
-      clearTimeout(spinnerTimeout);
+      clearTimeout(this.spinnerTimeout);
+      clearTimeout(this.buttonTimeout);
+      this.setState({
+        loading: false,
+        showSpinner: false,
+        showButtonDisabled: false,
+      });
       console.error("Error fetching users:", error);
-      this.setState({ loading: false, showSpinner: false });
     }
   };
 
   handlePrevPage = () => {
-    if (this.state.page.page > 0) {
+    if (!this.state.loading && this.state.page.page > 0) {
       this.fetchUsers(this.state.page.page - 1);
     }
   };
 
   handleNextPage = () => {
-    if (this.state.page.page < this.state.page.totalPages - 1) {
+    if (
+      !this.state.loading &&
+      this.state.page.page < this.state.page.totalPages - 1
+    ) {
       this.fetchUsers(this.state.page.page + 1);
     }
   };
@@ -100,7 +136,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
           <Title>{t("userlist.title")}</Title>
         </CardHeader>
         <UserContainer>
-          {this.state.loading && this.state.showSpinner ? (
+          {this.state.showSpinner ? (
             <Spinner data-testid="spinner" />
           ) : this.state.page.content.length > 0 ? (
             this.state.page.content.map((user) => (
@@ -116,7 +152,9 @@ class UserList extends Component<UserListPageProps, UserListState> {
           <Button
             data-testid="prev-button"
             onClick={this.handlePrevPage}
-            disabled={this.state.page.page === 0 || this.state.loading}
+            disabled={
+              this.state.page.page === 0 || this.state.showButtonDisabled
+            }
           >
             {t("userlist.buttonPrevious")}
           </Button>
@@ -125,7 +163,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
             onClick={this.handleNextPage}
             disabled={
               this.state.page.page >= this.state.page.totalPages - 1 ||
-              this.state.loading
+              this.state.showButtonDisabled
             }
           >
             {t("userlist.buttonNext")}
