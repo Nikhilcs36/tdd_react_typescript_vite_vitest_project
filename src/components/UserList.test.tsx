@@ -148,6 +148,13 @@ describe("User List", () => {
   });
 
   it("disables and re-enables 'Next' button while loading", async () => {
+    server.use(
+      createUserListHandler({
+        delayPage: 1, // Only delay page 1 requests
+        delayMs: 500,
+      })
+    );
+
     setup();
 
     const nextButton = await screen.findByTestId("next-button");
@@ -200,6 +207,13 @@ describe("User List", () => {
   });
 
   it("applies correct styles when buttons are enabled and disabled", async () => {
+    server.use(
+      createUserListHandler({
+        delayPage: 1, // Only delay page 1 requests
+        delayMs: 500,
+      })
+    );
+
     setup();
 
     const nextButton = await screen.findByTestId("next-button");
@@ -403,6 +417,86 @@ describe("User List", () => {
           await screen.findByText("user4");
 
           expect(screen.queryByTestId("spinner")).not.toBeInTheDocument();
+          await expectEnabled(nextButton);
+        });
+      });
+
+      describe("Delay Button Disabled States", () => {
+        beforeEach(() => {
+          server.resetHandlers();
+        });
+
+        it("disables buttons after 300ms delay on slow network but keeps enabled before delay", async () => {
+          server.use(
+            createUserListHandler({
+              delayPage: 1,
+              delayMs: 500, // Total API delay
+            })
+          );
+
+          setup();
+
+          // Initial page load
+          await screen.findByText("user1");
+          const nextButton = screen.getByTestId("next-button");
+
+          // Initial state check
+          await expectEnabled(nextButton);
+
+          // Trigger page change
+          userEvent.click(nextButton);
+
+          // Immediate check (before 300ms delay)
+          await waitFor(
+            () => {
+              expect(nextButton).not.toBeDisabled();
+              expect(screen.queryByTestId("spinner")).not.toBeInTheDocument();
+            },
+            { timeout: 250 }
+          );
+
+          // After 300ms delay
+          await waitFor(
+            () => {
+              expect(nextButton).toBeDisabled();
+              expect(screen.getByTestId("spinner")).toBeInTheDocument();
+            },
+            { timeout: 350 }
+          );
+
+          // After API completes (500ms total)
+          await screen.findByText("user4");
+
+          // Final state check
+          await expectEnabled(nextButton);
+          expect(screen.queryByTestId("spinner")).not.toBeInTheDocument();
+        });
+
+        it("never disables buttons when API completes faster than 300ms", async () => {
+          server.use(
+            createUserListHandler({
+              delayPage: 1,
+              delayMs: 250, // Faster than button disable delay
+            })
+          );
+
+          setup();
+
+          await screen.findByText("user1");
+          const nextButton = screen.getByTestId("next-button");
+
+          userEvent.click(nextButton);
+
+          // Check during API request
+          await waitFor(
+            () => {
+              expect(nextButton).not.toBeDisabled();
+            },
+            { timeout: 280 }
+          );
+
+          // After API completes
+          await screen.findByText("user4");
           await expectEnabled(nextButton);
         });
       });
