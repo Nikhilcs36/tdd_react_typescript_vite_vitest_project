@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import { SignUpRequestBody, validateSignUp } from "../../utils/validationRules";
 
 // Mock API for userlist page(msw)
-const page1 = {
+export const page1 = {
   content: [
     {
       id: 1,
