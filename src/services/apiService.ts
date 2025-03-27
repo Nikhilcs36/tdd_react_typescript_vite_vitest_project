@@ -99,3 +99,31 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
     return response.json();
   },
 };
+
+// Axios implementation for getUserById
+export const axiosApiServiceGetUser: ApiGetService = {
+  get: async (url) => {
+    const response = await axios.get(url, {
+      headers: {
+        "Accept-Language": i18n.language,
+      },
+    });
+    return response.data;
+  },
+};
+
+// Fetch implementation for getUserById
+export const fetchApiServiceGetUser: ApiGetService = {
+  get: async (url) => {
+    const response = await fetch(url, {
+      headers: {
+        "Accept-Language": i18n.language,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+    return response.json();
+  },
+};

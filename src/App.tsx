@@ -5,9 +5,13 @@ import LanguageSwitcher from "./locale/languageSwitcher";
 import SignUpPage from "./page/SignUpPage";
 import HomePage from "./page/HomePage";
 import LoginPage from "./page/LoginPage";
-import UserPage from "./page/UserPage";
+import UserPageWrapper from "./page/UserPage";
 import AccountActivationPage from "./page/accountActivationPage";
-import { axiosApiServiceActivation, axiosApiServiceSignUp } from "./services/apiService";
+import {
+  axiosApiServiceActivation,
+  axiosApiServiceGetUser,
+  axiosApiServiceSignUp,
+} from "./services/apiService";
 import tw from "twin.macro";
 
 // Navbar styled components
@@ -67,8 +71,18 @@ function App() {
               element={<SignUpPage apiService={axiosApiServiceSignUp} />}
             />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/user/:id" element={<UserPage />} />
-            <Route path="/activate/:token" element={<AccountActivationPage apiService={axiosApiServiceActivation} />} />
+            <Route
+              path="/user/:id"
+              element={
+                <UserPageWrapper ApiGetService={axiosApiServiceGetUser} />
+              }
+            />
+            <Route
+              path="/activate/:token"
+              element={
+                <AccountActivationPage apiService={axiosApiServiceActivation} />
+              }
+            />
           </Routes>
         </Content>
       </Router>

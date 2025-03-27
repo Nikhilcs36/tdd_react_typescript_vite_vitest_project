@@ -129,4 +129,23 @@ export const handlers = [
       { status: 200 }
     );
   }),
+
+  // Mock API for get user by ID (msw) ----(4)
+  http.get("/api/1.0/users/:id", async ({ request, params }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const { id } = params;
+    const user = page1.content.find((u) => u.id === Number(id));
+
+    if (!user) {
+      return HttpResponse.json(
+        { message: "User not found", languageReceived: acceptLanguage },
+        { status: 404 }
+      );
+    }
+
+    return HttpResponse.json(
+      { ...user, languageReceived: acceptLanguage },
+      { status: 200 }
+    );
+  }),
 ];
