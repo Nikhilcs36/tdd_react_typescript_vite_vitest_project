@@ -11,6 +11,10 @@ interface AccountActivationPageProps {
   apiService: ApiService;
 }
 
+interface ActivationSuccessResponse {
+  message: string;
+}
+
 const AccountActivationPage: React.FC<AccountActivationPageProps> = ({
   apiService,
 }) => {
@@ -27,7 +31,9 @@ const AccountActivationPage: React.FC<AccountActivationPageProps> = ({
     const activateAccount = async () => {
       setLoading(true);
       try {
-        await apiService.post(`/api/1.0/users/token/${token}`);
+        await apiService.post<ActivationSuccessResponse>(
+          `/api/1.0/users/token/${token}`
+        );
         setResult("success");
       } catch (error) {
         setResult("fail");
