@@ -36,7 +36,7 @@ interface SignUpState {
   password: string;
   passwordRepeat: string;
   isSubmitting: boolean;
-  successMessage: string | boolean | null;
+  successMessage: boolean;
   validationErrors: Record<string, string>;
   touched: {
     username: boolean;
@@ -50,6 +50,10 @@ interface SignUpPageProps extends WithTranslation {
   apiService: ApiService;
 }
 
+interface SignUpResponse {
+  message: string;
+}
+
 class SignUpPage extends Component<SignUpPageProps, SignUpState> {
   private validationTimeout: number | null = null;
 
@@ -59,7 +63,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
     password: "",
     passwordRepeat: "",
     isSubmitting: false,
-    successMessage: null,
+    successMessage: false,
     validationErrors: {},
     touched: {
       username: false,
@@ -142,7 +146,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
     this.setState(
       {
         isSubmitting: true,
-        successMessage: null,
+        successMessage: false,
         validationErrors: {},
         touched: {
           // Mark all fields as touched on submit
@@ -157,7 +161,10 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
           const { username, email, password, passwordRepeat } = this.state;
           const body = { username, email, password, passwordRepeat };
 
-          await this.props.apiService.post("/api/1.0/users", body);
+          await this.props.apiService.post<SignUpResponse>(
+            "/api/1.0/users",
+            body
+          );
           this.setState({ successMessage: true });
         } catch (error: any) {
           const validationErrors = error.response?.data?.validationErrors || {};
