@@ -2,7 +2,7 @@ import axios from "axios";
 import i18n from "../locale/i18n";
 
 export interface ApiService {
-  post: (url: string, body?: Record<string, any>) => Promise<any>;
+  post: <T>(url: string, body?: Record<string, any>) => Promise<T>;
 }
 
 export interface ApiGetService {
@@ -11,8 +11,8 @@ export interface ApiGetService {
 
 // Axios implementation signup
 export const axiosApiServiceSignUp: ApiService = {
-  post: async (url, body) => {
-    const response = await axios.post(url, body, {
+  post: async <T>(url: string, body?: Record<string, any>) => {
+    const response = await axios.post<T>(url, body, {
       headers: {
         "Accept-Language": i18n.language, // Attach the current language header
       },
@@ -23,7 +23,7 @@ export const axiosApiServiceSignUp: ApiService = {
 
 // Fetch implementation signup (for MSW testing)
 export const fetchApiServiceSignUp: ApiService = {
-  post: async (url, body) => {
+  post: async <T>(url: string, body?: Record<string, any>) => {
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -36,14 +36,14 @@ export const fetchApiServiceSignUp: ApiService = {
       const errorData = await response.json();
       throw errorData;
     }
-    return response.json();
+    return response.json() as T;
   },
 };
 
 // Axios implementation for account activation
 export const axiosApiServiceActivation: ApiService = {
-  post: async (url) => {
-    const response = await axios.post(
+  post: async <T>(url: string) => {
+    const response = await axios.post<T>(
       url,
       {},
       {
@@ -58,7 +58,7 @@ export const axiosApiServiceActivation: ApiService = {
 
 // Fetch implementation for account activation (for MSW testing)
 export const fetchApiServiceActivation: ApiService = {
-  post: async (url) => {
+  post: async <T>(url: string) => {
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -69,21 +69,21 @@ export const fetchApiServiceActivation: ApiService = {
       const errorData = await response.json(); // Extract the actual error message
       throw errorData; // Throw the full error object
     }
-    return response.json();
+    return response.json() as T;
   },
 };
 
 // Axios implementation for load Userlist
 export const axiosApiServiceLoadUserList: ApiGetService = {
-  get: async (url) => {
-    const response = await axios.get(url);
+  get: async <T>(url: string) => {
+    const response = await axios.get<T>(url);
     return response.data;
   },
 };
 
 // fetch implementation for load Userlist (for MSW testing)
 export const fetchApiServiceLoadUserList: ApiGetService = {
-  get: async (url) => {
+  get: async <T>(url: string) => {
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -96,14 +96,14 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
       throw errorData;
     }
 
-    return response.json();
+    return response.json() as T;
   },
 };
 
 // Axios implementation for getUserById
 export const axiosApiServiceGetUser: ApiGetService = {
-  get: async (url) => {
-    const response = await axios.get(url, {
+  get: async <T>(url: string) => {
+    const response = await axios.get<T>(url, {
       headers: {
         "Accept-Language": i18n.language,
       },
@@ -114,7 +114,7 @@ export const axiosApiServiceGetUser: ApiGetService = {
 
 // Fetch implementation for getUserById
 export const fetchApiServiceGetUser: ApiGetService = {
-  get: async (url) => {
+  get: async <T>(url: string) => {
     const response = await fetch(url, {
       headers: {
         "Accept-Language": i18n.language,
@@ -124,6 +124,6 @@ export const fetchApiServiceGetUser: ApiGetService = {
       const errorData = await response.json();
       throw errorData;
     }
-    return response.json();
+    return response.json() as T;
   },
 };
