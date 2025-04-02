@@ -10,6 +10,7 @@ import AccountActivationPage from "./page/accountActivationPage";
 import {
   axiosApiServiceActivation,
   axiosApiServiceGetUser,
+  axiosApiServiceLogin,
   axiosApiServiceSignUp,
 } from "./services/apiService";
 import tw from "twin.macro";
@@ -70,7 +71,10 @@ function App() {
               path="/signup"
               element={<SignUpPage apiService={axiosApiServiceSignUp} />}
             />
-            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/login"
+              element={<LoginPage apiService={axiosApiServiceLogin} />}
+            />
             <Route
               path="/user/:id"
               element={

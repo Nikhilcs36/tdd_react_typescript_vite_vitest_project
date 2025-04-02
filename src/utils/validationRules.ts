@@ -5,6 +5,11 @@ export type SignUpRequestBody = {
   passwordRepeat: string;
 };
 
+export type LoginRequestBody = {
+  email: string;
+  password: string;
+};
+
 export const validateSignUp = (
   body: SignUpRequestBody
 ): Record<string, string> => {
@@ -47,4 +52,20 @@ export const validateSignUp = (
   }
 
   return validationErrors;
+};
+
+export const validateLogin = (values: LoginRequestBody) => {
+  const errors: Record<string, string> = {};
+
+  if (!values.email) {
+    errors.email = "email_required";
+  } else if (!/\S+@\S+\.\S+/.test(values.email)) {
+    errors.email = "email_invalid";
+  }
+
+  if (!values.password) {
+    errors.password = "password_required";
+  }
+
+  return errors;
 };

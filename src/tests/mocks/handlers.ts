@@ -1,5 +1,10 @@
 import { http, HttpResponse } from "msw";
-import { SignUpRequestBody, validateSignUp } from "../../utils/validationRules";
+import {
+  LoginRequestBody,
+  SignUpRequestBody,
+  validateLogin,
+  validateSignUp,
+} from "../../utils/validationRules";
 
 // Mock API for userlist page(msw)
 export const page1 = {
@@ -145,6 +150,55 @@ export const handlers = [
 
     return HttpResponse.json(
       { ...user, languageReceived: acceptLanguage },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for user login (msw) ----(5)
+  http.post("/api/1.0/auth", async ({ request }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const body = (await request.json()) as LoginRequestBody;
+
+    // Validate input format only
+    const validationErrors = validateLogin(body);
+    if (Object.keys(validationErrors).length > 0) {
+      return HttpResponse.json(
+        {
+          message: "Validation Failure",
+          validationErrors,
+          languageReceived: acceptLanguage,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Mock database of valid users (could be moved to a separate file)
+    const validUsers = [{ email: "user@example.com", password: "Password1" }];
+
+    // Find user by email (case-sensitive comparison)
+    const user = validUsers.find((u) => u.email === body.email);
+
+    // Security: Always return same error for invalid email/password
+    if (!user || user.password !== body.password) {
+      return HttpResponse.json(
+        {
+          message: "Invalid credentials",
+          languageReceived: acceptLanguage,
+        },
+        { status: 401 }
+      );
+    }
+
+    // Successful login
+    return HttpResponse.json(
+      {
+        token: "mock-jwt-token",
+        user: {
+          email: user.email,
+          id: 1,
+        },
+        languageReceived: acceptLanguage,
+      },
       { status: 200 }
     );
   }),

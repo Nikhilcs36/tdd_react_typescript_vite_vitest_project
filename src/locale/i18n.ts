@@ -45,6 +45,17 @@ i18n.use(initReactI18next).init({
           buttonPrevious: "Previous",
           emptyPageMessage: "No users found",
         },
+        login: {
+          title: "Login",
+          email: "E-mail",
+          password: "Password",
+          submit: "Login",
+          errors: {
+            email_required: "Email is required.",
+            email_invalid: "Enter a valid email address.",
+            password_required: "Password is required.",
+          },
+        },
       },
     },
     ml: {
@@ -84,6 +95,17 @@ i18n.use(initReactI18next).init({
           buttonPrevious: "മുമ്പത്തേത്",
           emptyPageMessage: "ഉപയോക്താക്കളെയൊന്നും കണ്ടെത്തിയില്ല",
         },
+        login: {
+          title: "ലോഗിൻ",
+          email: "ഇമെയിൽ",
+          password: "പാസ്‌വേഡ്",
+          submit: "ലോഗിൻ",
+          errors: {
+            email_required: "ഇമെയിൽ ആവശ്യമാണ്.",
+            email_invalid: "സാധുവായ ഇമെയിൽ വിലാസം നൽകുക.",
+            password_required: "പാസ്‌വേഡ് ആവശ്യമാണ്.",
+          },
+        },
       },
     },
     ar: {
@@ -122,6 +144,17 @@ i18n.use(initReactI18next).init({
           buttonNext: "التالي",
           buttonPrevious: "السابق",
           emptyPageMessage: "لم يتم العثور على أي مستخدمين",
+        },
+        login: {
+          title: "تسجيل الدخول",
+          email: "البريد الإلكتروني",
+          password: "كلمة المرور",
+          submit: "تسجيل الدخول",
+          errors: {
+            email_required: "يرجى إدخال البريد الإلكتروني.",
+            email_invalid: "يرجى إدخال بريد إلكتروني صحيح.",
+            password_required: "يرجى إدخال كلمة المرور.",
+          },
         },
       },
     },
