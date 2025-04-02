@@ -1,8 +1,9 @@
 import axios from "axios";
 import i18n from "../locale/i18n";
+import { LoginRequestBody, SignUpRequestBody } from "../utils/validationRules";
 
-export interface ApiService {
-  post: <T>(url: string, body?: Record<string, any>) => Promise<T>;
+export interface ApiService<T = Record<string, any>> {
+  post: <R>(url: string, body?: T) => Promise<R>;
 }
 
 export interface ApiGetService {
@@ -10,7 +11,7 @@ export interface ApiGetService {
 }
 
 // Axios implementation signup
-export const axiosApiServiceSignUp: ApiService = {
+export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
   post: async <T>(url: string, body?: Record<string, any>) => {
     const response = await axios.post<T>(url, body, {
       headers: {
@@ -22,7 +23,7 @@ export const axiosApiServiceSignUp: ApiService = {
 };
 
 // Fetch implementation signup (for MSW testing)
-export const fetchApiServiceSignUp: ApiService = {
+export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
   post: async <T>(url: string, body?: Record<string, any>) => {
     const response = await fetch(url, {
       method: "POST",
@@ -125,5 +126,39 @@ export const fetchApiServiceGetUser: ApiGetService = {
       throw errorData;
     }
     return response.json() as T;
+  },
+};
+
+// Axios implementation for login
+export const axiosApiServiceLogin: ApiService<LoginRequestBody> = {
+  post: async <R>(url: string, body?: LoginRequestBody) => {
+    const response = await axios.post<R>(url, body, {
+      headers: {
+        "Accept-Language": i18n.language,
+      },
+    });
+    return response.data;
+  },
+};
+
+// Fetch implementation for login
+export const fetchApiServiceLogin: ApiService<LoginRequestBody> = {
+  post: async <R>(url: string, body?: LoginRequestBody) => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": i18n.language,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw { response: { data: responseData } }; // Match Axios error format
+    }
+
+    return responseData as R;
   },
 };

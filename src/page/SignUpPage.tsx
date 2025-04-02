@@ -1,7 +1,7 @@
 import { Component } from "react";
 import tw, { styled } from "twin.macro";
 import { ApiService } from "../services/apiService";
-import { validateSignUp } from "../utils/validationRules";
+import { SignUpRequestBody, validateSignUp } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
 import i18n from "../locale/i18n";
 
@@ -47,7 +47,7 @@ interface SignUpState {
 }
 
 interface SignUpPageProps extends WithTranslation {
-  apiService: ApiService;
+  apiService: ApiService<SignUpRequestBody>;
 }
 
 interface SignUpResponse {

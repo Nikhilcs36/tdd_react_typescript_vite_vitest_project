@@ -95,3 +95,46 @@ export const createUserListHandler = (options?: {
     });
   });
 };
+
+/**
+ * Utility function to fill the login form and optionally submit it.
+ * @param formData - An object containing the form data (email and password).
+ * @param submit - A boolean indicating whether to submit the form (default: true).
+ * @param language - Optional language code to switch the form language.
+ */
+export const fillAndSubmitLoginForm = async (
+  formData: {
+    email?: string;
+    password?: string;
+  },
+  submit: boolean = true,
+  language?: string
+) => {
+  // Change language if specified
+  if (language) {
+    await i18n.changeLanguage(language);
+  }
+
+  // Get translated labels
+  const loginEmailLabel = i18n.t("login.email");
+  const loginPasswordLabel = i18n.t("login.password");
+  const loginSubmitText = i18n.t("login.submit");
+
+  // Get form elements
+  const emailInput = screen.getByLabelText(loginEmailLabel);
+  const passwordInput = screen.getByLabelText(loginPasswordLabel);
+
+  // Fill form fields
+  if (formData.email) {
+    await userEvent.type(emailInput, formData.email);
+  }
+  if (formData.password) {
+    await userEvent.type(passwordInput, formData.password);
+  }
+
+  // Submit form if requested
+  if (submit) {
+    const button = screen.getByRole("button", { name: loginSubmitText });
+    await userEvent.click(button);
+  }
+};
