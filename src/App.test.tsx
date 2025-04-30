@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import App from "./App";
 import i18n from "./locale/i18n";
@@ -13,8 +13,19 @@ describe("App", () => {
 });
 
 describe("Routing", () => {
-  const setup = (path: string, lang: string) => {
+  /**
+   * Pushes a fake history entry, clears localStorage,
+   * sets auth on /user routes, sets language, and renders App.
+   */
+  const setup = (path: string, lang: string, authenticated = false) => {
+    window.localStorage.clear();
     window.history.pushState({}, "", path);
+
+    if (authenticated || path.startsWith("/user")) {
+      window.localStorage.setItem("authToken", "mock-jwt-token");
+      const userId = path.split("/")[2] || "";
+      window.localStorage.setItem("userId", userId);
+    }
 
     // Change the language before rendering
     act(() => {
@@ -25,12 +36,12 @@ describe("Routing", () => {
   };
 
   it.each`
-    path         | pageTestId
-    ${"/"}       | ${"home-page"}
-    ${"/signup"} | ${"signup-page"}
-    ${"/login"}  | ${"login-page"}
-    ${"/user/1"} | ${"user-page"}
-    ${"/user/2"} | ${"user-page"}
+    path               | pageTestId
+    ${"/"}             | ${"home-page"}
+    ${"/signup"}       | ${"signup-page"}
+    ${"/login"}        | ${"login-page"}
+    ${"/user/1"}       | ${"user-page"}
+    ${"/user/2"}       | ${"user-page"}
     ${"/activate/123"} | ${"activation-page"}
     ${"/activate/456"} | ${"activation-page"}
   `("displays $pageTestId when path is $path", ({ path, pageTestId }) => {
@@ -40,23 +51,23 @@ describe("Routing", () => {
   });
 
   it.each`
-    path         | pageTestId
-    ${"/"}       | ${"signup-page"}
-    ${"/"}       | ${"login-page"}
-    ${"/"}       | ${"user-page"}
-    ${"/"}       | ${"activation-page"}
-    ${"/signup"} | ${"home-page"}
-    ${"/signup"} | ${"login-page"}
-    ${"/signup"} | ${"user-page"}
-    ${"/signup"} | ${"activation-page"}
-    ${"/login"}  | ${"home-page"}
-    ${"/login"}  | ${"signup-page"}
-    ${"/login"}  | ${"user-page"}
-    ${"/login"} | ${"activation-page"}
-    ${"/user/1"} | ${"home-page"}
-    ${"/user/1"} | ${"signup-page"}
-    ${"/user/1"} | ${"login-page"}
-    ${"/user/1"} | ${"activation-page"}
+    path               | pageTestId
+    ${"/"}             | ${"signup-page"}
+    ${"/"}             | ${"login-page"}
+    ${"/"}             | ${"user-page"}
+    ${"/"}             | ${"activation-page"}
+    ${"/signup"}       | ${"home-page"}
+    ${"/signup"}       | ${"login-page"}
+    ${"/signup"}       | ${"user-page"}
+    ${"/signup"}       | ${"activation-page"}
+    ${"/login"}        | ${"home-page"}
+    ${"/login"}        | ${"signup-page"}
+    ${"/login"}        | ${"user-page"}
+    ${"/login"}        | ${"activation-page"}
+    ${"/user/1"}       | ${"home-page"}
+    ${"/user/1"}       | ${"signup-page"}
+    ${"/user/1"}       | ${"login-page"}
+    ${"/user/1"}       | ${"activation-page"}
     ${"/activate/123"} | ${"home-page"}
     ${"/activate/123"} | ${"signup-page"}
     ${"/activate/123"} | ${"login-page"}
@@ -71,13 +82,13 @@ describe("Routing", () => {
   );
 
   it.each([
-    ["Home", "Home", "en"], // English
+    ["Home page", "Home", "en"], // English
     ["Sign Up", "Sign Up", "en"],
 
-    ["Home", "Home", "ml"], // Malayalam
+    ["Home page", "ഹോം", "ml"], // Malayalam
     ["Sign Up", "രജിസ്റ്റർ ചെയ്യുക", "ml"],
 
-    ["Home", "Home", "ar"], // Arabic
+    ["Home page", "الرئيسية", "ar"], // Arabic
     ["Sign Up", "تسجيل حساب جديد", "ar"],
   ])("has link to %s page on navbar in %s language", (_, linkText, lang) => {
     setup("/", lang);
@@ -103,7 +114,11 @@ describe("Routing", () => {
     }
   );
   // Test the "Login" link
-  it.each([["Login", "Login", "en"]])(
+  it.each([
+    ["Login page", "Login", "en"],
+    ["Login page", "ലോഗിൻ", "ml"],
+    ["Login page", "تسجيل الدخول", "ar"],
+  ])(
     "displays Login page after clicking 'Login' link in %s language",
     (_, linkText, lang) => {
       setup("/", lang);
@@ -117,11 +132,11 @@ describe("Routing", () => {
   );
   // user page link test
   it("navigates to user page when clicking the username on user list", async () => {
-    setup("/", "en");
-    
+    setup("/", "en", /* authenticated = */ true);
+
     const user = await screen.findByText("user2");
     userEvent.click(user);
-    
+
     // Check if the user page loads
     const page = await screen.findByTestId("user-page");
     expect(page).toBeInTheDocument();
@@ -167,11 +182,15 @@ describe("Navbar styling and layout", () => {
 });
 
 describe("Language & direction tests for Navbar", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it.each`
-    lang    | expectedDir | linkTextHome | linkTextSignup         | linkTextLogin
-    ${"en"} | ${"ltr"}    | ${"Home"}    | ${"Sign Up"}           | ${"Login"}
-    ${"ml"} | ${"ltr"}    | ${"Home"}    | ${"രജിസ്റ്റർ ചെയ്യുക"} | ${"Login"}
-    ${"ar"} | ${"rtl"}    | ${"Home"}    | ${"تسجيل حساب جديد"}   | ${"Login"}
+    lang    | expectedDir | linkTextHome  | linkTextSignup         | linkTextLogin
+    ${"en"} | ${"ltr"}    | ${"Home"}     | ${"Sign Up"}           | ${"Login"}
+    ${"ml"} | ${"ltr"}    | ${"ഹോം"}      | ${"രജിസ്റ്റർ ചെയ്യുക"} | ${"ലോഗിൻ"}
+    ${"ar"} | ${"rtl"}    | ${"الرئيسية"} | ${"تسجيل حساب جديد"}   | ${"تسجيل الدخول"}
   `(
     "should set document.dir to $expectedDir and show correct navbar texts in $lang",
     ({ lang, expectedDir, linkTextHome, linkTextSignup, linkTextLogin }) => {
@@ -196,4 +215,78 @@ describe("Language & direction tests for Navbar", () => {
       ).toBeInTheDocument();
     }
   );
+});
+
+describe("Authentication navbar visible", () => {
+  const setup = (path: string, lang: string) => {
+    window.history.pushState({}, "", path);
+
+    // Change the language before rendering
+    act(() => {
+      i18n.changeLanguage(lang);
+    });
+
+    render(<App />);
+  };
+
+  const mockAuth = (authenticated: boolean) => {
+    if (authenticated) {
+      localStorage.setItem("authToken", "mock-token");
+      localStorage.setItem("userId", "1");
+    } else {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userId");
+    }
+  };
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  describe("When authenticated", () => {
+    it.each`
+      lang    | profileText
+      ${"en"} | ${"My Profile"}
+      ${"ml"} | ${"എന്റെ പ്രൊഫൈൽ"}
+      ${"ar"} | ${"ملفي"}
+    `(
+      "shows '$profileText' link and hides auth links in $lang",
+      ({ lang, profileText }) => {
+        mockAuth(true);
+        setup("/", lang);
+
+        // Verify profile link exists
+        const profileLink = screen.getByRole("link", { name: profileText });
+        expect(profileLink).toBeInTheDocument();
+
+        // Verify auth links are hidden
+        expect(screen.queryByTestId("signup-link")).not.toBeInTheDocument();
+        expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
+      }
+    );
+  });
+
+  describe("When not authenticated", () => {
+    it.each`
+      lang    | signupText             | loginText
+      ${"en"} | ${"Sign Up"}           | ${"Login"}
+      ${"ml"} | ${"രജിസ്റ്റർ ചെയ്യുക"} | ${"ലോഗിൻ"}
+      ${"ar"} | ${"تسجيل حساب جديد"}   | ${"تسجيل الدخول"}
+    `(
+      "shows '$signupText' and '$loginText' links",
+      ({ lang, signupText, loginText }) => {
+        mockAuth(false);
+        setup("/", lang);
+
+        // Verify auth links exist
+        const signupLink = screen.getByRole("link", { name: signupText });
+        const loginLink = screen.getByRole("link", { name: loginText });
+        expect(signupLink).toBeInTheDocument();
+        expect(loginLink).toBeInTheDocument();
+
+        // Verify profile link is hidden
+        expect(screen.queryByTestId("my-profile-link")).not.toBeInTheDocument();
+      }
+    );
+  });
 });

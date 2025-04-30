@@ -17,7 +17,7 @@ import tw from "twin.macro";
 
 // Navbar styled components
 const NavBar = tw.nav`
-bg-gray-400 
+  bg-gray-400 
   text-white 
   py-4 
   px-6 
@@ -32,9 +32,7 @@ bg-gray-400
 `;
 
 const NavLeft = tw.div`flex items-center`;
-
 const NavRight = tw.div`flex items-center gap-6`;
-
 const NavLink = tw(Link)`
   font-semibold 
   cursor-pointer 
@@ -43,56 +41,74 @@ const NavLink = tw(Link)`
   duration-200
 `;
 
-// This container adds a top margin so that the content doesn't hide under the fixed navbar.
 const Content = tw.div`
   mt-16
 `;
 
-function App() {
+// Router-less version for testing
+export const AppContent = () => {
   const { t } = useTranslation();
+  const isAuthenticated = !!localStorage.getItem("authToken");
+  const userId = localStorage.getItem("userId");
+
   return (
     <I18nextProvider i18n={i18n}>
-      <Router>
-        <NavBar>
-          <NavLeft>
-            <NavLink to="/" title="Home">
-              Home
+      <NavBar data-testid="navbar">
+        <NavLeft>
+          <NavLink to="/" title="Home">
+            {t("home")}
+          </NavLink>
+        </NavLeft>
+        <NavRight>
+          {isAuthenticated ? (
+            <NavLink to={`/user/${userId}`} data-testid="my-profile-link">
+              {t("myProfile")}
             </NavLink>
-          </NavLeft>
-          <NavRight>
-            <NavLink to="/signup">{t("signup.title")}</NavLink>
-            <NavLink to="/login">Login</NavLink>
-          </NavRight>
-        </NavBar>
-        <Content>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route
-              path="/signup"
-              element={<SignUpPage apiService={axiosApiServiceSignUp} />}
-            />
-            <Route
-              path="/login"
-              element={<LoginPage apiService={axiosApiServiceLogin} />}
-            />
-            <Route
-              path="/user/:id"
-              element={
-                <UserPageWrapper ApiGetService={axiosApiServiceGetUser} />
-              }
-            />
-            <Route
-              path="/activate/:token"
-              element={
-                <AccountActivationPage apiService={axiosApiServiceActivation} />
-              }
-            />
-          </Routes>
-        </Content>
-      </Router>
+          ) : (
+            <>
+              <NavLink to="/signup" data-testid="signup-link">
+                {t("signup.title")}
+              </NavLink>
+              <NavLink to="/login" data-testid="login-link">
+                {t("login.title")}
+              </NavLink>
+            </>
+          )}
+        </NavRight>
+      </NavBar>
+      <Content>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/signup"
+            element={<SignUpPage apiService={axiosApiServiceSignUp} />}
+          />
+          <Route
+            path="/login"
+            element={<LoginPage apiService={axiosApiServiceLogin} />}
+          />
+          <Route
+            path="/user/:id"
+            element={<UserPageWrapper ApiGetService={axiosApiServiceGetUser} />}
+          />
+          <Route
+            path="/activate/:token"
+            element={
+              <AccountActivationPage apiService={axiosApiServiceActivation} />
+            }
+          />
+        </Routes>
+      </Content>
       <LanguageSwitcher />
     </I18nextProvider>
   );
-}
+};
 
-export default App;
+// Production version with Router
+const AppWithRouter = () => (
+  <Router>
+    <AppContent />
+  </Router>
+);
+
+export default AppWithRouter;

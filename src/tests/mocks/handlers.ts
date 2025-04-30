@@ -192,11 +192,9 @@ export const handlers = [
     // Successful login
     return HttpResponse.json(
       {
+        id: 1,
+        username: user.email,
         token: "mock-jwt-token",
-        user: {
-          email: user.email,
-          id: 1,
-        },
         languageReceived: acceptLanguage,
       },
       { status: 200 }
