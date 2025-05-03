@@ -4,6 +4,7 @@ import { ApiService } from "../services/apiService";
 import { LoginRequestBody, validateLogin } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
 import i18n from "../locale/i18n";
+import { Navigate } from "react-router-dom";
 
 const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100`;
 
@@ -28,6 +29,18 @@ const ErrorMessage = tw.div`absolute top-full left-0 mt-1 text-red-700 text-sm m
 
 const ApiErrorMessage = tw.div`mb-4 p-3 text-red-700 bg-red-100 rounded text-center`;
 
+interface LoginResponse {
+  id: number;
+  username: string;
+  token: string;
+}
+
+interface ErrorResponse {
+  message: string;
+  path?: string;
+  timestamp?: number;
+}
+
 interface LoginState {
   email: string;
   password: string;
@@ -38,6 +51,7 @@ interface LoginState {
     email: boolean;
     password: boolean;
   };
+  redirectToSuccess: boolean;
 }
 
 interface LoginPageProps extends WithTranslation {
@@ -55,6 +69,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       email: false,
       password: false,
     },
+    redirectToSuccess: false,
   };
 
   validateFields = () => {
@@ -110,13 +125,23 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
 
     try {
       const { email, password } = this.state;
-      await this.props.apiService.post("/api/1.0/auth", { email, password });
+      const response = await this.props.apiService.post<LoginResponse>(
+        "/api/1.0/auth",
+        {
+          email,
+          password,
+        }
+      );
 
-      // Handle successful login (store token, redirect)
-    } catch (error: any) {
+      localStorage.setItem("authToken", response.token);
+      localStorage.setItem("userId", response.id.toString());
+      this.setState({ redirectToSuccess: true });
+    } catch (error) {
+      const apiError = error as { response?: { data?: ErrorResponse } };
       this.setState({
         apiErrorMessage:
-          error.response?.data?.message || "An unexpected error occurred.",
+          apiError.response?.data?.message ||
+          this.props.t("login.errors.generic"),
       });
     } finally {
       this.setState({ isSubmitting: false });
@@ -124,8 +149,12 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
   };
 
   render() {
-    const { validationErrors, apiErrorMessage } = this.state;
+    const { validationErrors, apiErrorMessage, redirectToSuccess } = this.state;
     const { t } = this.props;
+
+    if (redirectToSuccess) {
+      return <Navigate to="/" replace />;
+    }
 
     return (
       <FormWrapper data-testid="login-page">

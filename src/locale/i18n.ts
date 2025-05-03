@@ -11,6 +11,8 @@ i18n.use(initReactI18next).init({
   resources: {
     en: {
       translation: {
+        home: "Home",
+        myProfile: "My Profile",
         signup: {
           title: "Sign Up",
           username: "Username",
@@ -54,6 +56,7 @@ i18n.use(initReactI18next).init({
             email_required: "Email is required.",
             email_invalid: "Enter a valid email address.",
             password_required: "Password is required.",
+            generic: "An unexpected error occurred."
           },
         },
       },
@@ -61,6 +64,8 @@ i18n.use(initReactI18next).init({
     ml: {
       // Malayalam
       translation: {
+        home: "ഹോം",
+        myProfile: "എന്റെ പ്രൊഫൈൽ",
         signup: {
           title: "രജിസ്റ്റർ ചെയ്യുക",
           username: "ഉപയോക്തൃനാമം",
@@ -104,6 +109,7 @@ i18n.use(initReactI18next).init({
             email_required: "ഇമെയിൽ ആവശ്യമാണ്.",
             email_invalid: "സാധുവായ ഇമെയിൽ വിലാസം നൽകുക.",
             password_required: "പാസ്‌വേഡ് ആവശ്യമാണ്.",
+            generic: "ഒരു അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു."
           },
         },
       },
@@ -111,6 +117,8 @@ i18n.use(initReactI18next).init({
     ar: {
       // Arabic (RTL)
       translation: {
+        home: "الرئيسية", 
+        myProfile: "ملفي",
         signup: {
           title: "تسجيل حساب جديد",
           username: "اسم المستخدم",
@@ -154,6 +162,7 @@ i18n.use(initReactI18next).init({
             email_required: "يرجى إدخال البريد الإلكتروني.",
             email_invalid: "يرجى إدخال بريد إلكتروني صحيح.",
             password_required: "يرجى إدخال كلمة المرور.",
+            generic: "حدث خطأ غير متوقع."
           },
         },
       },

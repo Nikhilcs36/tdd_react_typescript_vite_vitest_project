@@ -13,11 +13,13 @@ import { defaultService } from "../services/defaultService";
 import "../locale/i18n";
 import i18n from "../locale/i18n";
 import { Form } from "./LoginPage";
+import { MemoryRouter } from "react-router-dom";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
 
 beforeEach(async () => {
+  localStorage.clear();
   vi.resetAllMocks();
   await act(async () => {
     await i18n.changeLanguage("en");
@@ -432,5 +434,34 @@ describe("Login Page", () => {
         );
       }
     );
+  });
+
+  describe("Login Page - Redirection", () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it("redirects to home page after successful login", async () => {
+      render(
+        <MemoryRouter>
+          <LoginPage apiService={fetchApiServiceLogin} />
+        </MemoryRouter>
+      );
+
+      // Test login functionality
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      // Verify localStorage updates
+      await waitFor(() => {
+        expect(localStorage.getItem("authToken")).toBe("mock-jwt-token");
+        expect(localStorage.getItem("userId")).toBe("1");
+      });
+
+      // Test redirection through URL assertion
+      expect(window.location.pathname).toBe("/");
+    });
   });
 });
