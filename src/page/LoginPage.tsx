@@ -4,7 +4,9 @@ import { ApiService } from "../services/apiService";
 import { LoginRequestBody, validateLogin } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
 import i18n from "../locale/i18n";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../store/authSlice";
 
 const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100`;
 
@@ -51,11 +53,13 @@ interface LoginState {
     email: boolean;
     password: boolean;
   };
-  redirectToSuccess: boolean;
 }
 
+// Add dispatch and navigate to props interface
 interface LoginPageProps extends WithTranslation {
   apiService: ApiService<LoginRequestBody>;
+  dispatch: ReturnType<typeof useDispatch>;
+  navigate: ReturnType<typeof useNavigate>;
 }
 
 class LoginPage extends Component<LoginPageProps, LoginState> {
@@ -69,7 +73,6 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       email: false,
       password: false,
     },
-    redirectToSuccess: false,
   };
 
   validateFields = () => {
@@ -133,9 +136,15 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         }
       );
 
-      localStorage.setItem("authToken", response.token);
-      localStorage.setItem("userId", response.id.toString());
-      this.setState({ redirectToSuccess: true });
+      // Dispatch loginSuccess action with id and username
+      this.props.dispatch(loginSuccess({ id: response.id, username: response.username }));
+
+      // Redirect using navigate prop
+      this.props.navigate("/"); // Redirect to home page
+
+      // Optional: Keep localStorage for backward compatibility
+      // localStorage.setItem("authToken", response.token);
+      // localStorage.setItem("userId", response.id.toString());
     } catch (error) {
       const apiError = error as { response?: { data?: ErrorResponse } };
       this.setState({
@@ -149,12 +158,8 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
   };
 
   render() {
-    const { validationErrors, apiErrorMessage, redirectToSuccess } = this.state;
+    const { validationErrors, apiErrorMessage } = this.state;
     const { t } = this.props;
-
-    if (redirectToSuccess) {
-      return <Navigate to="/" replace />;
-    }
 
     return (
       <FormWrapper data-testid="login-page">
@@ -213,4 +218,14 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
   }
 }
 
-export default withTranslation()(LoginPage);
+// Create a functional wrapper component to use hooks
+const LoginPageWrapper: React.FC<Omit<LoginPageProps, 'dispatch' | 'navigate'>> = (props) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  // Pass dispatch and navigate as props to the class component
+  return <LoginPage {...props} dispatch={dispatch} navigate={navigate} />;
+};
+
+
+// Apply withTranslation to the wrapper component
+export default withTranslation()(LoginPageWrapper);

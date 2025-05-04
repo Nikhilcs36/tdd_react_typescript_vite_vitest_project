@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import LoginPage from "./LoginPage";
+import LoginPageWrapper from "./LoginPage";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
@@ -14,22 +14,50 @@ import "../locale/i18n";
 import i18n from "../locale/i18n";
 import { Form } from "./LoginPage";
 import { MemoryRouter } from "react-router-dom";
+import { Provider } from "react-redux";
+import store from "../store";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
 
+// Mock the navigate function
+const mockedNavigate = vi.fn();
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...actual,
+    useNavigate: () => mockedNavigate,
+    // Keep MemoryRouter and other exports
+  };
+});
+
+
 beforeEach(async () => {
   localStorage.clear();
   vi.resetAllMocks();
+  mockedNavigate.mockClear(); // Clear navigate mock before each test
+  // Reset Redux state before each test if necessary for isolation
+  // This might require adding a reset action to your authSlice or creating a test store
+  // For now, we'll rely on dispatching specific actions in tests.
   await act(async () => {
     await i18n.changeLanguage("en");
   });
 });
 
+// Helper function to render the component wrapped with Provider and MemoryRouter
+const renderWithProviders = (component: React.ReactElement) => {
+  return render(
+    <Provider store={store}>
+      <MemoryRouter>{component}</MemoryRouter>
+    </Provider>
+  );
+};
+
+
 describe("Login Page", () => {
   describe("Layout", () => {
     it("displays required elements", () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       expect(
         screen.getByRole("heading", { name: "Login" })
       ).toBeInTheDocument();
@@ -39,13 +67,13 @@ describe("Login Page", () => {
     });
 
     it("password field has password type", () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       const input = screen.getByLabelText<HTMLInputElement>("Password");
       expect(input.type).toBe("password");
     });
 
     it("submit button is disabled initially", () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
     });
   });
@@ -57,7 +85,7 @@ describe("Login Page", () => {
     };
 
     it("shows disabled button styles", () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       const button = screen.getByRole("button", { name: "Login" });
 
       expect(button).toHaveStyleRule(
@@ -67,7 +95,7 @@ describe("Login Page", () => {
     });
 
     it("shows enabled button styles when form is valid", async () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       await fillAndSubmitLoginForm(formData, false);
 
       const button = screen.getByRole("button", { name: "Login" });
@@ -78,7 +106,7 @@ describe("Login Page", () => {
     });
 
     it("shows validation error styles", async () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
 
       const emailInput = screen.getByLabelText("E-mail");
       await userEvent.type(emailInput, "invalid");
@@ -99,6 +127,8 @@ describe("Login Page", () => {
         { lang: "en", expected: "24rem" },
       ];
 
+      // This test renders the styled component directly, not the LoginPageWrapper
+      // It doesn't need the Provider or Router
       it.each(cases)("sets $expected for $lang", ({ lang, expected }) => {
         const { container } = render(<Form lang={lang} />);
         expect(container.firstChild).toHaveStyleRule("max-width", expected);
@@ -113,14 +143,15 @@ describe("Login Page", () => {
     };
 
     it("enables button when form is valid", async () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       await fillAndSubmitLoginForm(validCredentials, false);
       expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
     });
 
-    it("submits valid credentials", async () => {
-      mockedAxios.post.mockResolvedValue({ data: { token: "test-token" } });
-      render(<LoginPage apiService={axiosApiServiceLogin} />);
+    // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
+    it("submits valid credentials (axios mock)", async () => {
+      mockedAxios.post.mockResolvedValue({ data: { token: "test-token", username: "testuser" } });
+      renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
 
       await fillAndSubmitLoginForm(validCredentials);
 
@@ -134,7 +165,7 @@ describe("Login Page", () => {
     });
 
     it("disables button during submission (MSW integration test)", async () => {
-      render(<LoginPage apiService={fetchApiServiceLogin} />);
+      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
 
       // Get button reference before submission
       const button = screen.getByRole("button", { name: "Login" });
@@ -152,10 +183,11 @@ describe("Login Page", () => {
       await waitFor(() => expect(button).toBeEnabled());
     });
 
+    // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
     it("disables button during submission (unit test)", async () => {
-      mockedAxios.post.mockResolvedValue({ data: { token: "test-token" } });
+      mockedAxios.post.mockResolvedValue({ data: { token: "test-token", username: "testuser" } });
 
-      render(<LoginPage apiService={axiosApiServiceLogin} />);
+      renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
 
       // Start form submission and capture the promise
       const submissionPromise = fillAndSubmitLoginForm(validCredentials);
@@ -171,11 +203,12 @@ describe("Login Page", () => {
       await waitFor(() => expect(button).toBeEnabled());
     });
 
-    it("handles invalid credentials", async () => {
+    // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
+    it("handles invalid credentials (axios mock)", async () => {
       mockedAxios.post.mockRejectedValue({
         response: { status: 401, data: { message: "Invalid credentials" } },
       });
-      render(<LoginPage apiService={axiosApiServiceLogin} />);
+      renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
 
       await fillAndSubmitLoginForm(validCredentials);
       await waitFor(() => {
@@ -186,7 +219,7 @@ describe("Login Page", () => {
 
   describe("Validation", () => {
     it("shows email required error", async () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       const emailInput = screen.getByLabelText("E-mail");
 
       await userEvent.type(emailInput, "test");
@@ -200,7 +233,7 @@ describe("Login Page", () => {
     });
 
     it("shows invalid email error", async () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       await fillAndSubmitLoginForm({ email: "invalid", password: "pass" });
       expect(screen.getByTestId("email-error")).toHaveTextContent(
         "Enter a valid email address."
@@ -208,7 +241,7 @@ describe("Login Page", () => {
     });
 
     it("shows password required error", async () => {
-      render(<LoginPage apiService={defaultService} />);
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       const passwordInput = screen.getByLabelText("Password");
 
       await userEvent.type(passwordInput, "passwordtest");
@@ -224,7 +257,7 @@ describe("Login Page", () => {
 
   describe("Login Page - Authentication Failure", () => {
     it("displays authentication fail message", async () => {
-      render(<LoginPage apiService={fetchApiServiceLogin} />);
+      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
@@ -237,7 +270,7 @@ describe("Login Page", () => {
     });
 
     it("clears authentication fail message when password field is changed", async () => {
-      render(<LoginPage apiService={fetchApiServiceLogin} />);
+      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
@@ -254,7 +287,7 @@ describe("Login Page", () => {
     });
 
     it("clears authentication fail message when email field is changed", async () => {
-      render(<LoginPage apiService={fetchApiServiceLogin} />);
+      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
@@ -276,10 +309,10 @@ describe("Login Page", () => {
       });
     });
 
-    it("displays 'An unexpected error occurred.' when the API response has no error message", async () => {
+    it("displays 'An unexpected error occurred.' when the API response has no error message (axios mock)", async () => {
       mockedAxios.post.mockRejectedValue({ response: { status: 500 } });
 
-      render(<LoginPage apiService={axiosApiServiceLogin} />);
+      renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
@@ -353,7 +386,7 @@ describe("Login Page", () => {
           await i18n.changeLanguage(lang);
         });
 
-        render(<LoginPage apiService={defaultService} />);
+        renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
 
         // Test heading
         expect(
@@ -382,7 +415,7 @@ describe("Login Page", () => {
           await i18n.changeLanguage(lang);
         });
 
-        render(<LoginPage apiService={defaultService} />);
+        renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
 
         // Test email validation
         const emailInput = screen.getByLabelText(translations.emailLabel);
@@ -409,14 +442,14 @@ describe("Login Page", () => {
     );
 
     it.each(testCases)(
-      "sends $lang Accept-Language header",
+      "sends $lang Accept-Language header (axios mock)",
       async ({ lang }) => {
         await act(async () => {
           await i18n.changeLanguage(lang);
         });
 
-        mockedAxios.post.mockResolvedValue({ data: {} });
-        render(<LoginPage apiService={axiosApiServiceLogin} />);
+        mockedAxios.post.mockResolvedValue({ data: { username: "testuser" } });
+        renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
 
         await fillAndSubmitLoginForm({
           email: "user@example.com",
@@ -436,17 +469,12 @@ describe("Login Page", () => {
     );
   });
 
-  describe("Login Page - Redirection", () => {
-    beforeEach(() => {
-      localStorage.clear();
-    });
+  describe("Login Page - Redirection and State Update (MSW)", () => {
 
-    it("redirects to home page after successful login", async () => {
-      render(
-        <MemoryRouter>
-          <LoginPage apiService={fetchApiServiceLogin} />
-        </MemoryRouter>
-      );
+    it("redirects to home page after successful login (MSW)", async () => {
+      // MSW handler for /api/1.0/auth should be set up globally or in a test setup file
+      // to return a successful response with user data (id, username, token).
+      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
 
       // Test login functionality
       await fillAndSubmitLoginForm({
@@ -454,14 +482,16 @@ describe("Login Page", () => {
         password: "Password1",
       });
 
-      // Verify localStorage updates
+      // Verify redirection using the mocked navigate function
       await waitFor(() => {
-        expect(localStorage.getItem("authToken")).toBe("mock-jwt-token");
-        expect(localStorage.getItem("userId")).toBe("1");
+         expect(mockedNavigate).toHaveBeenCalledWith("/");
       });
 
-      // Test redirection through URL assertion
-      expect(window.location.pathname).toBe("/");
+      // Verify Redux state update
+      const state = store.getState();
+      expect(state.auth.isAuthenticated).toBe(true);
+      expect(state.auth.user?.id).toBe(1);
+      expect(state.auth.user?.username).toBe("user@example.com");
     });
   });
 });

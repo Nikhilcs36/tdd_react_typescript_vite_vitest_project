@@ -14,30 +14,32 @@ import {
   axiosApiServiceSignUp,
 } from "./services/apiService";
 import tw from "twin.macro";
+import { Provider, useSelector } from "react-redux";
+import store, { RootState } from "./store";
 
 // Navbar styled components
 const NavBar = tw.nav`
-  bg-gray-400 
-  text-white 
-  py-4 
-  px-6 
-  flex 
-  items-center 
-  justify-between 
-  fixed 
-  w-full 
-  top-0 
-  z-20 
+  bg-gray-400
+  text-white
+  py-4
+  px-6
+  flex
+  items-center
+  justify-between
+  fixed
+  w-full
+  top-0
+  z-20
   shadow-lg
 `;
 
 const NavLeft = tw.div`flex items-center`;
 const NavRight = tw.div`flex items-center gap-6`;
 const NavLink = tw(Link)`
-  font-semibold 
-  cursor-pointer 
-  hover:underline 
-  transition-all 
+  font-semibold
+  cursor-pointer
+  hover:underline
+  transition-all
   duration-200
 `;
 
@@ -48,8 +50,9 @@ const Content = tw.div`
 // Router-less version for testing
 export const AppContent = () => {
   const { t } = useTranslation();
-  const isAuthenticated = !!localStorage.getItem("authToken");
-  const userId = localStorage.getItem("userId");
+  // Use useSelector to get authentication state and user from Redux store
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const user = useSelector((state: RootState) => state.auth.user); // Get the user object
 
   return (
     <I18nextProvider i18n={i18n}>
@@ -60,8 +63,9 @@ export const AppContent = () => {
           </NavLink>
         </NavLeft>
         <NavRight>
+          {/* Use isAuthenticated from Redux */}
           {isAuthenticated ? (
-            <NavLink to={`/user/${userId}`} data-testid="my-profile-link">
+            <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
               {t("myProfile")}
             </NavLink>
           ) : (
@@ -111,4 +115,11 @@ const AppWithRouter = () => (
   </Router>
 );
 
-export default AppWithRouter;
+// Wrap the AppWithRouter with the Redux Provider
+const App = () => (
+  <Provider store={store}>
+    <AppWithRouter />
+  </Provider>
+);
+
+export default App; // Export the new App component
