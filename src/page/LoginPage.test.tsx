@@ -16,6 +16,7 @@ import { Form } from "./LoginPage";
 import { MemoryRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "../store";
+import { logout } from "../store/authSlice";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
@@ -31,14 +32,12 @@ vi.mock("react-router-dom", async (importOriginal) => {
   };
 });
 
-
 beforeEach(async () => {
-  localStorage.clear();
   vi.resetAllMocks();
   mockedNavigate.mockClear(); // Clear navigate mock before each test
-  // Reset Redux state before each test if necessary for isolation
-  // This might require adding a reset action to your authSlice or creating a test store
-  // For now, we'll rely on dispatching specific actions in tests.
+  store.dispatch(logout()); // Reset Redux auth state before each test
+  window.localStorage.clear(); // Clear localStorage
+
   await act(async () => {
     await i18n.changeLanguage("en");
   });
@@ -52,7 +51,6 @@ const renderWithProviders = (component: React.ReactElement) => {
     </Provider>
   );
 };
-
 
 describe("Login Page", () => {
   describe("Layout", () => {
@@ -150,8 +148,12 @@ describe("Login Page", () => {
 
     // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
     it("submits valid credentials (axios mock)", async () => {
-      mockedAxios.post.mockResolvedValue({ data: { token: "test-token", username: "testuser" } });
-      renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
+      mockedAxios.post.mockResolvedValue({
+        data: { token: "test-token", username: "testuser" },
+      });
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
 
       await fillAndSubmitLoginForm(validCredentials);
 
@@ -165,7 +167,9 @@ describe("Login Page", () => {
     });
 
     it("disables button during submission (MSW integration test)", async () => {
-      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
 
       // Get button reference before submission
       const button = screen.getByRole("button", { name: "Login" });
@@ -185,9 +189,13 @@ describe("Login Page", () => {
 
     // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
     it("disables button during submission (unit test)", async () => {
-      mockedAxios.post.mockResolvedValue({ data: { token: "test-token", username: "testuser" } });
+      mockedAxios.post.mockResolvedValue({
+        data: { token: "test-token", username: "testuser" },
+      });
 
-      renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
 
       // Start form submission and capture the promise
       const submissionPromise = fillAndSubmitLoginForm(validCredentials);
@@ -208,7 +216,9 @@ describe("Login Page", () => {
       mockedAxios.post.mockRejectedValue({
         response: { status: 401, data: { message: "Invalid credentials" } },
       });
-      renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
 
       await fillAndSubmitLoginForm(validCredentials);
       await waitFor(() => {
@@ -257,7 +267,9 @@ describe("Login Page", () => {
 
   describe("Login Page - Authentication Failure", () => {
     it("displays authentication fail message", async () => {
-      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
@@ -270,7 +282,9 @@ describe("Login Page", () => {
     });
 
     it("clears authentication fail message when password field is changed", async () => {
-      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
@@ -287,7 +301,9 @@ describe("Login Page", () => {
     });
 
     it("clears authentication fail message when email field is changed", async () => {
-      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
@@ -312,7 +328,9 @@ describe("Login Page", () => {
     it("displays 'An unexpected error occurred.' when the API response has no error message (axios mock)", async () => {
       mockedAxios.post.mockRejectedValue({ response: { status: 500 } });
 
-      renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
@@ -449,7 +467,9 @@ describe("Login Page", () => {
         });
 
         mockedAxios.post.mockResolvedValue({ data: { username: "testuser" } });
-        renderWithProviders(<LoginPageWrapper apiService={axiosApiServiceLogin} />);
+        renderWithProviders(
+          <LoginPageWrapper apiService={axiosApiServiceLogin} />
+        );
 
         await fillAndSubmitLoginForm({
           email: "user@example.com",
@@ -470,11 +490,22 @@ describe("Login Page", () => {
   });
 
   describe("Login Page - Redirection and State Update (MSW)", () => {
+    beforeEach(async () => {
+      // Make beforeEach async
+      // Reset Redux auth state before each test
+      store.dispatch(logout());
+      // Clear localStorage
+      window.localStorage.clear();
+      // Set default language to English
+      await act(async () => {
+        await i18n.changeLanguage("en");
+      });
+    });
 
     it("redirects to home page after successful login (MSW)", async () => {
-      // MSW handler for /api/1.0/auth should be set up globally or in a test setup file
-      // to return a successful response with user data (id, username, token).
-      renderWithProviders(<LoginPageWrapper apiService={fetchApiServiceLogin} />);
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
 
       // Test login functionality
       await fillAndSubmitLoginForm({
@@ -484,7 +515,7 @@ describe("Login Page", () => {
 
       // Verify redirection using the mocked navigate function
       await waitFor(() => {
-         expect(mockedNavigate).toHaveBeenCalledWith("/");
+        expect(mockedNavigate).toHaveBeenCalledWith("/");
       });
 
       // Verify Redux state update

@@ -1,10 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import App from "./App";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import App, { AppContent } from "./App";
 import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
 import store from "./store";
 import { loginSuccess, logout } from "./store/authSlice";
+import { Provider } from "react-redux";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { fetchApiServiceLogin } from "./services/apiService";
+import { fillAndSubmitLoginForm } from "./tests/testUtils";
+import LoginPageWrapper from "./page/LoginPage";
 
 describe("App", () => {
   it("renders the App component", () => {
@@ -15,7 +26,8 @@ describe("App", () => {
 });
 
 describe("Routing", () => {
-  beforeEach(async () => { // Make beforeEach async
+  beforeEach(async () => {
+    // Make beforeEach async
     // Reset Redux auth state before each test
     store.dispatch(logout());
     // Clear localStorage as a precaution
@@ -30,7 +42,13 @@ describe("Routing", () => {
    * Pushes a fake history entry, sets auth state via Redux,
    * sets language, and renders App.
    */
-  const setup = (path: string, lang: string, authenticated = false, user = { id: 1, username: 'user1' }) => { // Updated user default
+  const setup = (
+    path: string,
+    lang: string,
+    authenticated = false,
+    user = { id: 1, username: "user1" }
+  ) => {
+    // Updated user default
     // Reset Redux auth state before each test
     store.dispatch(logout());
 
@@ -40,22 +58,26 @@ describe("Routing", () => {
     const userMatch = path.match(/^\/user\/(\d+)$/);
     let userIdFromPath: number | undefined;
     if (userMatch && userMatch[1]) {
-        userIdFromPath = Number(userMatch[1]);
+      userIdFromPath = Number(userMatch[1]);
     }
 
-
-    if (authenticated || userMatch) { // Check if authenticated or on a user profile path
+    if (authenticated || userMatch) {
+      // Check if authenticated or on a user profile path
       // Dispatch loginSuccess action if authenticated is true or on a user page
       // For user page paths, use the ID from the path if available, otherwise use the default user ID
-      const userToDispatch = userMatch && userIdFromPath !== undefined ? { id: userIdFromPath, username: user.username } : user;
+      const userToDispatch =
+        userMatch && userIdFromPath !== undefined
+          ? { id: userIdFromPath, username: user.username }
+          : user;
       store.dispatch(loginSuccess(userToDispatch));
     }
 
     // Change the language before rendering (only if a specific language is requested)
-    if (lang !== 'en') { // Only change if not the default English
-        act(() => {
-          i18n.changeLanguage(lang);
-        });
+    if (lang !== "en") {
+      // Only change if not the default English
+      act(() => {
+        i18n.changeLanguage(lang);
+      });
     }
 
     render(<App />);
@@ -167,33 +189,24 @@ describe("Routing", () => {
     render(<App />);
 
     // Wait for the "My Profile" link to appear in the navbar (it's conditional on auth state)
-    // Use the data-testid to find the link regardless of language
     const myProfileLink = await screen.findByTestId("my-profile-link");
 
     // Assert that the profile link's href uses the user ID
     expect(myProfileLink).toHaveAttribute("href", `/user/${mockUser.id}`);
-
 
     // Click the "My Profile" link
     await userEvent.click(myProfileLink);
 
     await waitFor(() => {
       expect(screen.getByTestId("user-page")).toBeInTheDocument();
-
-      // Assert the presence and text content of the elements that should display user data.
-      // This requires  MSW handler for /user/:id to return data like
-      // { id: 1, username: "user1", email: "user1@mail.com" } for user ID 1
-      // and your UserPage component to render this data.
-      // Based on the test output, the MSW handler for ID 1 returns "user1" and "user1@mail.com".
       expect(screen.getByTestId("username")).toHaveTextContent("user1");
       expect(screen.getByTestId("email")).toHaveTextContent("user1@mail.com");
     });
   });
 
   it("navigates to user page when clicking the username on user list", async () => {
-
-    store.dispatch(loginSuccess({ id: 2, username: 'user2' }));
-    setup("/", "en", true, { id: 2, username: 'user2' }); // Setup with authenticated state and user object
+    store.dispatch(loginSuccess({ id: 2, username: "user2" }));
+    setup("/", "en", true, { id: 2, username: "user2" }); // Setup with authenticated state and user object
 
     const userLink = await screen.findByText("user2");
     userEvent.click(userLink);
@@ -205,10 +218,72 @@ describe("Routing", () => {
     expect(screen.getByTestId("username")).toHaveTextContent("user2");
     expect(screen.getByTestId("email")).toHaveTextContent("user2@mail.com");
   });
+  // Integration test: Navigates to user profile via navbar link after successful login (using MSW login flow)
+  it("navigates to user profile via navbar link after successful login (MSW flow)", async () => {
+    // Start by rendering the App component at the home page
+    // Language is already set to English by the beforeEach hook
+    const AppWithFetchLoginService = () => (
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route
+              path="/login"
+              element={<LoginPageWrapper apiService={fetchApiServiceLogin} />}
+            />
+            {/* Use the rest of the AppContent for other routes */}
+            <Route path="*" element={<AppContent />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+    render(<AppWithFetchLoginService />);
+
+    // Click the Login link in the navbar to go to the login page
+    const loginLink = screen.getByTestId("login-link");
+    await userEvent.click(loginLink);
+
+    // Ensure we are on the login page
+    await waitFor(() => {
+      expect(screen.getByTestId("login-page")).toBeInTheDocument();
+    });
+
+    // Find the login form elements
+    await fillAndSubmitLoginForm({
+      email: "user@example.com",
+      password: "Password1",
+    });
+
+    // Verify Redux state update
+    await waitFor(() => {
+      const state = store.getState();
+      expect(state.auth.isAuthenticated).toBe(true);
+      expect(state.auth.user?.id).toBe(1);
+      expect(state.auth.user?.username).toBe("user@example.com");
+    });
+
+    // Wait for the navigation to the home page after successful login
+    // This relies LoginPage component dispatching loginSuccess and navigating
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
+
+    // Wait for the "My Profile" link to appear in the navbar (it's conditional on auth state)
+    const myProfileLink = await screen.findByTestId("my-profile-link");
+
+    // Click the "My Profile" link
+    await userEvent.click(myProfileLink);
+
+    await waitFor(() => {
+      // Check if the user page component is rendered
+      expect(screen.getByTestId("user-page")).toBeInTheDocument();
+      expect(screen.getByTestId("username")).toHaveTextContent("user1");
+      expect(screen.getByTestId("email")).toHaveTextContent("user1@mail.com");
+    });
+  });
 });
 
 describe("Navbar styling and layout", () => {
-  beforeEach(async () => { 
+  beforeEach(async () => {
     // Reset Redux auth state before each test in this describe block
     store.dispatch(logout());
     // Clear localStorage as a precaution
@@ -260,7 +335,8 @@ describe("Navbar styling and layout", () => {
 });
 
 describe("Language & direction tests for Navbar", () => {
-  beforeEach(async () => { // Make beforeEach async
+  beforeEach(async () => {
+    // Make beforeEach async
     // Reset Redux auth state before each test in this describe block
     store.dispatch(logout());
     // Clear localStorage as a precaution, though Redux is now primary
@@ -278,9 +354,17 @@ describe("Language & direction tests for Navbar", () => {
     ${"ar"} | ${"rtl"}    | ${"الرئيسية"} | ${"تسجيل حساب جديد"}   | ${"تسجيل الدخول"}
   `(
     "should set document.dir to $expectedDir and show correct navbar texts in $lang",
-    async ({ lang, expectedDir, linkTextHome, linkTextSignup, linkTextLogin }) => { // Make test async
+    async ({
+      lang,
+      expectedDir,
+      linkTextHome,
+      linkTextSignup,
+      linkTextLogin,
+    }) => {
+      // Make test async
       // Change the language before rendering
-      await act(async () => { // Use await act for language change
+      await act(async () => {
+        // Use await act for language change
         await i18n.changeLanguage(lang);
       });
 
@@ -304,7 +388,8 @@ describe("Language & direction tests for Navbar", () => {
 
 describe("Authentication navbar visible", () => {
   // Set default language to English for all tests in this describe block
-  beforeEach(async () => { // Make beforeEach async
+  beforeEach(async () => {
+    // Make beforeEach async
     // Reset Redux auth state before each test in this describe block
     store.dispatch(logout());
     // Clear localStorage as a precaution
@@ -319,17 +404,21 @@ describe("Authentication navbar visible", () => {
     window.history.pushState({}, "", path);
 
     // Change the language before rendering (only if a specific language is requested)
-    if (lang !== 'en') { // Only change if not the default English
-        act(() => {
-          i18n.changeLanguage(lang);
-        });
+    if (lang !== "en") {
+      // Only change if not the default English
+      act(() => {
+        i18n.changeLanguage(lang);
+      });
     }
 
     render(<App />);
   };
 
   // Modified mockAuth to dispatch Redux actions
-  const mockAuth = (authenticated: boolean, user = { id: 1, username: 'user1' }) => {
+  const mockAuth = (
+    authenticated: boolean,
+    user = { id: 1, username: "user1" }
+  ) => {
     if (authenticated) {
       store.dispatch(loginSuccess(user));
     } else {
