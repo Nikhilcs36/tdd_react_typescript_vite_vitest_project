@@ -1,8 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import App from "./App";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import App, { AppContent } from "./App";
 import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
+import store from "./store";
+import { loginSuccess, logout } from "./store/authSlice";
+import { Provider } from "react-redux";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { fetchApiServiceLogin } from "./services/apiService";
+import { fillAndSubmitLoginForm } from "./tests/testUtils";
+import LoginPageWrapper from "./page/LoginPage";
 
 describe("App", () => {
   it("renders the App component", () => {
@@ -13,24 +26,59 @@ describe("App", () => {
 });
 
 describe("Routing", () => {
-  /**
-   * Pushes a fake history entry, clears localStorage,
-   * sets auth on /user routes, sets language, and renders App.
-   */
-  const setup = (path: string, lang: string, authenticated = false) => {
+  beforeEach(async () => {
+    // Make beforeEach async
+    // Reset Redux auth state before each test
+    store.dispatch(logout());
+    // Clear localStorage as a precaution
     window.localStorage.clear();
+    // Set default language to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
+  /**
+   * Pushes a fake history entry, sets auth state via Redux,
+   * sets language, and renders App.
+   */
+  const setup = (
+    path: string,
+    lang: string,
+    authenticated = false,
+    user = { id: 1, username: "user1" }
+  ) => {
+    // Updated user default
+    // Reset Redux auth state before each test
+    store.dispatch(logout());
+
     window.history.pushState({}, "", path);
 
-    if (authenticated || path.startsWith("/user")) {
-      window.localStorage.setItem("authToken", "mock-jwt-token");
-      const userId = path.split("/")[2] || "";
-      window.localStorage.setItem("userId", userId);
+    // Check if the path is a user profile path and extract the ID
+    const userMatch = path.match(/^\/user\/(\d+)$/);
+    let userIdFromPath: number | undefined;
+    if (userMatch && userMatch[1]) {
+      userIdFromPath = Number(userMatch[1]);
     }
 
-    // Change the language before rendering
-    act(() => {
-      i18n.changeLanguage(lang);
-    });
+    if (authenticated || userMatch) {
+      // Check if authenticated or on a user profile path
+      // Dispatch loginSuccess action if authenticated is true or on a user page
+      // For user page paths, use the ID from the path if available, otherwise use the default user ID
+      const userToDispatch =
+        userMatch && userIdFromPath !== undefined
+          ? { id: userIdFromPath, username: user.username }
+          : user;
+      store.dispatch(loginSuccess(userToDispatch));
+    }
+
+    // Change the language before rendering (only if a specific language is requested)
+    if (lang !== "en") {
+      // Only change if not the default English
+      act(() => {
+        i18n.changeLanguage(lang);
+      });
+    }
 
     render(<App />);
   };
@@ -45,7 +93,7 @@ describe("Routing", () => {
     ${"/activate/123"} | ${"activation-page"}
     ${"/activate/456"} | ${"activation-page"}
   `("displays $pageTestId when path is $path", ({ path, pageTestId }) => {
-    setup(path, "en");
+    setup(path, "en"); // Use English for these basic routing tests
     const page = screen.queryByTestId(pageTestId);
     expect(page).toBeInTheDocument();
   });
@@ -75,7 +123,7 @@ describe("Routing", () => {
   `(
     "does not display $pageTestId when path is $path",
     ({ path, pageTestId }) => {
-      setup(path, "en");
+      setup(path, "en"); // Use English
       const page = screen.queryByTestId(pageTestId);
       expect(page).not.toBeInTheDocument();
     }
@@ -91,7 +139,7 @@ describe("Routing", () => {
     ["Home page", "الرئيسية", "ar"], // Arabic
     ["Sign Up", "تسجيل حساب جديد", "ar"],
   ])("has link to %s page on navbar in %s language", (_, linkText, lang) => {
-    setup("/", lang);
+    setup("/", lang); // Use the specified language
     const link = screen.getByRole("link", { name: linkText });
     expect(link).toBeInTheDocument();
   });
@@ -121,7 +169,7 @@ describe("Routing", () => {
   ])(
     "displays Login page after clicking 'Login' link in %s language",
     (_, linkText, lang) => {
-      setup("/", lang);
+      setup("/", lang); // Render with the given language
 
       const loginLink = screen.getByRole("link", { name: linkText });
       fireEvent.click(loginLink);
@@ -130,20 +178,122 @@ describe("Routing", () => {
       expect(loginPage).toBeInTheDocument();
     }
   );
-  // user page link test
-  it("navigates to user page when clicking the username on user list", async () => {
-    setup("/", "en", /* authenticated = */ true);
 
-    const user = await screen.findByText("user2");
-    userEvent.click(user);
+  // Integration test: Navigates to user profile via navbar link after simulating authenticated state
+  it("navigates to user profile via navbar link after simulating authenticated state", async () => {
+    // Simulate a logged-in state by dispatching the loginSuccess action with user ID and username
+    const mockUser = { id: 1, username: "user1" };
+    store.dispatch(loginSuccess(mockUser));
+
+    // Render the App component (it will now render based on the authenticated state)
+    render(<App />);
+
+    // Wait for the "My Profile" link to appear in the navbar (it's conditional on auth state)
+    const myProfileLink = await screen.findByTestId("my-profile-link");
+
+    // Assert that the profile link's href uses the user ID
+    expect(myProfileLink).toHaveAttribute("href", `/user/${mockUser.id}`);
+
+    // Click the "My Profile" link
+    await userEvent.click(myProfileLink);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("user-page")).toBeInTheDocument();
+      expect(screen.getByTestId("username")).toHaveTextContent("user1");
+      expect(screen.getByTestId("email")).toHaveTextContent("user1@mail.com");
+    });
+  });
+
+  it("navigates to user page when clicking the username on user list", async () => {
+    store.dispatch(loginSuccess({ id: 2, username: "user2" }));
+    setup("/", "en", true, { id: 2, username: "user2" }); // Setup with authenticated state and user object
+
+    const userLink = await screen.findByText("user2");
+    userEvent.click(userLink);
 
     // Check if the user page loads
+    // The route is now /user/:id, so the user page should load for user ID 2
     const page = await screen.findByTestId("user-page");
     expect(page).toBeInTheDocument();
+    expect(screen.getByTestId("username")).toHaveTextContent("user2");
+    expect(screen.getByTestId("email")).toHaveTextContent("user2@mail.com");
+  });
+  // Integration test: Navigates to user profile via navbar link after successful login (using MSW login flow)
+  it("navigates to user profile via navbar link after successful login (MSW flow)", async () => {
+    // Start by rendering the App component at the home page
+    // Language is already set to English by the beforeEach hook
+    const AppWithFetchLoginService = () => (
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route
+              path="/login"
+              element={<LoginPageWrapper apiService={fetchApiServiceLogin} />}
+            />
+            {/* Use the rest of the AppContent for other routes */}
+            <Route path="*" element={<AppContent />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+    render(<AppWithFetchLoginService />);
+
+    // Click the Login link in the navbar to go to the login page
+    const loginLink = screen.getByTestId("login-link");
+    await userEvent.click(loginLink);
+
+    // Ensure we are on the login page
+    await waitFor(() => {
+      expect(screen.getByTestId("login-page")).toBeInTheDocument();
+    });
+
+    // Find the login form elements
+    await fillAndSubmitLoginForm({
+      email: "user@example.com",
+      password: "Password1",
+    });
+
+    // Verify Redux state update
+    await waitFor(() => {
+      const state = store.getState();
+      expect(state.auth.isAuthenticated).toBe(true);
+      expect(state.auth.user?.id).toBe(1);
+      expect(state.auth.user?.username).toBe("user@example.com");
+    });
+
+    // Wait for the navigation to the home page after successful login
+    // This relies LoginPage component dispatching loginSuccess and navigating
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
+
+    // Wait for the "My Profile" link to appear in the navbar (it's conditional on auth state)
+    const myProfileLink = await screen.findByTestId("my-profile-link");
+
+    // Click the "My Profile" link
+    await userEvent.click(myProfileLink);
+
+    await waitFor(() => {
+      // Check if the user page component is rendered
+      expect(screen.getByTestId("user-page")).toBeInTheDocument();
+      expect(screen.getByTestId("username")).toHaveTextContent("user1");
+      expect(screen.getByTestId("email")).toHaveTextContent("user1@mail.com");
+    });
   });
 });
 
 describe("Navbar styling and layout", () => {
+  beforeEach(async () => {
+    // Reset Redux auth state before each test in this describe block
+    store.dispatch(logout());
+    // Clear localStorage as a precaution
+    window.localStorage.clear();
+    // Set default language to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
   it("renders a fixed navbar with proper styles", () => {
     render(<App />);
     const navbar = document.querySelector("nav");
@@ -159,13 +309,16 @@ describe("Navbar styling and layout", () => {
 
     // Background and shadow
     expect(navbar).toHaveStyleRule(
-      "background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1))"
+      "background-color",
+      "rgb(156 163 175 / var(--tw-bg-opacity, 1))"
     ); // bg-gray-400
     expect(navbar).toHaveStyleRule(
-      "color: rgb(255 255 255 / var(--tw-bg-opacity, 1))"
+      "color",
+      "rgb(255 255 255 / var(--tw-text-opacity, 1))"
     ); // text-white
     expect(navbar).toHaveStyleRule(
-      "box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),var(--tw-ring-shadow, 0 0 #0000),var(--tw-shadow)"
+      "box-shadow",
+      "var(--tw-ring-offset-shadow, 0 0 #0000),var(--tw-ring-shadow, 0 0 #0000),var(--tw-shadow)"
     ); // shadow-lg
 
     // Spacing and padding
@@ -182,8 +335,16 @@ describe("Navbar styling and layout", () => {
 });
 
 describe("Language & direction tests for Navbar", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Make beforeEach async
+    // Reset Redux auth state before each test in this describe block
+    store.dispatch(logout());
+    // Clear localStorage as a precaution, though Redux is now primary
     window.localStorage.clear();
+    // Set default language to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
   });
 
   it.each`
@@ -193,10 +354,18 @@ describe("Language & direction tests for Navbar", () => {
     ${"ar"} | ${"rtl"}    | ${"الرئيسية"} | ${"تسجيل حساب جديد"}   | ${"تسجيل الدخول"}
   `(
     "should set document.dir to $expectedDir and show correct navbar texts in $lang",
-    ({ lang, expectedDir, linkTextHome, linkTextSignup, linkTextLogin }) => {
+    async ({
+      lang,
+      expectedDir,
+      linkTextHome,
+      linkTextSignup,
+      linkTextLogin,
+    }) => {
+      // Make test async
       // Change the language before rendering
-      act(() => {
-        i18n.changeLanguage(lang);
+      await act(async () => {
+        // Use await act for language change
+        await i18n.changeLanguage(lang);
       });
 
       render(<App />);
@@ -218,28 +387,48 @@ describe("Language & direction tests for Navbar", () => {
 });
 
 describe("Authentication navbar visible", () => {
+  // Set default language to English for all tests in this describe block
+  beforeEach(async () => {
+    // Make beforeEach async
+    // Reset Redux auth state before each test in this describe block
+    store.dispatch(logout());
+    // Clear localStorage as a precaution
+    localStorage.clear();
+    // Set default language to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
   const setup = (path: string, lang: string) => {
     window.history.pushState({}, "", path);
 
-    // Change the language before rendering
-    act(() => {
-      i18n.changeLanguage(lang);
-    });
+    // Change the language before rendering (only if a specific language is requested)
+    if (lang !== "en") {
+      // Only change if not the default English
+      act(() => {
+        i18n.changeLanguage(lang);
+      });
+    }
 
     render(<App />);
   };
 
-  const mockAuth = (authenticated: boolean) => {
+  // Modified mockAuth to dispatch Redux actions
+  const mockAuth = (
+    authenticated: boolean,
+    user = { id: 1, username: "user1" }
+  ) => {
     if (authenticated) {
-      localStorage.setItem("authToken", "mock-token");
-      localStorage.setItem("userId", "1");
+      store.dispatch(loginSuccess(user));
     } else {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("userId");
+      store.dispatch(logout());
     }
   };
 
   afterEach(() => {
+    // Ensure Redux state is reset after each test in this block
+    store.dispatch(logout());
     localStorage.clear();
   });
 
@@ -252,8 +441,8 @@ describe("Authentication navbar visible", () => {
     `(
       "shows '$profileText' link and hides auth links in $lang",
       ({ lang, profileText }) => {
-        mockAuth(true);
-        setup("/", lang);
+        mockAuth(true); // Use mockAuth to set Redux state
+        setup("/", lang); // Use the specified language
 
         // Verify profile link exists
         const profileLink = screen.getByRole("link", { name: profileText });
@@ -275,8 +464,8 @@ describe("Authentication navbar visible", () => {
     `(
       "shows '$signupText' and '$loginText' links",
       ({ lang, signupText, loginText }) => {
-        mockAuth(false);
-        setup("/", lang);
+        mockAuth(false); // Use mockAuth to set Redux state
+        setup("/", lang); // Use the specified language
 
         // Verify auth links exist
         const signupLink = screen.getByRole("link", { name: signupText });
