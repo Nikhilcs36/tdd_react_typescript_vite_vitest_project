@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -503,5 +504,83 @@ describe("Redux store persistence", () => {
     expect(loadedAuthState.isAuthenticated).toBe(true);
     expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser" });
     // No assertion for token since it's not stored
+  });
+});
+
+describe("Navbar persistence with localStorage", () => {
+  beforeEach(async () => {
+    // Reset Redux auth state before each test
+    store.dispatch(logout());
+    // Clear localStorage
+    localStorage.clear();
+    // Set default language to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
+  it("maintains navbar login state after page refresh", async () => {
+    // Initial login (without token in state)
+    const testUser = { id: 5, username: "persistedUser" };
+    
+    // Render the app with the Redux provider
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <AppContent />
+        </MemoryRouter>
+      </Provider>
+    );
+    
+    // Verify initial state - should show login/signup links
+    expect(screen.getByTestId("login-link")).toBeInTheDocument();
+    expect(screen.getByTestId("signup-link")).toBeInTheDocument();
+    
+    // Dispatch login action to update Redux state
+    await act(async () => {
+      store.dispatch(loginSuccess(testUser));
+    });
+    
+    // Verify navbar updated - should now show profile link
+    const profileLink = await screen.findByTestId("my-profile-link");
+    expect(profileLink).toHaveAttribute("href", `/user/${testUser.id}`);
+    
+    // Verify auth links are hidden after login
+    expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("signup-link")).not.toBeInTheDocument();
+
+    // Simulate page refresh by creating a new store that loads from localStorage
+    const newStore = createStore();
+    
+    // Clean up the first render
+    cleanup();
+    
+    // Re-render app with "refreshed" store
+    render(
+      <Provider store={newStore}>
+        <MemoryRouter>
+          <AppContent />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Verify navbar state after refresh
+    await waitFor(() => {
+      const refreshedProfileLink = screen.getByTestId("my-profile-link");
+      expect(refreshedProfileLink).toHaveAttribute("href", `/user/${testUser.id}`);
+    });
+    
+    // Verify auth links are hidden
+    expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("signup-link")).not.toBeInTheDocument();
+
+    // Verify no token in state
+    const refreshedState = newStore.getState().auth;
+    expect(refreshedState).toEqual({
+      isAuthenticated: true,
+      user: testUser
+    });
+    // Token should not be present in the state
+    expect('token' in refreshedState).toBe(false);
   });
 });
