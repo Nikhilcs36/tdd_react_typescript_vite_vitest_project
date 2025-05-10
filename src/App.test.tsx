@@ -9,7 +9,7 @@ import {
 import App, { AppContent } from "./App";
 import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
-import store from "./store";
+import store, { createStore } from "./store";
 import { loginSuccess, logout } from "./store/authSlice";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -477,5 +477,31 @@ describe("Authentication navbar visible", () => {
         expect(screen.queryByTestId("my-profile-link")).not.toBeInTheDocument();
       }
     );
+  });
+});
+
+// Update the test for Redux store persistence
+describe("Redux store persistence", () => {
+  it("loads auth state from localStorage on store creation", () => {
+    // Clear any existing state
+    store.dispatch(logout());
+    localStorage.clear();
+
+    // Set up mock auth state in localStorage (without token)
+    const mockAuthState = {
+      isAuthenticated: true,
+      user: { id: 5, username: "persistedUser" },
+      // No token here
+    };
+    localStorage.setItem("authState", JSON.stringify(mockAuthState));
+
+    // Create a new store, which should load from localStorage
+    const newStore = createStore();
+
+    // Check if the auth state was loaded correctly
+    const loadedAuthState = newStore.getState().auth;
+    expect(loadedAuthState.isAuthenticated).toBe(true);
+    expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser" });
+    // No assertion for token since it's not stored
   });
 });

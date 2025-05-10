@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -11,12 +11,17 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
-    loginSuccess: (state, action: PayloadAction<{ id: number; username: string }>) => {
+    // Update loginSuccess to accept token but not store it in state
+    loginSuccess: (
+      state,
+      action: PayloadAction<{ id: number; username: string; token?: string }>
+    ) => {
       state.isAuthenticated = true;
-      state.user = action.payload;
+      state.user = { id: action.payload.id, username: action.payload.username };
+      // Token is not stored in state
     },
     logout: (state) => {
       state.isAuthenticated = false;

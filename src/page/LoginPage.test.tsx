@@ -137,7 +137,7 @@ describe("Login Page", () => {
   describe("Functionality", () => {
     const validCredentials = {
       email: "user@example.com",
-      password: "ValidPass123",
+      password: "Password1", // Use the password from the MSW mock
     };
 
     it("enables button when form is valid", async () => {
@@ -149,7 +149,7 @@ describe("Login Page", () => {
     // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
     it("submits valid credentials (axios mock)", async () => {
       mockedAxios.post.mockResolvedValue({
-        data: { token: "test-token", username: "testuser" },
+        data: { id: 1, username: "testuser", token: "test-token" }, // Include id and token
       });
       renderWithProviders(
         <LoginPageWrapper apiService={axiosApiServiceLogin} />
@@ -190,7 +190,7 @@ describe("Login Page", () => {
     // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
     it("disables button during submission (unit test)", async () => {
       mockedAxios.post.mockResolvedValue({
-        data: { token: "test-token", username: "testuser" },
+        data: { id: 1, username: "testuser", token: "test-token" }, // Include id and token
       });
 
       renderWithProviders(
@@ -223,6 +223,30 @@ describe("Login Page", () => {
       await fillAndSubmitLoginForm(validCredentials);
       await waitFor(() => {
         expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+      });
+    });
+
+    // New test for local storage persistence on successful login
+    it("saves auth state to local storage on successful login (MSW)", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      // Perform successful login
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      // Wait for the state to be saved to local storage (via the store subscription)
+      await waitFor(() => {
+        const storedState = localStorage.getItem('authState');
+        expect(storedState).not.toBeNull();
+        const parsedState = JSON.parse(storedState!);
+        expect(parsedState.isAuthenticated).toBe(true);
+        expect(parsedState.user).toEqual({ id: 1, username: "user@example.com" });
+        // No assertion for token since it's not stored
+        expect(parsedState.token).toBeUndefined();
       });
     });
   });
@@ -334,7 +358,7 @@ describe("Login Page", () => {
 
       await fillAndSubmitLoginForm({
         email: "user@example.com",
-        password: "ValidPass123",
+        password: "Password1",
       });
 
       await waitFor(() => {
@@ -466,14 +490,14 @@ describe("Login Page", () => {
           await i18n.changeLanguage(lang);
         });
 
-        mockedAxios.post.mockResolvedValue({ data: { username: "testuser" } });
+        mockedAxios.post.mockResolvedValue({ data: { id: 1, username: "testuser", token: "test-token" } }); // Include id and token
         renderWithProviders(
           <LoginPageWrapper apiService={axiosApiServiceLogin} />
         );
 
         await fillAndSubmitLoginForm({
           email: "user@example.com",
-          password: "password",
+          password: "Password1",
         });
 
         expect(mockedAxios.post).toHaveBeenCalledWith(
@@ -523,6 +547,7 @@ describe("Login Page", () => {
       expect(state.auth.isAuthenticated).toBe(true);
       expect(state.auth.user?.id).toBe(1);
       expect(state.auth.user?.username).toBe("user@example.com");
+      // No assertion for token since it's not stored
     });
   });
 });
