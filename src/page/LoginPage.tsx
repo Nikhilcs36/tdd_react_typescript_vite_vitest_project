@@ -34,7 +34,7 @@ const ApiErrorMessage = tw.div`mb-4 p-3 text-red-700 bg-red-100 rounded text-cen
 interface LoginResponse {
   id: number;
   username: string;
-  token: string;
+  token: string; // Ensure token is expected in the response
 }
 
 interface ErrorResponse {
@@ -136,15 +136,17 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         }
       );
 
-      // Dispatch loginSuccess action with id and username
-      this.props.dispatch(loginSuccess({ id: response.id, username: response.username }));
+      // Dispatch loginSuccess action with id, username, AND token
+      this.props.dispatch(
+        loginSuccess({
+          id: response.id,
+          username: response.username,
+          token: response.token, // Include the token in the payload
+        })
+      );
 
       // Redirect using navigate prop
       this.props.navigate("/"); // Redirect to home page
-
-      // Optional: Keep localStorage for backward compatibility
-      // localStorage.setItem("authToken", response.token);
-      // localStorage.setItem("userId", response.id.toString());
     } catch (error) {
       const apiError = error as { response?: { data?: ErrorResponse } };
       this.setState({
@@ -219,13 +221,14 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
 }
 
 // Create a functional wrapper component to use hooks
-const LoginPageWrapper: React.FC<Omit<LoginPageProps, 'dispatch' | 'navigate'>> = (props) => {
+const LoginPageWrapper: React.FC<
+  Omit<LoginPageProps, "dispatch" | "navigate">
+> = (props) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   // Pass dispatch and navigate as props to the class component
   return <LoginPage {...props} dispatch={dispatch} navigate={navigate} />;
 };
-
 
 // Apply withTranslation to the wrapper component
 export default withTranslation()(LoginPageWrapper);
