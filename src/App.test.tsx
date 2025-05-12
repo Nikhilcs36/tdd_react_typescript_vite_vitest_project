@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   act,
   cleanup,
@@ -479,24 +479,67 @@ describe("Authentication navbar visible", () => {
       }
     );
   });
+
+  describe("Logout functionality", () => {
+    it("should show logout link when authenticated and clear auth state on click", async () => {
+      // Set up authenticated state
+      mockAuth(true, { id: 1, username: "user1" });
+      setup("/", "en");
+      
+      // Verify logout link is visible
+      const logoutLink = screen.getByTestId("logout-link");
+      expect(logoutLink).toBeInTheDocument();
+      
+      // Click logout link
+      await userEvent.click(logoutLink);
+      
+      // Verify auth state is cleared
+      await waitFor(() => {
+        const state = store.getState();
+        expect(state.auth.isAuthenticated).toBe(false);
+        expect(state.auth.user).toBeNull();
+      });
+      
+      // Verify auth links are now visible
+      await waitFor(() => {
+        expect(screen.getByTestId("signup-link")).toBeInTheDocument();
+        expect(screen.getByTestId("login-link")).toBeInTheDocument();
+      });
+      
+      // Verify profile link is hidden
+      expect(screen.queryByTestId("my-profile-link")).not.toBeInTheDocument();
+    });
+  });
 });
 
 // Update the test for Redux store persistence
 describe("Redux store persistence", () => {
-  it("loads auth state from localStorage on store creation", () => {
+  beforeEach(() => {
     // Clear any existing state
     store.dispatch(logout());
     localStorage.clear();
-
-    // Set up mock auth state in localStorage (without token)
-    const mockAuthState = {
-      isAuthenticated: true,
-      user: { id: 5, username: "persistedUser" },
-      // No token here
-    };
-    localStorage.setItem("authState", JSON.stringify(mockAuthState));
-
-    // Create a new store, which should load from localStorage
+    
+    // Reset mocks
+    vi.resetModules();
+    vi.clearAllMocks();
+  });
+  
+  it("loads auth state from localStorage on store creation", () => {
+    // Mock SecureLS to return a specific value
+    vi.mock('secure-ls', () => {
+      return {
+        default: vi.fn().mockImplementation(() => ({
+          set: vi.fn(),
+          get: vi.fn().mockReturnValue({
+            isAuthenticated: true,
+            user: { id: 5, username: "persistedUser" }
+          }),
+          remove: vi.fn(),
+        })),
+      };
+    });
+    
+    // Create a new store, which should load from SecureLS
     const newStore = createStore();
 
     // Check if the auth state was loaded correctly

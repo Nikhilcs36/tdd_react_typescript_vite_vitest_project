@@ -16,6 +16,7 @@ import {
 import tw from "twin.macro";
 import { Provider, useSelector } from "react-redux";
 import store, { RootState } from "./store";
+import { logout } from "./store/authSlice";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -65,9 +66,22 @@ export const AppContent = () => {
         <NavRight>
           {/* Use isAuthenticated from Redux */}
           {isAuthenticated ? (
-            <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
-              {t("myProfile")}
-            </NavLink>
+            <>
+              <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
+                {t("myProfile")}
+              </NavLink>
+              <NavLink 
+                to="/" 
+                data-testid="logout-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Dispatch logout action
+                  store.dispatch(logout());
+                }}
+              >
+                {t("logout")}
+              </NavLink>
+            </>
           ) : (
             <>
               <NavLink to="/signup" data-testid="signup-link">

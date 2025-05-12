@@ -59,6 +59,7 @@ i18n.use(initReactI18next).init({
             generic: "An unexpected error occurred."
           },
         },
+        logout: "Logout",
       },
     },
     ml: {
@@ -112,6 +113,7 @@ i18n.use(initReactI18next).init({
             generic: "ഒരു അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു."
           },
         },
+        logout: "ലോഗ്ഔട്ട്",
       },
     },
     ar: {
@@ -165,6 +167,7 @@ i18n.use(initReactI18next).init({
             generic: "حدث خطأ غير متوقع."
           },
         },
+        logout: "تسجيل الخروج",
       },
     },
   },
