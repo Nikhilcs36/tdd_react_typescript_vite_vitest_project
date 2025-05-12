@@ -1,38 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { mockSecureLS, resetSecureLSMock } from '../tests/mocks/secureLsMock';
+import createSecureLSMock from '../tests/mocks/secureLsMockFactory';
+
+// Mock secure-ls before importing the modules that use it
+vi.mock('secure-ls', () => createSecureLSMock(mockSecureLS));
+
+// Import modules that use secure-ls after the mock is set up
 import { createStore } from './index';
 import { loginSuccess, logout } from './authSlice';
 
-// Use vi.hoisted to ensure these variables are defined before the mock is used
-const mockData = vi.hoisted(() => ({
-  setCalls: [] as { key: string; value: any }[],
-  removeCalls: [] as string[],
-  getReturnValue: undefined as any
-}));
-
-// Mock the secure-ls module
-vi.mock('secure-ls', () => {
-  return {
-    default: vi.fn().mockImplementation(() => ({
-      set: vi.fn().mockImplementation((key, value) => {
-        mockData.setCalls.push({ key, value });
-      }),
-      get: vi.fn().mockImplementation((_key) => {
-        return mockData.getReturnValue;
-      }),
-      remove: vi.fn().mockImplementation((key) => {
-        mockData.removeCalls.push(key);
-      }),
-    })),
-  };
-});
-
 describe('Store with SecureLS', () => {
   beforeEach(() => {
-    // Clear mock data between tests
-    mockData.setCalls = [];
-    mockData.removeCalls = [];
-    mockData.getReturnValue = undefined;
-    vi.clearAllMocks();
+    // Reset mock data between tests
+    resetSecureLSMock();
   });
 
   it('should use SecureLS to store auth state', () => {
@@ -43,8 +23,8 @@ describe('Store with SecureLS', () => {
     store.dispatch(loginSuccess(testUser));
     
     // Verify SecureLS.set was called with correct data
-    expect(mockData.setCalls.length).toBeGreaterThan(0);
-    const lastCall = mockData.setCalls[mockData.setCalls.length - 1];
+    expect(mockSecureLS.setCalls.length).toBeGreaterThan(0);
+    const lastCall = mockSecureLS.setCalls[mockSecureLS.setCalls.length - 1];
     expect(lastCall.key).toBe('authState');
     expect(lastCall.value).toMatchObject({
       isAuthenticated: true,
@@ -54,7 +34,7 @@ describe('Store with SecureLS', () => {
 
   it('should load auth state from SecureLS on store creation', () => {
     // Setup mock return value for SecureLS.get
-    mockData.getReturnValue = {
+    mockSecureLS.getReturnValue = {
       isAuthenticated: true,
       user: { id: 5, username: 'persistedUser' }
     };
@@ -75,9 +55,13 @@ describe('Store with SecureLS', () => {
     store.dispatch(logout());
     
     // Verify SecureLS.remove was called
-    expect(mockData.removeCalls).toContain('authState');
+    expect(mockSecureLS.removeCalls).toContain('authState');
   });
 });
+
+
+
+
 
 
 
