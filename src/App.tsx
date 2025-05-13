@@ -16,6 +16,7 @@ import {
 import tw from "twin.macro";
 import { Provider, useSelector } from "react-redux";
 import store, { RootState } from "./store";
+import { logout } from "./store/authSlice";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -51,7 +52,9 @@ const Content = tw.div`
 export const AppContent = () => {
   const { t } = useTranslation();
   // Use useSelector to get authentication state and user from Redux store
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
   const user = useSelector((state: RootState) => state.auth.user); // Get the user object
 
   return (
@@ -65,9 +68,22 @@ export const AppContent = () => {
         <NavRight>
           {/* Use isAuthenticated from Redux */}
           {isAuthenticated ? (
-            <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
-              {t("myProfile")}
-            </NavLink>
+            <>
+              <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
+                {t("myProfile")}
+              </NavLink>
+              <NavLink
+                to="/"
+                data-testid="logout-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Dispatch logout action
+                  store.dispatch(logout());
+                }}
+              >
+                {t("logout")}
+              </NavLink>
+            </>
           ) : (
             <>
               <NavLink to="/signup" data-testid="signup-link">

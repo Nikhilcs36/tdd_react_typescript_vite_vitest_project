@@ -56,9 +56,10 @@ i18n.use(initReactI18next).init({
             email_required: "Email is required.",
             email_invalid: "Enter a valid email address.",
             password_required: "Password is required.",
-            generic: "An unexpected error occurred."
+            generic: "An unexpected error occurred.",
           },
         },
+        logout: "Logout",
       },
     },
     ml: {
@@ -109,15 +110,16 @@ i18n.use(initReactI18next).init({
             email_required: "ഇമെയിൽ ആവശ്യമാണ്.",
             email_invalid: "സാധുവായ ഇമെയിൽ വിലാസം നൽകുക.",
             password_required: "പാസ്‌വേഡ് ആവശ്യമാണ്.",
-            generic: "ഒരു അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു."
+            generic: "ഒരു അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു.",
           },
         },
+        logout: "ലോഗ്ഔട്ട്",
       },
     },
     ar: {
       // Arabic (RTL)
       translation: {
-        home: "الرئيسية", 
+        home: "الرئيسية",
         myProfile: "ملفي",
         signup: {
           title: "تسجيل حساب جديد",
@@ -162,9 +164,10 @@ i18n.use(initReactI18next).init({
             email_required: "يرجى إدخال البريد الإلكتروني.",
             email_invalid: "يرجى إدخال بريد إلكتروني صحيح.",
             password_required: "يرجى إدخال كلمة المرور.",
-            generic: "حدث خطأ غير متوقع."
+            generic: "حدث خطأ غير متوقع.",
           },
         },
+        logout: "تسجيل الخروج",
       },
     },
   },

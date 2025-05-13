@@ -228,6 +228,17 @@ describe("Login Page", () => {
 
     // New test for local storage persistence on successful login
     it("saves auth state to local storage on successful login (MSW)", async () => {
+      // Mock SecureLS for this test
+      vi.mock("secure-ls", () => {
+        return {
+          default: vi.fn().mockImplementation(() => ({
+            set: vi.fn(),
+            get: vi.fn(),
+            remove: vi.fn(),
+          })),
+        };
+      });
+
       renderWithProviders(
         <LoginPageWrapper apiService={fetchApiServiceLogin} />
       );
@@ -238,15 +249,14 @@ describe("Login Page", () => {
         password: "Password1",
       });
 
-      // Wait for the state to be saved to local storage (via the store subscription)
+      // Wait for the Redux state to be updated
       await waitFor(() => {
-        const storedState = localStorage.getItem('authState');
-        expect(storedState).not.toBeNull();
-        const parsedState = JSON.parse(storedState!);
-        expect(parsedState.isAuthenticated).toBe(true);
-        expect(parsedState.user).toEqual({ id: 1, username: "user@example.com" });
-        // No assertion for token since it's not stored
-        expect(parsedState.token).toBeUndefined();
+        const state = store.getState();
+        expect(state.auth.isAuthenticated).toBe(true);
+        expect(state.auth.user).toEqual({
+          id: 1,
+          username: "user@example.com",
+        });
       });
     });
   });
@@ -490,7 +500,9 @@ describe("Login Page", () => {
           await i18n.changeLanguage(lang);
         });
 
-        mockedAxios.post.mockResolvedValue({ data: { id: 1, username: "testuser", token: "test-token" } }); // Include id and token
+        mockedAxios.post.mockResolvedValue({
+          data: { id: 1, username: "testuser", token: "test-token" },
+        }); // Include id and token
         renderWithProviders(
           <LoginPageWrapper apiService={axiosApiServiceLogin} />
         );

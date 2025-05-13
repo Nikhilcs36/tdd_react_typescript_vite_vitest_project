@@ -1,4 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import SecureLS from "secure-ls";
+
+// Initialize SecureLS
+const secureLS = new SecureLS({ encodingType: "aes" });
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -26,6 +30,8 @@ const authSlice = createSlice({
     logout: (state) => {
       state.isAuthenticated = false;
       state.user = null;
+      // Clear auth data from SecureLS
+      secureLS.remove("authState");
     },
   },
 });
