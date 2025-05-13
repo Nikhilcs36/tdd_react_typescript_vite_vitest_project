@@ -3,7 +3,7 @@ import authReducer from "./authSlice";
 import SecureLS from "secure-ls";
 
 // Initialize SecureLS
-const secureLS = new SecureLS({ encodingType: 'aes' });
+const secureLS = new SecureLS({ encodingType: "aes" });
 
 // Function to load state from SecureLS
 const loadState = () => {

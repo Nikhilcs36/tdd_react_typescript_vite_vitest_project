@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import SecureLS from "secure-ls";
 
 // Initialize SecureLS
-const secureLS = new SecureLS({ encodingType: 'aes' });
+const secureLS = new SecureLS({ encodingType: "aes" });
 
 interface AuthState {
   isAuthenticated: boolean;

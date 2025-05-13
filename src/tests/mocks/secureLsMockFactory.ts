@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 // This file only contains the factory function for creating the mock
 // It doesn't import or reference any other modules to avoid circular dependencies

@@ -52,7 +52,9 @@ const Content = tw.div`
 export const AppContent = () => {
   const { t } = useTranslation();
   // Use useSelector to get authentication state and user from Redux store
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
   const user = useSelector((state: RootState) => state.auth.user); // Get the user object
 
   return (
@@ -70,8 +72,8 @@ export const AppContent = () => {
               <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
                 {t("myProfile")}
               </NavLink>
-              <NavLink 
-                to="/" 
+              <NavLink
+                to="/"
                 data-testid="logout-link"
                 onClick={(e) => {
                   e.preventDefault();

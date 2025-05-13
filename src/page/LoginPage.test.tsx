@@ -229,7 +229,7 @@ describe("Login Page", () => {
     // New test for local storage persistence on successful login
     it("saves auth state to local storage on successful login (MSW)", async () => {
       // Mock SecureLS for this test
-      vi.mock('secure-ls', () => {
+      vi.mock("secure-ls", () => {
         return {
           default: vi.fn().mockImplementation(() => ({
             set: vi.fn(),
@@ -238,7 +238,7 @@ describe("Login Page", () => {
           })),
         };
       });
-      
+
       renderWithProviders(
         <LoginPageWrapper apiService={fetchApiServiceLogin} />
       );
@@ -253,7 +253,10 @@ describe("Login Page", () => {
       await waitFor(() => {
         const state = store.getState();
         expect(state.auth.isAuthenticated).toBe(true);
-        expect(state.auth.user).toEqual({ id: 1, username: "user@example.com" });
+        expect(state.auth.user).toEqual({
+          id: 1,
+          username: "user@example.com",
+        });
       });
     });
   });
@@ -497,7 +500,9 @@ describe("Login Page", () => {
           await i18n.changeLanguage(lang);
         });
 
-        mockedAxios.post.mockResolvedValue({ data: { id: 1, username: "testuser", token: "test-token" } }); // Include id and token
+        mockedAxios.post.mockResolvedValue({
+          data: { id: 1, username: "testuser", token: "test-token" },
+        }); // Include id and token
         renderWithProviders(
           <LoginPageWrapper apiService={axiosApiServiceLogin} />
         );
