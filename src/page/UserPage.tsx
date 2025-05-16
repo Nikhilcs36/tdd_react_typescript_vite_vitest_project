@@ -7,6 +7,7 @@ import { connect } from "react-redux";
 import { loginSuccess } from "../store/authSlice";
 import { UserUpdateRequestBody, validateUserUpdate } from "../utils/validationRules";
 import { AppDispatch } from "../store";
+import { withTranslation, WithTranslation } from "react-i18next";
 
 const PageContainer = tw.div`p-4 max-w-2xl mx-auto`;
 const SpinnerContainer = tw.div`text-center py-8`;
@@ -27,7 +28,7 @@ const Input = tw.input`p-2 border border-gray-300 rounded focus:outline-none foc
 const ErrorMessage = tw.div`text-red-600 text-sm mt-1`;
 const ButtonContainer = tw.div`flex flex-col mt-4`;
 
-interface UserPageProps {
+interface UserPageProps extends WithTranslation {
   id: string;
   ApiGetService: ApiGetService;
   ApiPutService?: ApiPutService<UserUpdateRequestBody>;
@@ -101,8 +102,8 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       const user = await this.props.ApiGetService.get<User>(
         `/api/1.0/users/${this.props.id}`
       );
-      this.setState({ 
-        user, 
+      this.setState({
+        user,
         loading: false,
         // Initialize edit form with user data
         editForm: {
@@ -112,8 +113,17 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         }
       });
     } catch (error: any) {
+      // Check if the error message is one of our known error keys
+      const errorMessage = error.response?.data?.message || error.message;
+      const translatedError =
+        errorMessage === "User not found" ?
+          this.props.t("profile.errors.userNotFound") :
+        errorMessage === "Update failed" ?
+          this.props.t("profile.errors.updateFailed") :
+          errorMessage;
+
       this.setState({
-        error: error.response?.data?.message || error.message,
+        error: translatedError,
         loading: false,
       });
     }
@@ -123,11 +133,11 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   isOwnProfile = (): boolean => {
     const { auth } = this.props;
     const { user } = this.state;
-    
+
     if (!auth?.isAuthenticated || !auth.user || !user) {
       return false;
     }
-    
+
     // Ensure we're comparing numbers, not strings
     return Number(auth.user.id) === Number(user.id);
   };
@@ -153,7 +163,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   // Update handleInputChange to validate on each change
   handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     this.setState((prevState) => ({
       editForm: {
         ...prevState.editForm,
@@ -172,7 +182,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       ...editForm,
       [fieldName]: value
     });
-    
+
     this.setState((prevState) => ({
       validationErrors: {
         ...prevState.validationErrors,
@@ -185,9 +195,9 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   validateForm = (): boolean => {
     const { editForm } = this.state;
     const validationErrors = validateUserUpdate(editForm);
-    
+
     this.setState({ validationErrors });
-    
+
     return Object.keys(validationErrors).length === 0;
   };
 
@@ -216,7 +226,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         user: response,
         isSubmitting: false,
         isEditing: false,
-        successMessage: "Profile updated successfully",
+        successMessage: this.props.t("profile.successMessage"),
       });
 
       // Update Redux store if the updated user is the current logged-in user
@@ -237,8 +247,17 @@ class UserPage extends Component<UserPageProps, UserPageState> {
           isSubmitting: false,
         });
       } else {
+        // Check if the error message is one of our known error keys
+        const errorMessage = error.response?.data?.message || error.message;
+        const translatedError =
+          errorMessage === "User not found" ?
+            this.props.t("profile.errors.userNotFound") :
+          errorMessage === "Update failed" ?
+            this.props.t("profile.errors.updateFailed") :
+            errorMessage;
+
         this.setState({
-          error: error.response?.data?.message || error.message,
+          error: translatedError,
           isSubmitting: false,
         });
       }
@@ -247,17 +266,19 @@ class UserPage extends Component<UserPageProps, UserPageState> {
 
   renderEditForm() {
     const { editForm, isSubmitting, validationErrors } = this.state;
+    const { t } = this.props;
 
     return (
       <FormContainer data-testid="edit-profile-form" onSubmit={this.handleSubmit}>
         <FormGroup>
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="username">{t("profile.username")}</Label>
           <Input
             id="username"
             name="username"
             value={editForm.username}
             onChange={this.handleInputChange}
             disabled={isSubmitting}
+            data-testid="username-input"
           />
           {validationErrors.username && (
             <ErrorMessage data-testid="username-error">
@@ -267,7 +288,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         </FormGroup>
 
         <FormGroup>
-          <Label htmlFor="email">E-mail</Label>
+          <Label htmlFor="email">{t("profile.email")}</Label>
           <Input
             id="email"
             name="email"
@@ -275,6 +296,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
             value={editForm.email}
             onChange={this.handleInputChange}
             disabled={isSubmitting}
+            data-testid="email-input"
           />
           {validationErrors.email && (
             <ErrorMessage data-testid="email-error">
@@ -284,7 +306,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         </FormGroup>
 
         <FormGroup>
-          <Label htmlFor="image">Profile Image URL</Label>
+          <Label htmlFor="image">{t("profile.imageUrl")}</Label>
           <Input
             id="image"
             name="image"
@@ -292,6 +314,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
             onChange={this.handleInputChange}
             disabled={isSubmitting}
             placeholder="https://example.com/image.jpg"
+            data-testid="image-input"
           />
           {validationErrors.image && (
             <ErrorMessage data-testid="image-error">
@@ -301,20 +324,20 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         </FormGroup>
 
         <ButtonContainer>
-          <SaveButton 
-            type="submit" 
+          <SaveButton
+            type="submit"
             disabled={isSubmitting}
             data-testid="save-profile-button"
           >
-            {isSubmitting ? "Saving..." : "Save Changes"}
+            {isSubmitting ? t("profile.saving") : t("profile.saveChanges")}
           </SaveButton>
-          <CancelButton 
-            type="button" 
+          <CancelButton
+            type="button"
             onClick={this.toggleEditMode}
             disabled={isSubmitting}
             data-testid="cancel-edit-button"
           >
-            Cancel
+            {t("profile.cancel")}
           </CancelButton>
         </ButtonContainer>
       </FormContainer>
@@ -323,6 +346,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
 
   renderProfileCard() {
     const { user } = this.state;
+    const { t } = this.props;
     if (!user) return null;
 
     return (
@@ -334,13 +358,13 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         />
         <ProfileName data-testid="username">{user.username}</ProfileName>
         <ProfileEmail data-testid="email">{user.email}</ProfileEmail>
-        
+
         {this.isOwnProfile() && (
-          <EditButton 
+          <EditButton
             onClick={this.toggleEditMode}
             data-testid="edit-profile-button"
           >
-            Edit Profile
+            {t("profile.editProfile")}
           </EditButton>
         )}
       </ProfileCardContainer>
@@ -388,10 +412,14 @@ const mapStateToProps = (state: { auth: UserPageProps['auth'] }) => ({
   auth: state.auth,
 });
 
-const ConnectedUserPage = connect(mapStateToProps)(UserPage);
+// Apply withTranslation to the component
+const TranslatedUserPage = withTranslation()(UserPage);
+
+// Connect to Redux store
+const ConnectedUserPage = connect(mapStateToProps)(TranslatedUserPage);
 
 // Functional wrapper for routing
-export const UserPageWrapper = (props: { 
+export const UserPageWrapper = (props: {
   ApiGetService: ApiGetService,
   ApiPutService?: ApiPutService<UserUpdateRequestBody>
 }) => {
