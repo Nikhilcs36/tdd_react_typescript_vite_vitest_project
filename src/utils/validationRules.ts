@@ -10,6 +10,12 @@ export type LoginRequestBody = {
   password: string;
 };
 
+export type UserUpdateRequestBody = {
+  username: string;
+  email: string;
+  image?: string;
+};
+
 export const validateSignUp = (
   body: SignUpRequestBody
 ): Record<string, string> => {
@@ -67,5 +73,35 @@ export const validateLogin = (values: LoginRequestBody) => {
     errors.password = "password_required";
   }
 
+  return errors;
+};
+
+/**
+ * Validates user profile update data
+ * @param body - The user update request body
+ * @returns Object containing validation errors, if any
+ */
+export const validateUserUpdate = (
+  body: UserUpdateRequestBody
+): Record<string, string> => {
+  const errors: Record<string, string> = {};
+  
+  // Validate username - similar to validateSignUp
+  if (!body.username) {
+    errors.username = "Username cannot be null";
+  } else if (body.username.length < 4 || body.username.length > 32) {
+    errors.username = "Must have min 4 and max 32 characters";
+  }
+  
+  // Validate email - similar to validateSignUp
+  if (!body.email) {
+    errors.email = "E-mail cannot be null";
+  } else if (!/\S+@\S+\.\S+/.test(body.email)) {
+    errors.email = "E-mail is not valid";
+  }
+  
+  // Image URL validation removed - now accepts any format
+  // The image field is optional, so we only need to validate if it's provided
+  
   return errors;
 };

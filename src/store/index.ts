@@ -18,12 +18,13 @@ const loadState = () => {
 // Function to save state to SecureLS
 const saveState = (state: any) => {
   try {
-    // Only store non-sensitive information
+    // Store auth state including token
     const stateToSave = {
       isAuthenticated: state.isAuthenticated,
       user: state.user
         ? { id: state.user.id, username: state.user.username }
         : null,
+      token: state.token, // Save token to SecureLS
     };
     secureLS.set("authState", stateToSave);
   } catch (err) {

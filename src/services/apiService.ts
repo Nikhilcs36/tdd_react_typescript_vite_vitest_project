@@ -1,9 +1,14 @@
 import axios from "axios";
 import i18n from "../locale/i18n";
-import { LoginRequestBody, SignUpRequestBody } from "../utils/validationRules";
+import { LoginRequestBody, SignUpRequestBody, UserUpdateRequestBody } from "../utils/validationRules";
+import store from "../store";
 
 export interface ApiService<T = Record<string, any>> {
   post: <R>(url: string, body?: T) => Promise<R>;
+}
+
+export interface ApiPutService<T = Record<string, any>> {
+  put: <R>(url: string, body?: T) => Promise<R>;
 }
 
 export interface ApiGetService {
@@ -160,5 +165,52 @@ export const fetchApiServiceLogin: ApiService<LoginRequestBody> = {
     }
 
     return responseData as R;
+  },
+};
+
+// Axios implementation for user profile update
+export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
+  put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
+    // Get token from Redux store
+    const token = store.getState().auth.token;
+    
+    const response = await axios.put(url, body, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': i18n.language,
+        'Authorization': token ? `Bearer ${token}` : undefined
+      }
+    });
+    
+    return response.data;
+  }
+};
+
+// Fetch implementation for user profile update (for MSW testing)
+export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
+  put: async <T>(url: string, body?: UserUpdateRequestBody) => {
+    // Get token from Redux store
+    const token = store.getState().auth.token;
+    
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
+    
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": i18n.language,
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+    
+    return response.json() as T;
   },
 };
