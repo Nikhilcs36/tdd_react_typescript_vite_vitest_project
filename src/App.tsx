@@ -12,6 +12,7 @@ import {
   axiosApiServiceGetUser,
   axiosApiServiceLogin,
   axiosApiServiceSignUp,
+  axiosApiServiceUpdateUser
 } from "./services/apiService";
 import tw from "twin.macro";
 import { Provider, useSelector } from "react-redux";
@@ -109,7 +110,10 @@ export const AppContent = () => {
           />
           <Route
             path="/user/:id"
-            element={<UserPageWrapper ApiGetService={axiosApiServiceGetUser} />}
+            element={<UserPageWrapper 
+              ApiGetService={axiosApiServiceGetUser} 
+              ApiPutService={axiosApiServiceUpdateUser}
+            />}
           />
           <Route
             path="/activate/:token"

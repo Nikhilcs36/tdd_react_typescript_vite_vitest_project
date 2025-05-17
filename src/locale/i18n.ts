@@ -60,6 +60,20 @@ i18n.use(initReactI18next).init({
           },
         },
         logout: "Logout",
+        profile: {
+          username: "Username",
+          email: "E-mail",
+          imageUrl: "Profile Image Path",
+          saving: "Saving...",
+          saveChanges: "Save Changes",
+          cancel: "Cancel",
+          editProfile: "Edit Profile",
+          successMessage: "Profile updated successfully",
+          errors: {
+            userNotFound: "User not found",
+            updateFailed: "Update failed"
+          }
+        },
       },
     },
     ml: {
@@ -114,6 +128,20 @@ i18n.use(initReactI18next).init({
           },
         },
         logout: "ലോഗ്ഔട്ട്",
+        profile: {
+          username: "ഉപയോക്തൃനാമം",
+          email: "ഇമെയിൽ",
+          imageUrl: "പ്രൊഫൈൽ ചിത്രത്തിന്റെ പാത്ത്",
+          saving: "സംരക്ഷിക്കുന്നു...",
+          saveChanges: "മാറ്റങ്ങൾ സംരക്ഷിക്കുക",
+          cancel: "റദ്ദാക്കുക",
+          editProfile: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക",
+          successMessage: "പ്രൊഫൈൽ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു",
+          errors: {
+            userNotFound: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
+            updateFailed: "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
+          }
+        },
       },
     },
     ar: {
@@ -168,6 +196,20 @@ i18n.use(initReactI18next).init({
           },
         },
         logout: "تسجيل الخروج",
+        profile: {
+          username: "اسم المستخدم",
+          email: "البريد الإلكتروني",
+          imageUrl: "مسار صورة الملف الشخصي",
+          saving: "جاري الحفظ...",
+          saveChanges: "حفظ",
+          cancel: "إلغاء",
+          editProfile: "تعديل الملف الشخصي",
+          successMessage: "تم تحديث الملف الشخصي بنجاح",
+          errors: {
+            userNotFound: "لم يتم العثور على المستخدم",
+            updateFailed: "فشل التحديث"
+          }
+        },
       },
     },
   },

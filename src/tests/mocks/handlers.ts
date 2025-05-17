@@ -2,8 +2,10 @@ import { http, HttpResponse } from "msw";
 import {
   LoginRequestBody,
   SignUpRequestBody,
+  UserUpdateRequestBody,
   validateLogin,
   validateSignUp,
+  validateUserUpdate
 } from "../../utils/validationRules";
 
 // Mock API for userlist page(msw)
@@ -197,6 +199,65 @@ export const handlers = [
         token: "mock-jwt-token",
         languageReceived: acceptLanguage,
       },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for user profile update (msw) ----(6)
+  http.put("/api/1.0/users/:id", async ({ request, params }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const authHeader = request.headers.get("Authorization");
+    const { id } = params;
+    
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return HttpResponse.json(
+        { 
+          path: `/api/1.0/users/${id}`,
+          timestamp: Date.now(),
+          message: "You are not authorized to update user" 
+        },
+        { status: 403 }
+      );
+    }
+    
+    // Parse request body
+    const body = (await request.json()) as UserUpdateRequestBody;
+    
+    // Use the centralized validation function from utils/validationRules
+    const validationErrors = validateUserUpdate(body);
+    if (Object.keys(validationErrors).length > 0) {
+      return HttpResponse.json(
+        {
+          message: "Validation Failure",
+          validationErrors,
+          languageReceived: acceptLanguage,
+        },
+        { status: 400 }
+      );
+    }
+    
+    // Find user in mock data
+    const user = page1.content.find((u) => u.id === Number(id));
+    
+    if (!user) {
+      return HttpResponse.json(
+        { message: "User not found", languageReceived: acceptLanguage },
+        { status: 404 }
+      );
+    }
+    
+    // Update user data (in a real app, this would update the database)
+    const updatedUser = {
+      ...user,
+      username: body.username,
+      email: body.email,
+      image: body.image || null,
+    };
+    
+    // Return updated user
+    return HttpResponse.json(
+      { ...updatedUser, languageReceived: acceptLanguage },
       { status: 200 }
     );
   }),
