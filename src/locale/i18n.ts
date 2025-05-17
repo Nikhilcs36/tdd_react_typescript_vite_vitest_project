@@ -63,7 +63,7 @@ i18n.use(initReactI18next).init({
         profile: {
           username: "Username",
           email: "E-mail",
-          imageUrl: "Profile Image URL",
+          imageUrl: "Profile Image Path",
           saving: "Saving...",
           saveChanges: "Save Changes",
           cancel: "Cancel",
@@ -131,7 +131,7 @@ i18n.use(initReactI18next).init({
         profile: {
           username: "ഉപയോക്തൃനാമം",
           email: "ഇമെയിൽ",
-          imageUrl: "പ്രൊഫൈൽ ചിത്രത്തിന്റെ URL",
+          imageUrl: "പ്രൊഫൈൽ ചിത്രത്തിന്റെ പാത്ത്",
           saving: "സംരക്ഷിക്കുന്നു...",
           saveChanges: "മാറ്റങ്ങൾ സംരക്ഷിക്കുക",
           cancel: "റദ്ദാക്കുക",
@@ -199,7 +199,7 @@ i18n.use(initReactI18next).init({
         profile: {
           username: "اسم المستخدم",
           email: "البريد الإلكتروني",
-          imageUrl: "رابط صورة الملف الشخصي",
+          imageUrl: "مسار صورة الملف الشخصي",
           saving: "جاري الحفظ...",
           saveChanges: "حفظ",
           cancel: "إلغاء",

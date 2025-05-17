@@ -195,7 +195,7 @@ describe("UserPage", () => {
           cancel: "Cancel",
           username: "Username",
           email: "E-mail",
-          imageUrl: "Profile Image URL",
+          imageUrl: "Profile Image Path",
           error: "User not found",
           updateError: "Update failed",
           success: "Profile updated successfully"
@@ -210,7 +210,7 @@ describe("UserPage", () => {
           cancel: "റദ്ദാക്കുക",
           username: "ഉപയോക്തൃനാമം",
           email: "ഇമെയിൽ",
-          imageUrl: "പ്രൊഫൈൽ ചിത്രത്തിന്റെ URL",
+          imageUrl: "പ്രൊഫൈൽ ചിത്രത്തിന്റെ പാത്ത്",
           error: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
           updateError: "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
           success: "പ്രൊഫൈൽ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു"
@@ -225,7 +225,7 @@ describe("UserPage", () => {
           cancel: "إلغاء",
           username: "اسم المستخدم",
           email: "البريد الإلكتروني",
-          imageUrl: "رابط صورة الملف الشخصي",
+          imageUrl: "مسار صورة الملف الشخصي",
           error: "لم يتم العثور على المستخدم",
           updateError: "فشل التحديث",
           success: "تم تحديث الملف الشخصي بنجاح"
