@@ -342,4 +342,37 @@ describe("UserPage", () => {
       });
     });
   });
+
+  describe("Edit Form Cancellation", () => {
+    it("reverts changes and exits edit mode when cancel button is clicked", async () => {
+      const { userData } = await setup();
+      
+      // Wait for user data to load
+      await waitFor(() => expect(screen.getByTestId("username")).toHaveTextContent(userData.username));
+      
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+      
+      // Make changes to the form
+      fireEvent.change(screen.getByTestId("username-input"), { 
+        target: { value: "changedusername" } 
+      });
+      fireEvent.change(screen.getByTestId("email-input"), { 
+        target: { value: "changed@example.com" } 
+      });
+      
+      // Click cancel button
+      fireEvent.click(screen.getByTestId("cancel-edit-button"));
+      
+      // Verify edit mode is exited (edit form is no longer displayed)
+      expect(screen.queryByTestId("edit-profile-form")).not.toBeInTheDocument();
+      
+      // Verify profile card is displayed with original data
+      expect(screen.getByTestId("username")).toHaveTextContent(userData.username);
+      expect(screen.getByTestId("email")).toHaveTextContent(userData.email);
+      
+      // Verify edit button is displayed again
+      expect(screen.getByTestId("edit-profile-button")).toBeInTheDocument();
+    });
+  });
 });
