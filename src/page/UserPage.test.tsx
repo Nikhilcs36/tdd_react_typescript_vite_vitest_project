@@ -319,4 +319,27 @@ describe("UserPage", () => {
       expect(document.documentElement.dir).toBe(direction);
     });
   });
+
+  describe("Profile Update", () => {
+    it("displays success message after successful profile update", async () => {
+      const { mockPut: _ } = await setup();
+      
+      // Wait for user data to load
+      await waitFor(() => expect(screen.getByTestId("username")).toBeInTheDocument());
+      
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+      
+      // Make a change and submit the form
+      fireEvent.change(screen.getByTestId("username-input"), { 
+        target: { value: "updateduser" } 
+      });
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+      
+      // Verify success message is displayed
+      await waitFor(() => {
+        expect(screen.getByTestId("success-message")).toHaveTextContent("Profile updated successfully");
+      });
+    });
+  });
 });
