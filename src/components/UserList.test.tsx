@@ -14,6 +14,9 @@ import UserListWithRouter from "./UserList";
 import defaultProfileImage from "../assets/profile.png";
 import i18n from "../locale/i18n";
 import { createUserListHandler } from "../tests/testUtils";
+import { Provider } from "react-redux";
+import store from "../store";
+import { loginSuccess, logout } from "../store/authSlice";
 
 // Mock axios API call
 vi.mock("axios");
@@ -500,6 +503,301 @@ describe("User List", () => {
           await expectEnabled(nextButton);
         });
       });
+    });
+  });
+
+  describe("Authorization Headers", () => {
+    beforeEach(() => {
+      // Reset auth state before each test
+      store.dispatch(logout());
+    });
+
+    it("should include Authorization header when user is authenticated (axios)", async () => {
+      // Setup authenticated user on the default store
+      store.dispatch(
+        loginSuccess({
+          id: 1,
+          username: "testuser",
+          token: "test-jwt-token",
+        })
+      );
+
+      // Mock axios to capture the request
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          content: [{ id: 1, username: "user1", email: "user1@example.com" }],
+          page: 0,
+          size: 3,
+          totalPages: 1,
+        },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter>
+            <UserList ApiGetService={axiosApiServiceLoadUserList} />
+          </MemoryRouter>
+        </Provider>
+      );
+
+      await screen.findByText("user1");
+
+      // Verify axios was called with Authorization header
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        "/api/1.0/users?page=0&size=3",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer test-jwt-token",
+            "Accept-Language": expect.any(String),
+          }),
+        })
+      );
+    });
+
+    it("should include Authorization header when user is authenticated (fetch)", async () => {
+      // Setup authenticated user on the default store
+      store.dispatch(
+        loginSuccess({
+          id: 1,
+          username: "testuser",
+          token: "test-jwt-token",
+        })
+      );
+
+      // Setup MSW handler to capture authorization header
+      let capturedAuthHeader: string | null = null;
+      let capturedLanguageHeader: string | null = null;
+      server.use(
+        http.get("/api/1.0/users", async ({ request }) => {
+          capturedAuthHeader = request.headers.get("Authorization");
+          capturedLanguageHeader = request.headers.get("Accept-Language");
+          return HttpResponse.json({
+            content: [{ id: 1, username: "user1", email: "user1@example.com" }],
+            page: 0,
+            size: 3,
+            totalPages: 1,
+          });
+        })
+      );
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter>
+            <UserList ApiGetService={fetchApiServiceLoadUserList} />
+          </MemoryRouter>
+        </Provider>
+      );
+
+      await screen.findByText("user1");
+
+      // Verify Authorization header was sent
+      expect(capturedAuthHeader).toBe("Bearer test-jwt-token");
+      expect(capturedLanguageHeader).toBeDefined();
+    });
+
+    it("should not include Authorization header when user is not authenticated (axios)", async () => {
+      // No authentication setup - user remains unauthenticated (logout already called in beforeEach)
+
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          content: [{ id: 1, username: "user1", email: "user1@example.com" }],
+          page: 0,
+          size: 3,
+          totalPages: 1,
+        },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter>
+            <UserList ApiGetService={axiosApiServiceLoadUserList} />
+          </MemoryRouter>
+        </Provider>
+      );
+
+      await screen.findByText("user1");
+
+      // Verify axios was called without Authorization header
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        "/api/1.0/users?page=0&size=3",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "Accept-Language": expect.any(String),
+          }),
+        })
+      );
+
+      // Verify Authorization header is not present
+      const callArgs = mockedAxios.get.mock.calls[0];
+      const headers = callArgs[1]?.headers;
+      expect(headers).not.toHaveProperty("Authorization");
+    });
+
+    it("should not include Authorization header when user is not authenticated (fetch)", async () => {
+      // No authentication setup - user remains unauthenticated (logout already called in beforeEach)
+
+      // Setup MSW handler to capture headers
+      let capturedAuthHeader: string | null = null;
+      let capturedLanguageHeader: string | null = null;
+      server.use(
+        http.get("/api/1.0/users", async ({ request }) => {
+          capturedAuthHeader = request.headers.get("Authorization");
+          capturedLanguageHeader = request.headers.get("Accept-Language");
+          return HttpResponse.json({
+            content: [{ id: 1, username: "user1", email: "user1@example.com" }],
+            page: 0,
+            size: 3,
+            totalPages: 1,
+          });
+        })
+      );
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter>
+            <UserList ApiGetService={fetchApiServiceLoadUserList} />
+          </MemoryRouter>
+        </Provider>
+      );
+
+      await screen.findByText("user1");
+
+      // Verify Authorization header was not sent
+      expect(capturedAuthHeader).toBeNull();
+      expect(capturedLanguageHeader).toBeDefined();
+    });
+  });
+
+  describe("Authenticated User Exclusion", () => {
+    beforeEach(() => {
+      // Reset auth state before each test
+      store.dispatch(logout());
+    });
+
+    it("should exclude authenticated user from user list (axios)", async () => {
+      // Setup authenticated user with ID 2 (user2 from mock data)
+      store.dispatch(
+        loginSuccess({
+          id: 2,
+          username: "user2",
+          token: "test-jwt-token",
+        })
+      );
+
+      // Mock axios to return filtered user list (excluding user2)
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          content: [
+            { id: 1, username: "user1", email: "user1@example.com" },
+            { id: 3, username: "user3", email: "user3@example.com" },
+            { id: 4, username: "user4", email: "user4@example.com" },
+          ],
+          page: 0,
+          size: 3,
+          totalPages: 2, // Adjusted for filtered list
+        },
+      });
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter>
+            <UserList ApiGetService={axiosApiServiceLoadUserList} />
+          </MemoryRouter>
+        </Provider>
+      );
+
+      // Verify user2 (authenticated user) is not displayed
+      expect(screen.queryByText("user2")).not.toBeInTheDocument();
+
+      // Verify other users are displayed
+      await screen.findByText("user1");
+      expect(screen.getByText("user3")).toBeInTheDocument();
+      expect(screen.getByText("user4")).toBeInTheDocument();
+    });
+
+    it("should exclude authenticated user from user list (fetch/MSW)", async () => {
+      // Setup authenticated user with ID 2 (user2 from mock data)
+      store.dispatch(
+        loginSuccess({
+          id: 2,
+          username: "user2",
+          token: "test-jwt-token",
+        })
+      );
+
+      // The MSW handler should automatically filter out the authenticated user
+      // based on the Authorization header containing user info
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter>
+            <UserList ApiGetService={fetchApiServiceLoadUserList} />
+          </MemoryRouter>
+        </Provider>
+      );
+
+      // Wait for the component to load
+      await waitFor(() => {
+        expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+      });
+
+      // Verify user2 (authenticated user) is not displayed
+      expect(screen.queryByText("user2")).not.toBeInTheDocument();
+
+      // Verify other users are displayed
+      expect(screen.getByText("user1")).toBeInTheDocument();
+      expect(screen.getByText("user3")).toBeInTheDocument();
+    });
+
+    it("should show all users when not authenticated (fetch/MSW)", async () => {
+      // No authentication setup - user remains unauthenticated
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter>
+            <UserList ApiGetService={fetchApiServiceLoadUserList} />
+          </MemoryRouter>
+        </Provider>
+      );
+
+      // Wait for the component to load
+      await waitFor(() => {
+        expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+      });
+
+      // Verify all users are displayed including user2
+      expect(screen.getByText("user1")).toBeInTheDocument();
+      expect(screen.getByText("user2")).toBeInTheDocument();
+      expect(screen.getByText("user3")).toBeInTheDocument();
+    });
+
+    it("should handle case when authenticated user is not in the current page", async () => {
+      // Setup authenticated user with ID 999 (not in mock data)
+      store.dispatch(
+        loginSuccess({
+          id: 999,
+          username: "authenticateduser",
+          token: "test-jwt-token",
+        })
+      );
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter>
+            <UserList ApiGetService={fetchApiServiceLoadUserList} />
+          </MemoryRouter>
+        </Provider>
+      );
+
+      // Wait for the component to load
+      await waitFor(() => {
+        expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+      });
+
+      // Verify all mock users are displayed (since authenticated user ID 999 is not in the list)
+      expect(screen.getByText("user1")).toBeInTheDocument();
+      expect(screen.getByText("user2")).toBeInTheDocument();
+      expect(screen.getByText("user3")).toBeInTheDocument();
     });
   });
 });

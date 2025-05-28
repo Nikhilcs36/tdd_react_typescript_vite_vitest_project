@@ -5,7 +5,7 @@ import {
   UserUpdateRequestBody,
   validateLogin,
   validateSignUp,
-  validateUserUpdate
+  validateUserUpdate,
 } from "../../utils/validationRules";
 
 // Mock API for userlist page(msw)
@@ -109,18 +109,35 @@ export const handlers = [
     );
   }),
 
-  // Mock API for userlist (msw) ----(3)
+  // Mock API for userlist (msw) - Authorization aware ----(3)
   http.get("/api/1.0/users", async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 0;
     const size = Number(url.searchParams.get("size")) || 3;
     const acceptLanguage = request.headers.get("Accept-Language");
+    const authHeader = request.headers.get("Authorization");
 
-    const allUsers = [
-      ...page1.content, // Keep existing users
-    ];
+    // For testing purposes, we'll return different user sets based on authentication
+    // In a real app, this would determine which users the authenticated user can see
+    let allUsers = [...page1.content]; // Default user list
 
-    // Apply slice on `page1.content`
+    // If authenticated, filter out the authenticated user from the list
+    // This simulates authorization-aware user listing where users don't see themselves
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      // Extract user ID from the custom header format: "Bearer <token>:userId:<id>"
+      // For testing, we'll use a simple approach where the token contains user info
+      const userIdFromHeader = request.headers.get("X-User-Id");
+
+      if (userIdFromHeader) {
+        const authenticatedUserId = Number(userIdFromHeader);
+        // Filter out the authenticated user from the list
+        allUsers = page1.content.filter(
+          (user) => user.id !== authenticatedUserId
+        );
+      }
+    }
+
+    // Apply slice for pagination
     const startIndex = page * size;
     const endIndex = startIndex + size;
     const paginatedUsers = allUsers.slice(startIndex, endIndex);
@@ -132,6 +149,8 @@ export const handlers = [
         size,
         totalPages: Math.ceil(allUsers.length / size),
         languageReceived: acceptLanguage,
+        // Include auth status for testing purposes
+        authHeaderReceived: authHeader ? "Bearer [token]" : null,
       },
       { status: 200 }
     );
@@ -208,22 +227,22 @@ export const handlers = [
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
     const { id } = params;
-    
+
     // Check authentication
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return HttpResponse.json(
-        { 
+        {
           path: `/api/1.0/users/${id}`,
           timestamp: Date.now(),
-          message: "You are not authorized to update user" 
+          message: "You are not authorized to update user",
         },
         { status: 403 }
       );
     }
-    
+
     // Parse request body
     const body = (await request.json()) as UserUpdateRequestBody;
-    
+
     // Use the centralized validation function from utils/validationRules
     const validationErrors = validateUserUpdate(body);
     if (Object.keys(validationErrors).length > 0) {
@@ -236,17 +255,17 @@ export const handlers = [
         { status: 400 }
       );
     }
-    
+
     // Find user in mock data
     const user = page1.content.find((u) => u.id === Number(id));
-    
+
     if (!user) {
       return HttpResponse.json(
         { message: "User not found", languageReceived: acceptLanguage },
         { status: 404 }
       );
     }
-    
+
     // Update user data (in a real app, this would update the database)
     const updatedUser = {
       ...user,
@@ -254,7 +273,7 @@ export const handlers = [
       email: body.email,
       image: body.image || null,
     };
-    
+
     // Return updated user
     return HttpResponse.json(
       { ...updatedUser, languageReceived: acceptLanguage },
