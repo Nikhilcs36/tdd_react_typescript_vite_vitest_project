@@ -58,13 +58,28 @@ class UserList extends Component<UserListPageProps, UserListState> {
 
   componentDidMount() {
     this.fetchUsers(0);
+
+    // Listen for user list refresh events (triggered after logout)
+    window.addEventListener("userListRefresh", this.handleUserListRefresh);
   }
 
   componentWillUnmount() {
     // Cleanup timeouts on component unmount
     clearTimeout(this.spinnerTimeout);
     clearTimeout(this.buttonTimeout);
+
+    // Remove event listener to prevent memory leaks
+    window.removeEventListener("userListRefresh", this.handleUserListRefresh);
   }
+
+  /**
+   * Handles user list refresh events
+   * Triggered when user logs out to refresh the list and show the previously authenticated user
+   */
+  handleUserListRefresh = () => {
+    // Refresh the current page to show updated user list (without authenticated user filtering)
+    this.fetchUsers(this.state.page.page);
+  };
 
   fetchUsers = async (pageNumber: number) => {
     this.setState({

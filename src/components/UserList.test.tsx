@@ -800,4 +800,54 @@ describe("User List", () => {
       expect(screen.getByText("user3")).toBeInTheDocument();
     });
   });
+
+  describe("User List Refresh Event", () => {
+    it("should refresh user list when userListRefresh event is dispatched", async () => {
+      // Mock API to track calls
+      const mockGet = vi.fn();
+      mockGet
+        .mockResolvedValueOnce({
+          content: [
+            { id: 1, username: "user1", email: "user1@mail.com", image: null },
+            { id: 3, username: "user3", email: "user3@mail.com", image: null },
+            { id: 4, username: "user4", email: "user4@mail.com", image: null },
+          ],
+          page: 0,
+          size: 3,
+          totalPages: 1,
+        })
+        .mockResolvedValueOnce({
+          content: [
+            { id: 1, username: "user1", email: "user1@mail.com", image: null },
+            { id: 2, username: "user2", email: "user2@mail.com", image: null }, // user2 now appears after logout
+            { id: 3, username: "user3", email: "user3@mail.com", image: null },
+          ],
+          page: 0,
+          size: 3,
+          totalPages: 1,
+        });
+
+      const mockApiService = { get: mockGet };
+
+      render(
+        <MemoryRouter>
+          <UserList ApiGetService={mockApiService} />
+        </MemoryRouter>
+      );
+
+      // Wait for initial load
+      await screen.findByText("user1");
+      expect(mockGet).toHaveBeenCalledTimes(1);
+
+      // Dispatch the custom event to trigger refresh
+      act(() => {
+        const refreshEvent = new CustomEvent("userListRefresh");
+        window.dispatchEvent(refreshEvent);
+      });
+
+      // Wait for the refresh to complete and verify user2 now appears
+      await screen.findByText("user2");
+      expect(mockGet).toHaveBeenCalledTimes(2);
+    });
+  });
 });

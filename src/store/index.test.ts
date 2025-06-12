@@ -17,7 +17,7 @@ describe("Store with SecureLS", () => {
 
   it("should use SecureLS to store auth state", () => {
     const store = createStore();
-    const testUser = { id: 1, username: "testuser" };
+    const testUser = { id: 1, username: "testuser", token: "mock-token" };
 
     // Dispatch login action
     store.dispatch(loginSuccess(testUser));
@@ -28,7 +28,8 @@ describe("Store with SecureLS", () => {
     expect(lastCall.key).toBe("authState");
     expect(lastCall.value).toMatchObject({
       isAuthenticated: true,
-      user: testUser,
+      user: { id: 1, username: "testuser" },
+      token: "mock-token",
     });
   });
 
@@ -37,6 +38,7 @@ describe("Store with SecureLS", () => {
     mockSecureLS.getReturnValue = {
       isAuthenticated: true,
       user: { id: 5, username: "persistedUser" },
+      token: "persistedToken",
     };
 
     // Create store which should load from SecureLS
@@ -46,11 +48,11 @@ describe("Store with SecureLS", () => {
     const loadedAuthState = store.getState().auth;
     expect(loadedAuthState.isAuthenticated).toBe(true);
     expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser" });
+    expect(loadedAuthState.token).toEqual("persistedToken");
   });
 
   it("should clear SecureLS on logout", () => {
     const store = createStore();
-
     // Dispatch logout action
     store.dispatch(logout());
 

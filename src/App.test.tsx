@@ -14,14 +14,33 @@ import store, { createStore } from "./store";
 import { loginSuccess, logout } from "./store/authSlice";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { fetchApiServiceLogin } from "./services/apiService";
+import {
+  axiosApiServiceLogin,
+  fetchApiServiceLogout,
+} from "./services/apiService";
 import { fillAndSubmitLoginForm } from "./tests/testUtils";
 import LoginPageWrapper from "./page/LoginPage";
+
+// Helper function to set up authenticated state
+const mockAuth = (
+  isAuthenticated: boolean,
+  user = {
+    id: 1,
+    username: "user1",
+    token: "mock-jwt-token",
+    email: "user1@mail.com",
+  }
+) => {
+  if (isAuthenticated) {
+    store.dispatch(loginSuccess(user));
+  } else {
+    store.dispatch(logout());
+  }
+};
 
 describe("App", () => {
   it("renders the App component", () => {
     render(<App />);
-
     screen.debug();
   });
 });
@@ -31,7 +50,7 @@ describe("Routing", () => {
     // Make beforeEach async
     // Reset Redux auth state before each test
     store.dispatch(logout());
-    // Clear localStorage as a precaution
+    // Clear localStorage
     window.localStorage.clear();
     // Set default language to English
     await act(async () => {
@@ -47,12 +66,16 @@ describe("Routing", () => {
     path: string,
     lang: string,
     authenticated = false,
-    user = { id: 1, username: "user1" }
+    user = {
+      id: 1,
+      username: "user1",
+      token: "mock-jwt-token",
+      email: "user1@mail.com",
+    }
   ) => {
     // Updated user default
     // Reset Redux auth state before each test
     store.dispatch(logout());
-
     window.history.pushState({}, "", path);
 
     // Check if the path is a user profile path and extract the ID
@@ -68,7 +91,12 @@ describe("Routing", () => {
       // For user page paths, use the ID from the path if available, otherwise use the default user ID
       const userToDispatch =
         userMatch && userIdFromPath !== undefined
-          ? { id: userIdFromPath, username: user.username }
+          ? {
+              id: userIdFromPath,
+              username: user.username,
+              token: user.token,
+              email: "user1@mail.com",
+            }
           : user;
       store.dispatch(loginSuccess(userToDispatch));
     }
@@ -80,7 +108,6 @@ describe("Routing", () => {
         i18n.changeLanguage(lang);
       });
     }
-
     render(<App />);
   };
 
@@ -133,10 +160,8 @@ describe("Routing", () => {
   it.each([
     ["Home page", "Home", "en"], // English
     ["Sign Up", "Sign Up", "en"],
-
     ["Home page", "ഹോം", "ml"], // Malayalam
     ["Sign Up", "രജിസ്റ്റർ ചെയ്യുക", "ml"],
-
     ["Home page", "الرئيسية", "ar"], // Arabic
     ["Sign Up", "تسجيل حساب جديد", "ar"],
   ])("has link to %s page on navbar in %s language", (_, linkText, lang) => {
@@ -154,14 +179,13 @@ describe("Routing", () => {
     "displays Sign Up page after clicking 'Sign Up' link in %s language",
     (_, linkText, lang) => {
       setup("/", lang); // Render with the given language
-
       const signUpLink = screen.getByRole("link", { name: linkText });
       fireEvent.click(signUpLink);
-
       const signUpPage = screen.getByTestId("signup-page");
       expect(signUpPage).toBeInTheDocument();
     }
   );
+
   // Test the "Login" link
   it.each([
     ["Login page", "Login", "en"],
@@ -171,10 +195,8 @@ describe("Routing", () => {
     "displays Login page after clicking 'Login' link in %s language",
     (_, linkText, lang) => {
       setup("/", lang); // Render with the given language
-
       const loginLink = screen.getByRole("link", { name: linkText });
       fireEvent.click(loginLink);
-
       const loginPage = screen.getByTestId("login-page");
       expect(loginPage).toBeInTheDocument();
     }
@@ -183,14 +205,19 @@ describe("Routing", () => {
   // Integration test: Navigates to user profile via navbar link after simulating authenticated state
   it("navigates to user profile via navbar link after simulating authenticated state", async () => {
     // Simulate a logged-in state by dispatching the loginSuccess action with user ID and username
-    const mockUser = { id: 1, username: "user1" };
+    const mockUser = {
+      id: 1,
+      username: "user1",
+      token: "mock-jwt-token",
+      email: "user1@mail.com",
+    };
     store.dispatch(loginSuccess(mockUser));
 
     // Render the App component (it will now render based on the authenticated state)
     render(<App />);
 
     // Wait for the "My Profile" link to appear in the navbar (it's conditional on auth state)
-    const myProfileLink = await screen.findByTestId("my-profile-link");
+    const myProfileLink = screen.getByTestId("my-profile-link");
 
     // Assert that the profile link's href uses the user ID
     expect(myProfileLink).toHaveAttribute("href", `/user/${mockUser.id}`);
@@ -206,19 +233,31 @@ describe("Routing", () => {
   });
 
   it("navigates to user page when clicking the username on user list", async () => {
-    store.dispatch(loginSuccess({ id: 2, username: "user2" }));
-    setup("/", "en", true, { id: 2, username: "user2" }); // Setup with authenticated state and user object
+    // Setup authenticated user as user2 (ID: 2) - this user will be filtered from the user list
+    const mockUser2 = {
+      id: 2,
+      username: "user2",
+      token: "mock-jwt-token",
+      email: "user2@mail.com",
+    };
+    store.dispatch(loginSuccess(mockUser2));
+    setup("/", "en", true, mockUser2); // Setup with authenticated state and user object
 
-    const userLink = await screen.findByText("user2");
-    userEvent.click(userLink);
+    // Find the link to user1
+    const userLink = await screen.findByText("user1");
 
-    // Check if the user page loads
-    // The route is now /user/:id, so the user page should load for user ID 2
+    // Click user1 link
+    act(() => {
+      fireEvent.click(userLink);
+    });
+
+    // Check if the user page loads for user1 (ID: 1)
     const page = await screen.findByTestId("user-page");
     expect(page).toBeInTheDocument();
-    expect(screen.getByTestId("username")).toHaveTextContent("user2");
-    expect(screen.getByTestId("email")).toHaveTextContent("user2@mail.com");
+    expect(screen.getByText("user1")).toBeInTheDocument();
+    expect(screen.getByText("user1@mail.com")).toBeInTheDocument();
   });
+
   // Integration test: Navigates to user profile via navbar link after successful login (using MSW login flow)
   it("navigates to user profile via navbar link after successful login (MSW flow)", async () => {
     // Start by rendering the App component at the home page
@@ -229,7 +268,7 @@ describe("Routing", () => {
           <Routes>
             <Route
               path="/login"
-              element={<LoginPageWrapper apiService={fetchApiServiceLogin} />}
+              element={<LoginPageWrapper apiService={axiosApiServiceLogin} />}
             />
             {/* Use the rest of the AppContent for other routes */}
             <Route path="*" element={<AppContent />} />
@@ -269,7 +308,7 @@ describe("Routing", () => {
     });
 
     // Wait for the "My Profile" link to appear in the navbar (it's conditional on auth state)
-    const myProfileLink = await screen.findByTestId("my-profile-link");
+    const myProfileLink = screen.getByTestId("my-profile-link");
 
     // Click the "My Profile" link
     await userEvent.click(myProfileLink);
@@ -286,9 +325,12 @@ describe("Routing", () => {
 describe("Navbar styling and layout", () => {
   beforeEach(async () => {
     // Reset Redux auth state before each test in this describe block
-    store.dispatch(logout());
+    await act(async () => {
+      store.dispatch(logout());
+    });
+
     // Clear localStorage as a precaution
-    window.localStorage.clear();
+    localStorage.clear();
     // Set default language to English
     await act(async () => {
       await i18n.changeLanguage("en");
@@ -339,7 +381,10 @@ describe("Language & direction tests for Navbar", () => {
   beforeEach(async () => {
     // Make beforeEach async
     // Reset Redux auth state before each test in this describe block
-    store.dispatch(logout());
+    await act(async () => {
+      store.dispatch(logout());
+    });
+
     // Clear localStorage as a precaution, though Redux is now primary
     window.localStorage.clear();
     // Set default language to English
@@ -368,12 +413,10 @@ describe("Language & direction tests for Navbar", () => {
         // Use await act for language change
         await i18n.changeLanguage(lang);
       });
-
       render(<App />);
 
       // Check document direction
       expect(document.documentElement.dir).toBe(expectedDir);
-
       expect(
         screen.getByRole("link", { name: linkTextHome })
       ).toBeInTheDocument();
@@ -388,12 +431,15 @@ describe("Language & direction tests for Navbar", () => {
 });
 
 describe("Authentication navbar visible", () => {
-  // Set default language to English for all tests in this describe block
+  // Set default language to English
   beforeEach(async () => {
     // Make beforeEach async
-    // Reset Redux auth state before each test in this describe block
-    store.dispatch(logout());
-    // Clear localStorage as a precaution
+    // Reset Redux auth state
+    await act(async () => {
+      store.dispatch(logout());
+    });
+
+    // Clear localStorage
     localStorage.clear();
     // Set default language to English
     await act(async () => {
@@ -403,7 +449,6 @@ describe("Authentication navbar visible", () => {
 
   const setup = (path: string, lang: string) => {
     window.history.pushState({}, "", path);
-
     // Change the language before rendering (only if a specific language is requested)
     if (lang !== "en") {
       // Only change if not the default English
@@ -411,25 +456,14 @@ describe("Authentication navbar visible", () => {
         i18n.changeLanguage(lang);
       });
     }
-
     render(<App />);
   };
 
-  // Modified mockAuth to dispatch Redux actions
-  const mockAuth = (
-    authenticated: boolean,
-    user = { id: 1, username: "user1" }
-  ) => {
-    if (authenticated) {
-      store.dispatch(loginSuccess(user));
-    } else {
-      store.dispatch(logout());
-    }
-  };
-
-  afterEach(() => {
+  afterEach(async () => {
     // Ensure Redux state is reset after each test in this block
-    store.dispatch(logout());
+    await act(async () => {
+      store.dispatch(logout());
+    });
     localStorage.clear();
   });
 
@@ -441,8 +475,10 @@ describe("Authentication navbar visible", () => {
       ${"ar"} | ${"ملفي"}          | ${"تسجيل الخروج"}
     `(
       "shows '$profileText' and '$logoutText' links and hides auth links in $lang",
-      ({ lang, profileText, logoutText }) => {
-        mockAuth(true); // Use mockAuth to set Redux state
+      async ({ lang, profileText, logoutText }) => {
+        await act(async () => {
+          mockAuth(true); // Use mockAuth to set Redux state
+        });
         setup("/", lang); // Use the specified language
 
         // Verify profile link exists
@@ -450,7 +486,7 @@ describe("Authentication navbar visible", () => {
         expect(profileLink).toBeInTheDocument();
 
         // Verify logout link exists
-        const logoutLink = screen.getByRole("link", { name: logoutText });
+        const logoutLink = screen.getByRole("button", { name: logoutText });
         expect(logoutLink).toBeInTheDocument();
 
         // Verify auth links are hidden
@@ -468,8 +504,10 @@ describe("Authentication navbar visible", () => {
       ${"ar"} | ${"تسجيل حساب جديد"}   | ${"تسجيل الدخول"}
     `(
       "shows '$signupText' and '$loginText' links",
-      ({ lang, signupText, loginText }) => {
-        mockAuth(false); // Use mockAuth to set Redux state
+      async ({ lang, signupText, loginText }) => {
+        await act(async () => {
+          mockAuth(false); // Use mockAuth to set Redux state
+        });
         setup("/", lang); // Use the specified language
 
         // Verify auth links exist
@@ -483,81 +521,77 @@ describe("Authentication navbar visible", () => {
       }
     );
   });
-
-  describe("Logout functionality", () => {
-    it("should show logout link when authenticated and clear auth state on click", async () => {
-      // Set up authenticated state
-      mockAuth(true, { id: 1, username: "user1" });
-      setup("/", "en");
-
-      // Verify logout link is visible
-      const logoutLink = screen.getByTestId("logout-link");
-      expect(logoutLink).toBeInTheDocument();
-
-      // Click logout link
-      await userEvent.click(logoutLink);
-
-      // Verify auth state is cleared
-      await waitFor(() => {
-        const state = store.getState();
-        expect(state.auth.isAuthenticated).toBe(false);
-        expect(state.auth.user).toBeNull();
-      });
-
-      // Verify auth links are now visible
-      await waitFor(() => {
-        expect(screen.getByTestId("signup-link")).toBeInTheDocument();
-        expect(screen.getByTestId("login-link")).toBeInTheDocument();
-      });
-
-      // Verify profile link is hidden
-      expect(screen.queryByTestId("my-profile-link")).not.toBeInTheDocument();
-    });
-  });
 });
 
-// Update the test for Redux store persistence
-describe("Redux store persistence", () => {
-  beforeEach(() => {
-    // Clear any existing state
-    store.dispatch(logout());
-    localStorage.clear();
+describe("Logout functionality", () => {
+  const mockAuthenticatedUser = () => {
+    mockAuth(true, {
+      id: 1,
+      username: "user1",
+      token: "mock-jwt-token",
+      email: "user1@mail.com",
+    });
+  };
 
-    // Reset mocks
-    vi.resetModules();
-    vi.clearAllMocks();
+  beforeEach(() => {
+    i18n.changeLanguage("en");
+    localStorage.clear();
+    mockAuthenticatedUser();
   });
 
-  it("loads auth state from localStorage on store creation", () => {
-    // Mock SecureLS to return a specific value
-    vi.mock("secure-ls", () => {
-      return {
-        default: vi.fn().mockImplementation(() => ({
-          set: vi.fn(),
-          get: vi.fn().mockReturnValue({
-            isAuthenticated: true,
-            user: { id: 5, username: "persistedUser" },
-          }),
-          remove: vi.fn(),
-        })),
-      };
+  afterEach(() => {
+    store.dispatch(logout());
+  });
+
+  it("logout successful flow when clicking logout link", async () => {
+    // Create spy specifically for this test
+    const postSpy = vi
+      .spyOn(fetchApiServiceLogout, "post")
+      .mockImplementation(async (_url: string) => {
+        return { status: 200, data: {} };
+      });
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/"]}>
+          <AppContent logoutApiService={fetchApiServiceLogout} />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Test logic
+    await userEvent.click(await screen.findByTestId("logout-link"));
+
+    // API verification
+    await waitFor(() => {
+      expect(postSpy).toHaveBeenCalledWith("/api/1.0/logout");
     });
 
-    // Create a new store, which should load from SecureLS
-    const newStore = createStore();
+    // Auth state assertions
+    const authState = store.getState().auth;
+    expect(authState.isAuthenticated).toBe(false);
+    expect(authState.user).toBeNull();
+    expect(authState.token).toBeNull();
 
-    // Check if the auth state was loaded correctly
-    const loadedAuthState = newStore.getState().auth;
-    expect(loadedAuthState.isAuthenticated).toBe(true);
-    expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser" });
-    // No assertion for token since it's not stored
+    // UI assertions
+    expect(screen.getByTestId("login-link")).toBeInTheDocument();
+    expect(screen.queryByTestId("logout-link")).not.toBeInTheDocument();
+
+    // Navigation assertion
+    expect(screen.getByTestId("home-page")).toBeInTheDocument();
+
+    // Cleanup
+    postSpy.mockRestore();
   });
 });
 
 describe("Navbar persistence with localStorage", () => {
   beforeEach(async () => {
     // Reset Redux auth state before each test
-    store.dispatch(logout());
+    await act(async () => {
+      store.dispatch(logout());
+    });
+
     // Clear localStorage
     localStorage.clear();
     // Set default language to English
@@ -568,7 +602,11 @@ describe("Navbar persistence with localStorage", () => {
 
   it("maintains navbar login state after page refresh", async () => {
     // Initial login (without token in state)
-    const testUser = { id: 5, username: "persistedUser" };
+    const testUser = {
+      id: 5,
+      username: "persistedUser",
+      token: "mock-jwt-token",
+    };
 
     // Render the app with the Redux provider
     render(
@@ -585,11 +623,11 @@ describe("Navbar persistence with localStorage", () => {
 
     // Dispatch login action to update Redux state
     await act(async () => {
-      store.dispatch(loginSuccess(testUser));
+      store.dispatch(loginSuccess({ ...testUser, token: "mock-jwt-token" }));
     });
 
     // Verify navbar updated - should now show profile link
-    const profileLink = await screen.findByTestId("my-profile-link");
+    const profileLink = await screen.getByTestId("my-profile-link");
     expect(profileLink).toHaveAttribute("href", `/user/${testUser.id}`);
 
     // Verify auth links are hidden after login
@@ -624,13 +662,12 @@ describe("Navbar persistence with localStorage", () => {
     expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
     expect(screen.queryByTestId("signup-link")).not.toBeInTheDocument();
 
-    // Verify no token in state
+    // Verify token in state
     const refreshedState = newStore.getState().auth;
     expect(refreshedState).toEqual({
       isAuthenticated: true,
-      user: testUser,
+      user: { id: 5, username: "persistedUser" },
+      token: "mock-jwt-token",
     });
-    // Token should not be present in the state
-    expect("token" in refreshedState).toBe(false);
   });
 });
