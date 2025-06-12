@@ -280,4 +280,38 @@ export const handlers = [
       { status: 200 }
     );
   }),
+
+  // Mock API for user logout (msw) - Authorization aware ----(7)
+  http.post("/api/1.0/logout", async ({ request }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const authHeader = request.headers.get("Authorization");
+
+    // Check if user is authenticated (has valid authorization header)
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return HttpResponse.json(
+        {
+          message: "Unauthorized",
+          languageReceived: acceptLanguage,
+        },
+        { status: 401 }
+      );
+    }
+
+    // Extract token from Authorization header
+    const token = authHeader.replace("Bearer ", "");
+
+    // Validate token (in real app, this would verify JWT)
+    if (!token || token !== "mock-jwt-token") {
+      return HttpResponse.json(
+        {
+          message: "Invalid token",
+          languageReceived: acceptLanguage,
+        },
+        { status: 401 }
+      );
+    }
+
+    // Successful logout - backend doesn't return messages for logout operations
+    return HttpResponse.json({}, { status: 200 });
+  }),
 ];

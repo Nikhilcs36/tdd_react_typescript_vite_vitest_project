@@ -194,6 +194,55 @@ export const fetchApiServiceLogin: ApiService<LoginRequestBody> = {
   },
 };
 
+// Axios implementation for logout - Authorization aware
+export const axiosApiServiceLogout: ApiService = {
+  post: async <R>(url: string) => {
+    // Get authentication state from Redux store for authorization
+    const authState = store.getState().auth;
+    const token: string | null = authState.token;
+
+    const response = await axios.post<R>(
+      url,
+      {}, // Empty body for logout
+      {
+        headers: {
+          "Accept-Language": i18n.language,
+          // Include Authorization header for authenticated logout
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      }
+    );
+    return response.data;
+  },
+};
+
+// Fetch implementation for logout (for MSW testing) - Authorization aware
+export const fetchApiServiceLogout: ApiService = {
+  post: async <R>(url: string) => {
+    // Get authentication state from Redux store for authorization
+    const authState = store.getState().auth;
+    const token: string | null = authState.token;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": i18n.language,
+        // Include Authorization header for authenticated logout
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({}), // Empty body for logout
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw { response: { data: errorData } }; // Match Axios error format
+    }
+
+    return response.json() as R;
+  },
+};
+
 // Axios implementation for user profile update
 export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
   put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
