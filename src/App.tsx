@@ -12,12 +12,15 @@ import {
   axiosApiServiceGetUser,
   axiosApiServiceLogin,
   axiosApiServiceSignUp,
-  axiosApiServiceUpdateUser
+  axiosApiServiceUpdateUser,
+  axiosApiServiceLogout,
+  ApiService,
 } from "./services/apiService";
 import tw from "twin.macro";
 import { Provider, useSelector } from "react-redux";
 import store, { RootState } from "./store";
-import { logout } from "./store/authSlice";
+import { useLogout } from "./components/logout/useLogout";
+import LogoutMessage from "./components/logout/LogoutMessage";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -34,7 +37,6 @@ const NavBar = tw.nav`
   z-20
   shadow-lg
 `;
-
 const NavLeft = tw.div`flex items-center`;
 const NavRight = tw.div`flex items-center gap-6`;
 const NavLink = tw(Link)`
@@ -44,19 +46,30 @@ const NavLink = tw(Link)`
   transition-all
   duration-200
 `;
-
+const StyledButton = tw.button`
+  font-semibold
+  cursor-pointer
+  hover:underline
+  transition-all
+  duration-200
+`;
 const Content = tw.div`
   mt-16
 `;
 
-// Router-less version for testing
-export const AppContent = () => {
+interface AppContentProps {
+  logoutApiService?: ApiService;
+}
+
+export const AppContent = ({
+  logoutApiService = axiosApiServiceLogout,
+}: AppContentProps) => {
   const { t } = useTranslation();
-  // Use useSelector to get authentication state and user from Redux store
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
-  const user = useSelector((state: RootState) => state.auth.user); // Get the user object
+  const user = useSelector((state: RootState) => state.auth.user);
+  const { logout } = useLogout(logoutApiService);
 
   return (
     <I18nextProvider i18n={i18n}>
@@ -67,23 +80,14 @@ export const AppContent = () => {
           </NavLink>
         </NavLeft>
         <NavRight>
-          {/* Use isAuthenticated from Redux */}
           {isAuthenticated ? (
             <>
               <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
                 {t("myProfile")}
               </NavLink>
-              <NavLink
-                to="/"
-                data-testid="logout-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Dispatch logout action
-                  store.dispatch(logout());
-                }}
-              >
-                {t("logout")}
-              </NavLink>
+              <StyledButton onClick={logout} data-testid="logout-link">
+                {t("logout.title")}
+              </StyledButton>
             </>
           ) : (
             <>
@@ -98,6 +102,7 @@ export const AppContent = () => {
         </NavRight>
       </NavBar>
       <Content>
+        <LogoutMessage />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route
@@ -110,10 +115,12 @@ export const AppContent = () => {
           />
           <Route
             path="/user/:id"
-            element={<UserPageWrapper 
-              ApiGetService={axiosApiServiceGetUser} 
-              ApiPutService={axiosApiServiceUpdateUser}
-            />}
+            element={
+              <UserPageWrapper
+                ApiGetService={axiosApiServiceGetUser}
+                ApiPutService={axiosApiServiceUpdateUser}
+              />
+            }
           />
           <Route
             path="/activate/:token"
@@ -127,14 +134,12 @@ export const AppContent = () => {
     </I18nextProvider>
   );
 };
-
 // Production version with Router
 const AppWithRouter = () => (
   <Router>
     <AppContent />
   </Router>
 );
-
 // Wrap the AppWithRouter with the Redux Provider
 const App = () => (
   <Provider store={store}>

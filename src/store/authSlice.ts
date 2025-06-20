@@ -7,13 +7,15 @@ const secureLS = new SecureLS({ encodingType: "aes" });
 interface AuthState {
   isAuthenticated: boolean;
   user: { id: number; username: string } | null;
-  token: string | null; // Add token to state
+  token: string | null;
+  showLogoutMessage: boolean;
 }
 
 const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
-  token: null, // Initialize token as null
+  token: null,
+  showLogoutMessage: false,
 };
 
 const authSlice = createSlice({
@@ -36,9 +38,16 @@ const authSlice = createSlice({
       // Clear auth data from SecureLS
       secureLS.remove("authState");
     },
+    showLogoutMessage: (state) => {
+      state.showLogoutMessage = true;
+    },
+    hideLogoutMessage: (state) => {
+      state.showLogoutMessage = false;
+    },
   },
 });
 
-export const { loginSuccess, logout } = authSlice.actions;
+export const { loginSuccess, logout, showLogoutMessage, hideLogoutMessage } =
+  authSlice.actions;
 
 export default authSlice.reducer;
