@@ -59,7 +59,10 @@ i18n.use(initReactI18next).init({
             generic: "An unexpected error occurred.",
           },
         },
-        logout: "Logout",
+        logout: {
+          title: "Logout",
+          logoutSuccess: "You have been logged out successfully",
+        },
         profile: {
           username: "Username",
           email: "E-mail",
@@ -71,8 +74,8 @@ i18n.use(initReactI18next).init({
           successMessage: "Profile updated successfully",
           errors: {
             userNotFound: "User not found",
-            updateFailed: "Update failed"
-          }
+            updateFailed: "Update failed",
+          },
         },
       },
     },
@@ -127,7 +130,10 @@ i18n.use(initReactI18next).init({
             generic: "ഒരു അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു.",
           },
         },
-        logout: "ലോഗ്ഔട്ട്",
+        logout: {
+          title: "ലോഗ്ഔട്ട്",
+          logoutSuccess: "നിങ്ങൾ വിജയകരമായി ലോഗ് ഔട്ട് ചെയ്തു",
+        },
         profile: {
           username: "ഉപയോക്തൃനാമം",
           email: "ഇമെയിൽ",
@@ -139,8 +145,8 @@ i18n.use(initReactI18next).init({
           successMessage: "പ്രൊഫൈൽ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു",
           errors: {
             userNotFound: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
-            updateFailed: "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
-          }
+            updateFailed: "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
+          },
         },
       },
     },
@@ -195,7 +201,10 @@ i18n.use(initReactI18next).init({
             generic: "حدث خطأ غير متوقع.",
           },
         },
-        logout: "تسجيل الخروج",
+        logout: {
+          title: "تسجيل الخروج",
+          logoutSuccess: "لقد تم تسجيل خروجك بنجاح",
+        },
         profile: {
           username: "اسم المستخدم",
           email: "البريد الإلكتروني",
@@ -207,8 +216,8 @@ i18n.use(initReactI18next).init({
           successMessage: "تم تحديث الملف الشخصي بنجاح",
           errors: {
             userNotFound: "لم يتم العثور على المستخدم",
-            updateFailed: "فشل التحديث"
-          }
+            updateFailed: "فشل التحديث",
+          },
         },
       },
     },

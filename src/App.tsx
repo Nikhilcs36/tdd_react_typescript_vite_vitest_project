@@ -20,6 +20,7 @@ import tw from "twin.macro";
 import { Provider, useSelector } from "react-redux";
 import store, { RootState } from "./store";
 import { useLogout } from "./components/logout/useLogout";
+import LogoutMessage from "./components/logout/LogoutMessage";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -85,7 +86,7 @@ export const AppContent = ({
                 {t("myProfile")}
               </NavLink>
               <StyledButton onClick={logout} data-testid="logout-link">
-                {t("logout")}
+                {t("logout.title")}
               </StyledButton>
             </>
           ) : (
@@ -101,6 +102,7 @@ export const AppContent = ({
         </NavRight>
       </NavBar>
       <Content>
+        <LogoutMessage />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route
