@@ -314,4 +314,46 @@ export const handlers = [
     // Successful logout - backend doesn't return messages for logout operations
     return HttpResponse.json({}, { status: 200 });
   }),
+
+  // Mock API for user deletion (msw) ----(8)
+  http.delete("/api/1.0/users/:id", async ({ request, params }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const authHeader = request.headers.get("Authorization");
+    const { id } = params;
+
+    // Check authentication with token validation
+    if (!authHeader?.startsWith("Bearer ")) {
+      return HttpResponse.json(
+        { message: "Unauthorized", languageReceived: acceptLanguage },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    if (token !== "mock-jwt-token") {
+      return HttpResponse.json(
+        { message: "Invalid token", languageReceived: acceptLanguage },
+        { status: 401 }
+      );
+    }
+
+    // Find user in mock data
+    const user = page1.content.find((u) => u.id === Number(id));
+
+    if (!user) {
+      return HttpResponse.json(
+        { message: "User not found", languageReceived: acceptLanguage },
+        { status: 404 }
+      );
+    }
+
+    // Simulate user deletion to match the real API (200 OK with a body)
+    // The body can be an empty object or a success message.
+    return HttpResponse.json(
+      { message: "User deleted successfully" },
+      {
+        status: 200,
+      }
+    );
+  }),
 ];
