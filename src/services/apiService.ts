@@ -19,6 +19,10 @@ export interface ApiGetService {
   get: <T>(url: string) => Promise<T>;
 }
 
+export interface ApiDeleteService {
+  delete: <R>(url: string) => Promise<R>;
+}
+
 // Axios implementation signup
 export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
   post: async <T>(url: string, body?: Record<string, any>) => {
@@ -287,5 +291,49 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
     }
 
     return response.json() as T;
+  },
+};
+
+// Axios implementation for delete user
+export const axiosApiServiceDeleteUser: ApiDeleteService = {
+  delete: async <R>(url: string): Promise<R> => {
+    // Get token from Redux store
+    const token: string | null = store.getState().auth.token;
+
+    const response = await axios.delete<R>(url, {
+      headers: {
+        "Accept-Language": i18n.language,
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    return response.data;
+  },
+};
+
+// Fetch implementation for delete user (for MSW testing)
+export const fetchApiServiceDeleteUser: ApiDeleteService = {
+  delete: async <R>(url: string): Promise<R> => {
+    // Get token from Redux store
+    const token: string | null = store.getState().auth.token;
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Accept-Language": i18n.language,
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+
+    // Handle 204 No Content response
+    if (response.status === 204) {
+      return Promise.resolve() as Promise<R>;
+    }
+
+    return response.json() as Promise<R>;
   },
 };

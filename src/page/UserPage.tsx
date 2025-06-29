@@ -1,11 +1,20 @@
 import { Component } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import tw from "twin.macro";
-import { ApiGetService, ApiPutService, axiosApiServiceUpdateUser } from "../services/apiService";
+import {
+  ApiGetService,
+  ApiPutService,
+  axiosApiServiceUpdateUser,
+  axiosApiServiceDeleteUser,
+  ApiDeleteService,
+} from "../services/apiService";
 import defaultProfileImage from "../assets/profile.png";
 import { connect } from "react-redux";
-import { loginSuccess } from "../store/authSlice";
-import { UserUpdateRequestBody, validateUserUpdate } from "../utils/validationRules";
+import { loginSuccess, logout } from "../store/authSlice";
+import {
+  UserUpdateRequestBody,
+  validateUserUpdate,
+} from "../utils/validationRules";
 import { AppDispatch } from "../store";
 import { withTranslation, WithTranslation } from "react-i18next";
 
@@ -27,11 +36,20 @@ const Label = tw.label`mb-1 text-sm font-medium text-gray-700`;
 const Input = tw.input`p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500`;
 const ErrorMessage = tw.div`text-red-600 text-sm mt-1`;
 const ButtonContainer = tw.div`flex flex-col mt-4`;
+const DeleteButton = tw.button`mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full`;
+const ConfirmDeleteContainer = tw.div`fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full`;
+const ConfirmDeleteDialog = tw.div`relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white`;
+const ConfirmDeleteTitle = tw.h3`text-lg font-bold mb-4`;
+const ConfirmDeleteMessage = tw.p`mb-4`;
+const ConfirmDeleteButtons = tw.div`flex justify-end`;
+const ConfirmDeleteCancelButton = tw.button`bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2`;
+const ConfirmDeleteConfirmButton = tw.button`bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded`;
 
 interface UserPageProps extends WithTranslation {
   id: string;
   ApiGetService: ApiGetService;
   ApiPutService?: ApiPutService<UserUpdateRequestBody>;
+  ApiDeleteService?: ApiDeleteService;
   auth?: {
     isAuthenticated: boolean;
     user: {
@@ -41,6 +59,7 @@ interface UserPageProps extends WithTranslation {
     token: string | null;
   };
   dispatch: AppDispatch; // Properly typed dispatch function
+  navigate: (path: string) => void;
 }
 
 interface User {
@@ -63,12 +82,14 @@ interface UserPageState {
   validationErrors: Record<string, string>;
   isSubmitting: boolean;
   successMessage: string | null;
+  showDeleteConfirmation: boolean;
 }
 
 class UserPage extends Component<UserPageProps, UserPageState> {
   // Set default props
   static defaultProps = {
-    ApiPutService: axiosApiServiceUpdateUser
+    ApiPutService: axiosApiServiceUpdateUser,
+    ApiDeleteService: axiosApiServiceDeleteUser,
   };
 
   state: UserPageState = {
@@ -84,6 +105,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     validationErrors: {},
     isSubmitting: false,
     successMessage: null,
+    showDeleteConfirmation: false,
   };
 
   componentDidMount() {
@@ -110,17 +132,17 @@ class UserPage extends Component<UserPageProps, UserPageState> {
           username: user.username,
           email: user.email,
           image: user.image || "",
-        }
+        },
       });
     } catch (error: any) {
       // Check if the error message is one of our known error keys
       const errorMessage = error.response?.data?.message || error.message;
       const translatedError =
-        errorMessage === "User not found" ?
-          this.props.t("profile.errors.userNotFound") :
-        errorMessage === "Update failed" ?
-          this.props.t("profile.errors.updateFailed") :
-          errorMessage;
+        errorMessage === "User not found"
+          ? this.props.t("profile.errors.userNotFound")
+          : errorMessage === "Update failed"
+          ? this.props.t("profile.errors.updateFailed")
+          : errorMessage;
 
       this.setState({
         error: translatedError,
@@ -164,15 +186,18 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    this.setState((prevState) => ({
-      editForm: {
-        ...prevState.editForm,
-        [name]: value,
+    this.setState(
+      (prevState) => ({
+        editForm: {
+          ...prevState.editForm,
+          [name]: value,
+        },
+      }),
+      () => {
+        // Validate after state update
+        this.validateField(name, value);
       }
-    }), () => {
-      // Validate after state update
-      this.validateField(name, value);
-    });
+    );
   };
 
   // Add method to validate individual fields
@@ -180,14 +205,14 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     const { editForm } = this.state;
     const validationErrors = validateUserUpdate({
       ...editForm,
-      [fieldName]: value
+      [fieldName]: value,
     });
 
     this.setState((prevState) => ({
       validationErrors: {
         ...prevState.validationErrors,
-        [fieldName]: validationErrors[fieldName] || ""
-      }
+        [fieldName]: validationErrors[fieldName] || "",
+      },
     }));
   };
 
@@ -250,11 +275,11 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         // Check if the error message is one of our known error keys
         const errorMessage = error.response?.data?.message || error.message;
         const translatedError =
-          errorMessage === "User not found" ?
-            this.props.t("profile.errors.userNotFound") :
-          errorMessage === "Update failed" ?
-            this.props.t("profile.errors.updateFailed") :
-            errorMessage;
+          errorMessage === "User not found"
+            ? this.props.t("profile.errors.userNotFound")
+            : errorMessage === "Update failed"
+            ? this.props.t("profile.errors.updateFailed")
+            : errorMessage;
 
         this.setState({
           error: translatedError,
@@ -264,12 +289,46 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     }
   };
 
+  // Delete functionality
+  openDeleteConfirmation = () => {
+    this.setState({ showDeleteConfirmation: true });
+  };
+
+  closeDeleteConfirmation = () => {
+    this.setState({ showDeleteConfirmation: false });
+  };
+
+  handleDelete = async () => {
+    this.closeDeleteConfirmation();
+    this.setState({ loading: true, error: null });
+    try {
+      await this.props.ApiDeleteService!.delete(
+        `/api/1.0/users/${this.props.id}`
+      );
+      this.props.dispatch(logout()); // Dispatch logout action
+      this.setState({
+        loading: false,
+        successMessage: this.props.t("profile.deleteSuccess"),
+      });
+
+      this.props.navigate("/");
+    } catch (apiError: any) {
+      this.setState({
+        error: apiError.response?.data?.message || apiError.message,
+        loading: false,
+      });
+    }
+  };
+
   renderEditForm() {
     const { editForm, isSubmitting, validationErrors } = this.state;
     const { t } = this.props;
 
     return (
-      <FormContainer data-testid="edit-profile-form" onSubmit={this.handleSubmit}>
+      <FormContainer
+        data-testid="edit-profile-form"
+        onSubmit={this.handleSubmit}
+      >
         <FormGroup>
           <Label htmlFor="username">{t("profile.username")}</Label>
           <Input
@@ -345,7 +404,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   }
 
   renderProfileCard() {
-    const { user } = this.state;
+    const { user, showDeleteConfirmation } = this.state;
     const { t } = this.props;
     if (!user) return null;
 
@@ -358,7 +417,6 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         />
         <ProfileName data-testid="username">{user.username}</ProfileName>
         <ProfileEmail data-testid="email">{user.email}</ProfileEmail>
-
         {this.isOwnProfile() && (
           <EditButton
             onClick={this.toggleEditMode}
@@ -366,6 +424,41 @@ class UserPage extends Component<UserPageProps, UserPageState> {
           >
             {t("profile.editProfile")}
           </EditButton>
+        )}
+        {this.isOwnProfile() && (
+          <DeleteButton
+            onClick={this.openDeleteConfirmation}
+            data-testid="delete-profile-button"
+          >
+            {t("profile.deleteProfile")}
+          </DeleteButton>
+        )}
+
+        {showDeleteConfirmation && (
+          <ConfirmDeleteContainer data-testid="delete-confirmation-dialog">
+            <ConfirmDeleteDialog>
+              <ConfirmDeleteTitle>
+                {t("profile.deleteConfirmationTitle")}
+              </ConfirmDeleteTitle>
+              <ConfirmDeleteMessage>
+                {t("profile.deleteConfirmationMessage")}
+              </ConfirmDeleteMessage>
+              <ConfirmDeleteButtons>
+                <ConfirmDeleteCancelButton
+                  onClick={this.closeDeleteConfirmation}
+                  data-testid="cancel-delete-button"
+                >
+                  {t("profile.cancel")}
+                </ConfirmDeleteCancelButton>
+                <ConfirmDeleteConfirmButton
+                  onClick={this.handleDelete}
+                  data-testid="confirm-delete-button"
+                >
+                  {t("profile.delete")}
+                </ConfirmDeleteConfirmButton>
+              </ConfirmDeleteButtons>
+            </ConfirmDeleteDialog>
+          </ConfirmDeleteContainer>
         )}
       </ProfileCardContainer>
     );
@@ -408,7 +501,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
 }
 
 // Connect component to Redux store
-const mapStateToProps = (state: { auth: UserPageProps['auth'] }) => ({
+const mapStateToProps = (state: { auth: UserPageProps["auth"] }) => ({
   auth: state.auth,
 });
 
@@ -420,11 +513,13 @@ const ConnectedUserPage = connect(mapStateToProps)(TranslatedUserPage);
 
 // Functional wrapper for routing
 export const UserPageWrapper = (props: {
-  ApiGetService: ApiGetService,
-  ApiPutService?: ApiPutService<UserUpdateRequestBody>
+  ApiGetService: ApiGetService;
+  ApiPutService?: ApiPutService<UserUpdateRequestBody>;
+  ApiDeleteService?: ApiDeleteService;
 }) => {
   const { id } = useParams<{ id: string }>();
-  return <ConnectedUserPage {...props} id={id || ""} />;
+  const navigate = useNavigate();
+  return <ConnectedUserPage {...props} id={id || ""} navigate={navigate} />;
 };
 
 export default UserPageWrapper;
