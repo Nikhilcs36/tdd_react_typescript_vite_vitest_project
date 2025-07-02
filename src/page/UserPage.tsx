@@ -10,7 +10,7 @@ import {
 } from "../services/apiService";
 import defaultProfileImage from "../assets/profile.png";
 import { connect } from "react-redux";
-import { loginSuccess, logout } from "../store/authSlice";
+import { logoutSuccess, updateUserSuccess } from "../store/actions";
 import {
   UserUpdateRequestBody,
   validateUserUpdate,
@@ -257,10 +257,10 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       // Update Redux store if the updated user is the current logged-in user
       if (auth?.user && Number(auth.user.id) === Number(response.id)) {
         this.props.dispatch(
-          loginSuccess({
+          updateUserSuccess({
             id: response.id,
             username: response.username,
-            token: auth.token || "",
+            image: response.image || undefined,
           })
         );
       }
@@ -305,7 +305,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       await this.props.ApiDeleteService!.delete(
         `/api/1.0/users/${this.props.id}`
       );
-      this.props.dispatch(logout()); // Dispatch logout action
+      this.props.dispatch(logoutSuccess()); // Dispatch logout action
       this.setState({
         loading: false,
         successMessage: this.props.t("profile.deleteSuccess"),

@@ -2,7 +2,8 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../../App";
 import { expect, describe, beforeEach, it } from "vitest";
-import { loginSuccess, hideLogoutMessage } from "../../store/authSlice";
+import { loginSuccess } from "../../store/actions";
+import { hideLogoutMessage } from "../../store/authSlice";
 import store from "../../store";
 import { server } from "../../tests/mocks/server";
 import { http, HttpResponse } from "msw";
@@ -11,7 +12,7 @@ import i18n from "../../locale/i18n";
 describe("Logout Message Component", () => {
   beforeEach(() => {
     server.use(
-      http.post("/api/1.0/logout", () => {
+      http.post("/api/1.0/logout", async () => {
         return HttpResponse.json({
           message: "You have been logged out successfully",
         });

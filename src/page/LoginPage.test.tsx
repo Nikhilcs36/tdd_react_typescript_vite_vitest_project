@@ -16,7 +16,7 @@ import { Form } from "./LoginPage";
 import { MemoryRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "../store";
-import { logout } from "../store/authSlice";
+import { logoutSuccess } from "../store/actions";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
@@ -35,7 +35,7 @@ vi.mock("react-router-dom", async (importOriginal) => {
 beforeEach(async () => {
   vi.resetAllMocks();
   mockedNavigate.mockClear(); // Clear navigate mock before each test
-  store.dispatch(logout()); // Reset Redux auth state before each test
+  store.dispatch(logoutSuccess()); // Reset Redux auth state before each test
   window.localStorage.clear(); // Clear localStorage
 
   await act(async () => {
@@ -529,7 +529,7 @@ describe("Login Page", () => {
     beforeEach(async () => {
       // Make beforeEach async
       // Reset Redux auth state before each test
-      store.dispatch(logout());
+      store.dispatch(logoutSuccess());
       // Clear localStorage
       window.localStorage.clear();
       // Set default language to English

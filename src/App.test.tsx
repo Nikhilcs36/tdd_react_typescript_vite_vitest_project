@@ -11,7 +11,7 @@ import App, { AppContent } from "./App";
 import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
 import store, { createStore } from "./store";
-import { loginSuccess, logout } from "./store/authSlice";
+import { loginSuccess, logoutSuccess } from "./store/actions";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
@@ -34,7 +34,7 @@ const mockAuth = (
   if (isAuthenticated) {
     store.dispatch(loginSuccess(user));
   } else {
-    store.dispatch(logout());
+    store.dispatch(logoutSuccess());
   }
 };
 
@@ -49,7 +49,7 @@ describe("Routing", () => {
   beforeEach(async () => {
     // Make beforeEach async
     // Reset Redux auth state before each test
-    store.dispatch(logout());
+    store.dispatch(logoutSuccess());
     // Clear localStorage
     window.localStorage.clear();
     // Set default language to English
@@ -75,7 +75,7 @@ describe("Routing", () => {
   ) => {
     // Updated user default
     // Reset Redux auth state before each test
-    store.dispatch(logout());
+    store.dispatch(logoutSuccess());
     window.history.pushState({}, "", path);
 
     // Check if the path is a user profile path and extract the ID
@@ -326,7 +326,7 @@ describe("Navbar styling and layout", () => {
   beforeEach(async () => {
     // Reset Redux auth state before each test in this describe block
     await act(async () => {
-      store.dispatch(logout());
+      store.dispatch(logoutSuccess());
     });
 
     // Clear localStorage as a precaution
@@ -382,7 +382,7 @@ describe("Language & direction tests for Navbar", () => {
     // Make beforeEach async
     // Reset Redux auth state before each test in this describe block
     await act(async () => {
-      store.dispatch(logout());
+      store.dispatch(logoutSuccess());
     });
 
     // Clear localStorage as a precaution, though Redux is now primary
@@ -436,7 +436,7 @@ describe("Authentication navbar visible", () => {
     // Make beforeEach async
     // Reset Redux auth state
     await act(async () => {
-      store.dispatch(logout());
+      store.dispatch(logoutSuccess());
     });
 
     // Clear localStorage
@@ -462,7 +462,7 @@ describe("Authentication navbar visible", () => {
   afterEach(async () => {
     // Ensure Redux state is reset after each test in this block
     await act(async () => {
-      store.dispatch(logout());
+      store.dispatch(logoutSuccess());
     });
     localStorage.clear();
   });
@@ -540,7 +540,7 @@ describe("Logout functionality", () => {
   });
 
   afterEach(() => {
-    store.dispatch(logout());
+    store.dispatch(logoutSuccess());
   });
 
   it("logout successful flow when clicking logout link", async () => {
@@ -589,7 +589,7 @@ describe("Navbar persistence with localStorage", () => {
   beforeEach(async () => {
     // Reset Redux auth state before each test
     await act(async () => {
-      store.dispatch(logout());
+      store.dispatch(logoutSuccess());
     });
 
     // Clear localStorage

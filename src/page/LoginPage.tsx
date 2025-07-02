@@ -6,7 +6,7 @@ import { withTranslation, WithTranslation } from "react-i18next";
 import i18n from "../locale/i18n";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "../store/authSlice";
+import { loginSuccess } from "../store/actions";
 
 const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100`;
 

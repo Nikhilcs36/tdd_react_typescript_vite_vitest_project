@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./authSlice";
+import rootReducer from "./rootReducer";
 import SecureLS from "secure-ls";
 
 // Initialize SecureLS
@@ -20,11 +20,11 @@ const saveState = (state: any) => {
   try {
     // Store auth state including token
     const stateToSave = {
-      isAuthenticated: state.isAuthenticated,
-      user: state.user
-        ? { id: state.user.id, username: state.user.username }
+      isAuthenticated: state.auth.isAuthenticated,
+      user: state.auth.user
+        ? { id: state.auth.user.id, username: state.auth.user.username }
         : null,
-      token: state.token, // Save token to SecureLS
+      token: state.auth.token, // Save token to SecureLS
     };
     secureLS.set("authState", stateToSave);
   } catch (err) {
@@ -37,15 +37,13 @@ export const createStore = () => {
   const persistedState = loadState();
 
   const store = configureStore({
-    reducer: {
-      auth: authReducer,
-    },
+    reducer: rootReducer,
     preloadedState: persistedState ? { auth: persistedState } : undefined,
   });
 
   // Subscribe to store changes to save state to SecureLS
   store.subscribe(() => {
-    saveState(store.getState().auth);
+    saveState(store.getState());
   });
 
   return store;
