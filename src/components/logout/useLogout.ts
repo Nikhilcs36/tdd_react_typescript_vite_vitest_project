@@ -1,9 +1,7 @@
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import {
-  logout as logoutAction,
-  showLogoutMessage,
-} from "../../store/authSlice";
+import { showLogoutMessage } from "../../store/authSlice";
+import { logoutSuccess } from "../../store/actions";
 import { ApiService } from "../../services/apiService";
 
 export const useLogout = (apiService: ApiService) => {
@@ -22,7 +20,7 @@ export const useLogout = (apiService: ApiService) => {
   const logout = async (): Promise<void> => {
     try {
       await apiService.post("/api/1.0/logout");
-      dispatch(logoutAction());
+      dispatch(logoutSuccess());
       dispatch(showLogoutMessage());
       navigate("/");
 

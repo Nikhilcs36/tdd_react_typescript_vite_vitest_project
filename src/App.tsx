@@ -69,7 +69,7 @@ export const AppContent = ({
     (state: RootState) => state.auth.isAuthenticated
   );
   const user = useSelector((state: RootState) => state.auth.user);
-  const { logout } = useLogout(logoutApiService);
+  const { logout: logoutUser } = useLogout(logoutApiService);
 
   return (
     <I18nextProvider i18n={i18n}>
@@ -85,7 +85,7 @@ export const AppContent = ({
               <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
                 {t("myProfile")}
               </NavLink>
-              <StyledButton onClick={logout} data-testid="logout-link">
+              <StyledButton onClick={logoutUser} data-testid="logout-link">
                 {t("logout.title")}
               </StyledButton>
             </>

@@ -6,7 +6,7 @@ import createSecureLSMock from "../tests/mocks/secureLsMockFactory";
 vi.mock("secure-ls", () => createSecureLSMock(mockSecureLS));
 
 // Import modules that use secure-ls after the mock is set up
-import { loginSuccess, logout } from "./authSlice";
+import { loginSuccess, logoutSuccess } from "./actions";
 import { createStore } from "./index";
 
 describe("Auth Slice", () => {
@@ -33,7 +33,7 @@ describe("Auth Slice", () => {
     expect(lastSetCall.key).toBe("authState");
 
     // Now logout
-    store.dispatch(logout());
+    store.dispatch(logoutSuccess());
 
     // Verify auth state is cleared
     expect(store.getState().auth.isAuthenticated).toBe(false);

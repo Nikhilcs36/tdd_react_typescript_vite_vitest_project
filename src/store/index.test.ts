@@ -7,7 +7,7 @@ vi.mock("secure-ls", () => createSecureLSMock(mockSecureLS));
 
 // Import modules that use secure-ls after the mock is set up
 import { createStore } from "./index";
-import { loginSuccess, logout } from "./authSlice";
+import { loginSuccess, logoutSuccess } from "./actions";
 
 describe("Store with SecureLS", () => {
   beforeEach(() => {
@@ -54,7 +54,7 @@ describe("Store with SecureLS", () => {
   it("should clear SecureLS on logout", () => {
     const store = createStore();
     // Dispatch logout action
-    store.dispatch(logout());
+    store.dispatch(logoutSuccess());
 
     // Verify SecureLS.remove was called
     expect(mockSecureLS.removeCalls).toContain("authState");

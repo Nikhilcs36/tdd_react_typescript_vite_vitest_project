@@ -11,7 +11,7 @@ import { MemoryRouter } from "react-router-dom";
 import { createStore } from "../store";
 import { Provider } from "react-redux";
 import { UserPageWrapper } from "./UserPage";
-import { loginSuccess } from "../store/authSlice";
+import { loginSuccess } from "../store/actions";
 import i18n from "../locale/i18n";
 import { fetchApiServiceDeleteUser } from "../services/apiService";
 

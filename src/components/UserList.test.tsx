@@ -16,7 +16,8 @@ import i18n from "../locale/i18n";
 import { createUserListHandler } from "../tests/testUtils";
 import { Provider } from "react-redux";
 import store from "../store";
-import { loginSuccess, logout } from "../store/authSlice";
+import { loginSuccess } from "../store/actions";
+import { logoutSuccess } from "../store/actions";
 
 // Mock axios API call
 vi.mock("axios");
@@ -509,7 +510,7 @@ describe("User List", () => {
   describe("Authorization Headers", () => {
     beforeEach(() => {
       // Reset auth state before each test
-      store.dispatch(logout());
+      store.dispatch(logoutSuccess());
     });
 
     it("should include Authorization header when user is authenticated (axios)", async () => {
@@ -596,7 +597,7 @@ describe("User List", () => {
     });
 
     it("should not include Authorization header when user is not authenticated (axios)", async () => {
-      // No authentication setup - user remains unauthenticated (logout already called in beforeEach)
+      // No authentication setup - user remains unauthenticated (logoutSuccess already called in beforeEach)
 
       mockedAxios.get.mockResolvedValue({
         data: {
@@ -634,7 +635,7 @@ describe("User List", () => {
     });
 
     it("should not include Authorization header when user is not authenticated (fetch)", async () => {
-      // No authentication setup - user remains unauthenticated (logout already called in beforeEach)
+      // No authentication setup - user remains unauthenticated (logoutSuccess already called in beforeEach)
 
       // Setup MSW handler to capture headers
       let capturedAuthHeader: string | null = null;
@@ -671,7 +672,7 @@ describe("User List", () => {
   describe("Authenticated User Exclusion", () => {
     beforeEach(() => {
       // Reset auth state before each test
-      store.dispatch(logout());
+      store.dispatch(logoutSuccess());
     });
 
     it("should exclude authenticated user from user list (axios)", async () => {
@@ -819,7 +820,7 @@ describe("User List", () => {
         .mockResolvedValueOnce({
           content: [
             { id: 1, username: "user1", email: "user1@mail.com", image: null },
-            { id: 2, username: "user2", email: "user2@mail.com", image: null }, // user2 now appears after logout
+            { id: 2, username: "user2", email: "user2@mail.com", image: null }, // user2 now appears after logoutSuccess
             { id: 3, username: "user3", email: "user3@mail.com", image: null },
           ],
           page: 0,
