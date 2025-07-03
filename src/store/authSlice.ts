@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import SecureLS from "secure-ls";
-import { loginSuccess, logoutSuccess, updateUserSuccess } from "./actions";
+import { loginSuccess, logoutSuccess } from "./actions";
 
 // Initialize SecureLS
 const secureLS = new SecureLS({ encodingType: "aes" });
@@ -42,12 +42,6 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         secureLS.remove("authState");
-      })
-      .addCase(updateUserSuccess, (state, action) => {
-        if (state.user) {
-          state.user.username = action.payload.username;
-          state.user.image = action.payload.image;
-        }
       });
   },
 });

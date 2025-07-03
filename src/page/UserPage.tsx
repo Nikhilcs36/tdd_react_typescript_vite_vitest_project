@@ -10,7 +10,8 @@ import {
 } from "../services/apiService";
 import defaultProfileImage from "../assets/profile.png";
 import { connect } from "react-redux";
-import { logoutSuccess, updateUserSuccess } from "../store/actions";
+import { logoutSuccess } from "../store/actions";
+import { updateUserSuccess } from "../store/userSlice";
 import {
   UserUpdateRequestBody,
   validateUserUpdate,
@@ -258,9 +259,12 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       if (auth?.user && Number(auth.user.id) === Number(response.id)) {
         this.props.dispatch(
           updateUserSuccess({
-            id: response.id,
-            username: response.username,
-            image: response.image || undefined,
+            user: {
+              id: response.id,
+              username: response.username,
+              email: response.email,
+              image: response.image || null,
+            },
           })
         );
       }
