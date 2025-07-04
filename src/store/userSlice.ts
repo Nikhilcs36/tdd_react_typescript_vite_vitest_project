@@ -14,17 +14,27 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
+    // Sets loading state to true when a user update begins
+    updateUserStart: (state) => {
+      state.isLoading = true;
+      state.error = null;
+    },
     // Updates state with new user data after a successful profile update
     updateUserSuccess: (state, action: PayloadAction<{ user: User }>) => {
       state.user = action.payload.user;
       state.isLoading = false;
       state.error = null;
     },
+    // Handles errors during the user update process
+    updateUserFailure: (state, action: PayloadAction<string>) => {
+      state.isLoading = false;
+      state.error = action.payload;
+    },
   },
 });
 
 // Export the action creator
-export const { updateUserSuccess } = userSlice.actions;
+export const { updateUserStart, updateUserSuccess, updateUserFailure } = userSlice.actions;
 
 // Export the reducer
 export default userSlice.reducer;

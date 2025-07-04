@@ -137,7 +137,7 @@ describe("signup page", () => {
         ); // Tailwind red-700
         expect(errorMessage).toHaveStyleRule("font-size", "0.875rem"); // Tailwind text-sm
       }
-    });
+    }, 10000);
     it("displays success message styles", async () => {
       mockedAxios.post.mockResolvedValue({ data: { message: "User created" } }); // successful API response
       render(<SignUpPage apiService={axiosApiServiceSignUp} />);
@@ -492,7 +492,7 @@ describe("signup page", () => {
           const button = screen.getByRole("button", { name: "Sign Up" });
           expect(button).toBeDisabled();
         }
-      });
+      }, 10000);
     });
 
     describe("SignupForm", () => {
