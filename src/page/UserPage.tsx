@@ -13,10 +13,14 @@ import { connect } from "react-redux";
 import { logoutSuccess } from "../store/actions";
 import { updateUserSuccess } from "../store/userSlice";
 import {
+  updateUserStart,
+  updateUserFailure,
+} from "../store/userSlice";
+import {
   UserUpdateRequestBody,
   validateUserUpdate,
 } from "../utils/validationRules";
-import { AppDispatch } from "../store";
+import { AppDispatch, RootState } from "../store";
 import { withTranslation, WithTranslation } from "react-i18next";
 
 const PageContainer = tw.div`p-4 max-w-2xl mx-auto`;
@@ -59,6 +63,10 @@ interface UserPageProps extends WithTranslation {
     } | null;
     token: string | null;
   };
+  user: {
+    isLoading: boolean;
+    error: string | null;
+  };
   dispatch: AppDispatch; // Properly typed dispatch function
   navigate: (path: string) => void;
 }
@@ -72,8 +80,6 @@ interface User {
 
 interface UserPageState {
   user: User | null;
-  loading: boolean;
-  error: string | null;
   isEditing: boolean;
   editForm: {
     username: string;
@@ -95,8 +101,6 @@ class UserPage extends Component<UserPageProps, UserPageState> {
 
   state: UserPageState = {
     user: null,
-    loading: false,
-    error: null,
     isEditing: false,
     editForm: {
       username: "",
@@ -120,14 +124,14 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   }
 
   loadUser = async () => {
-    this.setState({ loading: true, error: null });
+    this.props.dispatch(updateUserStart());
     try {
       const user = await this.props.ApiGetService.get<User>(
         `/api/1.0/users/${this.props.id}`
       );
+      this.props.dispatch(updateUserSuccess({ user: { ...user, image: user.image || null } }));
       this.setState({
         user,
-        loading: false,
         // Initialize edit form with user data
         editForm: {
           username: user.username,
@@ -144,11 +148,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
           : errorMessage === "Update failed"
           ? this.props.t("profile.errors.updateFailed")
           : errorMessage;
-
-      this.setState({
-        error: translatedError,
-        loading: false,
-      });
+      this.props.dispatch(updateUserFailure(translatedError));
     }
   };
 
@@ -231,7 +231,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { editForm } = this.state;
-    const { auth, ApiPutService, id } = this.props;
+    const { auth, ApiPutService, id, dispatch } = this.props;
 
     // Validate form before submission
     if (!this.validateForm()) {
@@ -239,6 +239,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     }
 
     this.setState({ isSubmitting: true, successMessage: null });
+    dispatch(updateUserStart());
 
     try {
       // Make API request to update profile using ApiPutService
@@ -257,7 +258,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
 
       // Update Redux store if the updated user is the current logged-in user
       if (auth?.user && Number(auth.user.id) === Number(response.id)) {
-        this.props.dispatch(
+        dispatch(
           updateUserSuccess({
             user: {
               id: response.id,
@@ -284,9 +285,8 @@ class UserPage extends Component<UserPageProps, UserPageState> {
             : errorMessage === "Update failed"
             ? this.props.t("profile.errors.updateFailed")
             : errorMessage;
-
+        dispatch(updateUserFailure(translatedError));
         this.setState({
-          error: translatedError,
           isSubmitting: false,
         });
       }
@@ -304,23 +304,24 @@ class UserPage extends Component<UserPageProps, UserPageState> {
 
   handleDelete = async () => {
     this.closeDeleteConfirmation();
-    this.setState({ loading: true, error: null });
+    this.props.dispatch(updateUserStart());
     try {
       await this.props.ApiDeleteService!.delete(
         `/api/1.0/users/${this.props.id}`
       );
       this.props.dispatch(logoutSuccess()); // Dispatch logout action
+      if (this.state.user) {
+        this.props.dispatch(updateUserSuccess({ user: { ...this.state.user, image: this.state.user.image || null } }));
+      }
       this.setState({
-        loading: false,
         successMessage: this.props.t("profile.deleteSuccess"),
       });
 
       this.props.navigate("/");
     } catch (apiError: any) {
-      this.setState({
-        error: apiError.response?.data?.message || apiError.message,
-        loading: false,
-      });
+      const errorMessage =
+        apiError.response?.data?.message || apiError.message;
+      this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
 
@@ -469,9 +470,10 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   }
 
   renderContent() {
-    const { loading, error, isEditing, successMessage } = this.state;
+    const { isEditing, successMessage } = this.state;
+    const { isLoading, error } = this.props.user;
 
-    if (loading) {
+    if (isLoading) {
       return (
         <SpinnerContainer>
           <Spinner data-testid="spinner" />
@@ -505,8 +507,9 @@ class UserPage extends Component<UserPageProps, UserPageState> {
 }
 
 // Connect component to Redux store
-const mapStateToProps = (state: { auth: UserPageProps["auth"] }) => ({
+const mapStateToProps = (state: RootState) => ({
   auth: state.auth,
+  user: state.user,
 });
 
 // Apply withTranslation to the component

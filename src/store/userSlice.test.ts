@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import userReducer, { updateUserSuccess } from './userSlice';
+import userReducer, { updateUserStart, updateUserSuccess, updateUserFailure } from './userSlice';
 import { UserState } from './types';
 
 // Mock user data for testing
@@ -35,5 +35,31 @@ describe('userSlice', () => {
     expect(newState.user).toEqual(mockUser);
     expect(newState.isLoading).toBe(false);
     expect(newState.error).toBeNull();
+  });
+
+  // Test case for the updateUserStart action
+  test('should handle updateUserStart', () => {
+    // Action to be dispatched
+    const action = updateUserStart();
+    // New state after the action is dispatched
+    const newState = userReducer(initialState, action);
+
+    // Assertions to check if the state is updated correctly
+    expect(newState.isLoading).toBe(true);
+    expect(newState.error).toBeNull();
+  });
+
+  // Test case for the updateUserFailure action
+  test('should handle updateUserFailure', () => {
+    // Error message to be dispatched
+    const error = 'Failed to update user';
+    // Action to be dispatched
+    const action = updateUserFailure(error);
+    // New state after the action is dispatched
+    const newState = userReducer(initialState, action);
+
+    // Assertions to check if the state is updated correctly
+    expect(newState.isLoading).toBe(false);
+    expect(newState.error).toEqual(error);
   });
 });
