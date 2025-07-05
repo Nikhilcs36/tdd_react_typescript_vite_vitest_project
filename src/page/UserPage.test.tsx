@@ -399,6 +399,36 @@ describe("UserPage", () => {
   });
 
   describe("Profile Update", () => {
+    it("clears the profile edit success message after 3 seconds", async () => {
+      await setup();
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Submit the form to trigger the success message
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      // Check that the success message is displayed
+      await waitFor(() => {
+        expect(screen.getByTestId("success-message")).toBeInTheDocument();
+      });
+
+      // Check that the success message is no longer displayed after 3 seconds
+      await waitFor(
+        () => {
+          expect(
+            screen.queryByTestId("success-message")
+          ).not.toBeInTheDocument();
+        },
+        { timeout: 4000 } // Wait for 4 seconds to be safe
+      );
+    });
+
     it("displays success message after successful profile update", async () => {
       const { mockPut: _ } = await setup();
 
@@ -464,6 +494,25 @@ describe("UserPage", () => {
     });
   });
   describe("User Deletion Workflow", () => {
+    it("clears delete success message after 3 seconds", async () => {
+      await setup({ withAuth: true });
+      fireEvent.click(await screen.findByTestId("delete-profile-button"));
+      fireEvent.click(screen.getByTestId("confirm-delete-button"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("success-message")).toBeInTheDocument();
+      });
+
+      await waitFor(
+        () => {
+          expect(
+            screen.queryByTestId("success-message")
+          ).not.toBeInTheDocument();
+        },
+        { timeout: 4000 }
+      );
+    });
+
     it("successfully deletes user and redirects", async () => {
       const { mockDelete } = await setup({ withAuth: true });
       fireEvent.click(await screen.findByTestId("delete-profile-button"));

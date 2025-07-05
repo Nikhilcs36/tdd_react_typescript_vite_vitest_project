@@ -12,10 +12,7 @@ import defaultProfileImage from "../assets/profile.png";
 import { connect } from "react-redux";
 import { logoutSuccess } from "../store/actions";
 import { updateUserSuccess } from "../store/userSlice";
-import {
-  updateUserStart,
-  updateUserFailure,
-} from "../store/userSlice";
+import { updateUserStart, updateUserFailure } from "../store/userSlice";
 import {
   UserUpdateRequestBody,
   validateUserUpdate,
@@ -113,6 +110,8 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     showDeleteConfirmation: false,
   };
 
+  private successTimeout: NodeJS.Timeout | null = null;
+
   componentDidMount() {
     this.loadUser();
   }
@@ -123,13 +122,21 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     }
   }
 
+  componentWillUnmount() {
+    if (this.successTimeout) {
+      clearTimeout(this.successTimeout);
+    }
+  }
+
   loadUser = async () => {
     this.props.dispatch(updateUserStart());
     try {
       const user = await this.props.ApiGetService.get<User>(
         `/api/1.0/users/${this.props.id}`
       );
-      this.props.dispatch(updateUserSuccess({ user: { ...user, image: user.image || null } }));
+      this.props.dispatch(
+        updateUserSuccess({ user: { ...user, image: user.image || null } })
+      );
       this.setState({
         user,
         // Initialize edit form with user data
@@ -256,6 +263,14 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         successMessage: this.props.t("profile.successMessage"),
       });
 
+      // Clear any existing timeout and set new one
+      if (this.successTimeout) {
+        clearTimeout(this.successTimeout);
+      }
+      this.successTimeout = setTimeout(() => {
+        this.setState({ successMessage: null });
+      }, 3000);
+
       // Update Redux store if the updated user is the current logged-in user
       if (auth?.user && Number(auth.user.id) === Number(response.id)) {
         dispatch(
@@ -311,16 +326,31 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       );
       this.props.dispatch(logoutSuccess()); // Dispatch logout action
       if (this.state.user) {
-        this.props.dispatch(updateUserSuccess({ user: { ...this.state.user, image: this.state.user.image || null } }));
+        this.props.dispatch(
+          updateUserSuccess({
+            user: { ...this.state.user, image: this.state.user.image || null },
+          })
+        );
       }
-      this.setState({
-        successMessage: this.props.t("profile.deleteSuccess"),
-      });
+      this.setState(
+        {
+          successMessage: this.props.t("profile.deleteSuccess"),
+        },
+        () => {
+          // Clear existing timeout before setting new one
+          if (this.successTimeout) {
+            clearTimeout(this.successTimeout);
+          }
 
-      this.props.navigate("/");
+          // Set timeout with navigation after message clear
+          this.successTimeout = setTimeout(() => {
+            this.setState({ successMessage: null });
+            this.props.navigate("/");
+          }, 3000);
+        }
+      );
     } catch (apiError: any) {
-      const errorMessage =
-        apiError.response?.data?.message || apiError.message;
+      const errorMessage = apiError.response?.data?.message || apiError.message;
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
