@@ -22,6 +22,7 @@ import { Provider, useSelector } from "react-redux";
 import store, { RootState } from "./store";
 import { useLogout } from "./components/logout/useLogout";
 import LogoutMessage from "./components/logout/LogoutMessage";
+import { ThemeSwitcher } from "./components/ThemeSwitcher";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -43,13 +44,6 @@ const NavBar = tw.nav`
 const NavLeft = tw.div`flex items-center gap-4`;
 const NavRight = tw.div`flex items-center gap-6`;
 const NavLink = tw(Link)`
-  font-semibold
-  cursor-pointer
-  hover:underline
-  transition-all
-  duration-200
-`;
-const ThemeSwitcher = tw.div`
   font-semibold
   cursor-pointer
   hover:underline
@@ -83,7 +77,7 @@ export const AppContent = ({
   const { logout: logoutUser } = useLogout(logoutApiService);
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
-    return savedTheme || "light";
+    return (savedTheme || "light") as "light" | "dark";
   });
 
   useEffect(() => {
@@ -106,12 +100,7 @@ export const AppContent = ({
           <NavLink to="/" title="Home">
             {t("home")}
           </NavLink>
-          <ThemeSwitcher
-            onClick={handleThemeSwitch}
-            data-testid="theme-switcher"
-          >
-            {theme === "light" ? "Dark" : "Light"} Mode
-          </ThemeSwitcher>
+          <ThemeSwitcher onClick={handleThemeSwitch} theme={theme} />
         </NavLeft>
         <NavRight>
           {isAuthenticated ? (
