@@ -5,9 +5,9 @@ import { ApiGetService } from "../services/apiService";
 import UserListItem from "./UserListItem";
 import { withTranslation, WithTranslation } from "react-i18next";
 
-const Card = tw.div`bg-white shadow-lg rounded-lg p-4`;
-const CardHeader = tw.div`text-center border-b pb-2`;
-const Title = tw.h3`text-xl font-semibold`;
+const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
+const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
+const Title = tw.h3`text-xl font-semibold dark:text-dark-text`;
 const UserContainer = tw.div`mt-4 flex flex-col items-center gap-2 h-40 overflow-auto`;
 const ButtonGroup = tw.div`flex justify-center mt-4 gap-2`;
 const Button = tw.button`px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300`;

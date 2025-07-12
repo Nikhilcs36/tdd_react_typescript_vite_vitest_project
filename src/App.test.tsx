@@ -585,6 +585,45 @@ describe("Logout functionality", () => {
   });
 });
 
+describe("Theme Functionality", () => {
+  beforeEach(() => {
+    document.documentElement.classList.remove("dark");
+    localStorage.clear();
+  });
+
+  it("initializes with light theme by default", () => {
+    render(<App />);
+    expect(document.documentElement).not.toHaveClass("dark");
+  });
+
+  it("toggles between light and dark themes when switch is clicked", async () => {
+    render(<App />);
+    const themeSwitcher = screen.getByTestId("theme-switcher");
+
+    await userEvent.click(themeSwitcher);
+    expect(document.documentElement).toHaveClass("dark");
+
+    await userEvent.click(themeSwitcher);
+    expect(document.documentElement).not.toHaveClass("dark");
+  });
+
+  it("persists theme selection across page reloads", async () => {
+    const { unmount } = render(<App />);
+    const themeSwitcher = screen.getByTestId("theme-switcher");
+
+    await userEvent.click(themeSwitcher);
+    unmount();
+
+    render(<App />);
+    await waitFor(
+      () => {
+        expect(document.documentElement).toHaveClass("dark");
+      },
+      { timeout: 1000 }
+    );
+  });
+});
+
 describe("Navbar persistence with localStorage", () => {
   beforeEach(async () => {
     // Reset Redux auth state before each test
