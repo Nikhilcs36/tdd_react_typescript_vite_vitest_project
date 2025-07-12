@@ -20,22 +20,22 @@ import {
 import { AppDispatch, RootState } from "../store";
 import { withTranslation, WithTranslation } from "react-i18next";
 
-const PageContainer = tw.div`p-4 max-w-2xl mx-auto`;
+const PageContainer = tw.div`p-4 max-w-2xl mx-auto dark:bg-dark-primary`;
 const SpinnerContainer = tw.div`text-center py-8`;
 const Spinner = tw.div`w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
 const ErrorAlert = tw.div`bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 text-center mx-auto max-w-md w-full`;
 const SuccessAlert = tw.div`bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4 text-center mx-auto max-w-md w-full`;
-const ProfileCardContainer = tw.div`bg-white rounded-lg shadow-md p-6`;
+const ProfileCardContainer = tw.div`bg-white rounded-lg shadow-md p-6 dark:bg-dark-secondary`;
 const ProfileImage = tw.img`w-32 h-32 rounded-full mx-auto mb-4`;
-const ProfileName = tw.h2`text-2xl font-bold text-center mb-2`;
-const ProfileEmail = tw.p`text-gray-600 text-center`;
+const ProfileName = tw.h2`text-2xl font-bold text-center mb-2 dark:text-dark-text`;
+const ProfileEmail = tw.p`text-gray-600 text-center dark:text-dark-text`;
 const EditButton = tw.button`mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full`;
 const CancelButton = tw.button`mt-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded w-full`;
 const SaveButton = tw.button`mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full disabled:bg-green-300 disabled:cursor-not-allowed`;
 const FormContainer = tw.form`mt-4 space-y-4`;
 const FormGroup = tw.div`flex flex-col`;
-const Label = tw.label`mb-1 text-sm font-medium text-gray-700`;
-const Input = tw.input`p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500`;
+const Label = tw.label`mb-1 text-sm font-medium text-gray-700 dark:text-dark-text`;
+const Input = tw.input`p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-dark-accent dark:bg-dark-primary dark:text-dark-text`;
 const ErrorMessage = tw.div`text-red-600 text-sm mt-1`;
 const ButtonContainer = tw.div`flex flex-col mt-4`;
 const DeleteButton = tw.button`mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full`;
