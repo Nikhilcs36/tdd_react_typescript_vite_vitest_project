@@ -8,19 +8,19 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/actions";
 
-const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100`;
+const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100 dark:bg-dark-primary`;
 
 export const Form = styled.form.attrs((props: { lang?: string }) => ({
   lang: props.lang || "en",
 }))<{ lang?: string }>`
-  ${tw`w-full p-4 bg-white rounded-lg shadow-md`}
+  ${tw`w-full p-4 bg-white rounded-lg shadow-md dark:bg-dark-secondary`}
   ${({ lang }) =>
     lang === "ml" ? tw`max-w-xl` : lang === "ar" ? tw`max-w-md` : tw`max-w-sm`}
 `;
 
-const Title = tw.h2`text-xl font-bold mb-3`;
-const Label = tw.label`block text-gray-700 font-medium mb-1`;
-const Input = tw.input`w-full px-3 py-0.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none`;
+const Title = tw.h2`text-xl font-bold mb-3 dark:text-dark-text`;
+const Label = tw.label`block text-gray-700 dark:text-dark-text font-medium mb-1`;
+const Input = tw.input`w-full px-3 py-0.5 border border-gray-300 dark:border-dark-accent rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-dark-primary dark:text-dark-text`;
 const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
   tw`px-4 py-2 mt-2 text-white transition-all bg-blue-500 rounded hover:bg-blue-600`,
   disabled && tw`bg-gray-400 cursor-not-allowed hover:bg-gray-400`,
