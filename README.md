@@ -56,7 +56,6 @@ Our development process follows a strict TDD cycle:
 -   **Unit Tests**: We aim for high unit test coverage using Vitest.
 -   **Component Tests**: We use Testing Library to test our React components.
 -   **API Mocking**: We use MSW (Mock Service Worker) to mock API responses for our tests.
--   **E2E Tests**: End-to-end tests are planned for future development.
 
 ## Workflows
 
