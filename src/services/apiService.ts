@@ -58,7 +58,7 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
 export const axiosApiServiceActivation: ApiService = {
   post: async <T>(url: string) => {
     const response = await axios.post<T>(
-      url,
+      url, // This URL is dynamic, so it will be handled in the component
       {},
       {
         headers: {
@@ -74,6 +74,7 @@ export const axiosApiServiceActivation: ApiService = {
 export const fetchApiServiceActivation: ApiService = {
   post: async <T>(url: string) => {
     const response = await fetch(url, {
+      // This URL is dynamic, so it will be handled in the component
       method: "POST",
       headers: {
         "Accept-Language": i18n.language,
@@ -140,6 +141,7 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
 export const axiosApiServiceGetUser: ApiGetService = {
   get: async <T>(url: string): Promise<T> => {
     const response = await axios.get<T>(url, {
+      // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
       },
@@ -152,6 +154,7 @@ export const axiosApiServiceGetUser: ApiGetService = {
 export const fetchApiServiceGetUser: ApiGetService = {
   get: async <T>(url: string): Promise<T> => {
     const response = await fetch(url, {
+      // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
       },
@@ -254,6 +257,7 @@ export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
     const token: string | null = store.getState().auth.token;
 
     const response = await axios.put(url, body, {
+      // This URL is dynamic, so it will be handled in the component
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
@@ -276,6 +280,7 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
     }
 
     const response = await fetch(url, {
+      // This URL is dynamic, so it will be handled in the component
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -301,6 +306,7 @@ export const axiosApiServiceDeleteUser: ApiDeleteService = {
     const token: string | null = store.getState().auth.token;
 
     const response = await axios.delete<R>(url, {
+      // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -317,6 +323,7 @@ export const fetchApiServiceDeleteUser: ApiDeleteService = {
     const token: string | null = store.getState().auth.token;
 
     const response = await fetch(url, {
+      // This URL is dynamic, so it will be handled in the component
       method: "DELETE",
       headers: {
         "Accept-Language": i18n.language,

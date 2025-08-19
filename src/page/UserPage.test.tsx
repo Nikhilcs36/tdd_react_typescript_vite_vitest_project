@@ -14,6 +14,7 @@ import { UserPageWrapper } from "./UserPage";
 import { loginSuccess } from "../store/actions";
 import i18n from "../locale/i18n";
 import { fetchApiServiceDeleteUser } from "../services/apiService";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 // Mock the store module
 let store: ReturnType<typeof createStore>;
@@ -136,7 +137,7 @@ describe("UserPage", () => {
       await waitFor(() => expect(mockPut).toHaveBeenCalled());
       expect(store.getState().auth.token).toBe("test-token");
       expect(mockPut).toHaveBeenCalledWith(
-        "/api/1.0/users/1",
+        API_ENDPOINTS.UPDATE_USER(1),
         expect.objectContaining({
           username: "updateduser",
         })
@@ -519,7 +520,7 @@ describe("UserPage", () => {
       fireEvent.click(screen.getByTestId("confirm-delete-button"));
 
       await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalledWith("/api/1.0/users/1");
+        expect(mockDelete).toHaveBeenCalledWith(API_ENDPOINTS.DELETE_USER(1));
         expect(screen.getByTestId("success-message")).toHaveTextContent(
           "Account deleted successfully"
         );

@@ -9,10 +9,12 @@ import { server } from "../../tests/mocks/server";
 import { http, HttpResponse } from "msw";
 import i18n from "../../locale/i18n";
 
+import { API_ENDPOINTS } from "../../services/apiEndpoints";
+
 describe("Logout Message Component", () => {
   beforeEach(() => {
     server.use(
-      http.post("/api/1.0/logout", async () => {
+      http.post(API_ENDPOINTS.LOGOUT, async () => {
         return HttpResponse.json({
           message: "You have been logged out successfully",
         });

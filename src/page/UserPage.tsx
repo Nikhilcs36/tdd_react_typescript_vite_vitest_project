@@ -19,6 +19,7 @@ import {
 } from "../utils/validationRules";
 import { AppDispatch, RootState } from "../store";
 import { withTranslation, WithTranslation } from "react-i18next";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 const PageContainer = tw.div`p-4 max-w-2xl mx-auto dark:bg-dark-primary`;
 const SpinnerContainer = tw.div`text-center py-8`;
@@ -132,7 +133,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     this.props.dispatch(updateUserStart());
     try {
       const user = await this.props.ApiGetService.get<User>(
-        `/api/1.0/users/${this.props.id}`
+        API_ENDPOINTS.GET_USER_BY_ID(Number(this.props.id))
       );
       this.props.dispatch(
         updateUserSuccess({ user: { ...user, image: user.image || null } })
@@ -251,7 +252,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     try {
       // Make API request to update profile using ApiPutService
       const response = await ApiPutService!.put<User>(
-        `/api/1.0/users/${id}`,
+        API_ENDPOINTS.UPDATE_USER(Number(id)),
         editForm
       );
 
@@ -322,7 +323,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     this.props.dispatch(updateUserStart());
     try {
       await this.props.ApiDeleteService!.delete(
-        `/api/1.0/users/${this.props.id}`
+        API_ENDPOINTS.DELETE_USER(Number(this.props.id))
       );
       this.props.dispatch(logoutSuccess()); // Dispatch logout action
       if (this.state.user) {
