@@ -1,11 +1,13 @@
 // API Endpoints
 export const API_ENDPOINTS = {
-  SIGNUP: "/api/1.0/users",
-  LOGIN: "/api/1.0/auth",
+  SIGNUP: "/api/user/create/",
+  LOGIN: "/api/user/token/",
+  ME: "/api/user/me/",
+  TOKEN_REFRESH: "/api/user/token/refresh/",
+  LOGOUT: "/api/user/logout/",
+  GET_USERS: "/api/user/users/",
   ACTIVATE_ACCOUNT: (token: string) => `/api/1.0/users/token/${token}`,
-  GET_USERS: "/api/1.0/users",
-  GET_USER_BY_ID: (id: number) => `/api/1.0/users/${id}`,
-  UPDATE_USER: (id: number) => `/api/1.0/users/${id}`,
-  DELETE_USER: (id: number) => `/api/1.0/users/${id}`,
-  LOGOUT: "/api/1.0/logout",
+  GET_USER_BY_ID: (id: number) => `/api/user/users/${id}/`,
+  UPDATE_USER: (id: number) => `/api/user/users/${id}/`,
+  DELETE_USER: (id: number) => `/api/user/users/${id}/`,
 };
