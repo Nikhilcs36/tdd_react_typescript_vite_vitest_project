@@ -3,6 +3,7 @@ import tw, { styled } from "twin.macro";
 import { ApiService } from "../services/apiService";
 import { SignUpRequestBody, validateSignUp } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 import i18n from "../locale/i18n";
 
 const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100 dark:bg-dark-primary`;
@@ -162,7 +163,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
           const body = { username, email, password, passwordRepeat };
 
           await this.props.apiService.post<SignUpResponse>(
-            "/api/1.0/users",
+            API_ENDPOINTS.SIGNUP,
             body
           );
           this.setState({ successMessage: true });

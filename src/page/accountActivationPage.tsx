@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import tw from "twin.macro";
 import { ApiService } from "../services/apiService";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 const SuccessMessage = tw.div`mt-3 p-3 text-green-700 bg-green-100 rounded text-center`;
 const ErrorMessage = tw.div`mt-3 p-3 text-red-700 bg-red-100 rounded text-center`;
@@ -32,7 +33,7 @@ const AccountActivationPage: React.FC<AccountActivationPageProps> = ({
       setLoading(true);
       try {
         await apiService.post<ActivationSuccessResponse>(
-          `/api/1.0/users/token/${token}`
+          API_ENDPOINTS.ACTIVATE_ACCOUNT(token)
         );
         setResult("success");
       } catch (error) {

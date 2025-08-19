@@ -30,6 +30,7 @@ import { createStore } from "../../store";
 import { loginSuccess } from "../../store/actions";
 import { useLogout } from "./useLogout";
 import type { ApiService } from "../../services/apiService";
+import { API_ENDPOINTS } from "../../services/apiEndpoints";
 
 describe("useLogout Hook", () => {
   let store: ReturnType<typeof createStore>;
@@ -71,7 +72,7 @@ describe("useLogout Hook", () => {
     });
 
     // Verify API call
-    expect(mockApiService.post).toHaveBeenCalledWith("/api/1.0/logout");
+    expect(mockApiService.post).toHaveBeenCalledWith(API_ENDPOINTS.LOGOUT);
 
     // Verify Redux state cleanup
     await waitFor(() => {

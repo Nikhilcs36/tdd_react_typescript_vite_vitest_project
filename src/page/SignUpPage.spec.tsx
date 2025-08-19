@@ -19,6 +19,7 @@ import { defaultService } from "../services/defaultService";
 import "../locale/i18n";
 import i18n from "../locale/i18n";
 import { Form } from "./SignUpPage";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
@@ -201,7 +202,7 @@ describe("signup page", () => {
       await fillAndSubmitSignUpForm(defaultFormData);
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        "/api/1.0/users",
+        API_ENDPOINTS.SIGNUP,
         defaultFormData,
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -218,7 +219,7 @@ describe("signup page", () => {
       await fillAndSubmitSignUpForm(defaultFormData);
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        "/api/1.0/users",
+        API_ENDPOINTS.SIGNUP,
         defaultFormData,
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -303,7 +304,7 @@ describe("signup page", () => {
         });
 
         // backend
-        const response = await fetch("/api/1.0/users", {
+        const response = await fetch(API_ENDPOINTS.SIGNUP, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
@@ -422,7 +423,7 @@ describe("signup page", () => {
           await fillAndSubmitSignUpForm(formData);
 
           // msw API integration
-          const response = await fetch("/api/1.0/users", {
+          const response = await fetch(API_ENDPOINTS.SIGNUP, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
@@ -884,7 +885,7 @@ describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
         // Call the API via fetchApiServiceSignUp. MSW will intercept this call
         // and Accept-Language header as "languageReceived" in the response.(handlers.ts)
         const responseData = await fetchApiServiceSignUp.post(
-          "/api/1.0/users",
+          API_ENDPOINTS.SIGNUP,
           formData
         );
 

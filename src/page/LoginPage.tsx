@@ -5,6 +5,7 @@ import { LoginRequestBody, validateLogin } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
 import i18n from "../locale/i18n";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/actions";
 
@@ -129,7 +130,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     try {
       const { email, password } = this.state;
       const response = await this.props.apiService.post<LoginResponse>(
-        "/api/1.0/auth",
+        API_ENDPOINTS.LOGIN,
         {
           email,
           password,

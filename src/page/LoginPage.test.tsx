@@ -17,6 +17,7 @@ import { MemoryRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "../store";
 import { logoutSuccess } from "../store/actions";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
@@ -158,7 +159,7 @@ describe("Login Page", () => {
       await fillAndSubmitLoginForm(validCredentials);
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        "/api/1.0/auth",
+        API_ENDPOINTS.LOGIN,
         validCredentials,
         expect.objectContaining({
           headers: { "Accept-Language": "en" },

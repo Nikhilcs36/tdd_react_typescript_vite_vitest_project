@@ -18,6 +18,7 @@ import {
   axiosApiServiceLogin,
   fetchApiServiceLogout,
 } from "./services/apiService";
+import { API_ENDPOINTS } from "./services/apiEndpoints";
 import { fillAndSubmitLoginForm } from "./tests/testUtils";
 import LoginPageWrapper from "./page/LoginPage";
 
@@ -564,7 +565,7 @@ describe("Logout functionality", () => {
 
     // API verification
     await waitFor(() => {
-      expect(postSpy).toHaveBeenCalledWith("/api/1.0/logout");
+      expect(postSpy).toHaveBeenCalledWith(API_ENDPOINTS.LOGOUT);
     });
 
     // Auth state assertions
