@@ -3,6 +3,7 @@ import { userEvent } from "@testing-library/user-event";
 import i18n from "../locale/i18n";
 import { http, HttpResponse, delay, HttpHandler } from "msw";
 import { page1 } from "../tests/mocks/handlers";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 /**
  * Utility function to fill the sign-up form and optionally submit it.
@@ -70,7 +71,7 @@ export const createUserListHandler = (options?: {
   delayPage?: number;
   delayMs?: number;
 }): HttpHandler => {
-  return http.get("/api/1.0/users", async ({ request }) => {
+  return http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 0;
     const size = Number(url.searchParams.get("size")) || 3;

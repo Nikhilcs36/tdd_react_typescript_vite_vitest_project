@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { showLogoutMessage } from "../../store/authSlice";
 import { logoutSuccess } from "../../store/actions";
 import { ApiService } from "../../services/apiService";
+import { API_ENDPOINTS } from "../../services/apiEndpoints";
 
 export const useLogout = (apiService: ApiService) => {
   const dispatch = useDispatch();
@@ -19,7 +20,7 @@ export const useLogout = (apiService: ApiService) => {
    */
   const logout = async (): Promise<void> => {
     try {
-      await apiService.post("/api/1.0/logout");
+      await apiService.post(API_ENDPOINTS.LOGOUT);
       dispatch(logoutSuccess());
       dispatch(showLogoutMessage());
       navigate("/");
