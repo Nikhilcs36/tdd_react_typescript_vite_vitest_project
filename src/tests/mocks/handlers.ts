@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import { API_ENDPOINTS } from "../../services/apiEndpoints";
 import {
   LoginRequestBody,
   SignUpRequestBody,
@@ -61,7 +62,7 @@ export const page1 = {
 
 export const handlers = [
   // Mock API for user signup (msw) ----(1)
-  http.post("/api/1.0/users", async ({ request }) => {
+  http.post(API_ENDPOINTS.SIGNUP, async ({ request }) => {
     // Capture the Accept-Language header from the request.
     const acceptLanguage = request.headers.get("Accept-Language");
 
@@ -110,7 +111,7 @@ export const handlers = [
   }),
 
   // Mock API for userlist (msw) - Authorization aware ----(3)
-  http.get("/api/1.0/users", async ({ request }) => {
+  http.get("/api/user/users/", async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 0;
     const size = Number(url.searchParams.get("size")) || 3;
@@ -157,7 +158,7 @@ export const handlers = [
   }),
 
   // Mock API for get user by ID (msw) ----(4)
-  http.get("/api/1.0/users/:id", async ({ request, params }) => {
+  http.get("/api/user/users/:id/", async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const { id } = params;
     const user = page1.content.find((u) => u.id === Number(id));
@@ -176,7 +177,7 @@ export const handlers = [
   }),
 
   // Mock API for user login (msw) ----(5)
-  http.post("/api/1.0/auth", async ({ request }) => {
+  http.post(API_ENDPOINTS.LOGIN, async ({ request }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const body = (await request.json()) as LoginRequestBody;
 
@@ -223,7 +224,7 @@ export const handlers = [
   }),
 
   // Mock API for user profile update (msw) ----(6)
-  http.put("/api/1.0/users/:id", async ({ request, params }) => {
+  http.put("/api/user/users/:id/", async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
     const { id } = params;
@@ -282,7 +283,7 @@ export const handlers = [
   }),
 
   // Mock API for user logout (msw) - Authorization aware ----(7)
-  http.post("/api/1.0/logout", async ({ request }) => {
+  http.post(API_ENDPOINTS.LOGOUT, async ({ request }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
 
@@ -316,7 +317,7 @@ export const handlers = [
   }),
 
   // Mock API for user deletion (msw) ----(8)
-  http.delete("/api/1.0/users/:id", async ({ request, params }) => {
+  http.delete("/api/user/users/:id/", async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
     const { id } = params;

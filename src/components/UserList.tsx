@@ -4,6 +4,7 @@ import tw from "twin.macro";
 import { ApiGetService } from "../services/apiService";
 import UserListItem from "./UserListItem";
 import { withTranslation, WithTranslation } from "react-i18next";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
 const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
@@ -99,7 +100,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
 
     try {
       const response = await this.props.ApiGetService.get<Page>(
-        `/api/1.0/users?page=${pageNumber}&size=${this.state.page.size}`
+        `${API_ENDPOINTS.GET_USERS}?page=${pageNumber}&size=${this.state.page.size}`
       );
 
       // Clear timeouts if request completes before delay

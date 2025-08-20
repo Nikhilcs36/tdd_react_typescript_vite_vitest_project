@@ -38,7 +38,7 @@ const setup = () => {
 const emptyListAPISetup = () => {
   // Override the API response (in mocks/handlers.ts) to return an empty list just for this test
   server.use(
-    http.get("/api/1.0/users", async () => {
+    http.get("/api/user/users/", async () => {
       return HttpResponse.json({
         content: [],
         page: 0,
@@ -545,7 +545,7 @@ describe("User List", () => {
 
       // Verify axios was called with Authorization header
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        "/api/1.0/users?page=0&size=3",
+        "/api/user/users/?page=0&size=3",
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: "Bearer test-jwt-token",
@@ -569,7 +569,7 @@ describe("User List", () => {
       let capturedAuthHeader: string | null = null;
       let capturedLanguageHeader: string | null = null;
       server.use(
-        http.get("/api/1.0/users", async ({ request }) => {
+        http.get("/api/user/users/", async ({ request }) => {
           capturedAuthHeader = request.headers.get("Authorization");
           capturedLanguageHeader = request.headers.get("Accept-Language");
           return HttpResponse.json({
@@ -620,7 +620,7 @@ describe("User List", () => {
 
       // Verify axios was called without Authorization header
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        "/api/1.0/users?page=0&size=3",
+        "/api/user/users/?page=0&size=3",
         expect.objectContaining({
           headers: expect.objectContaining({
             "Accept-Language": expect.any(String),
@@ -641,7 +641,7 @@ describe("User List", () => {
       let capturedAuthHeader: string | null = null;
       let capturedLanguageHeader: string | null = null;
       server.use(
-        http.get("/api/1.0/users", async ({ request }) => {
+        http.get("/api/user/users/", async ({ request }) => {
           capturedAuthHeader = request.headers.get("Authorization");
           capturedLanguageHeader = request.headers.get("Accept-Language");
           return HttpResponse.json({

@@ -238,7 +238,7 @@ describe("signup page", () => {
       await fillAndSubmitSignUpForm(defaultFormData);
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        "/api/1.0/users",
+        API_ENDPOINTS.SIGNUP,
         defaultFormData,
         expect.objectContaining({
           headers: expect.objectContaining({
