@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import axios from "axios";
 import { server } from "../tests/mocks/server";
 import { http, HttpResponse } from "msw";
+import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
 import UserListWithRouter from "./UserList";
 import defaultProfileImage from "../assets/profile.png";
@@ -38,7 +39,7 @@ const setup = () => {
 const emptyListAPISetup = () => {
   // Override the API response (in mocks/handlers.ts) to return an empty list just for this test
   server.use(
-    http.get("/api/user/users/", async () => {
+    http.get(API_ENDPOINTS.GET_USERS, async () => {
       return HttpResponse.json({
         content: [],
         page: 0,
@@ -545,7 +546,7 @@ describe("User List", () => {
 
       // Verify axios was called with Authorization header
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        "/api/user/users/?page=0&size=3",
+        `${API_ENDPOINTS.GET_USERS}?page=0&size=3`,
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: "Bearer test-jwt-token",
@@ -569,7 +570,7 @@ describe("User List", () => {
       let capturedAuthHeader: string | null = null;
       let capturedLanguageHeader: string | null = null;
       server.use(
-        http.get("/api/user/users/", async ({ request }) => {
+        http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
           capturedAuthHeader = request.headers.get("Authorization");
           capturedLanguageHeader = request.headers.get("Accept-Language");
           return HttpResponse.json({
@@ -620,7 +621,7 @@ describe("User List", () => {
 
       // Verify axios was called without Authorization header
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        "/api/user/users/?page=0&size=3",
+        `${API_ENDPOINTS.GET_USERS}?page=0&size=3`,
         expect.objectContaining({
           headers: expect.objectContaining({
             "Accept-Language": expect.any(String),
@@ -641,7 +642,7 @@ describe("User List", () => {
       let capturedAuthHeader: string | null = null;
       let capturedLanguageHeader: string | null = null;
       server.use(
-        http.get("/api/user/users/", async ({ request }) => {
+        http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
           capturedAuthHeader = request.headers.get("Authorization");
           capturedLanguageHeader = request.headers.get("Accept-Language");
           return HttpResponse.json({

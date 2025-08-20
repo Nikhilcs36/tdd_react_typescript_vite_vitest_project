@@ -111,7 +111,7 @@ export const handlers = [
   }),
 
   // Mock API for userlist (msw) - Authorization aware ----(3)
-  http.get("/api/user/users/", async ({ request }) => {
+  http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 0;
     const size = Number(url.searchParams.get("size")) || 3;
@@ -158,7 +158,7 @@ export const handlers = [
   }),
 
   // Mock API for get user by ID (msw) ----(4)
-  http.get("/api/user/users/:id/", async ({ request, params }) => {
+  http.get(API_ENDPOINTS.USER_BY_ID, async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const { id } = params;
     const user = page1.content.find((u) => u.id === Number(id));
@@ -224,7 +224,7 @@ export const handlers = [
   }),
 
   // Mock API for user profile update (msw) ----(6)
-  http.put("/api/user/users/:id/", async ({ request, params }) => {
+  http.put(API_ENDPOINTS.USER_BY_ID, async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
     const { id } = params;
@@ -317,7 +317,7 @@ export const handlers = [
   }),
 
   // Mock API for user deletion (msw) ----(8)
-  http.delete("/api/user/users/:id/", async ({ request, params }) => {
+  http.delete(API_ENDPOINTS.USER_BY_ID, async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
     const { id } = params;
