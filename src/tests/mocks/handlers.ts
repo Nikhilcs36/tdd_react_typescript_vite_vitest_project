@@ -124,8 +124,8 @@ export const handlers = [
 
     // If authenticated, filter out the authenticated user from the list
     // This simulates authorization-aware user listing where users don't see themselves
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      // Extract user ID from the custom header format: "Bearer <token>:userId:<id>"
+    if (authHeader && authHeader.startsWith("JWT ")) {
+      // Extract user ID from the custom header format: "JWT <token>:userId:<id>"
       // For testing, we'll use a simple approach where the token contains user info
       const userIdFromHeader = request.headers.get("X-User-Id");
 
@@ -151,7 +151,7 @@ export const handlers = [
         totalPages: Math.ceil(allUsers.length / size),
         languageReceived: acceptLanguage,
         // Include auth status for testing purposes
-        authHeaderReceived: authHeader ? "Bearer [token]" : null,
+        authHeaderReceived: authHeader ? "JWT [token]" : null,
       },
       { status: 200 }
     );
@@ -230,7 +230,7 @@ export const handlers = [
     const { id } = params;
 
     // Check authentication
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
       return HttpResponse.json(
         {
           path: `/api/1.0/users/${id}`,
@@ -288,7 +288,7 @@ export const handlers = [
     const authHeader = request.headers.get("Authorization");
 
     // Check if user is authenticated (has valid authorization header)
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
       return HttpResponse.json(
         {
           message: "Unauthorized",
@@ -299,7 +299,7 @@ export const handlers = [
     }
 
     // Extract token from Authorization header
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace("JWT ", "");
 
     // Validate token (in real app, this would verify JWT)
     if (!token || token !== "mock-jwt-token") {
@@ -323,14 +323,14 @@ export const handlers = [
     const { id } = params;
 
     // Check authentication with token validation
-    if (!authHeader?.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("JWT ")) {
       return HttpResponse.json(
         { message: "Unauthorized", languageReceived: acceptLanguage },
         { status: 401 }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace("JWT ", "");
     if (token !== "mock-jwt-token") {
       return HttpResponse.json(
         { message: "Invalid token", languageReceived: acceptLanguage },

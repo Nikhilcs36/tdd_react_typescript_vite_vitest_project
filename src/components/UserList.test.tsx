@@ -549,7 +549,7 @@ describe("User List", () => {
         `${API_ENDPOINTS.GET_USERS}?page=0&size=3`,
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: "Bearer test-jwt-token",
+            Authorization: "JWT test-jwt-token",
             "Accept-Language": expect.any(String),
           }),
         })
@@ -593,7 +593,7 @@ describe("User List", () => {
       await screen.findByText("user1");
 
       // Verify Authorization header was sent
-      expect(capturedAuthHeader).toBe("Bearer test-jwt-token");
+      expect(capturedAuthHeader).toBe("JWT test-jwt-token");
       expect(capturedLanguageHeader).toBeDefined();
     });
 
