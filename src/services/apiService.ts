@@ -100,7 +100,7 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
       headers: {
         "Accept-Language": i18n.language,
         // Include Authorization header if user is authenticated
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token && { Authorization: `JWT ${token}` }),
         // Include user ID for filtering authenticated user from list
         ...(user && { "X-User-Id": user.id.toString() }),
       },
@@ -122,7 +122,7 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
       headers: {
         "Accept-Language": i18n.language, // Attach the current language header
         // Include Authorization header if user is authenticated
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token && { Authorization: `JWT ${token}` }),
         // Include user ID for filtering authenticated user from list
         ...(user && { "X-User-Id": user.id.toString() }),
       },
@@ -140,10 +140,15 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
 // Axios implementation for getUserById
 export const axiosApiServiceGetUser: ApiGetService = {
   get: async <T>(url: string): Promise<T> => {
+    // Get authentication state from Redux store
+    const authState = store.getState().auth;
+    const token: string | null = authState.token;
     const response = await axios.get<T>(url, {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
+        // Include Authorization header if user is authenticated
+        ...(token && { Authorization: `JWT ${token}` }),
       },
     });
     return response.data;
@@ -153,10 +158,15 @@ export const axiosApiServiceGetUser: ApiGetService = {
 // Fetch implementation for getUserById
 export const fetchApiServiceGetUser: ApiGetService = {
   get: async <T>(url: string): Promise<T> => {
+    // Get authentication state from Redux store
+    const authState = store.getState().auth;
+    const token: string | null = authState.token;
     const response = await fetch(url, {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
+        // Include Authorization header if user is authenticated
+        ...(token && { Authorization: `JWT ${token}` }),
       },
     });
     if (!response.ok) {
@@ -215,7 +225,7 @@ export const axiosApiServiceLogout: ApiService = {
         headers: {
           "Accept-Language": i18n.language,
           // Include Authorization header for authenticated logout
-          ...(token && { Authorization: `Bearer ${token}` }),
+          ...(token && { Authorization: `JWT ${token}` }),
         },
       }
     );
@@ -236,7 +246,7 @@ export const fetchApiServiceLogout: ApiService = {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
         // Include Authorization header for authenticated logout
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token && { Authorization: `JWT ${token}` }),
       },
       body: JSON.stringify({}), // Empty body for logout
     });
@@ -261,7 +271,7 @@ export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
-        Authorization: token ? `Bearer ${token}` : undefined,
+        Authorization: token ? `JWT ${token}` : undefined,
       },
     });
 
@@ -285,7 +295,7 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
-        Authorization: `Bearer ${token}`,
+        Authorization: `JWT ${token}`,
       },
       body: JSON.stringify(body),
     });
@@ -309,7 +319,7 @@ export const axiosApiServiceDeleteUser: ApiDeleteService = {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token && { Authorization: `JWT ${token}` }),
       },
     });
     return response.data;
@@ -327,7 +337,7 @@ export const fetchApiServiceDeleteUser: ApiDeleteService = {
       method: "DELETE",
       headers: {
         "Accept-Language": i18n.language,
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token && { Authorization: `JWT ${token}` }),
       },
     });
 
