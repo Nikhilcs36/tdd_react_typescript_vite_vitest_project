@@ -520,7 +520,8 @@ describe("User List", () => {
         loginSuccess({
           id: 1,
           username: "testuser",
-          token: "test-jwt-token",
+          access: "mock-access-token",
+          refresh: "mock-refresh-token"
         })
       );
 
@@ -549,7 +550,7 @@ describe("User List", () => {
         `${API_ENDPOINTS.GET_USERS}?page=0&size=3`,
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: "JWT test-jwt-token",
+            Authorization: "JWT mock-access-token",
             "Accept-Language": expect.any(String),
           }),
         })
@@ -562,7 +563,8 @@ describe("User List", () => {
         loginSuccess({
           id: 1,
           username: "testuser",
-          token: "test-jwt-token",
+          access: "mock-access-token",
+          refresh: "mock-refresh-token"
         })
       );
 
@@ -593,7 +595,7 @@ describe("User List", () => {
       await screen.findByText("user1");
 
       // Verify Authorization header was sent
-      expect(capturedAuthHeader).toBe("JWT test-jwt-token");
+      expect(capturedAuthHeader).toBe("JWT mock-access-token");
       expect(capturedLanguageHeader).toBeDefined();
     });
 
@@ -682,7 +684,8 @@ describe("User List", () => {
         loginSuccess({
           id: 2,
           username: "user2",
-          token: "test-jwt-token",
+          access: "mock-access-token",
+          refresh: "mock-refresh-token"
         })
       );
 
@@ -723,7 +726,8 @@ describe("User List", () => {
         loginSuccess({
           id: 2,
           username: "user2",
-          token: "test-jwt-token",
+          access: "mock-access-token",
+          refresh: "mock-refresh-token"
         })
       );
 
@@ -779,7 +783,8 @@ describe("User List", () => {
         loginSuccess({
           id: 999,
           username: "authenticateduser",
-          token: "test-jwt-token",
+          access: "mock-access-token",
+          refresh: "mock-refresh-token"
         })
       );
 

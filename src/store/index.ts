@@ -18,13 +18,14 @@ const loadState = () => {
 // Function to save state to SecureLS
 const saveState = (state: any) => {
   try {
-    // Store auth state including token
+    // Store auth state including both tokens
     const stateToSave = {
       isAuthenticated: state.auth.isAuthenticated,
       user: state.auth.user
         ? { id: state.auth.user.id, username: state.auth.user.username }
         : null,
-      token: state.auth.token, // Save token to SecureLS
+      accessToken: state.auth.accessToken,
+      refreshToken: state.auth.refreshToken
     };
     secureLS.set("authState", stateToSave);
   } catch (err) {

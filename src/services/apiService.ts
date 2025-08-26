@@ -93,18 +93,27 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
   get: async <T>(url: string): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
-    const token: string | null = authState.token;
+    const accessToken: string | null = authState.accessToken;
     const user: { id: number; username: string } | null = authState.user;
+    
+    // Build headers with basic requirements
+    const baseHeaders = {
+      "Accept-Language": i18n.language,
+    };
 
-    const response = await axios.get<T>(url, {
-      headers: {
-        "Accept-Language": i18n.language,
-        // Include Authorization header if user is authenticated
-        ...(token && { Authorization: `JWT ${token}` }),
-        // Include user ID for filtering authenticated user from list
-        ...(user && { "X-User-Id": user.id.toString() }),
-      },
-    });
+    // Add authorization headers only if access token exists
+    const authHeaders = accessToken ? {
+      "Authorization": `JWT ${accessToken}`,
+      ...(user && { "X-User-Id": user.id.toString() }),
+    } : {};
+
+    // Combine headers
+    const headers = {
+      ...baseHeaders,
+      ...authHeaders,
+    };
+    
+    const response = await axios.get<T>(url, { headers });
     return response.data;
   },
 };
@@ -114,18 +123,29 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
   get: async <T>(url: string): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
-    const token: string | null = authState.token;
+    const accessToken: string | null = authState.accessToken;
     const user: { id: number; username: string } | null = authState.user;
+
+    // Build headers with basic requirements
+    const baseHeaders = {
+      "Accept-Language": i18n.language,
+    };
+
+    // Add authorization headers only if access token exists
+    const authHeaders = accessToken ? {
+      "Authorization": `JWT ${accessToken}`,
+      ...(user && { "X-User-Id": user.id.toString() }),
+    } : {};
+
+    // Combine headers
+    const headers = {
+      ...baseHeaders,
+      ...authHeaders,
+    };
 
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        "Accept-Language": i18n.language, // Attach the current language header
-        // Include Authorization header if user is authenticated
-        ...(token && { Authorization: `JWT ${token}` }),
-        // Include user ID for filtering authenticated user from list
-        ...(user && { "X-User-Id": user.id.toString() }),
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -142,13 +162,17 @@ export const axiosApiServiceGetUser: ApiGetService = {
   get: async <T>(url: string): Promise<T> => {
     // Get authentication state from Redux store
     const authState = store.getState().auth;
-    const token: string | null = authState.token;
+    const accessToken: string | null = authState.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
+
     const response = await axios.get<T>(url, {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
-        // Include Authorization header if user is authenticated
-        ...(token && { Authorization: `JWT ${token}` }),
+        "Authorization": `JWT ${accessToken}`,
       },
     });
     return response.data;
@@ -160,13 +184,17 @@ export const fetchApiServiceGetUser: ApiGetService = {
   get: async <T>(url: string): Promise<T> => {
     // Get authentication state from Redux store
     const authState = store.getState().auth;
-    const token: string | null = authState.token;
+    const accessToken: string | null = authState.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
+
     const response = await fetch(url, {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
-        // Include Authorization header if user is authenticated
-        ...(token && { Authorization: `JWT ${token}` }),
+        "Authorization": `JWT ${accessToken}`,
       },
     });
     if (!response.ok) {
@@ -216,16 +244,16 @@ export const axiosApiServiceLogout: ApiService = {
   post: async <R>(url: string) => {
     // Get authentication state from Redux store for authorization
     const authState = store.getState().auth;
-    const token: string | null = authState.token;
+    const accessToken: string | null = authState.accessToken;
+    const refreshToken: string | null = authState.refreshToken;
 
     const response = await axios.post<R>(
       url,
-      {}, // Empty body for logout
+      { refresh: refreshToken }, // Send refresh token in body for blacklisting
       {
         headers: {
           "Accept-Language": i18n.language,
-          // Include Authorization header for authenticated logout
-          ...(token && { Authorization: `JWT ${token}` }),
+          "Authorization": `JWT ${accessToken}`,
         },
       }
     );
@@ -238,17 +266,21 @@ export const fetchApiServiceLogout: ApiService = {
   post: async <R>(url: string) => {
     // Get authentication state from Redux store for authorization
     const authState = store.getState().auth;
-    const token: string | null = authState.token;
+    const accessToken: string | null = authState.accessToken;
+    const refreshToken: string | null = authState.refreshToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
 
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
-        // Include Authorization header for authenticated logout
-        ...(token && { Authorization: `JWT ${token}` }),
+        "Authorization": `JWT ${accessToken}`,
       },
-      body: JSON.stringify({}), // Empty body for logout
+      body: JSON.stringify({ refresh: refreshToken }), // Send refresh token for blacklisting
     });
 
     if (!response.ok) {
@@ -264,14 +296,18 @@ export const fetchApiServiceLogout: ApiService = {
 export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
   put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
     // Get token from Redux store
-    const token: string | null = store.getState().auth.token;
+    const accessToken: string | null = store.getState().auth.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
 
     const response = await axios.put(url, body, {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
-        Authorization: token ? `JWT ${token}` : undefined,
+        "Authorization": `JWT ${accessToken}`,
       },
     });
 
@@ -283,9 +319,9 @@ export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
 export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
   put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
     // Get token from Redux store
-    const token: string | null = store.getState().auth.token;
+    const accessToken: string | null = store.getState().auth.accessToken;
 
-    if (!token) {
+    if (!accessToken) {
       throw new Error("Authentication token not found");
     }
 
@@ -295,7 +331,7 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
-        Authorization: `JWT ${token}`,
+        "Authorization": `JWT ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
@@ -313,13 +349,17 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
 export const axiosApiServiceDeleteUser: ApiDeleteService = {
   delete: async <R>(url: string): Promise<R> => {
     // Get token from Redux store
-    const token: string | null = store.getState().auth.token;
+    const accessToken: string | null = store.getState().auth.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
 
     const response = await axios.delete<R>(url, {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
-        ...(token && { Authorization: `JWT ${token}` }),
+        "Authorization": `JWT ${accessToken}`,
       },
     });
     return response.data;
@@ -330,14 +370,18 @@ export const axiosApiServiceDeleteUser: ApiDeleteService = {
 export const fetchApiServiceDeleteUser: ApiDeleteService = {
   delete: async <R>(url: string): Promise<R> => {
     // Get token from Redux store
-    const token: string | null = store.getState().auth.token;
+    const accessToken: string | null = store.getState().auth.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
 
     const response = await fetch(url, {
       // This URL is dynamic, so it will be handled in the component
       method: "DELETE",
       headers: {
         "Accept-Language": i18n.language,
-        ...(token && { Authorization: `JWT ${token}` }),
+        "Authorization": `JWT ${accessToken}`,
       },
     });
 

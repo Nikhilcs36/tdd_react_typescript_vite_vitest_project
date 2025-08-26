@@ -150,7 +150,12 @@ describe("Login Page", () => {
     // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
     it("submits valid credentials (axios mock)", async () => {
       mockedAxios.post.mockResolvedValue({
-        data: { id: 1, username: "testuser", token: "test-token" }, // Include id and token
+        data: { 
+          id: 1, 
+          username: "testuser", 
+          access: "mock-access-token",
+          refresh: "mock-refresh-token"
+        },
       });
       renderWithProviders(
         <LoginPageWrapper apiService={axiosApiServiceLogin} />
@@ -191,7 +196,12 @@ describe("Login Page", () => {
     // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
     it("disables button during submission (unit test)", async () => {
       mockedAxios.post.mockResolvedValue({
-        data: { id: 1, username: "testuser", token: "test-token" }, // Include id and token
+        data: { 
+          id: 1, 
+          username: "testuser", 
+          access: "mock-access-token",
+          refresh: "mock-refresh-token"
+        },
       });
 
       renderWithProviders(
@@ -502,8 +512,13 @@ describe("Login Page", () => {
         });
 
         mockedAxios.post.mockResolvedValue({
-          data: { id: 1, username: "testuser", token: "test-token" },
-        }); // Include id and token
+          data: { 
+            id: 1, 
+            username: "testuser",
+            access: "mock-access-token",
+            refresh: "mock-refresh-token"
+          },
+        });
         renderWithProviders(
           <LoginPageWrapper apiService={axiosApiServiceLogin} />
         );

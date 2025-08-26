@@ -35,7 +35,8 @@ const ApiErrorMessage = tw.div`mb-4 p-3 text-red-700 bg-red-100 rounded text-cen
 interface LoginResponse {
   id: number;
   username: string;
-  token: string; // Ensure token is expected in the response
+  access: string;
+  refresh: string;
 }
 
 interface ErrorResponse {
@@ -137,12 +138,13 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         }
       );
 
-      // Dispatch loginSuccess action with id, username, AND token
+      // Dispatch loginSuccess action with id, username, access and refresh tokens
       this.props.dispatch(
         loginSuccess({
           id: response.id,
           username: response.username,
-          token: response.token, // Include the token in the payload
+          access: response.access,
+          refresh: response.refresh
         })
       );
 

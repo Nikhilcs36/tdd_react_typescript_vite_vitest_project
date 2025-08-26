@@ -21,7 +21,11 @@ describe("Auth Slice", () => {
     const testUser = { id: 1, username: "testuser" };
 
     // Dispatch login action
-    store.dispatch(loginSuccess({ ...testUser, token: "test-token" }));
+    store.dispatch(loginSuccess({ 
+      ...testUser, 
+      access: "test-access-token",
+      refresh: "test-refresh-token" 
+    }));
 
     // Verify user is logged in
     expect(store.getState().auth.isAuthenticated).toBe(true);
@@ -52,27 +56,34 @@ describe("Auth Slice", () => {
   });
 
   it("should store and retrieve token correctly with SecureLS", () => {
-    // Setup: Create store and login a user with token
+    // Setup: Create store and login a user with tokens
     const store = createStore();
     const testUser = { id: 1, username: "testuser" };
-    const testToken = "test-jwt-token";
+    const testAccessToken = "test-access-token";
+    const testRefreshToken = "test-refresh-token";
 
-    // Dispatch login action with token
-    store.dispatch(loginSuccess({ ...testUser, token: testToken }));
+    // Dispatch login action with tokens
+    store.dispatch(loginSuccess({ 
+      ...testUser, 
+      access: testAccessToken,
+      refresh: testRefreshToken 
+    }));
 
-    // Verify user and token are stored in Redux state
+    // Verify user and tokens are stored in Redux state
     expect(store.getState().auth.isAuthenticated).toBe(true);
     expect(store.getState().auth.user).toEqual(testUser);
-    expect(store.getState().auth.token).toBe(testToken);
+    expect(store.getState().auth.accessToken).toBe(testAccessToken);
+    expect(store.getState().auth.refreshToken).toBe(testRefreshToken);
 
-    // Verify SecureLS.set was called with auth state including token
+    // Verify SecureLS.set was called with auth state including tokens
     expect(mockSecureLS.setCalls.length).toBeGreaterThan(0);
     const lastSetCall = mockSecureLS.setCalls[mockSecureLS.setCalls.length - 1];
     expect(lastSetCall.key).toBe("authState");
     expect(lastSetCall.value).toMatchObject({
       isAuthenticated: true,
       user: testUser,
-      token: testToken
+      accessToken: testAccessToken,
+      refreshToken: testRefreshToken
     });
 
     // Create a new store to simulate app restart/refresh
@@ -82,7 +93,8 @@ describe("Auth Slice", () => {
     mockSecureLS.getReturnValue = {
       isAuthenticated: true,
       user: testUser,
-      token: testToken
+      accessToken: testAccessToken,
+      refreshToken: testRefreshToken
     };
     
     const newStore = createStore();
@@ -91,6 +103,7 @@ describe("Auth Slice", () => {
     const loadedAuthState = newStore.getState().auth;
     expect(loadedAuthState.isAuthenticated).toBe(true);
     expect(loadedAuthState.user).toEqual(testUser);
-    expect(loadedAuthState.token).toBe(testToken);
+    expect(loadedAuthState.accessToken).toBe(testAccessToken);
+    expect(loadedAuthState.refreshToken).toBe(testRefreshToken);
   });
 });

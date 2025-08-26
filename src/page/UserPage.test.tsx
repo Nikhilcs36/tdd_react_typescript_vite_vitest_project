@@ -74,7 +74,8 @@ describe("UserPage", () => {
           loginSuccess({
             id: 1,
             username: "authedUser",
-            token: "test-token",
+            access: "test-access-token",
+            refresh: "test-refresh-token"
           })
         );
       });
@@ -135,7 +136,8 @@ describe("UserPage", () => {
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
       await waitFor(() => expect(mockPut).toHaveBeenCalled());
-      expect(store.getState().auth.token).toBe("test-token");
+      expect(store.getState().auth.accessToken).toBe("test-access-token");
+      expect(store.getState().auth.refreshToken).toBe("test-refresh-token");
       expect(mockPut).toHaveBeenCalledWith(
         API_ENDPOINTS.UPDATE_USER(1),
         expect.objectContaining({
@@ -553,7 +555,8 @@ describe("UserPage", () => {
       fireEvent.click(screen.getByTestId("confirm-delete-button"));
 
       await waitFor(() => expect(mockDelete).toHaveBeenCalled());
-      expect(store.getState().auth.token).toBe("test-token");
+      expect(store.getState().auth.accessToken).toBe("test-access-token");
+      expect(store.getState().auth.refreshToken).toBe("test-refresh-token");
     });
 
     it("cancels delete confirmation", async () => {
@@ -575,7 +578,8 @@ describe("UserPage", () => {
           loginSuccess({
             id: 1,
             username: "authedUser",
-            token: "mock-jwt-token",
+            access: "mock-access-token",
+            refresh: "mock-refresh-token"
           })
         );
       });
@@ -599,7 +603,9 @@ describe("UserPage", () => {
         expect(store.getState().auth).toEqual({
           isAuthenticated: false,
           user: null,
-          token: null,
+          accessToken: null,
+          refreshToken: null,
+          showLogoutMessage: false
         });
       });
     });
