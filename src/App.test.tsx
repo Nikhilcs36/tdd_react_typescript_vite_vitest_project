@@ -28,7 +28,8 @@ const mockAuth = (
   user = {
     id: 1,
     username: "user1",
-    token: "mock-jwt-token",
+    access: "mock-jwt-access-token",
+    refresh: "mock-jwt-refresh-token",
     email: "user1@mail.com",
   }
 ) => {
@@ -70,7 +71,8 @@ describe("Routing", () => {
     user = {
       id: 1,
       username: "user1",
-      token: "mock-jwt-token",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
       email: "user1@mail.com",
     }
   ) => {
@@ -95,7 +97,8 @@ describe("Routing", () => {
           ? {
               id: userIdFromPath,
               username: user.username,
-              token: user.token,
+              access: user.access,
+              refresh: user.refresh,
               email: "user1@mail.com",
             }
           : user;
@@ -209,7 +212,8 @@ describe("Routing", () => {
     const mockUser = {
       id: 1,
       username: "user1",
-      token: "mock-jwt-token",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
       email: "user1@mail.com",
     };
     store.dispatch(loginSuccess(mockUser));
@@ -238,7 +242,8 @@ describe("Routing", () => {
     const mockUser2 = {
       id: 2,
       username: "user2",
-      token: "mock-jwt-token",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
       email: "user2@mail.com",
     };
     store.dispatch(loginSuccess(mockUser2));
@@ -529,7 +534,8 @@ describe("Logout functionality", () => {
     mockAuth(true, {
       id: 1,
       username: "user1",
-      token: "mock-jwt-token",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
       email: "user1@mail.com",
     });
   };
@@ -572,7 +578,8 @@ describe("Logout functionality", () => {
     const authState = store.getState().auth;
     expect(authState.isAuthenticated).toBe(false);
     expect(authState.user).toBeNull();
-    expect(authState.token).toBeNull();
+    expect(authState.accessToken).toBeNull();
+    expect(authState.refreshToken).toBeNull();
 
     // UI assertions
     expect(screen.getByTestId("login-link")).toBeInTheDocument();
@@ -645,7 +652,8 @@ describe("Navbar persistence with localStorage", () => {
     const testUser = {
       id: 5,
       username: "persistedUser",
-      token: "mock-jwt-token",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
     };
 
     // Render the app with the Redux provider
@@ -663,7 +671,7 @@ describe("Navbar persistence with localStorage", () => {
 
     // Dispatch login action to update Redux state
     await act(async () => {
-      store.dispatch(loginSuccess({ ...testUser, token: "mock-jwt-token" }));
+      store.dispatch(loginSuccess(testUser));
     });
 
     // Verify navbar updated - should now show profile link
@@ -707,7 +715,9 @@ describe("Navbar persistence with localStorage", () => {
     expect(refreshedState).toEqual({
       isAuthenticated: true,
       user: { id: 5, username: "persistedUser" },
-      token: "mock-jwt-token",
+      accessToken: "mock-jwt-access-token",
+      refreshToken: "mock-jwt-refresh-token",
+      showLogoutMessage: false
     });
   });
 });

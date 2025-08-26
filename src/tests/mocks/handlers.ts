@@ -125,16 +125,20 @@ export const handlers = [
     // If authenticated, filter out the authenticated user from the list
     // This simulates authorization-aware user listing where users don't see themselves
     if (authHeader && authHeader.startsWith("JWT ")) {
-      // Extract user ID from the custom header format: "JWT <token>:userId:<id>"
-      // For testing, we'll use a simple approach where the token contains user info
-      const userIdFromHeader = request.headers.get("X-User-Id");
+      const accessToken = authHeader.replace("JWT ", "");
+      
+      // In a real app, we would validate the JWT token here
+      // For testing, we'll just check if it matches our mock token
+      if (accessToken === "mock-access-token") {
+        const userIdFromHeader = request.headers.get("X-User-Id");
 
-      if (userIdFromHeader) {
-        const authenticatedUserId = Number(userIdFromHeader);
-        // Filter out the authenticated user from the list
-        allUsers = page1.content.filter(
-          (user) => user.id !== authenticatedUserId
-        );
+        if (userIdFromHeader) {
+          const authenticatedUserId = Number(userIdFromHeader);
+          // Filter out the authenticated user from the list
+          allUsers = page1.content.filter(
+            (user) => user.id !== authenticatedUserId
+          );
+        }
       }
     }
 
@@ -216,7 +220,8 @@ export const handlers = [
       {
         id: 1,
         username: user.email,
-        token: "mock-jwt-token",
+        access: "mock-access-token",
+        refresh: "mock-refresh-token",
         languageReceived: acceptLanguage,
       },
       { status: 200 }
@@ -298,14 +303,17 @@ export const handlers = [
       );
     }
 
-    // Extract token from Authorization header
-    const token = authHeader.replace("JWT ", "");
+    // Extract access token from Authorization header
+    const accessToken = authHeader.replace("JWT ", "");
 
-    // Validate token (in real app, this would verify JWT)
-    if (!token || token !== "mock-jwt-token") {
+    // Validate access token and check refresh token in request body
+    const body = await request.json() as { refresh?: string };
+    const refreshToken = body?.refresh;
+
+    if (!accessToken || accessToken !== "mock-access-token" || !refreshToken || refreshToken !== "mock-refresh-token") {
       return HttpResponse.json(
         {
-          message: "Invalid token",
+          message: "Invalid tokens",
           languageReceived: acceptLanguage,
         },
         { status: 401 }
@@ -316,7 +324,31 @@ export const handlers = [
     return HttpResponse.json({}, { status: 200 });
   }),
 
-  // Mock API for user deletion (msw) ----(8)
+  // Mock API for token refresh ----(8)
+  http.post("/api/user/token/refresh/", async ({ request }) => {
+    const body = await request.json() as { refresh?: string };
+    const refreshToken = body?.refresh;
+
+    if (!refreshToken || refreshToken !== "mock-refresh-token") {
+      return HttpResponse.json(
+        {
+          message: "Invalid refresh token",
+        },
+        { status: 401 }
+      );
+    }
+
+    // Return new access token and optionally new refresh token
+    return HttpResponse.json(
+      {
+        access: "new-mock-access-token",
+        refresh: "new-mock-refresh-token",
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for user deletion (msw) ----(9)
   http.delete(API_ENDPOINTS.USER_BY_ID, async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
@@ -330,8 +362,8 @@ export const handlers = [
       );
     }
 
-    const token = authHeader.replace("JWT ", "");
-    if (token !== "mock-jwt-token") {
+    const accessToken = authHeader.replace("JWT ", "");
+    if (accessToken !== "mock-access-token") {
       return HttpResponse.json(
         { message: "Invalid token", languageReceived: acceptLanguage },
         { status: 401 }

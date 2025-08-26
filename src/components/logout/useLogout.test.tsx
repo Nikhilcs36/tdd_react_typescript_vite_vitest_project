@@ -57,7 +57,8 @@ describe("useLogout Hook", () => {
       loginSuccess({
         id: 1,
         username: "testuser",
-        token: "valid-token",
+        access: "mock-access-token",
+        refresh: "mock-refresh-token"
       })
     );
   });
@@ -79,7 +80,8 @@ describe("useLogout Hook", () => {
       const { auth } = store.getState();
       expect(auth.isAuthenticated).toBe(false);
       expect(auth.user).toBeNull();
-      expect(auth.token).toBeNull();
+      expect(auth.accessToken).toBeNull();
+      expect(auth.refreshToken).toBeNull();
     });
 
     // Verify SecureLS cleanup

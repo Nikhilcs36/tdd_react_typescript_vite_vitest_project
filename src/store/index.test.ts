@@ -17,7 +17,12 @@ describe("Store with SecureLS", () => {
 
   it("should use SecureLS to store auth state", () => {
     const store = createStore();
-    const testUser = { id: 1, username: "testuser", token: "mock-token" };
+    const testUser = {
+      id: 1,
+      username: "testuser",
+      access: "mock-access-token",
+      refresh: "mock-refresh-token"
+    };
 
     // Dispatch login action
     store.dispatch(loginSuccess(testUser));
@@ -29,7 +34,8 @@ describe("Store with SecureLS", () => {
     expect(lastCall.value).toMatchObject({
       isAuthenticated: true,
       user: { id: 1, username: "testuser" },
-      token: "mock-token",
+      accessToken: "mock-access-token",
+      refreshToken: "mock-refresh-token"
     });
   });
 
@@ -38,7 +44,8 @@ describe("Store with SecureLS", () => {
     mockSecureLS.getReturnValue = {
       isAuthenticated: true,
       user: { id: 5, username: "persistedUser" },
-      token: "persistedToken",
+      accessToken: "mock-persisted-access-token",
+      refreshToken: "mock-persisted-refresh-token"
     };
 
     // Create store which should load from SecureLS
@@ -48,7 +55,8 @@ describe("Store with SecureLS", () => {
     const loadedAuthState = store.getState().auth;
     expect(loadedAuthState.isAuthenticated).toBe(true);
     expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser" });
-    expect(loadedAuthState.token).toEqual("persistedToken");
+    expect(loadedAuthState.accessToken).toEqual("mock-persisted-access-token");
+    expect(loadedAuthState.refreshToken).toEqual("mock-persisted-refresh-token");
   });
 
   it("should clear SecureLS on logout", () => {
