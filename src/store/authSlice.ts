@@ -39,12 +39,14 @@ const authSlice = createSlice({
         state.user = { id: action.payload.id, username: action.payload.username };
         state.accessToken = action.payload.access;
         state.refreshToken = action.payload.refresh;
+        state.showLogoutMessage = false; // Ensure logout message is hidden on login
         // Store tokens in secure storage
         secureLS.set("authState", {
           isAuthenticated: true,
           user: { id: action.payload.id, username: action.payload.username },
           accessToken: action.payload.access,
           refreshToken: action.payload.refresh,
+          showLogoutMessage: false, // Ensure logout message is hidden in storage too
         });
       })
       .addCase(logoutSuccess, (state) => {
