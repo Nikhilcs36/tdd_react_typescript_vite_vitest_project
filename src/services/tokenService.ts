@@ -10,7 +10,7 @@ interface TokenResponse {
 export const refreshAccessToken = async (): Promise<boolean> => {
   try {
     const refreshToken = store.getState().auth.refreshToken;
-    
+
     if (!refreshToken) {
       return false;
     }
@@ -26,7 +26,7 @@ export const refreshAccessToken = async (): Promise<boolean> => {
         loginSuccess({
           ...store.getState().auth.user!,
           access: response.data.access,
-          refresh: response.data.refresh || refreshToken // Use new refresh token if provided
+          refresh: response.data.refresh || refreshToken, // Use new refresh token if provided
         })
       );
       return true;
@@ -51,7 +51,9 @@ axios.interceptors.response.use(
         const refreshed = await refreshAccessToken();
         if (refreshed) {
           // Update the authorization header with new access token
-          originalRequest.headers.Authorization = `JWT ${store.getState().auth.accessToken}`;
+          originalRequest.headers.Authorization = `JWT ${
+            store.getState().auth.accessToken
+          }`;
           return axios(originalRequest);
         }
       } catch (refreshError) {

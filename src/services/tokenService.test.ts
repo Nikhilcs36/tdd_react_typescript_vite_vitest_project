@@ -10,12 +10,14 @@ const mockedAxios = axios as any;
 describe("tokenService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: "testuser",
-      access: "mock-access-token",
-      refresh: "mock-refresh-token"
-    }));
+    store.dispatch(
+      loginSuccess({
+        id: 1,
+        username: "testuser",
+        access: "mock-access-token",
+        refresh: "mock-refresh-token",
+      })
+    );
   });
 
   afterEach(() => {
@@ -27,8 +29,8 @@ describe("tokenService", () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: {
           access: "new-mock-access-token",
-          refresh: "new-mock-refresh-token"
-        }
+          refresh: "new-mock-refresh-token",
+        },
       });
 
       const result = await refreshAccessToken();
@@ -44,12 +46,14 @@ describe("tokenService", () => {
 
     it("should return false if refresh token is not available", async () => {
       // Clear auth state
-      store.dispatch(loginSuccess({
-        id: 1,
-        username: "testuser",
-        access: "mock-access-token",
-        refresh: ""
-      }));
+      store.dispatch(
+        loginSuccess({
+          id: 1,
+          username: "testuser",
+          access: "mock-access-token",
+          refresh: "",
+        })
+      );
 
       const result = await refreshAccessToken();
 
@@ -72,9 +76,9 @@ describe("tokenService", () => {
     it("should keep old refresh token if new one is not provided", async () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: {
-          access: "new-mock-access-token"
+          access: "new-mock-access-token",
           // No refresh token in response
-        }
+        },
       });
 
       const result = await refreshAccessToken();
@@ -88,8 +92,8 @@ describe("tokenService", () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: {
           // Missing access token in response
-          refresh: "new-mock-refresh-token"
-        }
+          refresh: "new-mock-refresh-token",
+        },
       });
 
       const result = await refreshAccessToken();
@@ -105,8 +109,8 @@ describe("tokenService", () => {
       mockedAxios.post.mockRejectedValueOnce({
         response: {
           status: 500,
-          data: { message: "Internal server error" }
-        }
+          data: { message: "Internal server error" },
+        },
       });
 
       const result = await refreshAccessToken();
@@ -125,14 +129,14 @@ describe("tokenService", () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: {
           access: "refreshed-access-token",
-          refresh: "refreshed-refresh-token"
-        }
+          refresh: "refreshed-refresh-token",
+        },
       });
 
       // The interceptor should trigger refreshAccessToken for 401 errors
       // This test verifies that the refresh logic works correctly
       expect(mockedAxios.post).not.toHaveBeenCalled(); // Not called yet
-      
+
       // Test the refresh function directly since testing the actual interceptor
       // with mocked axios is complex and flaky
       const result = await refreshAccessToken();
@@ -145,12 +149,14 @@ describe("tokenService", () => {
 
     it("should not retry if refresh token is missing", async () => {
       // Clear refresh token
-      store.dispatch(loginSuccess({
-        id: 1,
-        username: "testuser",
-        access: "mock-access-token",
-        refresh: ""
-      }));
+      store.dispatch(
+        loginSuccess({
+          id: 1,
+          username: "testuser",
+          access: "mock-access-token",
+          refresh: "",
+        })
+      );
 
       const result = await refreshAccessToken();
       expect(result).toBe(false);
@@ -176,20 +182,20 @@ describe("tokenService", () => {
       mockedAxios.post.mockResolvedValue({
         data: {
           access: "refreshed-access-token",
-          refresh: "refreshed-refresh-token"
-        }
+          refresh: "refreshed-refresh-token",
+        },
       });
 
       // Make multiple refresh calls
       const results = await Promise.all([
         refreshAccessToken(),
-        refreshAccessToken()
+        refreshAccessToken(),
       ]);
 
       // Both should succeed
       expect(results[0]).toBe(true);
       expect(results[1]).toBe(true);
-      
+
       // Refresh should be called for each request
       expect(mockedAxios.post).toHaveBeenCalledTimes(2);
     });
@@ -202,13 +208,13 @@ describe("tokenService", () => {
         response: {
           status: 403,
           data: { message: "Access forbidden" },
-          config: { _retry: false }
-        }
+          config: { _retry: false },
+        },
       });
 
       // Make request that should fail with 403
       await expect(axios.get("/api/protected")).rejects.toMatchObject({
-        response: { status: 403 }
+        response: { status: 403 },
       });
 
       // No refresh should be attempted for non-401 errors
@@ -221,13 +227,13 @@ describe("tokenService", () => {
         response: {
           status: 404,
           data: { message: "Resource not found" },
-          config: { _retry: false }
-        }
+          config: { _retry: false },
+        },
       });
 
       // Make request that should fail with 404
       await expect(axios.get("/api/nonexistent")).rejects.toMatchObject({
-        response: { status: 404 }
+        response: { status: 404 },
       });
 
       // No refresh should be attempted
@@ -239,7 +245,9 @@ describe("tokenService", () => {
       mockedAxios.get.mockRejectedValueOnce(new Error("Network disconnected"));
 
       // Make request that should fail with network error
-      await expect(axios.get("/api/data")).rejects.toThrow("Network disconnected");
+      await expect(axios.get("/api/data")).rejects.toThrow(
+        "Network disconnected"
+      );
 
       // No refresh should be attempted for network errors
       expect(mockedAxios.post).not.toHaveBeenCalled();
@@ -247,9 +255,9 @@ describe("tokenService", () => {
 
     it("should not intercept 200 OK responses", async () => {
       // Mock a successful response
-      mockedAxios.get.mockResolvedValueOnce({ 
-        status: 200, 
-        data: { success: true, message: "Operation successful" } 
+      mockedAxios.get.mockResolvedValueOnce({
+        status: 200,
+        data: { success: true, message: "Operation successful" },
       });
 
       // Make successful request
@@ -257,8 +265,11 @@ describe("tokenService", () => {
 
       // Response should pass through unchanged
       expect(response.status).toBe(200);
-      expect(response.data).toEqual({ success: true, message: "Operation successful" });
-      
+      expect(response.data).toEqual({
+        success: true,
+        message: "Operation successful",
+      });
+
       // No refresh should be attempted for successful responses
       expect(mockedAxios.post).not.toHaveBeenCalled();
     });
@@ -269,13 +280,15 @@ describe("tokenService", () => {
         response: {
           status: 400,
           data: { message: "Invalid request parameters" },
-          config: { _retry: false }
-        }
+          config: { _retry: false },
+        },
       });
 
       // Make request that should fail with 400
-      await expect(axios.put("/api/data", { invalid: "data" })).rejects.toMatchObject({
-        response: { status: 400 }
+      await expect(
+        axios.put("/api/data", { invalid: "data" })
+      ).rejects.toMatchObject({
+        response: { status: 400 },
       });
 
       // No refresh should be attempted for non-401 errors
@@ -288,13 +301,13 @@ describe("tokenService", () => {
         response: {
           status: 500,
           data: { message: "Internal server error" },
-          config: { _retry: false }
-        }
+          config: { _retry: false },
+        },
       });
 
       // Make request that should fail with 500
       await expect(axios.get("/api/data")).rejects.toMatchObject({
-        response: { status: 500 }
+        response: { status: 500 },
       });
 
       // No refresh should be attempted for server errors

@@ -95,24 +95,26 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
     const user: { id: number; username: string } | null = authState.user;
-    
+
     // Build headers with basic requirements
     const baseHeaders = {
       "Accept-Language": i18n.language,
     };
 
     // Add authorization headers only if access token exists
-    const authHeaders = accessToken ? {
-      "Authorization": `JWT ${accessToken}`,
-      ...(user && { "X-User-Id": user.id.toString() }),
-    } : {};
+    const authHeaders = accessToken
+      ? {
+          Authorization: `JWT ${accessToken}`,
+          ...(user && { "X-User-Id": user.id.toString() }),
+        }
+      : {};
 
     // Combine headers
     const headers = {
       ...baseHeaders,
       ...authHeaders,
     };
-    
+
     const response = await axios.get<T>(url, { headers });
     return response.data;
   },
@@ -132,10 +134,12 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
     };
 
     // Add authorization headers only if access token exists
-    const authHeaders = accessToken ? {
-      "Authorization": `JWT ${accessToken}`,
-      ...(user && { "X-User-Id": user.id.toString() }),
-    } : {};
+    const authHeaders = accessToken
+      ? {
+          Authorization: `JWT ${accessToken}`,
+          ...(user && { "X-User-Id": user.id.toString() }),
+        }
+      : {};
 
     // Combine headers
     const headers = {
@@ -172,7 +176,7 @@ export const axiosApiServiceGetUser: ApiGetService = {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
-        "Authorization": `JWT ${accessToken}`,
+        Authorization: `JWT ${accessToken}`,
       },
     });
     return response.data;
@@ -194,7 +198,7 @@ export const fetchApiServiceGetUser: ApiGetService = {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
-        "Authorization": `JWT ${accessToken}`,
+        Authorization: `JWT ${accessToken}`,
       },
     });
     if (!response.ok) {
@@ -253,7 +257,7 @@ export const axiosApiServiceLogout: ApiService = {
       {
         headers: {
           "Accept-Language": i18n.language,
-          "Authorization": `JWT ${accessToken}`,
+          Authorization: `JWT ${accessToken}`,
         },
       }
     );
@@ -278,7 +282,7 @@ export const fetchApiServiceLogout: ApiService = {
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
-        "Authorization": `JWT ${accessToken}`,
+        Authorization: `JWT ${accessToken}`,
       },
       body: JSON.stringify({ refresh: refreshToken }), // Send refresh token for blacklisting
     });
@@ -307,7 +311,7 @@ export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
-        "Authorization": `JWT ${accessToken}`,
+        Authorization: `JWT ${accessToken}`,
       },
     });
 
@@ -331,7 +335,7 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": i18n.language,
-        "Authorization": `JWT ${accessToken}`,
+        Authorization: `JWT ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
@@ -359,7 +363,7 @@ export const axiosApiServiceDeleteUser: ApiDeleteService = {
       // This URL is dynamic, so it will be handled in the component
       headers: {
         "Accept-Language": i18n.language,
-        "Authorization": `JWT ${accessToken}`,
+        Authorization: `JWT ${accessToken}`,
       },
     });
     return response.data;
@@ -381,7 +385,7 @@ export const fetchApiServiceDeleteUser: ApiDeleteService = {
       method: "DELETE",
       headers: {
         "Accept-Language": i18n.language,
-        "Authorization": `JWT ${accessToken}`,
+        Authorization: `JWT ${accessToken}`,
       },
     });
 

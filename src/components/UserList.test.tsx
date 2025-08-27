@@ -521,7 +521,7 @@ describe("User List", () => {
           id: 1,
           username: "testuser",
           access: "mock-access-token",
-          refresh: "mock-refresh-token"
+          refresh: "mock-refresh-token",
         })
       );
 
@@ -564,7 +564,7 @@ describe("User List", () => {
           id: 1,
           username: "testuser",
           access: "mock-access-token",
-          refresh: "mock-refresh-token"
+          refresh: "mock-refresh-token",
         })
       );
 
@@ -685,7 +685,7 @@ describe("User List", () => {
           id: 2,
           username: "user2",
           access: "mock-access-token",
-          refresh: "mock-refresh-token"
+          refresh: "mock-refresh-token",
         })
       );
 
@@ -727,7 +727,7 @@ describe("User List", () => {
           id: 2,
           username: "user2",
           access: "mock-access-token",
-          refresh: "mock-refresh-token"
+          refresh: "mock-refresh-token",
         })
       );
 
@@ -784,7 +784,7 @@ describe("User List", () => {
           id: 999,
           username: "authenticateduser",
           access: "mock-access-token",
-          refresh: "mock-refresh-token"
+          refresh: "mock-refresh-token",
         })
       );
 

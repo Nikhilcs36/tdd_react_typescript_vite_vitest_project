@@ -58,7 +58,7 @@ describe("useLogout Hook", () => {
         id: 1,
         username: "testuser",
         access: "mock-access-token",
-        refresh: "mock-refresh-token"
+        refresh: "mock-refresh-token",
       })
     );
   });

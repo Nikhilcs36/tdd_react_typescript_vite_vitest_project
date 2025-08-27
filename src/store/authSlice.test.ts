@@ -21,11 +21,13 @@ describe("Auth Slice", () => {
     const testUser = { id: 1, username: "testuser" };
 
     // Dispatch login action
-    store.dispatch(loginSuccess({ 
-      ...testUser, 
-      access: "test-access-token",
-      refresh: "test-refresh-token" 
-    }));
+    store.dispatch(
+      loginSuccess({
+        ...testUser,
+        access: "test-access-token",
+        refresh: "test-refresh-token",
+      })
+    );
 
     // Verify user is logged in
     expect(store.getState().auth.isAuthenticated).toBe(true);
@@ -63,11 +65,13 @@ describe("Auth Slice", () => {
     const testRefreshToken = "test-refresh-token";
 
     // Dispatch login action with tokens
-    store.dispatch(loginSuccess({ 
-      ...testUser, 
-      access: testAccessToken,
-      refresh: testRefreshToken 
-    }));
+    store.dispatch(
+      loginSuccess({
+        ...testUser,
+        access: testAccessToken,
+        refresh: testRefreshToken,
+      })
+    );
 
     // Verify user and tokens are stored in Redux state
     expect(store.getState().auth.isAuthenticated).toBe(true);
@@ -83,22 +87,22 @@ describe("Auth Slice", () => {
       isAuthenticated: true,
       user: testUser,
       accessToken: testAccessToken,
-      refreshToken: testRefreshToken
+      refreshToken: testRefreshToken,
     });
 
     // Create a new store to simulate app restart/refresh
     resetSecureLSMock();
-    
+
     // Setup mock return value for SecureLS.get to simulate stored data
     mockSecureLS.getReturnValue = {
       isAuthenticated: true,
       user: testUser,
       accessToken: testAccessToken,
-      refreshToken: testRefreshToken
+      refreshToken: testRefreshToken,
     };
-    
+
     const newStore = createStore();
-    
+
     // Verify the auth state was loaded correctly from SecureLS
     const loadedAuthState = newStore.getState().auth;
     expect(loadedAuthState.isAuthenticated).toBe(true);

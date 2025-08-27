@@ -116,7 +116,7 @@ export const fillAndSubmitLoginForm = async (
     await i18n.changeLanguage(language);
   }
 
-// Get translated labels
+  // Get translated labels
   const loginEmailLabel = i18n.t("login.email");
   const loginPasswordLabel = i18n.t("login.password");
   const loginSubmitText = i18n.t("login.submit");
