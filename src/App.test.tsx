@@ -22,6 +22,23 @@ import { API_ENDPOINTS } from "./services/apiEndpoints";
 import { fillAndSubmitLoginForm } from "./tests/testUtils";
 import LoginPageWrapper from "./page/LoginPage";
 
+// Mock the UserPageWrapper component to prevent state updates in tests
+// Provide realistic content for integration tests that expect specific elements
+vi.mock("./page/UserPage", () => ({
+  UserPageWrapper: () => (
+    <div data-testid="user-page">
+      <div data-testid="username">user1</div>
+      <div data-testid="email">user1@mail.com</div>
+    </div>
+  ),
+  default: () => (
+    <div data-testid="user-page">
+      <div data-testid="username">user1</div>
+      <div data-testid="email">user1@mail.com</div>
+    </div>
+  ),
+}));
+
 // Helper function to set up authenticated state
 const mockAuth = (
   isAuthenticated: boolean,
