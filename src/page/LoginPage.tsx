@@ -144,7 +144,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
           id: response.id,
           username: response.username,
           access: response.access,
-          refresh: response.refresh
+          refresh: response.refresh,
         })
       );
 

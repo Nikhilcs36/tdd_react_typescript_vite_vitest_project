@@ -734,7 +734,7 @@ describe("Navbar persistence with localStorage", () => {
       user: { id: 5, username: "persistedUser" },
       accessToken: "mock-jwt-access-token",
       refreshToken: "mock-jwt-refresh-token",
-      showLogoutMessage: false
+      showLogoutMessage: false,
     });
   });
 });

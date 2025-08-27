@@ -21,7 +21,7 @@ describe("Store with SecureLS", () => {
       id: 1,
       username: "testuser",
       access: "mock-access-token",
-      refresh: "mock-refresh-token"
+      refresh: "mock-refresh-token",
     };
 
     // Dispatch login action
@@ -35,7 +35,7 @@ describe("Store with SecureLS", () => {
       isAuthenticated: true,
       user: { id: 1, username: "testuser" },
       accessToken: "mock-access-token",
-      refreshToken: "mock-refresh-token"
+      refreshToken: "mock-refresh-token",
     });
   });
 
@@ -45,7 +45,7 @@ describe("Store with SecureLS", () => {
       isAuthenticated: true,
       user: { id: 5, username: "persistedUser" },
       accessToken: "mock-persisted-access-token",
-      refreshToken: "mock-persisted-refresh-token"
+      refreshToken: "mock-persisted-refresh-token",
     };
 
     // Create store which should load from SecureLS
@@ -56,7 +56,9 @@ describe("Store with SecureLS", () => {
     expect(loadedAuthState.isAuthenticated).toBe(true);
     expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser" });
     expect(loadedAuthState.accessToken).toEqual("mock-persisted-access-token");
-    expect(loadedAuthState.refreshToken).toEqual("mock-persisted-refresh-token");
+    expect(loadedAuthState.refreshToken).toEqual(
+      "mock-persisted-refresh-token"
+    );
   });
 
   it("should clear SecureLS on logout", () => {

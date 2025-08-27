@@ -7,7 +7,7 @@ const secureLS = new SecureLS({ encodingType: "aes" });
 
 interface AuthState {
   isAuthenticated: boolean;
-  user: { id: number; username: string, image?: string } | null;
+  user: { id: number; username: string; image?: string } | null;
   accessToken: string | null;
   refreshToken: string | null;
   showLogoutMessage: boolean;
@@ -36,7 +36,10 @@ const authSlice = createSlice({
     builder
       .addCase(loginSuccess, (state, action) => {
         state.isAuthenticated = true;
-        state.user = { id: action.payload.id, username: action.payload.username };
+        state.user = {
+          id: action.payload.id,
+          username: action.payload.username,
+        };
         state.accessToken = action.payload.access;
         state.refreshToken = action.payload.refresh;
         state.showLogoutMessage = false; // Ensure logout message is hidden on login

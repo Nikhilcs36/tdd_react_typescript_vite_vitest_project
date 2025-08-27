@@ -126,7 +126,7 @@ export const handlers = [
     // This simulates authorization-aware user listing where users don't see themselves
     if (authHeader && authHeader.startsWith("JWT ")) {
       const accessToken = authHeader.replace("JWT ", "");
-      
+
       // In a real app, we would validate the JWT token here
       // For testing, we'll just check if it matches our mock token
       if (accessToken === "mock-access-token") {
@@ -307,10 +307,15 @@ export const handlers = [
     const accessToken = authHeader.replace("JWT ", "");
 
     // Validate access token and check refresh token in request body
-    const body = await request.json() as { refresh?: string };
+    const body = (await request.json()) as { refresh?: string };
     const refreshToken = body?.refresh;
 
-    if (!accessToken || accessToken !== "mock-access-token" || !refreshToken || refreshToken !== "mock-refresh-token") {
+    if (
+      !accessToken ||
+      accessToken !== "mock-access-token" ||
+      !refreshToken ||
+      refreshToken !== "mock-refresh-token"
+    ) {
       return HttpResponse.json(
         {
           message: "Invalid tokens",
@@ -326,7 +331,7 @@ export const handlers = [
 
   // Mock API for token refresh ----(8)
   http.post("/api/user/token/refresh/", async ({ request }) => {
-    const body = await request.json() as { refresh?: string };
+    const body = (await request.json()) as { refresh?: string };
     const refreshToken = body?.refresh;
 
     if (!refreshToken || refreshToken !== "mock-refresh-token") {

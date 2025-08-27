@@ -75,7 +75,7 @@ describe("UserPage", () => {
             id: 1,
             username: "authedUser",
             access: "test-access-token",
-            refresh: "test-refresh-token"
+            refresh: "test-refresh-token",
           })
         );
       });
@@ -579,7 +579,7 @@ describe("UserPage", () => {
             id: 1,
             username: "authedUser",
             access: "mock-access-token",
-            refresh: "mock-refresh-token"
+            refresh: "mock-refresh-token",
           })
         );
       });
@@ -605,7 +605,7 @@ describe("UserPage", () => {
           user: null,
           accessToken: null,
           refreshToken: null,
-          showLogoutMessage: false
+          showLogoutMessage: false,
         });
       });
     });

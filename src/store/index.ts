@@ -26,7 +26,7 @@ const saveState = (state: any) => {
         : null,
       accessToken: state.auth.accessToken,
       refreshToken: state.auth.refreshToken,
-      showLogoutMessage: state.auth.showLogoutMessage
+      showLogoutMessage: state.auth.showLogoutMessage,
     };
     secureLS.set("authState", stateToSave);
   } catch (err) {
