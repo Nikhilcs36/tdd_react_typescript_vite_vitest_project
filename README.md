@@ -57,6 +57,25 @@ Our development process follows a strict TDD cycle:
 -   **Component Tests**: We use Testing Library to test our React components.
 -   **API Mocking**: We use MSW (Mock Service Worker) to mock API responses for our tests.
 
+## Security Implementation
+
+### Token Management
+- **JWT Authentication**: Uses access/refresh token pattern provided by backend
+- **Automatic Refresh**: Axios interceptors detect 401 errors and automatically refresh tokens
+- **Storage Security**:
+  - Access tokens stored in Redux state (in-memory)
+  - Refresh tokens handled via secure HTTP-only cookies from backend
+- **Token Handling**:
+  - Frontend automatically refreshes tokens when expired (401 responses)
+  - Backend controls actual token expiration times
+  - No hardcoded expiration times in frontend code
+
+### Protection Mechanisms
+- Automatic token invalidation on logout (Redux state cleared, backend logout API called)
+- Secure token storage in Redux state (in-memory)
+- Language-aware API headers (Accept-Language)
+- Authorization header management with JWT tokens
+
 ## Workflows
 
 ### TDD Development Cycle
