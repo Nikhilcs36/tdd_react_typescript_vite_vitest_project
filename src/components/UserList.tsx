@@ -183,7 +183,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
         <UserContainer>
           {this.state.showSpinner ? (
             <Spinner data-testid="spinner" />
-          ) : this.state.page.content.length > 0 ? (
+          ) : this.state.page.content && this.state.page.content.length > 0 ? (
             this.state.page.content.map((user) => (
               <div key={user.id}>
                 <UserListItem user={user} onClick={this.handleUserClick} />
