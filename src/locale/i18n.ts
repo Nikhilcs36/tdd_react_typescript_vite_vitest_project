@@ -46,6 +46,7 @@ i18n.use(initReactI18next).init({
           buttonNext: "Next",
           buttonPrevious: "Previous",
           emptyPageMessage: "No users found",
+          loginRequiredMessage: "Please login to view users",
         },
         login: {
           title: "Login",
@@ -123,6 +124,7 @@ i18n.use(initReactI18next).init({
           buttonNext: "അടുത്തത്",
           buttonPrevious: "മുമ്പത്തേത്",
           emptyPageMessage: "ഉപയോക്താക്കളെയൊന്നും കണ്ടെത്തിയില്ല",
+          loginRequiredMessage: "ഉപയോക്താക്കളെ കാണാൻ ദയവായി ലോഗിൻ ചെയ്യുക",
         },
         login: {
           title: "ലോഗിൻ",
@@ -200,6 +202,7 @@ i18n.use(initReactI18next).init({
           buttonNext: "التالي",
           buttonPrevious: "السابق",
           emptyPageMessage: "لم يتم العثور على أي مستخدمين",
+          loginRequiredMessage: "يرجى تسجيل الدخول لعرض المستخدمين",
         },
         login: {
           title: "تسجيل الدخول",
