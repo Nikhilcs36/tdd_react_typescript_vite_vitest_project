@@ -5,6 +5,8 @@ import { ApiGetService } from "../services/apiService";
 import UserListItem from "./UserListItem";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
+import { connect, ConnectedProps } from "react-redux";
+import { RootState } from "../store";
 
 const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
 const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
@@ -28,7 +30,7 @@ interface Page {
   totalPages: number;
 }
 
-interface UserListPageProps extends WithTranslation {
+interface UserListPageProps extends WithTranslation, PropsFromRedux {
   ApiGetService: ApiGetService;
   navigate: NavigateFunction; // Pass navigate function as a prop
 }
@@ -58,10 +60,20 @@ class UserList extends Component<UserListPageProps, UserListState> {
   private buttonTimeout = 0;
 
   componentDidMount() {
-    this.fetchUsers(0);
+    // Only fetch users if authenticated, otherwise show appropriate message
+    if (this.props.isAuthenticated) {
+      this.fetchUsers(0);
+    }
 
     // Listen for user list refresh events (triggered after logout)
     window.addEventListener("userListRefresh", this.handleUserListRefresh);
+  }
+
+  componentDidUpdate(prevProps: UserListPageProps) {
+    // If authentication status changes from unauthenticated to authenticated, fetch users
+    if (!prevProps.isAuthenticated && this.props.isAuthenticated) {
+      this.fetchUsers(0);
+    }
   }
 
   componentWillUnmount() {
@@ -79,7 +91,10 @@ class UserList extends Component<UserListPageProps, UserListState> {
    */
   handleUserListRefresh = () => {
     // Refresh the current page to show updated user list (without authenticated user filtering)
-    this.fetchUsers(this.state.page.page);
+    // Only fetch if authenticated
+    if (this.props.isAuthenticated) {
+      this.fetchUsers(this.state.page.page);
+    }
   };
 
   fetchUsers = async (pageNumber: number) => {
@@ -145,7 +160,21 @@ class UserList extends Component<UserListPageProps, UserListState> {
   };
 
   render() {
-    const { t } = this.props;
+    const { t, isAuthenticated } = this.props;
+
+    if (!isAuthenticated) {
+      return (
+        <Card>
+          <CardHeader>
+            <Title>{t("userlist.title")}</Title>
+          </CardHeader>
+          <UserContainer>
+            <p>{t("userlist.loginRequiredMessage")}</p>
+          </UserContainer>
+        </Card>
+      );
+    }
+
     return (
       <Card>
         <CardHeader>
@@ -190,10 +219,18 @@ class UserList extends Component<UserListPageProps, UserListState> {
   }
 }
 
+// Connect to Redux store
+const mapStateToProps = (state: RootState) => ({
+  isAuthenticated: state.auth.isAuthenticated,
+});
+
+const connector = connect(mapStateToProps);
+type PropsFromRedux = ConnectedProps<typeof connector>;
+
 // Wrapper component to inject `useNavigate` for class component
 function UserListWithRouter(props: Omit<UserListPageProps, "navigate">) {
   const navigate = useNavigate(); // useNavigate hook to get navigation function
   return <UserList {...props} navigate={navigate} />; //Pass navigate as a prop
 }
 
-export default withTranslation()(UserListWithRouter);
+export default connector(withTranslation()(UserListWithRouter));
