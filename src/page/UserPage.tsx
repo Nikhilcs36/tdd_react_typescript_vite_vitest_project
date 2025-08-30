@@ -20,6 +20,7 @@ import {
 import { AppDispatch, RootState } from "../store";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
+import { AuthState } from "../store/authSlice";
 
 const PageContainer = tw.div`p-4 max-w-2xl mx-auto dark:bg-dark-primary`;
 const SpinnerContainer = tw.div`text-center py-8`;
@@ -53,14 +54,7 @@ interface UserPageProps extends WithTranslation {
   ApiGetService: ApiGetService;
   ApiPutService?: ApiPutService<UserUpdateRequestBody>;
   ApiDeleteService?: ApiDeleteService;
-  auth?: {
-    isAuthenticated: boolean;
-    user: {
-      id: number;
-      username: string;
-    } | null;
-    token: string | null;
-  };
+  auth?: AuthState;
   user: {
     isLoading: boolean;
     error: string | null;
@@ -130,6 +124,9 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   }
 
   loadUser = async () => {
+    if (!this.props.id || isNaN(Number(this.props.id))) {
+      return; // Do not fetch if id is not available or not a number
+    }
     this.props.dispatch(updateUserStart());
     try {
       const user = await this.props.ApiGetService.get<User>(

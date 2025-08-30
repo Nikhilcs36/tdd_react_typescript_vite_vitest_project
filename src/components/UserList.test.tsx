@@ -56,10 +56,8 @@ const emptyListAPISetup = () => {
   server.use(
     http.get(API_ENDPOINTS.GET_USERS, async () => {
       return HttpResponse.json({
-        content: [],
-        page: 0,
-        size: 3,
-        totalPages: 0,
+        results: [],
+        count: 0,
       });
     })
   );
@@ -108,17 +106,17 @@ describe("User List", () => {
     setup(true);
     await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
     userEvent.click(screen.getByTestId("next-button"));
-    const firstUserOnPage2 = await screen.findByText("user4");
+    const firstUserOnPage2 = await screen.findByText("user5");
     expect(firstUserOnPage2).toBeInTheDocument();
   });
 
   it("Disabled next button on last page when authenticated", async () => {
     setup(true);
-    await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
+    await screen.findByText("user2"); // user1 is filtered out
+    // Go to Page 2
     userEvent.click(screen.getByTestId("next-button"));
-    await screen.findByText("user4");
-    userEvent.click(screen.getByTestId("next-button"));
-    await screen.findByText("user7");
+    await screen.findByText("user5");
+    // Now on the last page, the button should be disabled
     expect(screen.getByTestId("next-button")).toBeDisabled();
   });
 
@@ -132,7 +130,7 @@ describe("User List", () => {
     setup(true);
     await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
     userEvent.click(screen.getByTestId("next-button"));
-    await screen.findByText("user4");
+    await screen.findByText("user5");
     expect(screen.getByTestId("prev-button")).toBeInTheDocument();
   });
 
@@ -140,9 +138,7 @@ describe("User List", () => {
     setup(true);
     await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
     userEvent.click(screen.getByTestId("next-button"));
-    await screen.findByText("user4");
-    userEvent.click(screen.getByTestId("next-button"));
-    await screen.findByText("user4");
+    await screen.findByText("user5");
     userEvent.click(screen.getByTestId("prev-button"));
     await screen.findByText("user2"); // Should navigate back to first page
   });
@@ -151,10 +147,8 @@ describe("User List", () => {
     // Mock API response with an empty user list
     mockedAxios.get.mockResolvedValue({
       data: {
-        content: [],
-        page: 0,
-        size: 3,
-        totalPages: 0,
+        results: [],
+        count: 0,
       },
     });
 
@@ -170,7 +164,14 @@ describe("User List", () => {
   });
 
   it('displays "No users found" when the list is empty ( Integration Test for verifies API + Component Integration)', async () => {
-    emptyListAPISetup();
+    server.use(
+      http.get(API_ENDPOINTS.GET_USERS, async () => {
+        return HttpResponse.json({
+          results: [],
+          count: 0,
+        });
+      })
+    );
     setup(true);
     const noUsersMessage = await screen.findByText("No users found");
     expect(noUsersMessage).toBeInTheDocument();
@@ -179,7 +180,7 @@ describe("User List", () => {
   it("disables and re-enables 'Next' button while loading", async () => {
     server.use(
       createUserListHandler({
-        delayPage: 1, // Only delay page 1 requests
+        delayPage: 2, // Only delay page 2 requests
         delayMs: 500,
       })
     );
@@ -198,7 +199,7 @@ describe("User List", () => {
     await waitFor(() => expect(nextButton).toBeDisabled());
 
     // Wait for next page to load
-    await screen.findByText("user4");
+    await screen.findByText("user5");
 
     // Ensure button is enabled again
     await waitFor(() => expect(nextButton).not.toBeDisabled());
@@ -217,7 +218,7 @@ describe("User List", () => {
     userEvent.click(nextButton);
 
     // Wait for the new page to load
-    await screen.findByText("user4");
+    await screen.findByText("user5");
 
     // Ensure Previous button is now enabled
     await waitFor(() => expect(prevButton).not.toBeDisabled());
@@ -238,7 +239,7 @@ describe("User List", () => {
   it("applies correct styles when buttons are enabled and disabled", async () => {
     server.use(
       createUserListHandler({
-        delayPage: 1, // Only delay page 1 requests
+        delayPage: 2, // Only delay page 2 requests
         delayMs: 500,
       })
     );
@@ -249,24 +250,24 @@ describe("User List", () => {
     const prevButton = screen.getByTestId("prev-button");
 
     //Initial State: Next enabled, Previous disabled
-    expectEnabled(nextButton);
-    expectDisabled(prevButton);
+    await expectEnabled(nextButton);
+    await expectDisabled(prevButton);
 
     // Click 'Next' - Next should become disabled during loading
     userEvent.click(nextButton);
     await waitFor(() => expectDisabled(nextButton));
 
     // Wait for next page - Previous should become enabled
-    await screen.findByText("user4");
-    await waitFor(() => expectEnabled(prevButton));
+    await screen.findByText("user5");
+    await expectEnabled(prevButton);
 
     // Click 'Previous' - Previous should become disabled during loading
     userEvent.click(prevButton);
     await waitFor(() => expectDisabled(prevButton));
 
     // Wait for page 1 - Next enabled again
-    await screen.findByText("user1");
-    await waitFor(() => expectEnabled(nextButton));
+    await screen.findByText("user2");
+    await expectEnabled(nextButton);
   });
 
   it("navigates to the correct user ID when clicking a user (Check Rendered UserPage)", async () => {
@@ -409,7 +410,7 @@ describe("User List", () => {
         it("shows spinner after 300ms delay when API is slow", async () => {
           server.use(
             createUserListHandler({
-              delayPage: 1, // Only delay page 1 requests
+              delayPage: 2, // Only delay page 2 requests
               delayMs: 500,
             })
           );
@@ -417,7 +418,7 @@ describe("User List", () => {
           setup(true);
 
           // Initial page load
-          await screen.findByText("user1");
+          await screen.findByText("user2");
           const nextButton = screen.getByTestId("next-button");
 
           userEvent.click(nextButton);
@@ -430,25 +431,25 @@ describe("User List", () => {
           );
 
           // Verify new page
-          await screen.findByText("user4");
+          await screen.findByText("user5");
           await expectEnabled(nextButton);
         });
 
         it("does not show spinner when API completes quickly", async () => {
           server.use(
             createUserListHandler({
-              delayPage: 1,
+              delayPage: 2,
               delayMs: 100, // Shorter than spinner threshold
             })
           );
 
           setup(true);
 
-          await screen.findByText("user1");
+          await screen.findByText("user2");
           const nextButton = screen.getByTestId("next-button");
 
           userEvent.click(nextButton);
-          await screen.findByText("user4");
+          await screen.findByText("user5");
 
           expect(screen.queryByTestId("spinner")).not.toBeInTheDocument();
           await expectEnabled(nextButton);
@@ -463,7 +464,7 @@ describe("User List", () => {
         it("disables buttons after 300ms delay on slow network but keeps enabled before delay", async () => {
           server.use(
             createUserListHandler({
-              delayPage: 1,
+              delayPage: 2,
               delayMs: 500, // Total API delay
             })
           );
@@ -471,7 +472,7 @@ describe("User List", () => {
           setup(true);
 
           // Initial page load
-          await screen.findByText("user1");
+          await screen.findByText("user2");
           const nextButton = screen.getByTestId("next-button");
 
           // Initial state check
@@ -499,7 +500,7 @@ describe("User List", () => {
           );
 
           // After API completes (500ms total)
-          await screen.findByText("user4");
+          await screen.findByText("user5");
 
           // Final state check
           await expectEnabled(nextButton);
@@ -509,14 +510,14 @@ describe("User List", () => {
         it("never disables buttons when API completes faster than 300ms", async () => {
           server.use(
             createUserListHandler({
-              delayPage: 1,
+              delayPage: 2,
               delayMs: 250, // Faster than button disable delay
             })
           );
 
           setup(true);
 
-          await screen.findByText("user1");
+          await screen.findByText("user2");
           const nextButton = screen.getByTestId("next-button");
 
           userEvent.click(nextButton);
@@ -530,7 +531,7 @@ describe("User List", () => {
           );
 
           // After API completes
-          await screen.findByText("user4");
+          await screen.findByText("user5");
           await expectEnabled(nextButton);
         });
       });
@@ -544,10 +545,8 @@ describe("User List", () => {
       // Mock axios to capture the request
       mockedAxios.get.mockResolvedValue({
         data: {
-          content: [{ id: 1, username: "user1", email: "user1@example.com" }],
-          page: 0,
-          size: 3,
-          totalPages: 1,
+          results: [{ id: 1, username: "user1", email: "user1@example.com" }],
+          count: 1,
         },
       });
 
@@ -563,7 +562,7 @@ describe("User List", () => {
 
       // Verify axios was called with Authorization header
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        `${API_ENDPOINTS.GET_USERS}?page=0&size=3`,
+        `${API_ENDPOINTS.GET_USERS}?page=1&size=3`,
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: "JWT mock-access-token",
@@ -584,10 +583,8 @@ describe("User List", () => {
           capturedAuthHeader = request.headers.get("Authorization");
           capturedLanguageHeader = request.headers.get("Accept-Language");
           return HttpResponse.json({
-            content: [{ id: 1, username: "user1", email: "user1@example.com" }],
-            page: 0,
-            size: 3,
-            totalPages: 1,
+            results: [{ id: 2, username: "user2", email: "user2@example.com" }],
+            count: 1,
           });
         })
       );
@@ -600,7 +597,7 @@ describe("User List", () => {
         </Provider>
       );
 
-      await screen.findByText("user1");
+      await screen.findByText("user2");
 
       // Verify Authorization header was sent
       expect(capturedAuthHeader).toBe("JWT mock-access-token");
@@ -614,10 +611,8 @@ describe("User List", () => {
       // Mock axios to capture any potential requests
       mockedAxios.get.mockResolvedValue({
         data: {
-          content: [{ id: 1, username: "user1", email: "user1@example.com" }],
-          page: 0,
-          size: 3,
-          totalPages: 1,
+          results: [{ id: 1, username: "user1", email: "user1@example.com" }],
+          count: 1,
         },
       });
 
@@ -649,10 +644,8 @@ describe("User List", () => {
           capturedAuthHeader = request.headers.get("Authorization");
           capturedLanguageHeader = request.headers.get("Accept-Language");
           return HttpResponse.json({
-            content: [{ id: 1, username: "user1", email: "user1@example.com" }],
-            page: 0,
-            size: 3,
-            totalPages: 1,
+            results: [{ id: 1, username: "user1", email: "user1@example.com" }],
+            count: 1,
           });
         })
       );
@@ -694,14 +687,12 @@ describe("User List", () => {
       // Mock axios to return filtered user list (excluding user2)
       mockedAxios.get.mockResolvedValue({
         data: {
-          content: [
+          results: [
             { id: 1, username: "user1", email: "user1@example.com" },
             { id: 3, username: "user3", email: "user3@example.com" },
             { id: 4, username: "user4", email: "user4@example.com" },
           ],
-          page: 0,
-          size: 3,
-          totalPages: 2, // Adjusted for filtered list
+          count: 3,
         },
       });
 
@@ -821,24 +812,20 @@ describe("User List", () => {
       const mockGet = vi.fn();
       mockGet
         .mockResolvedValueOnce({
-          content: [
+          results: [
             { id: 1, username: "user1", email: "user1@mail.com", image: null },
             { id: 3, username: "user3", email: "user3@mail.com", image: null },
             { id: 4, username: "user4", email: "user4@mail.com", image: null },
           ],
-          page: 0,
-          size: 3,
-          totalPages: 1,
+          count: 3,
         })
         .mockResolvedValueOnce({
-          content: [
+          results: [
             { id: 1, username: "user1", email: "user1@mail.com", image: null },
             { id: 2, username: "user2", email: "user2@mail.com", image: null }, // user2 now appears after logoutSuccess
             { id: 3, username: "user3", email: "user3@mail.com", image: null },
           ],
-          page: 0,
-          size: 3,
-          totalPages: 1,
+          count: 3,
         });
 
       const mockApiService = { get: mockGet };
@@ -864,6 +851,31 @@ describe("User List", () => {
       // Wait for the refresh to complete and verify user2 now appears
       await screen.findByText("user2");
       expect(mockGet).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("API Response Structure", () => {
+    it("displays users from API response with 'results' field", async () => {
+      server.use(
+        http.get(API_ENDPOINTS.GET_USERS, async () => {
+          return HttpResponse.json({
+            count: 3,
+            next: null,
+            previous: null,
+            results: [
+              { id: 2, username: "user2", email: "user2@mail.com" },
+              { id: 3, username: "user3", email: "user3@mail.com" },
+              { id: 4, username: "user4", email: "user4@mail.com" },
+            ],
+          });
+        })
+      );
+
+      setup(true);
+
+      expect(await screen.findByText("user2")).toBeInTheDocument();
+      expect(await screen.findByText("user3")).toBeInTheDocument();
+      expect(await screen.findByText("user4")).toBeInTheDocument();
     });
   });
 });
