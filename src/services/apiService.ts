@@ -94,7 +94,6 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
-    const user: { id: number; username: string } | null = authState.user;
 
     // Build headers with basic requirements
     const baseHeaders = {
@@ -105,7 +104,6 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
     const authHeaders = accessToken
       ? {
           Authorization: `JWT ${accessToken}`,
-          ...(user && { "X-User-Id": user.id.toString() }),
         }
       : {};
 
@@ -126,26 +124,20 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
-    const user: { id: number; username: string } | null = authState.user;
+    const authenticatedUserId: number | undefined = authState.user?.id;
 
     // Build headers with basic requirements
-    const baseHeaders = {
+    const headers: Record<string, string> = {
       "Accept-Language": i18n.language,
     };
 
     // Add authorization headers only if access token exists
-    const authHeaders = accessToken
-      ? {
-          Authorization: `JWT ${accessToken}`,
-          ...(user && { "X-User-Id": user.id.toString() }),
-        }
-      : {};
-
-    // Combine headers
-    const headers = {
-      ...baseHeaders,
-      ...authHeaders,
-    };
+    if (accessToken) {
+      headers["Authorization"] = `JWT ${accessToken}`;
+      if (authenticatedUserId) {
+        headers["X-Authenticated-User-Id"] = String(authenticatedUserId);
+      }
+    }
 
     const response = await fetch(url, {
       method: "GET",

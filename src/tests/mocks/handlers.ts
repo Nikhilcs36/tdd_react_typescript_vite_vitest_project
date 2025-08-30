@@ -55,7 +55,7 @@ export const page1 = {
       image: null,
     },
   ],
-  page: 0,
+  page: 1,
   size: 3,
   totalPages: 9,
 };
@@ -113,48 +113,33 @@ export const handlers = [
   // Mock API for userlist (msw) - Authorization aware ----(3)
   http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
-    const page = Number(url.searchParams.get("page")) || 0;
+    const page = Number(url.searchParams.get("page")) || 1;
     const size = Number(url.searchParams.get("size")) || 3;
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
 
-    // For testing purposes, we'll return different user sets based on authentication
-    // In a real app, this would determine which users the authenticated user can see
-    let allUsers = [...page1.content]; // Default user list
+    let allUsers = [...page1.content];
 
-    // If authenticated, filter out the authenticated user from the list
-    // This simulates authorization-aware user listing where users don't see themselves
     if (authHeader && authHeader.startsWith("JWT ")) {
-      const accessToken = authHeader.replace("JWT ", "");
-
-      // In a real app, we would validate the JWT token here
-      // For testing, we'll just check if it matches our mock token
-      if (accessToken === "mock-access-token") {
-        const userIdFromHeader = request.headers.get("X-User-Id");
-
-        if (userIdFromHeader) {
-          const authenticatedUserId = Number(userIdFromHeader);
-          // Filter out the authenticated user from the list
-          allUsers = page1.content.filter(
-            (user) => user.id !== authenticatedUserId
-          );
-        }
+      const authenticatedUserId = request.headers.get(
+        "X-Authenticated-User-Id"
+      );
+      if (authenticatedUserId) {
+        allUsers = page1.content.filter(
+          (user) => user.id !== Number(authenticatedUserId)
+        );
       }
     }
 
-    // Apply slice for pagination
-    const startIndex = page * size;
+    const startIndex = (page - 1) * size;
     const endIndex = startIndex + size;
     const paginatedUsers = allUsers.slice(startIndex, endIndex);
 
     return HttpResponse.json(
       {
-        content: paginatedUsers,
-        page,
-        size,
-        totalPages: Math.ceil(allUsers.length / size),
+        results: paginatedUsers,
+        count: allUsers.length,
         languageReceived: acceptLanguage,
-        // Include auth status for testing purposes
         authHeaderReceived: authHeader ? "JWT [token]" : null,
       },
       { status: 200 }

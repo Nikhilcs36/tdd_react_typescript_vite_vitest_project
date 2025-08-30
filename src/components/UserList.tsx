@@ -46,7 +46,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
   state: UserListState = {
     page: {
       content: [],
-      page: 0,
+      page: 1,
       size: 3, // Default page size
       totalPages: 0,
     },
@@ -62,7 +62,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
   componentDidMount() {
     // Only fetch users if authenticated, otherwise show appropriate message
     if (this.props.isAuthenticated) {
-      this.fetchUsers(0);
+      this.fetchUsers(1);
     }
 
     // Listen for user list refresh events (triggered after logout)
@@ -72,7 +72,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
   componentDidUpdate(prevProps: UserListPageProps) {
     // If authentication status changes from unauthenticated to authenticated, fetch users
     if (!prevProps.isAuthenticated && this.props.isAuthenticated) {
-      this.fetchUsers(0);
+      this.fetchUsers(1);
     }
   }
 
@@ -114,7 +114,10 @@ class UserList extends Component<UserListPageProps, UserListState> {
     }, 300);
 
     try {
-      const response = await this.props.ApiGetService.get<Page>(
+      const response = await this.props.ApiGetService.get<{
+        results: User[];
+        count: number;
+      }>(
         `${API_ENDPOINTS.GET_USERS}?page=${pageNumber}&size=${this.state.page.size}`
       );
 
@@ -123,7 +126,12 @@ class UserList extends Component<UserListPageProps, UserListState> {
       clearTimeout(this.buttonTimeout);
 
       this.setState({
-        page: response,
+        page: {
+          content: response.results,
+          page: pageNumber,
+          size: this.state.page.size,
+          totalPages: Math.ceil(response.count / this.state.page.size),
+        },
         loading: false,
         showSpinner: false,
         showButtonDisabled: false,
@@ -141,7 +149,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
   };
 
   handlePrevPage = () => {
-    if (!this.state.loading && this.state.page.page > 0) {
+    if (!this.state.loading && this.state.page.page > 1) {
       this.fetchUsers(this.state.page.page - 1);
     }
   };
@@ -149,7 +157,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
   handleNextPage = () => {
     if (
       !this.state.loading &&
-      this.state.page.page < this.state.page.totalPages - 1
+      this.state.page.page < this.state.page.totalPages
     ) {
       this.fetchUsers(this.state.page.page + 1);
     }
@@ -184,13 +192,15 @@ class UserList extends Component<UserListPageProps, UserListState> {
           {this.state.showSpinner ? (
             <Spinner data-testid="spinner" />
           ) : this.state.page.content && this.state.page.content.length > 0 ? (
-            this.state.page.content.map((user) => (
-              <div key={user.id}>
+            this.state.page.content.map((user, index) => (
+              <div key={user.id || `user-${index}`}>
                 <UserListItem user={user} onClick={this.handleUserClick} />
               </div>
             ))
           ) : (
-            <p>{t("userlist.emptyPageMessage")}</p>
+            <div className="text-center text-gray-500">
+              {t("userlist.emptyPageMessage")}
+            </div>
           )}
         </UserContainer>
         <ButtonGroup>
@@ -198,7 +208,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
             data-testid="prev-button"
             onClick={this.handlePrevPage}
             disabled={
-              this.state.page.page === 0 || this.state.showButtonDisabled
+              this.state.page.page === 1 || this.state.showButtonDisabled
             }
           >
             {t("userlist.buttonPrevious")}
@@ -207,7 +217,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
             data-testid="next-button"
             onClick={this.handleNextPage}
             disabled={
-              this.state.page.page >= this.state.page.totalPages - 1 ||
+              this.state.page.page >= this.state.page.totalPages ||
               this.state.showButtonDisabled
             }
           >

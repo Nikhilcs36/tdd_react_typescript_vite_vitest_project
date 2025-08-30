@@ -5,7 +5,7 @@ import { loginSuccess, logoutSuccess } from "./actions";
 // Initialize SecureLS
 const secureLS = new SecureLS({ encodingType: "aes" });
 
-interface AuthState {
+export interface AuthState {
   isAuthenticated: boolean;
   user: { id: number; username: string; image?: string } | null;
   accessToken: string | null;
