@@ -16,7 +16,7 @@ export interface ApiPutService<T = Record<string, any>> {
 }
 
 export interface ApiGetService {
-  get: <T>(url: string) => Promise<T>;
+  get: <T>(url: string, page?: number, page_size?: number) => Promise<T>;
 }
 
 export interface ApiDeleteService {
@@ -88,9 +88,9 @@ export const fetchApiServiceActivation: ApiService = {
   },
 };
 
-// Axios implementation for load Userlist - Authorization aware
+// Axios implementation for load Userlist - Authorization aware (Django compatible)
 export const axiosApiServiceLoadUserList: ApiGetService = {
-  get: async <T>(url: string): Promise<T> => {
+  get: async <T>(url: string, page?: number, page_size?: number): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
@@ -113,14 +113,17 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
       ...authHeaders,
     };
 
-    const response = await axios.get<T>(url, { headers });
+    // Django expects snake_case parameters for pagination
+    const params = { page, page_size };
+
+    const response = await axios.get<T>(url, { headers, params });
     return response.data;
   },
 };
 
-// fetch implementation for load Userlist (for MSW testing) - Authorization aware
+// fetch implementation for load Userlist (for MSW testing) - Authorization aware (Django compatible)
 export const fetchApiServiceLoadUserList: ApiGetService = {
-  get: async <T>(url: string): Promise<T> => {
+  get: async <T>(url: string, page?: number, page_size?: number): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
@@ -139,7 +142,17 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
       }
     }
 
-    const response = await fetch(url, {
+    // Django expects snake_case parameters for pagination
+    // Handle both absolute and relative URLs
+    let finalUrl = url;
+    if (page !== undefined || page_size !== undefined) {
+      const urlObj = new URL(url, window.location.origin);
+      if (page !== undefined) urlObj.searchParams.set('page', page.toString());
+      if (page_size !== undefined) urlObj.searchParams.set('page_size', page_size.toString());
+      finalUrl = urlObj.toString();
+    }
+
+    const response = await fetch(finalUrl, {
       method: "GET",
       headers,
     });
