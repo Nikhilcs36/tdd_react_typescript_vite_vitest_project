@@ -3,6 +3,7 @@ import { NavigateFunction, useNavigate } from "react-router-dom";
 import tw from "twin.macro";
 import { ApiGetService } from "../services/apiService";
 import UserListItem from "./UserListItem";
+import Pagination from "./Pagination";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { connect, ConnectedProps } from "react-redux";
@@ -12,8 +13,6 @@ const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
 const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
 const Title = tw.h3`text-xl font-semibold dark:text-dark-text`;
 const UserContainer = tw.div`mt-4 flex flex-col items-center gap-2 h-40 overflow-auto`;
-const ButtonGroup = tw.div`flex justify-center mt-4 gap-2`;
-const Button = tw.button`px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300`;
 const Spinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin`;
 
 export interface User {
@@ -24,10 +23,12 @@ export interface User {
 }
 
 interface Page {
-  content: User[];
-  page: number;
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: User[];
+  currentPage: number;
   size: number;
-  totalPages: number;
 }
 
 interface UserListPageProps extends WithTranslation, PropsFromRedux {
@@ -45,10 +46,12 @@ interface UserListState {
 class UserList extends Component<UserListPageProps, UserListState> {
   state: UserListState = {
     page: {
-      content: [],
-      page: 1,
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+      currentPage: 1,
       size: 3, // Default page size
-      totalPages: 0,
     },
     loading: false,
     showSpinner: false,
@@ -93,7 +96,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
     // Refresh the current page to show updated user list (without authenticated user filtering)
     // Only fetch if authenticated
     if (this.props.isAuthenticated) {
-      this.fetchUsers(this.state.page.page);
+      this.fetchUsers(this.state.page.currentPage);
     }
   };
 
@@ -115,10 +118,14 @@ class UserList extends Component<UserListPageProps, UserListState> {
 
     try {
       const response = await this.props.ApiGetService.get<{
-        results: User[];
         count: number;
+        next: string | null;
+        previous: string | null;
+        results: User[];
       }>(
-        `${API_ENDPOINTS.GET_USERS}?page=${pageNumber}&size=${this.state.page.size}`
+        API_ENDPOINTS.GET_USERS,
+        pageNumber,
+        this.state.page.size
       );
 
       // Clear timeouts if request completes before delay
@@ -127,10 +134,12 @@ class UserList extends Component<UserListPageProps, UserListState> {
 
       this.setState({
         page: {
-          content: response.results,
-          page: pageNumber,
+          count: response.count,
+          next: response.next,
+          previous: response.previous,
+          results: response.results,
+          currentPage: pageNumber,
           size: this.state.page.size,
-          totalPages: Math.ceil(response.count / this.state.page.size),
         },
         loading: false,
         showSpinner: false,
@@ -149,17 +158,14 @@ class UserList extends Component<UserListPageProps, UserListState> {
   };
 
   handlePrevPage = () => {
-    if (!this.state.loading && this.state.page.page > 1) {
-      this.fetchUsers(this.state.page.page - 1);
+    if (!this.state.loading && this.state.page.previous) {
+      this.fetchUsers(this.state.page.currentPage - 1);
     }
   };
 
   handleNextPage = () => {
-    if (
-      !this.state.loading &&
-      this.state.page.page < this.state.page.totalPages
-    ) {
-      this.fetchUsers(this.state.page.page + 1);
+    if (!this.state.loading && this.state.page.next) {
+      this.fetchUsers(this.state.page.currentPage + 1);
     }
   };
 
@@ -191,8 +197,8 @@ class UserList extends Component<UserListPageProps, UserListState> {
         <UserContainer>
           {this.state.showSpinner ? (
             <Spinner data-testid="spinner" />
-          ) : this.state.page.content && this.state.page.content.length > 0 ? (
-            this.state.page.content.map((user, index) => (
+          ) : this.state.page.results && this.state.page.results.length > 0 ? (
+            this.state.page.results.map((user, index) => (
               <div key={user.id || `user-${index}`}>
                 <UserListItem user={user} onClick={this.handleUserClick} />
               </div>
@@ -203,27 +209,15 @@ class UserList extends Component<UserListPageProps, UserListState> {
             </div>
           )}
         </UserContainer>
-        <ButtonGroup>
-          <Button
-            data-testid="prev-button"
-            onClick={this.handlePrevPage}
-            disabled={
-              this.state.page.page === 1 || this.state.showButtonDisabled
-            }
-          >
-            {t("userlist.buttonPrevious")}
-          </Button>
-          <Button
-            data-testid="next-button"
-            onClick={this.handleNextPage}
-            disabled={
-              this.state.page.page >= this.state.page.totalPages ||
-              this.state.showButtonDisabled
-            }
-          >
-            {t("userlist.buttonNext")}
-          </Button>
-        </ButtonGroup>
+        <Pagination
+          next={this.state.page.next}
+          previous={this.state.page.previous}
+          count={this.state.page.count}
+          pageSize={this.state.page.size}
+          currentPage={this.state.page.currentPage}
+          onPageChange={this.fetchUsers}
+          loading={this.state.loading}
+        />
       </Card>
     );
   }

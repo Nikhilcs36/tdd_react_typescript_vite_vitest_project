@@ -21,26 +21,32 @@ describe("UserList Pagination with 1-based indexing", () => {
         const page = url.searchParams.get("page");
         if (page === "1") {
           return HttpResponse.json({
+            count: 6,
+        next: "?page=2&page_size=3",
+            previous: null,
             results: [
               { id: 1, username: "user1", email: "user1@mail.com" },
               { id: 2, username: "user2", email: "user2@mail.com" },
               { id: 3, username: "user3", email: "user3@mail.com" },
             ],
-            count: 6,
           });
         } else if (page === "2") {
           return HttpResponse.json({
+            count: 6,
+            next: null,
+            previous: "?page=1&page_size=3",
             results: [
               { id: 4, username: "user4", email: "user4@mail.com" },
               { id: 5, username: "user5", email: "user5@mail.com" },
               { id: 6, username: "user6", email: "user6@mail.com" },
             ],
-            count: 6,
           });
         }
         return HttpResponse.json({
-          results: [],
           count: 0,
+          next: null,
+          previous: null,
+          results: [],
         });
       })
     );

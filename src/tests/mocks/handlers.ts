@@ -9,9 +9,12 @@ import {
   validateUserUpdate,
 } from "../../utils/validationRules";
 
-// Mock API for userlist page(msw)
+// Mock API for userlist page(msw) - Django-style pagination
 export const page1 = {
-  content: [
+  count: 7, // Total number of users
+  next: "?page=2&page_size=3",
+  previous: null,
+  results: [
     {
       id: 1,
       username: "user1",
@@ -55,9 +58,7 @@ export const page1 = {
       image: null,
     },
   ],
-  page: 1,
-  size: 3,
-  totalPages: 9,
+  currentPage: 1,
 };
 
 export const handlers = [
@@ -114,19 +115,19 @@ export const handlers = [
   http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 1;
-    const size = Number(url.searchParams.get("size")) || 3;
+    const size = Number(url.searchParams.get("page_size")) || 3;
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
 
-    let allUsers = [...page1.content];
+    let allUsers = [...page1.results];
 
     if (authHeader && authHeader.startsWith("JWT ")) {
       const authenticatedUserId = request.headers.get(
         "X-Authenticated-User-Id"
       );
       if (authenticatedUserId) {
-        allUsers = page1.content.filter(
-          (user) => user.id !== Number(authenticatedUserId)
+        allUsers = page1.results.filter(
+          (user: { id: number }) => user.id !== Number(authenticatedUserId)
         );
       }
     }
@@ -135,10 +136,14 @@ export const handlers = [
     const endIndex = startIndex + size;
     const paginatedUsers = allUsers.slice(startIndex, endIndex);
 
+    const totalPages = Math.ceil(allUsers.length / size);
+    
     return HttpResponse.json(
       {
-        results: paginatedUsers,
         count: allUsers.length,
+        next: page < totalPages ? `?page=${page + 1}&page_size=${size}` : null,
+        previous: page > 1 ? `?page=${page - 1}&page_size=${size}` : null,
+        results: paginatedUsers,
         languageReceived: acceptLanguage,
         authHeaderReceived: authHeader ? "JWT [token]" : null,
       },
@@ -150,7 +155,7 @@ export const handlers = [
   http.get(API_ENDPOINTS.USER_BY_ID, async ({ request, params }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const { id } = params;
-    const user = page1.content.find((u) => u.id === Number(id));
+    const user = page1.results.find((u: { id: number }) => u.id === Number(id));
 
     if (!user) {
       return HttpResponse.json(
@@ -248,7 +253,7 @@ export const handlers = [
     }
 
     // Find user in mock data
-    const user = page1.content.find((u) => u.id === Number(id));
+    const user = page1.results.find((u: { id: number }) => u.id === Number(id));
 
     if (!user) {
       return HttpResponse.json(
@@ -361,7 +366,7 @@ export const handlers = [
     }
 
     // Find user in mock data
-    const user = page1.content.find((u) => u.id === Number(id));
+    const user = page1.results.find((u: { id: number }) => u.id === Number(id));
 
     if (!user) {
       return HttpResponse.json(

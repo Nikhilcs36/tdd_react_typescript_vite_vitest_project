@@ -74,7 +74,7 @@ export const createUserListHandler = (options?: {
   return http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 1;
-    const size = Number(url.searchParams.get("size")) || 3;
+    const size = Number(url.searchParams.get("page_size")) || 3;
 
     // Apply artificial delay for specific pages to test loading states
     if (options?.delayPage === page && options?.delayMs) {
@@ -82,15 +82,19 @@ export const createUserListHandler = (options?: {
     }
 
     // Reuse mock data structure from mocks/handlers.ts for consistency
-    const allUsers = [...page1.content];
+    const allUsers = [...page1.results];
 
     // Calculate pagination using 1-based indexing
     const startIndex = (page - 1) * size;
     const endIndex = startIndex + size;
 
+    const totalPages = Math.ceil(allUsers.length / size);
+    
     return HttpResponse.json({
-      results: allUsers.slice(startIndex, endIndex),
       count: allUsers.length,
+      next: page < totalPages ? `?page=${page + 1}&page_size=${size}` : null,
+      previous: page > 1 ? `?page=${page - 1}&page_size=${size}` : null,
+      results: allUsers.slice(startIndex, endIndex),
     });
   });
 };

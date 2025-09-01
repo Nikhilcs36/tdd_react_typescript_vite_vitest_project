@@ -144,11 +144,13 @@ describe("User List", () => {
   });
 
   it('displays "No users found" when the list is empty ( Unit Test for checks component logic)', async () => {
-    // Mock API response with an empty user list
+    // Mock API response with an empty user list (Django format)
     mockedAxios.get.mockResolvedValue({
       data: {
         results: [],
         count: 0,
+        next: null,
+        previous: null,
       },
     });
 
@@ -560,14 +562,18 @@ describe("User List", () => {
 
       await screen.findByText("user1");
 
-      // Verify axios was called with Authorization header
+      // Verify axios was called with Authorization header and Django pagination params
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        `${API_ENDPOINTS.GET_USERS}?page=1&size=3`,
+        API_ENDPOINTS.GET_USERS,
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: "JWT mock-access-token",
             "Accept-Language": expect.any(String),
           }),
+          params: expect.objectContaining({
+            page: 1,
+            page_size: 3
+          })
         })
       );
     });
