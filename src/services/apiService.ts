@@ -90,7 +90,11 @@ export const fetchApiServiceActivation: ApiService = {
 
 // Axios implementation for load Userlist - Authorization aware (Django compatible)
 export const axiosApiServiceLoadUserList: ApiGetService = {
-  get: async <T>(url: string, page?: number, page_size?: number): Promise<T> => {
+  get: async <T>(
+    url: string,
+    page?: number,
+    page_size?: number
+  ): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
@@ -123,7 +127,11 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
 
 // fetch implementation for load Userlist (for MSW testing) - Authorization aware (Django compatible)
 export const fetchApiServiceLoadUserList: ApiGetService = {
-  get: async <T>(url: string, page?: number, page_size?: number): Promise<T> => {
+  get: async <T>(
+    url: string,
+    page?: number,
+    page_size?: number
+  ): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
@@ -147,8 +155,9 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
     let finalUrl = url;
     if (page !== undefined || page_size !== undefined) {
       const urlObj = new URL(url, window.location.origin);
-      if (page !== undefined) urlObj.searchParams.set('page', page.toString());
-      if (page_size !== undefined) urlObj.searchParams.set('page_size', page_size.toString());
+      if (page !== undefined) urlObj.searchParams.set("page", page.toString());
+      if (page_size !== undefined)
+        urlObj.searchParams.set("page_size", page_size.toString());
       finalUrl = urlObj.toString();
     }
 
@@ -162,6 +171,52 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
       throw errorData;
     }
 
+    return response.json() as T;
+  },
+};
+
+// Axios implementation for getCurrentUser (me endpoint)
+export const axiosApiServiceGetCurrentUser: ApiGetService = {
+  get: async <T>(url: string): Promise<T> => {
+    // Get authentication state from Redux store
+    const authState = store.getState().auth;
+    const accessToken: string | null = authState.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
+
+    const response = await axios.get<T>(url, {
+      headers: {
+        "Accept-Language": i18n.language,
+        Authorization: `JWT ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+};
+
+// Fetch implementation for getCurrentUser (me endpoint)
+export const fetchApiServiceGetCurrentUser: ApiGetService = {
+  get: async <T>(url: string): Promise<T> => {
+    // Get authentication state from Redux store
+    const authState = store.getState().auth;
+    const accessToken: string | null = authState.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
+
+    const response = await fetch(url, {
+      headers: {
+        "Accept-Language": i18n.language,
+        Authorization: `JWT ${accessToken}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
     return response.json() as T;
   },
 };

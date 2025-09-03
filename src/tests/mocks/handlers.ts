@@ -137,7 +137,7 @@ export const handlers = [
     const paginatedUsers = allUsers.slice(startIndex, endIndex);
 
     const totalPages = Math.ceil(allUsers.length / size);
-    
+
     return HttpResponse.json(
       {
         count: allUsers.length,
@@ -166,6 +166,38 @@ export const handlers = [
 
     return HttpResponse.json(
       { ...user, languageReceived: acceptLanguage },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for get current user (me endpoint) ----(4.1)
+  http.get(API_ENDPOINTS.ME, async ({ request }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        {
+          message: "Authentication required",
+          languageReceived: acceptLanguage,
+        },
+        { status: 401 }
+      );
+    }
+
+    // For the ME endpoint, return the first user as the current user
+    const currentUser = page1.results[0];
+
+    if (!currentUser) {
+      return HttpResponse.json(
+        { message: "User not found", languageReceived: acceptLanguage },
+        { status: 404 }
+      );
+    }
+
+    return HttpResponse.json(
+      { ...currentUser, languageReceived: acceptLanguage },
       { status: 200 }
     );
   }),
