@@ -241,14 +241,15 @@ describe("Routing", () => {
     // Wait for the "My Profile" link to appear in the navbar (it's conditional on auth state)
     const myProfileLink = screen.getByTestId("my-profile-link");
 
-    // Assert that the profile link's href uses the user ID
-    expect(myProfileLink).toHaveAttribute("href", `/user/${mockUser.id}`);
+    // Assert that the profile link's href uses the profile route
+    expect(myProfileLink).toHaveAttribute("href", "/profile");
 
     // Click the "My Profile" link
     await userEvent.click(myProfileLink);
 
     await waitFor(() => {
-      expect(screen.getByTestId("user-page")).toBeInTheDocument();
+      // Check if the profile page component is rendered
+      expect(screen.getByTestId("profile-page")).toBeInTheDocument();
       expect(screen.getByTestId("username")).toHaveTextContent("user1");
       expect(screen.getByTestId("email")).toHaveTextContent("user1@mail.com");
     });
@@ -337,8 +338,8 @@ describe("Routing", () => {
     await userEvent.click(myProfileLink);
 
     await waitFor(() => {
-      // Check if the user page component is rendered
-      expect(screen.getByTestId("user-page")).toBeInTheDocument();
+      // Check if the profile page component is rendered
+      expect(screen.getByTestId("profile-page")).toBeInTheDocument();
       expect(screen.getByTestId("username")).toHaveTextContent("user1");
       expect(screen.getByTestId("email")).toHaveTextContent("user1@mail.com");
     });
@@ -693,7 +694,7 @@ describe("Navbar persistence with localStorage", () => {
 
     // Verify navbar updated - should now show profile link
     const profileLink = await screen.getByTestId("my-profile-link");
-    expect(profileLink).toHaveAttribute("href", `/user/${testUser.id}`);
+    expect(profileLink).toHaveAttribute("href", "/profile");
 
     // Verify auth links are hidden after login
     expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
@@ -717,10 +718,7 @@ describe("Navbar persistence with localStorage", () => {
     // Verify navbar state after refresh
     await waitFor(() => {
       const refreshedProfileLink = screen.getByTestId("my-profile-link");
-      expect(refreshedProfileLink).toHaveAttribute(
-        "href",
-        `/user/${testUser.id}`
-      );
+      expect(refreshedProfileLink).toHaveAttribute("href", "/profile");
     });
 
     // Verify auth links are hidden

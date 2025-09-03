@@ -7,10 +7,12 @@ import SignUpPage from "./page/SignUpPage";
 import HomePage from "./page/HomePage";
 import LoginPage from "./page/LoginPage";
 import UserPageWrapper from "./page/UserPage";
+import ProfilePageWrapper from "./page/ProfilePage";
 import AccountActivationPage from "./page/accountActivationPage";
 import {
   axiosApiServiceActivation,
   axiosApiServiceGetUser,
+  axiosApiServiceGetCurrentUser,
   axiosApiServiceLogin,
   axiosApiServiceSignUp,
   axiosApiServiceUpdateUser,
@@ -73,7 +75,6 @@ export const AppContent = ({
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
-  const user = useSelector((state: RootState) => state.auth.user);
   const { logout: logoutUser } = useLogout(logoutApiService);
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -105,7 +106,7 @@ export const AppContent = ({
         <NavRight>
           {isAuthenticated ? (
             <>
-              <NavLink to={`/user/${user?.id}`} data-testid="my-profile-link">
+              <NavLink to="/profile" data-testid="my-profile-link">
                 {t("myProfile")}
               </NavLink>
               <StyledButton onClick={logoutUser} data-testid="logout-link">
@@ -141,6 +142,15 @@ export const AppContent = ({
             element={
               <UserPageWrapper
                 ApiGetService={axiosApiServiceGetUser}
+                ApiPutService={axiosApiServiceUpdateUser}
+              />
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProfilePageWrapper
+                ApiGetService={axiosApiServiceGetCurrentUser}
                 ApiPutService={axiosApiServiceUpdateUser}
               />
             }
