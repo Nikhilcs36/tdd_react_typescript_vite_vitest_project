@@ -99,17 +99,20 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
 
+    // Require authentication for user list access
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
+
     // Build headers with basic requirements
     const baseHeaders = {
       "Accept-Language": i18n.language,
     };
 
-    // Add authorization headers only if access token exists
-    const authHeaders = accessToken
-      ? {
-          Authorization: `JWT ${accessToken}`,
-        }
-      : {};
+    // Add authorization headers
+    const authHeaders = {
+      Authorization: `JWT ${accessToken}`,
+    };
 
     // Combine headers
     const headers = {
@@ -137,17 +140,20 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
     const accessToken: string | null = authState.accessToken;
     const authenticatedUserId: number | undefined = authState.user?.id;
 
+    // Require authentication for user list access
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
+
     // Build headers with basic requirements
     const headers: Record<string, string> = {
       "Accept-Language": i18n.language,
+      Authorization: `JWT ${accessToken}`,
     };
 
-    // Add authorization headers only if access token exists
-    if (accessToken) {
-      headers["Authorization"] = `JWT ${accessToken}`;
-      if (authenticatedUserId) {
-        headers["X-Authenticated-User-Id"] = String(authenticatedUserId);
-      }
+    // Add authenticated user ID header if available
+    if (authenticatedUserId) {
+      headers["X-Authenticated-User-Id"] = String(authenticatedUserId);
     }
 
     // Django expects snake_case parameters for pagination
