@@ -25,9 +25,12 @@ export const useLogout = (apiService: ApiService) => {
       dispatch(showLogoutMessage());
       navigate("/");
 
-      // Refresh user list if needed
-      const refreshEvent = new CustomEvent("userListRefresh");
-      window.dispatchEvent(refreshEvent);
+      // Refresh user list if needed - use setTimeout to ensure Redux state is updated
+      // before triggering the refresh event
+      setTimeout(() => {
+        const refreshEvent = new CustomEvent("userListRefresh");
+        window.dispatchEvent(refreshEvent);
+      }, 0);
     } catch (error) {
       console.error("Logout failed:", error);
     }

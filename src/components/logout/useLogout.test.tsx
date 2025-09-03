@@ -95,4 +95,48 @@ describe("useLogout Hook", () => {
       expect.objectContaining({ type: "userListRefresh" })
     );
   });
+
+  it("should dispatch userListRefresh event after Redux state is updated", async () => {
+    const { result } = renderHook(() => useLogout(mockApiService), {
+      wrapper: createWrapper(),
+    });
+
+    // Spy on setTimeout to capture the callback
+    const setTimeoutSpy = vi.spyOn(global, "setTimeout");
+    let setTimeoutCallback: (() => void) | undefined;
+
+    setTimeoutSpy.mockImplementation((callback: () => void) => {
+      setTimeoutCallback = callback;
+      return 0 as any;
+    });
+
+    await act(async () => {
+      await result.current.logout();
+    });
+
+    // Verify setTimeout was called with 0ms delay
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 0);
+
+    // Execute the setTimeout callback to trigger the event dispatch
+    if (typeof setTimeoutCallback !== "function") {
+      throw new Error(
+        "setTimeout callback was not captured or is not a function"
+      );
+    }
+
+    await act(async () => {
+      setTimeoutCallback!();
+    });
+
+    // Verify the userListRefresh event was dispatched
+    expect(mockDispatchEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "userListRefresh" })
+    );
+
+    // Verify Redux state is cleared
+    const { auth } = store.getState();
+    expect(auth.isAuthenticated).toBe(false);
+
+    setTimeoutSpy.mockRestore();
+  });
 });
