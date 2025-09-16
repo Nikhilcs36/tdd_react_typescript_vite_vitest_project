@@ -385,6 +385,28 @@ export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
   },
 };
 
+// Axios implementation for user profile update with file upload
+export const axiosApiServiceUpdateUserWithFile: ApiPutService<FormData> = {
+  put: async <T>(url: string, body?: FormData): Promise<T> => {
+    // Get token from Redux store
+    const accessToken: string | null = store.getState().auth.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
+
+    const response = await axios.put(url, body, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Accept-Language": i18n.language,
+        Authorization: `JWT ${accessToken}`,
+      },
+    });
+
+    return response.data;
+  },
+};
+
 // Fetch implementation for user profile update (for MSW testing)
 export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
   put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
