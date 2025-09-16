@@ -34,6 +34,9 @@ const mockApiGetService = { get: vi.fn() };
 const mockApiPutService = { put: vi.fn() };
 const mockApiDeleteService = { delete: vi.fn() };
 
+// Mock URL.createObjectURL for file preview
+global.URL.createObjectURL = vi.fn(() => "blob:test-preview-url");
+
 describe("ProfilePage", () => {
   const baseUser = {
     id: 1,
@@ -222,6 +225,52 @@ describe("ProfilePage", () => {
       await setup({ userData: { ...baseUser, image: "custom.jpg" } });
       const img = await screen.findByTestId("profile-image");
       expect(img).toHaveAttribute("src", "custom.jpg");
+    });
+
+    it("allows selecting image file from PC", async () => {
+      await setup();
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Check that file input is available
+      const fileInput = screen.getByTestId("image-file-input");
+      expect(fileInput).toBeInTheDocument();
+      expect(fileInput).toHaveAttribute("type", "file");
+      expect(fileInput).toHaveAttribute("accept", "image/*");
+    });
+
+    it("displays selected image preview", async () => {
+      await setup();
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Create a mock file
+      const file = new File(["dummy content"], "test-image.jpg", {
+        type: "image/jpeg",
+      });
+
+      // Trigger file selection
+      const fileInput = screen.getByTestId("image-file-input");
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      // Check that image preview is displayed
+      await waitFor(() => {
+        const previewImg = screen.getByTestId("image-preview");
+        expect(previewImg).toBeInTheDocument();
+        expect(previewImg).toHaveAttribute("src");
+      });
     });
   });
 

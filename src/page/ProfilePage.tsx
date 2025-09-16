@@ -6,6 +6,7 @@ import {
   ApiPutService,
   ApiDeleteService,
   axiosApiServiceUpdateUser,
+  axiosApiServiceUpdateUserWithFile,
   axiosApiServiceDeleteUser,
   axiosApiServiceGetCurrentUser,
 } from "../services/apiService";
@@ -82,6 +83,7 @@ interface ProfilePageState {
   isSubmitting: boolean;
   successMessage: string | null;
   showDeleteConfirmation: boolean;
+  selectedFile: File | null;
 }
 
 class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
@@ -104,6 +106,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     isSubmitting: false,
     successMessage: null,
     showDeleteConfirmation: false,
+    selectedFile: null,
   };
 
   private successTimeout: NodeJS.Timeout | null = null;
@@ -209,10 +212,10 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     return Object.keys(validationErrors).length === 0;
   };
 
-  // Update handleSubmit to properly call the API service
+  // Update handleSubmit to properly call the API service with file upload support
   handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { editForm } = this.state;
+    const { editForm, selectedFile } = this.state;
     const { ApiPutService, dispatch } = this.props;
 
     // Validate form before submission
@@ -224,11 +227,27 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     dispatch(updateUserStart());
 
     try {
-      // Make API request to update profile using ApiPutService
-      const response = await ApiPutService!.put<User>(
-        API_ENDPOINTS.ME, // Use ME endpoint for updates
-        editForm
-      );
+      let response: User;
+
+      if (selectedFile) {
+        // Use FormData for file upload
+        const formData = new FormData();
+        formData.append("username", editForm.username);
+        formData.append("email", editForm.email);
+        formData.append("image", selectedFile);
+
+        // Use the file upload service
+        response = await axiosApiServiceUpdateUserWithFile.put<User>(
+          API_ENDPOINTS.ME,
+          formData
+        );
+      } else {
+        // Use regular JSON for non-file updates
+        response = await ApiPutService!.put<User>(
+          API_ENDPOINTS.ME, // Use ME endpoint for updates
+          editForm
+        );
+      }
 
       // Update state with new user data
       this.setState({
@@ -236,6 +255,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         isSubmitting: false,
         isEditing: false,
         successMessage: this.props.t("profile.successMessage"),
+        selectedFile: null, // Clear selected file after successful upload
       });
 
       // Clear any existing timeout and set new one
@@ -279,6 +299,12 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         });
       }
     }
+  };
+
+  // Handle file selection for image upload
+  handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    this.setState({ selectedFile: file });
   };
 
   // Delete functionality
@@ -387,6 +413,32 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
             <ErrorMessage data-testid="image-error">
               {validationErrors.image}
             </ErrorMessage>
+          )}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="imageFile">{t("profile.imageFile")}</Label>
+          <Input
+            id="imageFile"
+            name="imageFile"
+            type="file"
+            accept="image/*"
+            onChange={this.handleFileChange}
+            disabled={isSubmitting}
+            data-testid="image-file-input"
+          />
+          {this.state.selectedFile && (
+            <div className="mt-2">
+              <img
+                src={URL.createObjectURL(this.state.selectedFile)}
+                alt="Preview"
+                className="object-cover w-32 h-32 rounded"
+                data-testid="image-preview"
+              />
+              <p className="mt-1 text-sm text-gray-600">
+                {this.state.selectedFile.name}
+              </p>
+            </div>
           )}
         </FormGroup>
 
