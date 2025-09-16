@@ -385,6 +385,36 @@ export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
   },
 };
 
+// Fetch implementation for user profile update (for MSW testing)
+export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
+  put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
+    // Get token from Redux store
+    const accessToken: string | null = store.getState().auth.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Authentication token not found");
+    }
+
+    const response = await fetch(url, {
+      // This URL is dynamic, so it will be handled in the component
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": i18n.language,
+        Authorization: `JWT ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+
+    return response.json() as T;
+  },
+};
+
 // Axios implementation for user profile update with file upload
 export const axiosApiServiceUpdateUserWithFile: ApiPutService<FormData> = {
   put: async <T>(url: string, body?: FormData): Promise<T> => {
@@ -407,9 +437,9 @@ export const axiosApiServiceUpdateUserWithFile: ApiPutService<FormData> = {
   },
 };
 
-// Fetch implementation for user profile update (for MSW testing)
-export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
-  put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
+// Fetch implementation for user profile update with file upload (for MSW testing)
+export const fetchApiServiceUpdateUserWithFile: ApiPutService<FormData> = {
+  put: async <T>(url: string, body?: FormData): Promise<T> => {
     // Get token from Redux store
     const accessToken: string | null = store.getState().auth.accessToken;
 
@@ -418,14 +448,14 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
     }
 
     const response = await fetch(url, {
-      // This URL is dynamic, so it will be handled in the component
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
         "Accept-Language": i18n.language,
         Authorization: `JWT ${accessToken}`,
+        // Note: Don't set Content-Type for FormData, browser will set it automatically
+        // with the correct boundary parameter for multipart/form-data
       },
-      body: JSON.stringify(body),
+      body: body,
     });
 
     if (!response.ok) {

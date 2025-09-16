@@ -268,8 +268,22 @@ export const handlers = [
       );
     }
 
-    // Parse request body
-    const body = (await request.json()) as UserUpdateRequestBody;
+    // Check if this is a multipart/form-data request (file upload)
+    const contentType = request.headers.get("Content-Type");
+    let body: UserUpdateRequestBody;
+
+    if (contentType?.includes("multipart/form-data")) {
+      // Handle file upload - parse FormData
+      const formData = await request.formData();
+      body = {
+        username: formData.get("username") as string,
+        email: formData.get("email") as string,
+        image: (formData.get("image") as string | null) || undefined,
+      };
+    } else {
+      // Handle regular JSON request
+      body = (await request.json()) as UserUpdateRequestBody;
+    }
 
     // Use the centralized validation function from utils/validationRules
     const validationErrors = validateUserUpdate(body);
