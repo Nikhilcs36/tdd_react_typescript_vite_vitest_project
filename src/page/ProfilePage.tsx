@@ -242,10 +242,16 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           formData
         );
       } else {
-        // Use regular JSON for non-file updates
+        // Use regular JSON for non-file updates - exclude image field
+        const updateData = {
+          username: editForm.username,
+          email: editForm.email,
+          // Image field is excluded from the request when no file is selected
+        };
+        
         response = await ApiPutService!.put<User>(
           API_ENDPOINTS.ME, // Use ME endpoint for updates
-          editForm
+          updateData
         );
       }
 
@@ -405,19 +411,18 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
             name="image"
             value={editForm.image}
             onChange={this.handleInputChange}
-            disabled={isSubmitting}
+            disabled={true} // Make image field read-only
             placeholder="https://example.com/image.jpg"
             data-testid="image-input"
+            readOnly // Add readOnly attribute
           />
-          {validationErrors.image && (
-            <ErrorMessage data-testid="image-error">
-              {validationErrors.image}
-            </ErrorMessage>
-          )}
+          <p className="mt-1 text-sm text-gray-500">
+            Image URL cannot be edited directly
+          </p>
         </FormGroup>
 
         <FormGroup>
-          <Label htmlFor="imageFile">{t("profile.imageFile")}</Label>
+          <Label htmlFor="imageFile">Upload New Profile Image</Label>
           <Input
             id="imageFile"
             name="imageFile"
