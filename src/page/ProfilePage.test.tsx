@@ -160,15 +160,15 @@ describe("ProfilePage", () => {
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
       await waitFor(() => expect(mockPut).toHaveBeenCalled());
-      
+
       // Verify that the request data does NOT contain the image field
       expect(mockPut).toHaveBeenCalledWith(
         API_ENDPOINTS.ME,
         expect.not.objectContaining({
-          image: expect.anything()
+          image: expect.anything(),
         })
       );
-      
+
       // Verify that only username and email are included
       expect(mockPut).toHaveBeenCalledWith(
         API_ENDPOINTS.ME,
@@ -183,20 +183,18 @@ describe("ProfilePage", () => {
       await setup({ withAuth: true });
 
       fireEvent.click(await screen.findByTestId("edit-profile-button"));
-      
+
       // Verify that the image input field is read-only
       const imageInput = screen.getByTestId("image-input");
       expect(imageInput).toHaveAttribute("readOnly");
       expect(imageInput).toHaveAttribute("disabled");
-      
-      // Verify that the read-only message is displayed (check for the element existence)
-      const readOnlyMessage = screen.getByText((_, element) => {
-        return element?.tagName.toLowerCase() === 'p' && 
-               element?.classList.contains('text-sm') && 
-               element?.classList.contains('text-gray-500') &&
-               element?.classList.contains('mt-1');
-      });
+
+      // Verify that the read-only message is displayed (check for the specific text)
+      const readOnlyMessage = screen.getByText(
+        "Image URL cannot be edited directly"
+      );
       expect(readOnlyMessage).toBeInTheDocument();
+      expect(readOnlyMessage).toHaveClass("text-sm", "text-gray-500", "mt-1");
     });
 
     it("displays loading spinner", async () => {
@@ -319,6 +317,86 @@ describe("ProfilePage", () => {
         const previewImg = screen.getByTestId("image-preview");
         expect(previewImg).toBeInTheDocument();
         expect(previewImg).toHaveAttribute("src");
+      });
+    });
+
+    it.each([
+      [
+        "en",
+        "Image URL cannot be edited directly",
+        "Upload New Profile Image",
+        "Choose file",
+        "No file chosen",
+      ],
+      [
+        "ml",
+        "ചിത്ര URL നേരിട്ട് എഡിറ്റ് ചെയ്യാൻ കഴിയില്ല",
+        "പുതിയ പ്രൊഫൈൽ ചിത്രം അപ്‌ലോഡ് ചെയ്യുക",
+        "ഫയൽ തിരഞ്ഞെടുക്കുക",
+        "ഫയൽ തിരഞ്ഞെടുത്തിട്ടില്ല",
+      ],
+      [
+        "ar",
+        "لا يمكن تعديل رابط الصورة مباشرة",
+        "تحميل صورة ملف شخصي جديدة",
+        "اختر ملف",
+        "لم يتم اختيار ملف",
+      ],
+    ])(
+      "displays translations for %s language",
+      async (
+        language,
+        imageUrlInfoText,
+        uploadProfileImageText,
+        chooseFileText,
+        noFileChosenText
+      ) => {
+        await setup({ withAuth: true, language });
+
+        // Wait for user data to load
+        await waitFor(() =>
+          expect(screen.getByTestId("username")).toBeInTheDocument()
+        );
+
+        // Enter edit mode
+        fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+        // Check that all translations are displayed
+        await waitFor(() => {
+          expect(screen.getByText(imageUrlInfoText)).toBeInTheDocument();
+          expect(screen.getByText(uploadProfileImageText)).toBeInTheDocument();
+          expect(screen.getByText(chooseFileText)).toBeInTheDocument();
+          expect(screen.getByText(noFileChosenText)).toBeInTheDocument();
+        });
+      }
+    );
+
+    it("displays selected file name when a file is chosen", async () => {
+      await setup({ withAuth: true });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Create a mock file
+      const file = new File(["dummy content"], "test-image.jpg", {
+        type: "image/jpeg",
+      });
+
+      // Trigger file selection
+      const fileInput = screen.getByTestId("image-file-input");
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      // Check that the selected file name is displayed in the custom file input button
+      await waitFor(() => {
+        const fileButtonText = screen.getByText("test-image.jpg", {
+          selector: "span.text-gray-700",
+        });
+        expect(fileButtonText).toBeInTheDocument();
       });
     });
   });
