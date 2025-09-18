@@ -150,6 +150,55 @@ describe("ProfilePage", () => {
       );
     });
 
+    it("excludes image field from request when no file is selected", async () => {
+      const { mockPut } = await setup({ withAuth: true });
+
+      fireEvent.click(await screen.findByTestId("edit-profile-button"));
+      fireEvent.change(screen.getByTestId("username-input"), {
+        target: { value: "updateduser" },
+      });
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      await waitFor(() => expect(mockPut).toHaveBeenCalled());
+      
+      // Verify that the request data does NOT contain the image field
+      expect(mockPut).toHaveBeenCalledWith(
+        API_ENDPOINTS.ME,
+        expect.not.objectContaining({
+          image: expect.anything()
+        })
+      );
+      
+      // Verify that only username and email are included
+      expect(mockPut).toHaveBeenCalledWith(
+        API_ENDPOINTS.ME,
+        expect.objectContaining({
+          username: "updateduser",
+          email: baseUser.email,
+        })
+      );
+    });
+
+    it("makes image field read-only in edit form", async () => {
+      await setup({ withAuth: true });
+
+      fireEvent.click(await screen.findByTestId("edit-profile-button"));
+      
+      // Verify that the image input field is read-only
+      const imageInput = screen.getByTestId("image-input");
+      expect(imageInput).toHaveAttribute("readOnly");
+      expect(imageInput).toHaveAttribute("disabled");
+      
+      // Verify that the read-only message is displayed (check for the element existence)
+      const readOnlyMessage = screen.getByText((_, element) => {
+        return element?.tagName.toLowerCase() === 'p' && 
+               element?.classList.contains('text-sm') && 
+               element?.classList.contains('text-gray-500') &&
+               element?.classList.contains('mt-1');
+      });
+      expect(readOnlyMessage).toBeInTheDocument();
+    });
+
     it("displays loading spinner", async () => {
       const delayedResolve = () =>
         new Promise((resolve) => setTimeout(() => resolve(baseUser), 200));
