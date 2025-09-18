@@ -248,7 +248,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           email: editForm.email,
           // Image field is excluded from the request when no file is selected
         };
-        
+
         response = await ApiPutService!.put<User>(
           API_ENDPOINTS.ME, // Use ME endpoint for updates
           updateData
@@ -417,21 +417,36 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
             readOnly // Add readOnly attribute
           />
           <p className="mt-1 text-sm text-gray-500">
-            Image URL cannot be edited directly
+            {t("profile.imageUrlInfo")}
           </p>
         </FormGroup>
 
         <FormGroup>
-          <Label htmlFor="imageFile">Upload New Profile Image</Label>
-          <Input
-            id="imageFile"
-            name="imageFile"
-            type="file"
-            accept="image/*"
-            onChange={this.handleFileChange}
-            disabled={isSubmitting}
-            data-testid="image-file-input"
-          />
+          <Label htmlFor="imageFile">{t("profile.uploadProfileImage")}</Label>
+          <div className="relative">
+            <Input
+              id="imageFile"
+              name="imageFile"
+              type="file"
+              accept="image/*"
+              onChange={this.handleFileChange}
+              disabled={isSubmitting}
+              data-testid="image-file-input"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            <div className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
+              <span className="text-gray-700">
+                {this.state.selectedFile
+                  ? this.state.selectedFile.name
+                  : t("fileInput.chooseFile")}
+              </span>
+            </div>
+          </div>
+          {!this.state.selectedFile && (
+            <p className="mt-1 text-sm text-gray-500">
+              {t("fileInput.noFileChosen")}
+            </p>
+          )}
           {this.state.selectedFile && (
             <div className="mt-2">
               <img
