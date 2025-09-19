@@ -434,8 +434,8 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
               data-testid="image-file-input"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-            <div className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
-              <span className="text-gray-700">
+            <div className="flex items-center px-4 py-2 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200 dark:bg-dark-secondary dark:border-dark-accent dark:hover:bg-dark-primary">
+              <span className="text-gray-700 dark:text-dark-text">
                 {this.state.selectedFile
                   ? this.state.selectedFile.name
                   : t("fileInput.chooseFile")}
@@ -455,9 +455,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
                 className="object-cover w-32 h-32 rounded"
                 data-testid="image-preview"
               />
-              <p className="mt-1 text-sm text-gray-600">
-                {this.state.selectedFile.name}
-              </p>
             </div>
           )}
         </FormGroup>
