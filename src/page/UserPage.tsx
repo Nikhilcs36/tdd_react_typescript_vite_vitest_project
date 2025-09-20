@@ -146,14 +146,11 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       });
     } catch (error: any) {
       // Check if the error message is one of our known error keys
-      const errorMessage = error.response?.data?.message || error.message;
-      const translatedError =
-        errorMessage === "User not found"
-          ? this.props.t("profile.errors.userNotFound")
-          : errorMessage === "Update failed"
-          ? this.props.t("profile.errors.updateFailed")
-          : errorMessage;
-      this.props.dispatch(updateUserFailure(translatedError));
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message;
+      this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
 
@@ -291,14 +288,11 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         });
       } else {
         // Check if the error message is one of our known error keys
-        const errorMessage = error.response?.data?.message || error.message;
-        const translatedError =
-          errorMessage === "User not found"
-            ? this.props.t("profile.errors.userNotFound")
-            : errorMessage === "Update failed"
-            ? this.props.t("profile.errors.updateFailed")
-            : errorMessage;
-        dispatch(updateUserFailure(translatedError));
+        const errorMessage =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          error.message;
+        dispatch(updateUserFailure(errorMessage));
         this.setState({
           isSubmitting: false,
         });
@@ -510,7 +504,18 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     }
 
     if (error) {
-      return <ErrorAlert data-testid="error-message">{error}</ErrorAlert>;
+      const { t } = this.props;
+      const translatedError =
+        error === "User not found"
+          ? t("profile.errors.userNotFound")
+          : error === "Not found."
+          ? t("profile.errors.userNotFound")
+          : error === "Update failed"
+          ? t("profile.errors.updateFailed")
+          : error;
+      return (
+        <ErrorAlert data-testid="error-message">{translatedError}</ErrorAlert>
+      );
     }
 
     return (
