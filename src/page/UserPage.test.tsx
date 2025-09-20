@@ -159,7 +159,7 @@ describe("UserPage", () => {
 
     it("handles user not found", async () => {
       const mockError = vi.fn().mockRejectedValue({
-        response: { data: { message: "User not found" } },
+        response: { data: { detail: "User not found" } },
       });
 
       await setup({
@@ -210,7 +210,7 @@ describe("UserPage", () => {
 
       // Mock the update to fail
       mockApiPutService.put.mockRejectedValueOnce({
-        response: { data: { message: "Update failed" } },
+        response: { data: { detail: "Update failed" } },
       });
 
       // Make a change and submit the form
@@ -331,7 +331,7 @@ describe("UserPage", () => {
       "handles $lang API errors",
       async ({ lang, translations }) => {
         const mockError = vi.fn().mockRejectedValue({
-          response: { data: { message: "User not found" } },
+          response: { data: { detail: "User not found" } },
         });
 
         await setup({
@@ -365,7 +365,7 @@ describe("UserPage", () => {
 
         // Mock the update to fail
         mockApiPutService.put.mockRejectedValueOnce({
-          response: { data: { message: "Update failed" } },
+          response: { data: { detail: "Update failed" } },
         });
 
         // Make a change and submit the form
@@ -552,7 +552,7 @@ describe("UserPage", () => {
 
     it("handles delete errors", async () => {
       mockApiDeleteService.delete.mockRejectedValueOnce({
-        response: { data: { message: "Deletion failed" } },
+        response: { data: { detail: "Deletion failed" } },
       });
       const { mockDelete } = await setup({ withAuth: true });
 

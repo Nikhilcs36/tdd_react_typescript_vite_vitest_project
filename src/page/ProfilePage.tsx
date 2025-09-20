@@ -139,14 +139,8 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       });
     } catch (error: any) {
       // Check if the error message is one of our known error keys
-      const errorMessage = error.response?.data?.message || error.message;
-      const translatedError =
-        errorMessage === "User not found"
-          ? this.props.t("profile.errors.userNotFound")
-          : errorMessage === "Update failed"
-          ? this.props.t("profile.errors.updateFailed")
-          : errorMessage;
-      this.props.dispatch(updateUserFailure(translatedError));
+      const errorMessage = error.response?.data?.detail || error.message;
+      this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
 
@@ -292,14 +286,8 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         });
       } else {
         // Check if the error message is one of our known error keys
-        const errorMessage = error.response?.data?.message || error.message;
-        const translatedError =
-          errorMessage === "User not found"
-            ? this.props.t("profile.errors.userNotFound")
-            : errorMessage === "Update failed"
-            ? this.props.t("profile.errors.updateFailed")
-            : errorMessage;
-        dispatch(updateUserFailure(translatedError));
+        const errorMessage = error.response?.data?.detail || error.message;
+        dispatch(updateUserFailure(errorMessage));
         this.setState({
           isSubmitting: false,
         });
@@ -355,7 +343,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         }
       );
     } catch (apiError: any) {
-      const errorMessage = apiError.response?.data?.message || apiError.message;
+      const errorMessage = apiError.response?.data?.detail || apiError.message;
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };

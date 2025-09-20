@@ -148,7 +148,6 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       // Check if the error message is one of our known error keys
       const errorMessage =
         error.response?.data?.detail ||
-        error.response?.data?.message ||
         error.message;
       this.props.dispatch(updateUserFailure(errorMessage));
     }
@@ -290,7 +289,6 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         // Check if the error message is one of our known error keys
         const errorMessage =
           error.response?.data?.detail ||
-          error.response?.data?.message ||
           error.message;
         dispatch(updateUserFailure(errorMessage));
         this.setState({
@@ -342,7 +340,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         }
       );
     } catch (apiError: any) {
-      const errorMessage = apiError.response?.data?.message || apiError.message;
+      const errorMessage = apiError.response?.data?.detail || apiError.message;
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
