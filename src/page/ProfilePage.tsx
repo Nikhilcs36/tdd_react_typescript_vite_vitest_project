@@ -286,7 +286,14 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         });
       } else {
         // Check if the error message is one of our known error keys
-        const errorMessage = error.response?.data?.detail || error.message;
+        let errorMessage = error.response?.data?.detail || error.message;
+        if (
+          error.response?.data?.image &&
+          Array.isArray(error.response.data.image) &&
+          error.response.data.image.length > 0
+        ) {
+          errorMessage = error.response.data.image[0];
+        }
         dispatch(updateUserFailure(errorMessage));
         this.setState({
           isSubmitting: false,
@@ -447,6 +454,12 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           )}
         </FormGroup>
 
+        {this.props.user.error && (
+          <ErrorAlert data-testid="error-message">
+            {this.props.t(`profile.errors.${this.props.user.error}`)}
+          </ErrorAlert>
+        )}
+
         <ButtonContainer>
           <SaveButton
             type="submit"
@@ -530,6 +543,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   renderContent() {
     const { isEditing, successMessage } = this.state;
     const { isLoading, error } = this.props.user;
+    const { t } = this.props;
 
     if (isLoading) {
       return (
@@ -539,8 +553,12 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       );
     }
 
-    if (error) {
-      return <ErrorAlert data-testid="error-message">{error}</ErrorAlert>;
+    if (error && !isEditing) {
+      return (
+        <ErrorAlert data-testid="error-message">
+          {t(`profile.errors.${error}`)}
+        </ErrorAlert>
+      );
     }
 
     return (
