@@ -30,11 +30,15 @@ const userSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
+    // Clears the user error state without affecting loading status
+    clearUserError: (state) => {
+      state.error = null;
+    },
   },
 });
 
 // Export the action creator
-export const { updateUserStart, updateUserSuccess, updateUserFailure } = userSlice.actions;
+export const { updateUserStart, updateUserSuccess, updateUserFailure, clearUserError } = userSlice.actions;
 
 // Export the reducer
 export default userSlice.reducer;

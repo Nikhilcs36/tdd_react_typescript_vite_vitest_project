@@ -14,7 +14,11 @@ import defaultProfileImage from "../assets/profile.png";
 import { connect } from "react-redux";
 import { logoutSuccess } from "../store/actions";
 import { updateUserSuccess } from "../store/userSlice";
-import { updateUserStart, updateUserFailure } from "../store/userSlice";
+import {
+  updateUserStart,
+  updateUserFailure,
+  clearUserError,
+} from "../store/userSlice";
 import {
   UserUpdateRequestBody,
   validateUserUpdate,
@@ -321,6 +325,11 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     this.setState({ selectedFile: file });
+
+    // Clear previous error messages when a new file is selected
+    if (this.props.user.error) {
+      this.props.dispatch(clearUserError());
+    }
   };
 
   // Delete functionality

@@ -482,6 +482,51 @@ describe("ProfilePage", () => {
       ) as HTMLInputElement;
       expect(updatedClearImageCheckbox.checked).toBe(false);
     });
+
+    it("clears previous image upload error when a new image is selected", async () => {
+      // Mock a failed image upload response
+      (axiosApiServiceUpdateUserWithFile.put as Mock).mockRejectedValue({
+        response: {
+          data: {
+            image: [
+              "Invalid image format. Only JPG, JPEG, and PNG are allowed.",
+            ],
+          },
+        },
+      });
+
+      await setup({ withAuth: true });
+
+      // 1. Enter edit mode
+      fireEvent.click(await screen.findByTestId("edit-profile-button"));
+
+      // 2. Simulate the first file upload that fails
+      const file1 = new File(["dummy"], "test1.txt", { type: "text/plain" });
+      fireEvent.change(screen.getByTestId("image-file-input"), {
+        target: { files: [file1] },
+      });
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      // 3. Wait for the error message to be displayed
+      await waitFor(() => {
+        expect(screen.getByTestId("error-message")).toHaveTextContent(
+          "Invalid image format. Only JPG, JPEG, and PNG are allowed."
+        );
+      });
+
+      // 4. Simulate selecting a new, valid image file
+      const file2 = new File(["dummy"], "test2.jpg", { type: "image/jpeg" });
+      fireEvent.change(screen.getByTestId("image-file-input"), {
+        target: { files: [file2] },
+      });
+
+      // 5. Assert that the error message is cleared
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("error-message")
+        ).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe("Profile Update", () => {
