@@ -79,8 +79,11 @@ i18n.use(initReactI18next).init({
           errors: {
             userNotFound: "User not found",
             updateFailed: "Update failed",
-            "Invalid image format. Only JPG, JPEG, and PNG are allowed.": "Invalid image format. Only JPG, JPEG, and PNG are allowed.",
-            "Image size cannot exceed 2097152 bytes.": "Image size cannot exceed 2MB.",
+            "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
+              "Invalid image format. Only JPG, JPEG, and PNG are allowed.",
+            "Image size cannot exceed 2097152 bytes.":
+              "Image size cannot exceed 2MB.",
+            "Network Error": "Network Error",
           },
           deleteProfile: "Delete Profile",
           deleteConfirmationTitle: "Delete Confirmation",
@@ -166,8 +169,11 @@ i18n.use(initReactI18next).init({
           errors: {
             userNotFound: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
             updateFailed: "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
-            "Invalid image format. Only JPG, JPEG, and PNG are allowed.": "അസാധുവായ ചിത്ര ഫോർമാറ്റ്. JPG, JPEG, PNG എന്നിവ മാത്രം അനുവദനീയമാണ്.",
-            "Image size cannot exceed 2097152 bytes.": "ചിത്രത്തിന്റെ വലുപ്പം 2MB കവിയാൻ പാടില്ല.",
+            "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
+              "അസാധുവായ ചിത്ര ഫോർമാറ്റ്. JPG, JPEG, PNG എന്നിവ മാത്രം അനുവദനീയമാണ്.",
+            "Image size cannot exceed 2097152 bytes.":
+              "ചിത്രത്തിന്റെ വലുപ്പം 2MB കവിയാൻ പാടില്ല.",
+            "Network Error": "നെറ്റ്‌വർക്ക് പിശക്",
           },
           deleteProfile: "പ്രൊഫൈൽ നീക്കം ചെയ്യുക",
           deleteConfirmationTitle: "നീക്കം ചെയ്യൽ സ്ഥിരീകരണം",
@@ -253,8 +259,11 @@ i18n.use(initReactI18next).init({
           errors: {
             userNotFound: "لم يتم العثور على المستخدم",
             updateFailed: "فشل التحديث",
-            "Invalid image format. Only JPG, JPEG, and PNG are allowed.": "تنسيق الصورة غير صالح. يُسمح فقط بصيغ JPG وJPEG وPNG.",
-            "Image size cannot exceed 2097152 bytes.": "لا يمكن أن يتجاوز حجم الصورة 2 ميجابايت.",
+            "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
+              "تنسيق الصورة غير صالح. يُسمح فقط بصيغ JPG وJPEG وPNG.",
+            "Image size cannot exceed 2097152 bytes.":
+              "لا يمكن أن يتجاوز حجم الصورة 2 ميجابايت.",
+            "Network Error": "خطأ في الشبكة",
           },
           deleteProfile: "حذف الملف الشخصي",
           deleteConfirmationTitle: "تأكيد الحذف",
