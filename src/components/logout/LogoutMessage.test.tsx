@@ -31,7 +31,8 @@ describe("Logout Message Component", () => {
         loginSuccess({
           id: 1,
           username: "testuser",
-          token: "valid-test-token",
+          access: "valid-test-token",
+          refresh: "valid-refresh-token",
         })
       );
     });
@@ -55,7 +56,12 @@ describe("Logout Message Component", () => {
     // First login/logout
     await act(async () => {
       store.dispatch(
-        loginSuccess({ id: 1, username: "user1", token: "token1" })
+        loginSuccess({ 
+          id: 1, 
+          username: "user1", 
+          access: "token1",
+          refresh: "refresh-token1" 
+        })
       );
     });
     const logoutLink1 = await screen.findByTestId("logout-link");
@@ -70,7 +76,12 @@ describe("Logout Message Component", () => {
     // Second login/logout
     await act(async () => {
       store.dispatch(
-        loginSuccess({ id: 2, username: "user2", token: "token2" })
+        loginSuccess({ 
+          id: 2, 
+          username: "user2", 
+          access: "token2",
+          refresh: "refresh-token2" 
+        })
       );
     });
     const logoutLink2 = await screen.findByTestId("logout-link");
@@ -102,7 +113,8 @@ describe("Logout Message Component", () => {
           loginSuccess({
             id: 1,
             username: "testuser",
-            token: "valid-test-token",
+            access: "valid-test-token",
+            refresh: "valid-refresh-token",
           })
         );
       });
