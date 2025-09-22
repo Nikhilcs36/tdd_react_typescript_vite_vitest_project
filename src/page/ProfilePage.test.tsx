@@ -413,6 +413,35 @@ describe("ProfilePage", () => {
         expect(fileButtonText).toBeInTheDocument();
       });
     });
+
+    it("sends a null image field when the clear image checkbox is checked", async () => {
+      const { mockPut } = await setup({ withAuth: true });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Find and click the clear image checkbox
+      const clearImageCheckbox = screen.getByTestId("clear-image-checkbox");
+      fireEvent.click(clearImageCheckbox);
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      // Verify that the request data contains image: null
+      await waitFor(() => {
+        expect(mockPut).toHaveBeenCalledWith(
+          API_ENDPOINTS.ME,
+          expect.objectContaining({
+            image: null,
+          })
+        );
+      });
+    });
   });
 
   describe("Profile Update", () => {

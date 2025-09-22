@@ -13,7 +13,7 @@ export type LoginRequestBody = {
 export type UserUpdateRequestBody = {
   username: string;
   email: string;
-  image?: string;
+  image?: string | null;
 };
 
 export const validateSignUp = (
