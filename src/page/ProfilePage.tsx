@@ -270,6 +270,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         isEditing: false,
         successMessage: this.props.t("profile.successMessage"),
         selectedFile: null, // Clear selected file after successful upload
+        clearImage: false, // Uncheck the clear image checkbox
       });
 
       // Clear any existing timeout and set new one

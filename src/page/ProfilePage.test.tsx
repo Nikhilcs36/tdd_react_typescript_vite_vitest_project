@@ -442,6 +442,46 @@ describe("ProfilePage", () => {
         );
       });
     });
+
+    it("unchecks the clear image checkbox after successful submission", async () => {
+      await setup({ withAuth: true });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Find and click the clear image checkbox
+      const clearImageCheckbox = screen.getByTestId(
+        "clear-image-checkbox"
+      ) as HTMLInputElement;
+      fireEvent.click(clearImageCheckbox);
+
+      // Verify checkbox is checked
+      expect(clearImageCheckbox.checked).toBe(true);
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      // Wait for the success message to ensure the form has been processed
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("success-message")
+        ).toBeInTheDocument();
+      });
+
+      // Re-enter edit mode to check the state of the checkbox
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Verify that the checkbox is now unchecked
+      const updatedClearImageCheckbox = screen.getByTestId(
+        "clear-image-checkbox"
+      ) as HTMLInputElement;
+      expect(updatedClearImageCheckbox.checked).toBe(false);
+    });
   });
 
   describe("Profile Update", () => {
