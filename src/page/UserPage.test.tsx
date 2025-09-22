@@ -157,26 +157,6 @@ describe("UserPage", () => {
       );
     });
 
-    it("handles user not found", async () => {
-      const mockError = vi.fn().mockRejectedValue({
-        response: { data: { detail: "User not found" } },
-      });
-
-      await setup({
-        initialEntries: ["/user/999"],
-        mockGet: mockError,
-      });
-
-      await waitFor(
-        () => {
-          expect(screen.getByTestId("error-message")).toHaveTextContent(
-            "User not found"
-          );
-        },
-        { timeout: 3000 }
-      );
-    });
-
     it("handles user not found with 'detail' field in error response", async () => {
       const mockError = vi.fn().mockRejectedValue({
         response: { data: { detail: "Not found." } },
@@ -331,7 +311,7 @@ describe("UserPage", () => {
       "handles $lang API errors",
       async ({ lang, translations }) => {
         const mockError = vi.fn().mockRejectedValue({
-          response: { data: { detail: "User not found" } },
+          response: { data: { detail: "Not found." } },
         });
 
         await setup({
