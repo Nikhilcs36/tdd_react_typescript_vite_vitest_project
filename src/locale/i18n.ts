@@ -91,6 +91,7 @@ i18n.use(initReactI18next).init({
             "Are you sure you want to delete your profile?",
           delete: "Delete",
           deleteSuccess: "Account deleted successfully",
+          removeProfileImage: "Remove Profile Image",
         },
         fileInput: {
           chooseFile: "Choose file",
@@ -181,6 +182,7 @@ i18n.use(initReactI18next).init({
             "നിങ്ങളുടെ പ്രൊഫൈൽ ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ?",
           delete: "നീക്കം ചെയ്യുക",
           deleteSuccess: "അക്കൗണ്ട് വിജയകരമായി നീക്കം ചെയ്തു",
+          removeProfileImage: "പ്രൊഫൈൽ ചിത്രം നീക്കം ചെയ്യുക",
         },
         fileInput: {
           chooseFile: "ഫയൽ തിരഞ്ഞെടുക്കുക",
@@ -270,6 +272,7 @@ i18n.use(initReactI18next).init({
           deleteConfirmationMessage: "هل أنت متأكد أنك تريد حذف ملفك الشخصي؟",
           delete: "حذف",
           deleteSuccess: "تم حذف الحساب بنجاح",
+          removeProfileImage: "إزالة صورة الملف الشخصي",
         },
         fileInput: {
           chooseFile: "اختر ملف",

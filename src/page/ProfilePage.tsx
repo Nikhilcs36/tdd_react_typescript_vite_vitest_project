@@ -84,6 +84,7 @@ interface ProfilePageState {
   successMessage: string | null;
   showDeleteConfirmation: boolean;
   selectedFile: File | null;
+  clearImage: boolean;
 }
 
 class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
@@ -107,6 +108,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     successMessage: null,
     showDeleteConfirmation: false,
     selectedFile: null,
+    clearImage: false,
   };
 
   private successTimeout: NodeJS.Timeout | null = null;
@@ -206,10 +208,15 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     return Object.keys(validationErrors).length === 0;
   };
 
+  // Handle checkbox change for clearing the image
+  handleClearImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ clearImage: e.target.checked });
+  };
+
   // Update handleSubmit to properly call the API service with file upload support
   handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { editForm, selectedFile } = this.state;
+    const { editForm, selectedFile, clearImage } = this.state;
     const { ApiPutService, dispatch } = this.props;
 
     // Validate form before submission
@@ -236,12 +243,19 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           formData
         );
       } else {
-        // Use regular JSON for non-file updates - exclude image field
-        const updateData = {
+        // Use regular JSON for non-file updates
+        const updateData: {
+          username: string;
+          email: string;
+          image?: null;
+        } = {
           username: editForm.username,
           email: editForm.email,
-          // Image field is excluded from the request when no file is selected
         };
+
+        if (clearImage) {
+          updateData.image = null;
+        }
 
         response = await ApiPutService!.put<User>(
           API_ENDPOINTS.ME, // Use ME endpoint for updates
@@ -414,6 +428,21 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           <p className="mt-1 text-sm text-gray-500">
             {t("profile.imageUrlInfo")}
           </p>
+        </FormGroup>
+
+        <FormGroup>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="clearImage"
+              name="clearImage"
+              checked={this.state.clearImage}
+              onChange={this.handleClearImageChange}
+              data-testid="clear-image-checkbox"
+              className="mr-2"
+            />
+            <Label htmlFor="clearImage">{t("profile.removeProfileImage")}</Label>
+          </div>
         </FormGroup>
 
         <FormGroup>
