@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import {
   render,
   screen,
@@ -14,6 +14,19 @@ import { ProfilePageWrapper } from "./ProfilePage";
 import { loginSuccess } from "../store/actions";
 import i18n from "../locale/i18n";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
+import { axiosApiServiceUpdateUserWithFile } from "../services/apiService";
+
+// Mock the apiService module to intercept the file upload service
+vi.mock("../services/apiService", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../services/apiService")>();
+  return {
+    ...actual,
+    axiosApiServiceUpdateUserWithFile: {
+      put: vi.fn(),
+    },
+  };
+});
 
 // Mock the store module
 let store: ReturnType<typeof createStore>;
@@ -570,6 +583,87 @@ describe("ProfilePage", () => {
       expect(
         screen.queryByTestId("delete-confirmation-dialog")
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Internationalization user profile image upload", () => {
+    it.each([
+      {
+        lang: "en",
+        expected: "Invalid image format. Only JPG, JPEG, and PNG are allowed.",
+      },
+      {
+        lang: "ml",
+        expected:
+          "അസാധുവായ ചിത്ര ഫോർമാറ്റ്. JPG, JPEG, PNG എന്നിവ മാത്രം അനുവദനീയമാണ്.",
+      },
+      {
+        lang: "ar",
+        expected: "تنسيق الصورة غير صالح. يُسمح فقط بصيغ JPG وJPEG وPNG.",
+      },
+    ])("displays image format error in $lang", async ({ lang, expected }) => {
+      (axiosApiServiceUpdateUserWithFile.put as Mock).mockRejectedValue({
+        response: {
+          data: {
+            image: [
+              "Invalid image format. Only JPG, JPEG, and PNG are allowed.",
+            ],
+          },
+        },
+      });
+
+      await setup({
+        language: lang,
+      });
+
+      // Simulate form submission
+      fireEvent.click(await screen.findByTestId("edit-profile-button"));
+      const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(screen.getByTestId("image-file-input"), {
+        target: { files: [file] },
+      });
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("error-message")).toHaveTextContent(expected);
+      });
+    });
+
+    it.each([
+      {
+        lang: "en",
+        expected: "Image size cannot exceed 2MB.",
+      },
+      {
+        lang: "ml",
+        expected: "ചിത്രത്തിന്റെ വലുപ്പം 2MB കവിയാൻ പാടില്ല.",
+      },
+      {
+        lang: "ar",
+        expected: "لا يمكن أن يتجاوز حجم الصورة 2 ميجابايت.",
+      },
+    ])("displays image size error in $lang", async ({ lang, expected }) => {
+      (axiosApiServiceUpdateUserWithFile.put as Mock).mockRejectedValue({
+        response: {
+          data: { image: ["Image size cannot exceed 2097152 bytes."] },
+        },
+      });
+
+      await setup({
+        language: lang,
+      });
+
+      // Simulate form submission
+      fireEvent.click(await screen.findByTestId("edit-profile-button"));
+      const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(screen.getByTestId("image-file-input"), {
+        target: { files: [file] },
+      });
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("error-message")).toHaveTextContent(expected);
+      });
     });
   });
 });
