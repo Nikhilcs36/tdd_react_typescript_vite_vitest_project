@@ -504,9 +504,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     if (error) {
       const { t } = this.props;
       const translatedError =
-        error === "User not found"
-          ? t("profile.errors.userNotFound")
-          : error === "Not found."
+        error === "Not found."
           ? t("profile.errors.userNotFound")
           : error === "Update failed"
           ? t("profile.errors.updateFailed")
