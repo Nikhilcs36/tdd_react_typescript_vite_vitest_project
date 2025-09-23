@@ -527,6 +527,55 @@ describe("ProfilePage", () => {
         ).not.toBeInTheDocument();
       });
     });
+
+    it("clears the file input after a successful image upload", async () => {
+      // Mock a successful image upload response
+      (axiosApiServiceUpdateUserWithFile.put as Mock).mockResolvedValue({
+        ...baseUser,
+        image: "new-image.jpg",
+      });
+
+      await setup({ withAuth: true });
+
+      // 1. Enter edit mode
+      fireEvent.click(await screen.findByTestId("edit-profile-button"));
+
+      // 2. Simulate file selection
+      const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+      const fileInput = screen.getByTestId(
+        "image-file-input"
+      ) as HTMLInputElement;
+      fireEvent.change(fileInput, {
+        target: { files: [file] },
+      });
+
+      // 3. Verify the file name is displayed
+      await waitFor(() => {
+        expect(screen.getByText("test.jpg")).toBeInTheDocument();
+      });
+
+      // 4. Submit the form
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      // 5. Wait for the success message
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("success-message")
+        ).toBeInTheDocument();
+      });
+
+      // 6. Re-enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // 7. Assert that the file input is cleared
+      await waitFor(() => {
+        const fileInput = screen.getByTestId(
+          "image-file-input"
+        ) as HTMLInputElement;
+        expect(fileInput.files?.length).toBe(0);
+        expect(screen.getByText("Choose file")).toBeInTheDocument();
+      });
+    });
   });
 
   describe("Profile Update", () => {

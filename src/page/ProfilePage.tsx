@@ -1,4 +1,4 @@
-import { Component } from "react";
+import React, { Component } from "react";
 import { useNavigate } from "react-router-dom";
 import tw from "twin.macro";
 import {
@@ -93,6 +93,12 @@ interface ProfilePageState {
 }
 
 class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
+  private fileInputRef: React.RefObject<HTMLInputElement>;
+
+  constructor(props: ProfilePageProps) {
+    super(props);
+    this.fileInputRef = React.createRef<HTMLInputElement>();
+  }
   // Set default props
   static defaultProps = {
     ApiGetService: axiosApiServiceGetCurrentUser,
@@ -281,7 +287,13 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         successMessage: this.props.t("profile.successMessage"),
         selectedFile: null, // Clear selected file after successful upload
         clearImage: false, // Uncheck the clear image checkbox
+        imagePreviewUrl: null, // Clear image preview after successful upload
       });
+
+      // Reset the file input's value using the ref
+      if (this.fileInputRef.current) {
+        this.fileInputRef.current.value = "";
+      }
 
       // Clear any existing timeout and set new one
       if (this.successTimeout) {
@@ -485,6 +497,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
               disabled={isSubmitting}
               data-testid="image-file-input"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              ref={this.fileInputRef} // Attach the ref here
             />
             <div className="flex items-center px-4 py-2 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200 dark:bg-dark-secondary dark:border-dark-accent dark:hover:bg-dark-primary">
               <span className="text-gray-700 dark:text-dark-text">
