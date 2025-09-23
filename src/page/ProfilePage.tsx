@@ -89,6 +89,7 @@ interface ProfilePageState {
   showDeleteConfirmation: boolean;
   selectedFile: File | null;
   clearImage: boolean;
+  imagePreviewUrl: string | null; // Store blob URL for cleanup
 }
 
 class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
@@ -113,6 +114,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     showDeleteConfirmation: false,
     selectedFile: null,
     clearImage: false,
+    imagePreviewUrl: null, // Initialize image preview URL
   };
 
   private successTimeout: NodeJS.Timeout | null = null;
@@ -124,6 +126,10 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   componentWillUnmount() {
     if (this.successTimeout) {
       clearTimeout(this.successTimeout);
+    }
+    // Clean up any blob URLs to prevent memory leaks
+    if (this.state.imagePreviewUrl && URL.revokeObjectURL) {
+      URL.revokeObjectURL(this.state.imagePreviewUrl);
     }
   }
 
@@ -324,7 +330,19 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   // Handle file selection for image upload
   handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    this.setState({ selectedFile: file });
+    
+    // Clean up previous blob URL if it exists
+    if (this.state.imagePreviewUrl && URL.revokeObjectURL) {
+      URL.revokeObjectURL(this.state.imagePreviewUrl);
+    }
+
+    // Create new blob URL for preview
+    const imagePreviewUrl = file && URL.createObjectURL ? URL.createObjectURL(file) : null;
+
+    this.setState({ 
+      selectedFile: file,
+      imagePreviewUrl 
+    });
 
     // Clear previous error messages when a new file is selected
     if (this.props.user.error) {
@@ -481,10 +499,10 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
               {t("fileInput.noFileChosen")}
             </p>
           )}
-          {this.state.selectedFile && (
+          {this.state.imagePreviewUrl && (
             <div className="mt-2">
               <img
-                src={URL.createObjectURL(this.state.selectedFile)}
+                src={this.state.imagePreviewUrl}
                 alt="Preview"
                 className="object-cover w-32 h-32 rounded"
                 data-testid="image-preview"
