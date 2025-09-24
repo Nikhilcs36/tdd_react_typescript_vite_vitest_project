@@ -224,9 +224,15 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     return Object.keys(validationErrors).length === 0;
   };
 
-  // Handle checkbox change for clearing the image
-  handleClearImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ clearImage: e.target.checked });
+  // Handle button click for clearing the image
+  handleClearImageClick = () => {
+    this.setState({ 
+      clearImage: true,
+      editForm: {
+        ...this.state.editForm,
+        image: ""
+      }
+    });
   };
 
   // Update handleSubmit to properly call the API service with file upload support
@@ -471,18 +477,15 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         </FormGroup>
 
         <FormGroup>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="clearImage"
-              name="clearImage"
-              checked={this.state.clearImage}
-              onChange={this.handleClearImageChange}
-              data-testid="clear-image-checkbox"
-              className="mr-2"
-            />
-            <Label htmlFor="clearImage">{t("profile.removeProfileImage")}</Label>
-          </div>
+          <button
+            type="button"
+            onClick={this.handleClearImageClick}
+            disabled={!this.state.editForm.image}
+            data-testid="clear-image-button"
+            className="px-4 py-2 font-bold text-white bg-red-500 rounded hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
+          >
+            {t("profile.removeProfileImage")}
+          </button>
         </FormGroup>
 
         <FormGroup>
