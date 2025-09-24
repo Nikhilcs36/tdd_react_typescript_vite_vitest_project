@@ -322,7 +322,9 @@ describe("Login Page", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Invalid credentials")).toBeInTheDocument();
+        expect(
+          screen.getByText("login.errors.Invalid credentials")
+        ).toBeInTheDocument();
       });
     });
 
@@ -337,12 +339,16 @@ describe("Login Page", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Invalid credentials")).toBeInTheDocument();
+        expect(
+          screen.getByText("login.errors.Invalid credentials")
+        ).toBeInTheDocument();
       });
 
       await userEvent.type(screen.getByLabelText("Password"), "newpass");
 
-      expect(screen.queryByText("Invalid credentials")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("login.errors.Invalid credentials")
+      ).not.toBeInTheDocument();
     });
 
     it("clears authentication fail message when email field is changed", async () => {
@@ -357,7 +363,7 @@ describe("Login Page", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("api-error")).toHaveTextContent(
-          "Invalid credentials"
+          "login.errors.Invalid credentials"
         );
       });
 
@@ -388,6 +394,85 @@ describe("Login Page", () => {
         );
       });
     });
+
+    it("displays the specific error message from non_field_errors", async () => {
+      mockedAxios.post.mockRejectedValue({
+        response: {
+          status: 400,
+          data: {
+            non_field_errors: [
+              "No active account found with the given credentials",
+            ],
+          },
+        },
+      });
+
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "wrongpassword",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("api-error")).toHaveTextContent(
+          "No active account found with the given credentials"
+        );
+      });
+    });
+
+    const errorTranslationTestCases = [
+      {
+        lang: "en",
+        expectedMessage: "No active account found with the given credentials",
+      },
+      {
+        lang: "ml",
+        expectedMessage:
+          "നൽകിയിട്ടുള്ള ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് സജീവമായ അക്കൗണ്ട് കണ്ടെത്താനായില്ല",
+      },
+      {
+        lang: "ar",
+        expectedMessage: "لم يتم العثور على حساب نشط ببيانات الاعتماد المقدمة",
+      },
+    ];
+
+    it.each(errorTranslationTestCases)(
+      "displays translated error message for 'no_active_account' in $lang",
+      async ({ lang, expectedMessage }) => {
+        await act(async () => {
+          await i18n.changeLanguage(lang);
+        });
+
+        mockedAxios.post.mockRejectedValue({
+          response: {
+            status: 400,
+            data: {
+              non_field_errors: [
+                "No active account found with the given credentials",
+              ],
+            },
+          },
+        });
+
+        renderWithProviders(
+          <LoginPageWrapper apiService={axiosApiServiceLogin} />
+        );
+
+        await fillAndSubmitLoginForm({
+          email: "user@example.com",
+          password: "wrongpassword",
+        });
+
+        await waitFor(() => {
+          expect(screen.getByTestId("api-error")).toHaveTextContent(
+            expectedMessage
+          );
+        });
+      }
+    );
   });
 
   describe("i18n Integration", () => {
