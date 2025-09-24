@@ -414,7 +414,7 @@ describe("ProfilePage", () => {
       });
     });
 
-    it("sends a null image field when the clear image checkbox is checked", async () => {
+    it("sends a null image field when the clear image button is clicked", async () => {
       const { mockPut } = await setup({ withAuth: true });
 
       // Wait for user data to load
@@ -425,9 +425,9 @@ describe("ProfilePage", () => {
       // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Find and click the clear image checkbox
-      const clearImageCheckbox = screen.getByTestId("clear-image-checkbox");
-      fireEvent.click(clearImageCheckbox);
+      // Find and click the clear image button
+      const clearImageButton = screen.getByTestId("clear-image-button");
+      fireEvent.click(clearImageButton);
 
       // Submit the form
       fireEvent.click(screen.getByTestId("save-profile-button"));
@@ -443,7 +443,7 @@ describe("ProfilePage", () => {
       });
     });
 
-    it("unchecks the clear image checkbox after successful submission", async () => {
+    it("resets the clear image state after successful submission", async () => {
       await setup({ withAuth: true });
 
       // Wait for user data to load
@@ -454,14 +454,9 @@ describe("ProfilePage", () => {
       // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Find and click the clear image checkbox
-      const clearImageCheckbox = screen.getByTestId(
-        "clear-image-checkbox"
-      ) as HTMLInputElement;
-      fireEvent.click(clearImageCheckbox);
-
-      // Verify checkbox is checked
-      expect(clearImageCheckbox.checked).toBe(true);
+      // Find and click the clear image button
+      const clearImageButton = screen.getByTestId("clear-image-button");
+      fireEvent.click(clearImageButton);
 
       // Submit the form
       fireEvent.click(screen.getByTestId("save-profile-button"));
@@ -473,14 +468,44 @@ describe("ProfilePage", () => {
         ).toBeInTheDocument();
       });
 
-      // Re-enter edit mode to check the state of the checkbox
+      // Re-enter edit mode to check the state of the button
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify that the checkbox is now unchecked
-      const updatedClearImageCheckbox = screen.getByTestId(
-        "clear-image-checkbox"
-      ) as HTMLInputElement;
-      expect(updatedClearImageCheckbox.checked).toBe(false);
+      // Verify that the clear image button is enabled (meaning no image is set to be cleared)
+      const updatedClearImageButton = screen.getByTestId("clear-image-button");
+      expect(updatedClearImageButton).toBeEnabled();
+    });
+
+    it("disables clear image button when there is no existing profile image", async () => {
+      await setup({ userData: { ...baseUser, image: null } });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Verify that the clear image button is disabled
+      const clearImageButton = screen.getByTestId("clear-image-button");
+      expect(clearImageButton).toBeDisabled();
+    });
+
+    it("enables clear image button when there is an existing profile image", async () => {
+      await setup({ userData: { ...baseUser, image: "https://example.com/image.jpg" } });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Verify that the clear image button is enabled
+      const clearImageButton = screen.getByTestId("clear-image-button");
+      expect(clearImageButton).toBeEnabled();
     });
 
     it("clears previous image upload error when a new image is selected", async () => {
