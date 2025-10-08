@@ -1,0 +1,128 @@
+import { describe, expect, it, vi } from "vitest";
+import { axiosApiServiceSignUp, fetchApiServiceSignUp } from "../apiService";
+import axios from "axios";
+
+vi.mock("axios");
+const mockedAxios = vi.mocked(axios, { deep: true });
+
+describe("Django Error Handling", () => {
+  describe("axiosApiServiceSignUp", () => {
+    it("should handle Django error response format correctly", async () => {
+      // Mock Django error response format (array of errors)
+      const djangoErrorResponse = {
+        response: {
+          status: 400,
+          data: {
+            username: ["Username already exists"],
+            email: ["E-mail in use"],
+          },
+        },
+      };
+
+      mockedAxios.post.mockRejectedValueOnce(djangoErrorResponse);
+
+      try {
+        await axiosApiServiceSignUp.post("/api/user/create/", {
+          username: "existinguser",
+          email: "existing@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        });
+        expect.fail("Should have thrown an error");
+      } catch (error: any) {
+        // Verify the error is converted to the expected format
+        expect(error.response.data.validationErrors).toEqual({
+          username: "Username already exists",
+          email: "E-mail in use",
+        });
+      }
+    });
+
+    it("should handle single string errors correctly", async () => {
+      // Mock Django error response with single string (non-array)
+      const djangoErrorResponse = {
+        response: {
+          status: 400,
+          data: {
+            username: "Username already exists",
+          },
+        },
+      };
+
+      mockedAxios.post.mockRejectedValueOnce(djangoErrorResponse);
+
+      try {
+        await axiosApiServiceSignUp.post("/api/user/create/", {
+          username: "existinguser",
+          email: "test@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        });
+        expect.fail("Should have thrown an error");
+      } catch (error: any) {
+        expect(error.response.data.validationErrors).toEqual({
+          username: "Username already exists",
+        });
+      }
+    });
+  });
+
+  describe("fetchApiServiceSignUp", () => {
+    it("should handle Django error response format correctly", async () => {
+      // Mock fetch response for Django error
+      const djangoErrorResponse = {
+        username: ["Username already exists"],
+        email: ["E-mail in use"],
+      };
+
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => djangoErrorResponse,
+      });
+
+      try {
+        await fetchApiServiceSignUp.post("/api/user/create/", {
+          username: "existinguser",
+          email: "existing@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        });
+        expect.fail("Should have thrown an error");
+      } catch (error: any) {
+        // Verify the error is converted to the expected format
+        expect(error.response.data.validationErrors).toEqual({
+          username: "Username already exists",
+          email: "E-mail in use",
+        });
+      }
+    });
+
+    it("should handle single string errors correctly", async () => {
+      // Mock fetch response for single string error
+      const djangoErrorResponse = {
+        username: "Username already exists",
+      };
+
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => djangoErrorResponse,
+      });
+
+      try {
+        await fetchApiServiceSignUp.post("/api/user/create/", {
+          username: "existinguser",
+          email: "test@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        });
+        expect.fail("Should have thrown an error");
+      } catch (error: any) {
+        expect(error.response.data.validationErrors).toEqual({
+          username: "Username already exists",
+        });
+      }
+    });
+  });
+});

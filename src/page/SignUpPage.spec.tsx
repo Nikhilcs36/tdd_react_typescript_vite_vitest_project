@@ -312,16 +312,15 @@ describe("signup page", () => {
 
         const data = await response.json();
 
-        // Assertions for the overall response
+        // Assertions for the overall response (Django format)
         expect(response.status).toBe(400);
-        expect(data.message).toBe("Validation Failure");
 
-        // Assertions for validation errors backend
-        expect(data.validationErrors).toEqual({
-          username: "Username cannot be null",
-          email: "E-mail cannot be null",
-          password: "Password cannot be null",
-          passwordRepeat: "password_repeat_null",
+        // Assertions for validation errors backend (Django format)
+        expect(data).toEqual({
+          username: ["Username cannot be null"],
+          email: ["E-mail cannot be null"],
+          password: ["Password cannot be null"],
+          passwordRepeat: ["password_repeat_null"],
         });
 
         const button = screen.getByRole("button", { name: "Sign Up" });
@@ -429,12 +428,10 @@ describe("signup page", () => {
             body: JSON.stringify(formData),
           });
 
-          // backend API response
+          // backend API response (Django format)
           const data = await response.json();
           expect(response.status).toBe(400);
-          expect(data.validationErrors[expectedError.key]).toBe(
-            expectedError.backendError
-          );
+          expect(data[expectedError.key][0]).toBe(expectedError.backendError);
 
           // UI assertions
           const errorMessage = await screen.findByTestId(
