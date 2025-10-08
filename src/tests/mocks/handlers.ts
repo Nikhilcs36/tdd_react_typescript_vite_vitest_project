@@ -62,7 +62,7 @@ export const page1 = {
 };
 
 export const handlers = [
-  // Mock API for user signup (msw) ----(1)
+  // Mock API for user signup (msw) - Django compatible ----(1)
   http.post(API_ENDPOINTS.SIGNUP, async ({ request }) => {
     // Capture the Accept-Language header from the request.
     const acceptLanguage = request.headers.get("Accept-Language");
@@ -73,22 +73,26 @@ export const handlers = [
     // Use the shared validation function form utils/validationRules
     const validationErrors = validateSignUp(body);
 
-    // If there are validation errors, return them
+    // If there are validation errors, return them in Django format
     if (Object.keys(validationErrors).length > 0) {
-      return HttpResponse.json(
-        {
-          message: "Validation Failure",
-          validationErrors,
-          // Optional, Accept-Language header for testing:
-          languageReceived: acceptLanguage,
-        },
-        { status: 400 }
-      );
+      // Convert to Django format: { field: [errorMessage] }
+      const djangoValidationErrors: Record<string, string[]> = {};
+      Object.keys(validationErrors).forEach((key) => {
+        djangoValidationErrors[key] = [validationErrors[key]];
+      });
+
+      return HttpResponse.json(djangoValidationErrors, { status: 400 });
     }
-    // If no validation errors, simulate a successful response
+    // If no validation errors, simulate a successful Django response
     return HttpResponse.json(
-      { message: "User created", languageReceived: acceptLanguage },
-      { status: 200 }
+      {
+        id: 1,
+        username: body.username,
+        email: body.email,
+        image: null,
+        languageReceived: acceptLanguage,
+      },
+      { status: 201 }
     );
   }),
 

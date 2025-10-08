@@ -52,7 +52,10 @@ interface SignUpPageProps extends WithTranslation {
 }
 
 interface SignUpResponse {
-  message: string;
+  id: number;
+  username: string;
+  email: string;
+  image: string | null;
 }
 
 class SignUpPage extends Component<SignUpPageProps, SignUpState> {

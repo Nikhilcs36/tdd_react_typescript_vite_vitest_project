@@ -23,19 +23,40 @@ export interface ApiDeleteService {
   delete: <R>(url: string) => Promise<R>;
 }
 
-// Axios implementation signup
+// Axios implementation signup (Django compatible)
 export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
   post: async <T>(url: string, body?: Record<string, any>) => {
-    const response = await axios.post<T>(url, body, {
-      headers: {
-        "Accept-Language": i18n.language, // Attach the current language header
-      },
-    });
-    return response.data;
+    try {
+      const response = await axios.post<T>(url, body, {
+        headers: {
+          "Accept-Language": i18n.language, // Attach the current language header
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      // Handle Django error response format
+      if (error.response?.status === 400) {
+        const djangoErrors = error.response.data;
+        // Convert Django array format to object format expected by frontend
+        const validationErrors: Record<string, string> = {};
+        Object.keys(djangoErrors).forEach((key) => {
+          if (
+            Array.isArray(djangoErrors[key]) &&
+            djangoErrors[key].length > 0
+          ) {
+            validationErrors[key] = djangoErrors[key][0]; // Take first error message
+          } else {
+            validationErrors[key] = djangoErrors[key];
+          }
+        });
+        throw { response: { data: { validationErrors } } };
+      }
+      throw error;
+    }
   },
 };
 
-// Fetch implementation signup (for MSW testing)
+// Fetch implementation signup (for MSW testing) - Django compatible
 export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
   post: async <T>(url: string, body?: Record<string, any>) => {
     const response = await fetch(url, {
@@ -46,9 +67,27 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
       },
       body: JSON.stringify(body),
     });
+
     if (!response.ok) {
       const errorData = await response.json();
-      throw errorData;
+      // Handle Django error response format
+      if (response.status === 400) {
+        const djangoErrors = errorData;
+        // Convert Django array format to object format expected by frontend
+        const validationErrors: Record<string, string> = {};
+        Object.keys(djangoErrors).forEach((key) => {
+          if (
+            Array.isArray(djangoErrors[key]) &&
+            djangoErrors[key].length > 0
+          ) {
+            validationErrors[key] = djangoErrors[key][0]; // Take first error message
+          } else {
+            validationErrors[key] = djangoErrors[key];
+          }
+        });
+        throw { response: { data: { validationErrors } } };
+      }
+      throw { response: { data: errorData } };
     }
     return response.json() as T;
   },

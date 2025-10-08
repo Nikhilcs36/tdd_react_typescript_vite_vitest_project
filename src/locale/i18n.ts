@@ -28,6 +28,7 @@ i18n.use(initReactI18next).init({
             "Username cannot be null": "Username is required.",
             "Must have min 4 and max 32 characters":
               "Username must be 4-32 characters.",
+            "Username already exists": "Username already exists.",
             "E-mail cannot be null": "Email is required.",
             "E-mail is not valid":
               "Enter a valid email (e.g., user@example.com).",
@@ -58,7 +59,8 @@ i18n.use(initReactI18next).init({
             email_required: "Email is required.",
             email_invalid: "Enter a valid email address.",
             password_required: "Password is required.",
-            no_active_account: "No active account found with the given credentials.",
+            no_active_account:
+              "No active account found with the given credentials.",
             generic: "An unexpected error occurred.",
           },
         },
@@ -120,6 +122,7 @@ i18n.use(initReactI18next).init({
             "Username cannot be null": "ഉപയോക്തൃനാമം ആവശ്യമാണ്.",
             "Must have min 4 and max 32 characters":
               "ഉപയോക്തൃനാമം 4-32 പ്രതീകങ്ങൾ ആയിരിക്കണം.",
+            "Username already exists": "ഉപയോക്തൃനാമം ഇതിനകം നിലവിലുണ്ട്.",
             "E-mail cannot be null": "ഇമെയിൽ ആവശ്യമാണ്.",
             "E-mail is not valid":
               "സാധുവായ ഇമെയിൽ നൽകുക (ഉദാ: user@example.com).",
@@ -150,7 +153,8 @@ i18n.use(initReactI18next).init({
             email_required: "ഇമെയിൽ ആവശ്യമാണ്.",
             email_invalid: "സാധുവായ ഇമെയിൽ വിലാസം നൽകുക.",
             password_required: "പാസ്‌വേഡ് ആവശ്യമാണ്.",
-            no_active_account: "നൽകിയിട്ടുള്ള ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് സജീവമായ അക്കൗണ്ട് കണ്ടെത്താനായില്ല",
+            no_active_account:
+              "നൽകിയിട്ടുള്ള ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് സജീവമായ അക്കൗണ്ട് കണ്ടെത്താനായില്ല",
             generic: "ഒരു അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു.",
           },
         },
@@ -212,6 +216,7 @@ i18n.use(initReactI18next).init({
             "Username cannot be null": "يرجى إدخال اسم المستخدم.",
             "Must have min 4 and max 32 characters":
               "يجب أن يكون اسم المستخدم بين 4 و32 حرفًا.",
+            "Username already exists": "اسم المستخدم موجود بالفعل.",
             "E-mail cannot be null": "يرجى إدخال البريد الإلكتروني.",
             "E-mail is not valid":
               "يرجى إدخال بريد إلكتروني صحيح (مثال: user@example.com).",
@@ -242,7 +247,8 @@ i18n.use(initReactI18next).init({
             email_required: "يرجى إدخال البريد الإلكتروني.",
             email_invalid: "يرجى إدخال بريد إلكتروني صحيح.",
             password_required: "يرجى إدخال كلمة المرور.",
-            no_active_account: "لم يتم العثور على حساب نشط ببيانات الاعتماد المقدمة",
+            no_active_account:
+              "لم يتم العثور على حساب نشط ببيانات الاعتماد المقدمة",
             generic: "حدث خطأ غير متوقع.",
           },
         },
