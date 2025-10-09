@@ -151,8 +151,9 @@ describe("Login Page", () => {
     it("submits valid credentials (axios mock)", async () => {
       mockedAxios.post.mockResolvedValue({
         data: {
-          id: 1,
+          id: 13,
           username: "testuser",
+          email: "testuser@gmail.com",
           access: "mock-access-token",
           refresh: "mock-refresh-token",
         },
@@ -197,8 +198,9 @@ describe("Login Page", () => {
     it("disables button during submission (unit test)", async () => {
       mockedAxios.post.mockResolvedValue({
         data: {
-          id: 1,
-          username: "testuser",
+          id: 13,
+          username: "testuser1",
+          email: "testuser1@gmail.com",
           access: "mock-access-token",
           refresh: "mock-refresh-token",
         },
@@ -225,7 +227,10 @@ describe("Login Page", () => {
     // This test uses mockedAxios, which is fine for unit testing the component's interaction with axios
     it("handles invalid credentials (axios mock)", async () => {
       mockedAxios.post.mockRejectedValue({
-        response: { status: 401, data: { message: "Invalid credentials" } },
+        response: {
+          status: 400,
+          data: { non_field_errors: ["no_active_account"] },
+        },
       });
       renderWithProviders(
         <LoginPageWrapper apiService={axiosApiServiceLogin} />
@@ -233,7 +238,11 @@ describe("Login Page", () => {
 
       await fillAndSubmitLoginForm(validCredentials);
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+        expect(
+          screen.getByText(
+            "No active account found with the given credentials."
+          )
+        ).toBeInTheDocument();
       });
     });
 
@@ -266,7 +275,7 @@ describe("Login Page", () => {
         expect(state.auth.isAuthenticated).toBe(true);
         expect(state.auth.user).toEqual({
           id: 1,
-          username: "user@example.com",
+          username: "testuser",
         });
       });
     });
@@ -323,7 +332,9 @@ describe("Login Page", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText("login.errors.Invalid credentials")
+          screen.getByText(
+            "No active account found with the given credentials."
+          )
         ).toBeInTheDocument();
       });
     });
@@ -340,14 +351,18 @@ describe("Login Page", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText("login.errors.Invalid credentials")
+          screen.getByText(
+            "No active account found with the given credentials."
+          )
         ).toBeInTheDocument();
       });
 
       await userEvent.type(screen.getByLabelText("Password"), "newpass");
 
       expect(
-        screen.queryByText("login.errors.Invalid credentials")
+        screen.queryByText(
+          "No active account found with the given credentials."
+        )
       ).not.toBeInTheDocument();
     });
 
@@ -363,7 +378,7 @@ describe("Login Page", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("api-error")).toHaveTextContent(
-          "login.errors.Invalid credentials"
+          "No active account found with the given credentials"
         );
       });
 
@@ -395,20 +410,9 @@ describe("Login Page", () => {
       });
     });
 
-    it("displays the specific error message from non_field_errors", async () => {
-      mockedAxios.post.mockRejectedValue({
-        response: {
-          status: 400,
-          data: {
-            non_field_errors: [
-              "No active account found with the given credentials",
-            ],
-          },
-        },
-      });
-
+    it("displays the specific error message from non_field_errors (MSW)", async () => {
       renderWithProviders(
-        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
       );
 
       await fillAndSubmitLoginForm({
@@ -419,6 +423,48 @@ describe("Login Page", () => {
       await waitFor(() => {
         expect(screen.getByTestId("api-error")).toHaveTextContent(
           "No active account found with the given credentials"
+        );
+      });
+    });
+
+    it("displays email and password required errors from api (MSW)", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      // First touch the fields to ensure validation errors are shown
+      const emailInput = screen.getByLabelText("E-mail");
+      const passwordInput = screen.getByLabelText("Password");
+      await userEvent.type(emailInput, "test");
+      await userEvent.clear(emailInput);
+      await userEvent.type(passwordInput, "test");
+      await userEvent.clear(passwordInput);
+
+      await fillAndSubmitLoginForm({ email: "", password: "" });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("email-error")).toHaveTextContent(
+          "Email is required."
+        );
+        expect(screen.getByTestId("password-error")).toHaveTextContent(
+          "Password is required."
+        );
+      });
+    });
+
+    it("displays invalid email error from api (MSW)", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "invalid-email",
+        password: "password",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("email-error")).toHaveTextContent(
+          "Enter a valid email address."
         );
       });
     });
@@ -450,9 +496,7 @@ describe("Login Page", () => {
           response: {
             status: 400,
             data: {
-              non_field_errors: [
-                "No active account found with the given credentials",
-              ],
+              non_field_errors: ["no_active_account"],
             },
           },
         });
@@ -598,8 +642,9 @@ describe("Login Page", () => {
 
         mockedAxios.post.mockResolvedValue({
           data: {
-            id: 1,
-            username: "testuser",
+            id: 13,
+            username: "testuser2",
+            email: "testuser2@gmail.com",
             access: "mock-access-token",
             refresh: "mock-refresh-token",
           },
@@ -659,8 +704,8 @@ describe("Login Page", () => {
       const state = store.getState();
       expect(state.auth.isAuthenticated).toBe(true);
       expect(state.auth.user?.id).toBe(1);
-      expect(state.auth.user?.username).toBe("user@example.com");
-      // No assertion for token since it's not stored
+      expect(state.auth.user?.username).toBe("testuser");
+      // No assertion for token since it's1 not stored
     });
   });
 });

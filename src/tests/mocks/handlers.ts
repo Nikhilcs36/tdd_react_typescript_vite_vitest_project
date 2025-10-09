@@ -214,18 +214,30 @@ export const handlers = [
     // Validate input format only
     const validationErrors = validateLogin(body);
     if (Object.keys(validationErrors).length > 0) {
-      return HttpResponse.json(
-        {
-          message: "Validation Failure",
-          validationErrors,
-          languageReceived: acceptLanguage,
-        },
-        { status: 400 }
-      );
+      // Convert to Django format: { field: [errorMessage] }
+      const djangoValidationErrors: Record<string, string[]> = {};
+      Object.keys(validationErrors).forEach((key) => {
+        djangoValidationErrors[key] = [validationErrors[key]];
+      });
+      return HttpResponse.json(djangoValidationErrors, { status: 400 });
+    }
+
+    // Handle empty fields (Django returns field-specific errors)
+    if (!body.email || !body.password) {
+      const emptyFieldErrors: Record<string, string[]> = {};
+      if (!body.email) emptyFieldErrors.email = ["email_required"];
+      if (!body.password) emptyFieldErrors.password = ["password_required"];
+      return HttpResponse.json(emptyFieldErrors, { status: 400 });
     }
 
     // Mock database of valid users (could be moved to a separate file)
-    const validUsers = [{ email: "user@example.com", password: "Password1" }];
+    const validUsers = [
+      {
+        email: "user@example.com",
+        password: "Password1",
+        username: "testuser",
+      },
+    ];
 
     // Find user by email (case-sensitive comparison)
     const user = validUsers.find((u) => u.email === body.email);
@@ -234,10 +246,10 @@ export const handlers = [
     if (!user || user.password !== body.password) {
       return HttpResponse.json(
         {
-          message: "Invalid credentials",
+          non_field_errors: ["no_active_account"],
           languageReceived: acceptLanguage,
         },
-        { status: 401 }
+        { status: 400 }
       );
     }
 
@@ -245,7 +257,8 @@ export const handlers = [
     return HttpResponse.json(
       {
         id: 1,
-        username: user.email,
+        username: user.username,
+        email: user.email,
         access: "mock-access-token",
         refresh: "mock-refresh-token",
         languageReceived: acceptLanguage,

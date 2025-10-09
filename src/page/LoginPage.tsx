@@ -40,10 +40,9 @@ interface LoginResponse {
 }
 
 interface ErrorResponse {
-  message?: string;
   non_field_errors?: string[];
-  path?: string;
-  timestamp?: number;
+  email?: string[];
+  password?: string[];
 }
 
 interface LoginState {
@@ -151,30 +150,29 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
 
       // Redirect using navigate prop
       this.props.navigate("/"); // Redirect to home page
-} catch (error) {
+    } catch (error) {
       const apiError = error as { response?: { data?: ErrorResponse } };
-      let errorMessage = "login.errors.generic"; // Default error message
       if (apiError.response?.data) {
-        const nonFieldErrors = apiError.response.data.non_field_errors;
-        if (nonFieldErrors && nonFieldErrors.length > 0) {
-          const errorKey = nonFieldErrors[0];
-          // Map specific API error messages to translation keys
-          if (
-            errorKey === "No active account found with the given credentials"
-          ) {
-            errorMessage = "login.errors.no_active_account";
-          } else {
-            // Fallback for other potential non-field errors
-            errorMessage = `login.errors.${errorKey}`;
+        const { non_field_errors, email, password } = apiError.response.data;
+        if (non_field_errors) {
+          this.setState({
+            apiErrorMessage: `login.errors.${non_field_errors[0]}`,
+          });
+        } else {
+          const newValidationErrors: Record<string, string> = {};
+          if (email) {
+            newValidationErrors.email = email[0];
           }
-        } else if (apiError.response.data.message) {
-          // Handle other types of error messages if present
-          errorMessage = `login.errors.${apiError.response.data.message}`;
+          if (password) {
+            newValidationErrors.password = password[0];
+          }
+          this.setState({ validationErrors: newValidationErrors });
         }
+      } else {
+        this.setState({
+          apiErrorMessage: "login.errors.generic",
+        });
       }
-      this.setState({
-        apiErrorMessage: errorMessage,
-      });
     } finally {
       this.setState({ isSubmitting: false });
     }
