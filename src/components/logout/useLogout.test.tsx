@@ -72,7 +72,14 @@ describe("useLogout Hook", () => {
       await result.current.logout();
     });
 
-    // Verify API call
+    // Verify API call and response handling
+    const expectedResponse = { message: "logout_Success" };
+    mockApiService.post = vi.fn().mockResolvedValue(expectedResponse);
+
+    await act(async () => {
+      await result.current.logout();
+    });
+
     expect(mockApiService.post).toHaveBeenCalledWith(API_ENDPOINTS.LOGOUT);
 
     // Verify Redux state cleanup

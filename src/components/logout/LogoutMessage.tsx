@@ -30,7 +30,7 @@ const LogoutMessage: React.FC = () => {
 
   return (
     <AlertSuccess data-testid="logout-success-message">
-      {t("logout.logoutSuccess")}
+      {t("logout.logout_Success")}
     </AlertSuccess>
   );
 };
