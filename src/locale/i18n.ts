@@ -66,7 +66,7 @@ i18n.use(initReactI18next).init({
         },
         logout: {
           title: "Logout",
-          logoutSuccess: "You have been logged out successfully",
+          logout_Success: "You have been logged out successfully",
         },
         profile: {
           username: "Username",
@@ -160,7 +160,7 @@ i18n.use(initReactI18next).init({
         },
         logout: {
           title: "ലോഗ്ഔട്ട്",
-          logoutSuccess: "നിങ്ങൾ വിജയകരമായി ലോഗ് ഔട്ട് ചെയ്തു",
+          logout_Success: "നിങ്ങൾ വിജയകരമായി ലോഗ് ഔട്ട് ചെയ്തു",
         },
         profile: {
           username: "ഉപയോക്തൃനാമം",
@@ -254,7 +254,7 @@ i18n.use(initReactI18next).init({
         },
         logout: {
           title: "تسجيل الخروج",
-          logoutSuccess: "لقد تم تسجيل خروجك بنجاح",
+          logout_Success: "لقد تم تسجيل خروجك بنجاح",
         },
         profile: {
           username: "اسم المستخدم",

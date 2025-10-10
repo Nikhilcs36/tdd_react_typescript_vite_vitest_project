@@ -374,8 +374,8 @@ export const handlers = [
       );
     }
 
-    // Successful logout - backend doesn't return messages for logout operations
-    return HttpResponse.json({}, { status: 200 });
+    // Successful logout - Django backend returns a success message
+    return HttpResponse.json({ message: "logout_Success" }, { status: 200 });
   }),
 
   // Mock API for token refresh ----(8)
