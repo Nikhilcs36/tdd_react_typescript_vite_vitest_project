@@ -183,7 +183,7 @@ export const handlers = [
     if (!authHeader || !authHeader.startsWith("JWT ")) {
       return HttpResponse.json(
         {
-          message: "Authentication required",
+          message: "Token is invalid or expired",
           languageReceived: acceptLanguage,
         },
         { status: 401 }
@@ -349,7 +349,7 @@ export const handlers = [
     if (!authHeader || !authHeader.startsWith("JWT ")) {
       return HttpResponse.json(
         {
-          message: "Unauthorized",
+          message: "Token is invalid or expired",
           languageReceived: acceptLanguage,
         },
         { status: 401 }
@@ -371,7 +371,7 @@ export const handlers = [
     ) {
       return HttpResponse.json(
         {
-          message: "Invalid tokens",
+          message: "Token is invalid or expired",
           languageReceived: acceptLanguage,
         },
         { status: 401 }
@@ -415,7 +415,10 @@ export const handlers = [
     // Check authentication with token validation
     if (!authHeader?.startsWith("JWT ")) {
       return HttpResponse.json(
-        { message: "Unauthorized", languageReceived: acceptLanguage },
+        {
+          message: "Token is invalid or expired",
+          languageReceived: acceptLanguage,
+        },
         { status: 401 }
       );
     }
@@ -423,7 +426,10 @@ export const handlers = [
     const accessToken = authHeader.replace("JWT ", "");
     if (accessToken !== "mock-access-token") {
       return HttpResponse.json(
-        { message: "Invalid token", languageReceived: acceptLanguage },
+        {
+          message: "Token is invalid or expired",
+          languageReceived: acceptLanguage,
+        },
         { status: 401 }
       );
     }

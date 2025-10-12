@@ -322,7 +322,7 @@ describe("Routing", () => {
       const state = store.getState();
       expect(state.auth.isAuthenticated).toBe(true);
       expect(state.auth.user?.id).toBe(1);
-      expect(state.auth.user?.username).toBe("user@example.com");
+      expect(state.auth.user?.username).toBe("testuser");
     });
 
     // Wait for the navigation to the home page after successful login
