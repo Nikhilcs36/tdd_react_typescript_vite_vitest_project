@@ -364,10 +364,20 @@ export const handlers = [
     const body = (await request.json()) as { refresh?: string };
     const refreshToken = body?.refresh;
 
-    if (!refreshToken || refreshToken !== "mock-refresh-token") {
+    if (!refreshToken) {
       return HttpResponse.json(
         {
           refresh: ["refresh_token_required"],
+          languageReceived: acceptLanguage,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (refreshToken !== "mock-refresh-token") {
+      return HttpResponse.json(
+        {
+          detail: "refresh_token_not_valid",
           languageReceived: acceptLanguage,
         },
         { status: 400 }

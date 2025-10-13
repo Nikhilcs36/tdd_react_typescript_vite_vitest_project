@@ -356,17 +356,38 @@ export const axiosApiServiceLogout: ApiService = {
     const accessToken: string | null = authState.accessToken;
     const refreshToken: string | null = authState.refreshToken;
 
-    const response = await axios.post<R>(
-      url,
-      { refresh: refreshToken }, // Send refresh token in body for blacklisting
-      {
-        headers: {
-          "Accept-Language": i18n.language,
-          Authorization: `JWT ${accessToken}`,
-        },
+    try {
+      const response = await axios.post<R>(
+        url,
+        { refresh: refreshToken }, // Send refresh token in body for blacklisting
+        {
+          headers: {
+            "Accept-Language": i18n.language,
+            Authorization: `JWT ${accessToken}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      // Handle Django error response format
+      if (error.response?.status === 400 || error.response?.status === 401) {
+        const djangoErrors = error.response.data;
+        // Convert Django array format to object format expected by frontend
+        const validationErrors: Record<string, string> = {};
+        Object.keys(djangoErrors).forEach((key) => {
+          if (
+            Array.isArray(djangoErrors[key]) &&
+            djangoErrors[key].length > 0
+          ) {
+            validationErrors[key] = djangoErrors[key][0]; // Take first error message
+          } else {
+            validationErrors[key] = djangoErrors[key];
+          }
+        });
+        throw { response: { data: { validationErrors } } };
       }
-    );
-    return response.data;
+      throw error;
+    }
   },
 };
 
@@ -394,10 +415,32 @@ export const fetchApiServiceLogout: ApiService = {
 
     if (!response.ok) {
       const errorData = await response.json();
+      // Handle Django error response format
+      if (response.status === 400 || response.status === 401) {
+        const djangoErrors = errorData;
+        // Convert Django array format to object format expected by frontend
+        const validationErrors: Record<string, string> = {};
+        Object.keys(djangoErrors).forEach((key) => {
+          if (
+            Array.isArray(djangoErrors[key]) &&
+            djangoErrors[key].length > 0
+          ) {
+            validationErrors[key] = djangoErrors[key][0]; // Take first error message
+          } else {
+            validationErrors[key] = djangoErrors[key];
+          }
+        });
+        throw { response: { data: { validationErrors } } };
+      }
       throw { response: { data: errorData } }; // Match Axios error format
     }
 
-    return response.json() as R;
+    // Handle cases where the response might not have a body (e.g., 204 No Content)
+    const responseText = await response.text();
+    if (responseText) {
+      return JSON.parse(responseText) as R;
+    }
+    return {} as R;
   },
 };
 
