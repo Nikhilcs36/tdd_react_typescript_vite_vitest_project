@@ -345,8 +345,12 @@ export const handlers = [
     const acceptLanguage = request.headers.get("Accept-Language");
     const authHeader = request.headers.get("Authorization");
 
-    // Check if user is authenticated (has valid authorization header)
-    if (!authHeader || !authHeader.startsWith("JWT ")) {
+    // Check if user is authenticated (has valid authorization header with valid token)
+    if (
+      !authHeader ||
+      !authHeader.startsWith("JWT ") ||
+      authHeader.replace("JWT ", "") !== "mock-access-token"
+    ) {
       return HttpResponse.json(
         {
           message: "Token is invalid or expired",
@@ -356,25 +360,17 @@ export const handlers = [
       );
     }
 
-    // Extract access token from Authorization header
-    const accessToken = authHeader.replace("JWT ", "");
-
-    // Validate access token and check refresh token in request body
+    // Validate refresh token in request body
     const body = (await request.json()) as { refresh?: string };
     const refreshToken = body?.refresh;
 
-    if (
-      !accessToken ||
-      accessToken !== "mock-access-token" ||
-      !refreshToken ||
-      refreshToken !== "mock-refresh-token"
-    ) {
+    if (!refreshToken || refreshToken !== "mock-refresh-token") {
       return HttpResponse.json(
         {
-          message: "Token is invalid or expired",
+          refresh: ["refresh_token_required"],
           languageReceived: acceptLanguage,
         },
-        { status: 401 }
+        { status: 400 }
       );
     }
 
