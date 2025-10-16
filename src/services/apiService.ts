@@ -12,7 +12,11 @@ export interface ApiService<T = Record<string, any>> {
 }
 
 export interface ApiPutService<T = Record<string, any>> {
-  put: <R>(url: string, body?: T) => Promise<R>;
+  put: <R>(url: string, body?: Partial<T>) => Promise<R>;
+}
+
+export interface ApiPutServiceWithFile {
+  put: <R>(url: string, body?: FormData) => Promise<R>;
 }
 
 export interface ApiGetService {
@@ -446,7 +450,10 @@ export const fetchApiServiceLogout: ApiService = {
 
 // Axios implementation for user profile update
 export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
-  put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
+  put: async <T>(
+    url: string,
+    body?: Partial<UserUpdateRequestBody>
+  ): Promise<T> => {
     // Get token from Redux store
     const accessToken: string | null = store.getState().auth.accessToken;
 
@@ -469,7 +476,10 @@ export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
 
 // Fetch implementation for user profile update (for MSW testing)
 export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
-  put: async <T>(url: string, body?: UserUpdateRequestBody): Promise<T> => {
+  put: async <T>(
+    url: string,
+    body?: Partial<UserUpdateRequestBody>
+  ): Promise<T> => {
     // Get token from Redux store
     const accessToken: string | null = store.getState().auth.accessToken;
 
@@ -498,7 +508,7 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
 };
 
 // Axios implementation for user profile update with file upload
-export const axiosApiServiceUpdateUserWithFile: ApiPutService<FormData> = {
+export const axiosApiServiceUpdateUserWithFile: ApiPutServiceWithFile = {
   put: async <T>(url: string, body?: FormData): Promise<T> => {
     // Get token from Redux store
     const accessToken: string | null = store.getState().auth.accessToken;
@@ -520,7 +530,7 @@ export const axiosApiServiceUpdateUserWithFile: ApiPutService<FormData> = {
 };
 
 // Fetch implementation for user profile update with file upload (for MSW testing)
-export const fetchApiServiceUpdateUserWithFile: ApiPutService<FormData> = {
+export const fetchApiServiceUpdateUserWithFile: ApiPutServiceWithFile = {
   put: async <T>(url: string, body?: FormData): Promise<T> => {
     // Get token from Redux store
     const accessToken: string | null = store.getState().auth.accessToken;

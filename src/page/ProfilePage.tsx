@@ -224,21 +224,44 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     return Object.keys(validationErrors).length === 0;
   };
 
+  // Check if there are any changes to the form
+  hasChanges = (): boolean => {
+    const { editForm, user, selectedFile, clearImage } = this.state;
+
+    if (selectedFile) {
+      return true; // File upload always counts as a change
+    }
+
+    if (clearImage) {
+      return true; // Clearing image counts as a change
+    }
+
+    if (!user) {
+      return false; // No user data yet
+    }
+
+    return (
+      editForm.username !== user.username ||
+      editForm.email !== user.email ||
+      editForm.image !== (user.image || "")
+    );
+  };
+
   // Handle button click for clearing the image
   handleClearImageClick = () => {
-    this.setState({ 
+    this.setState({
       clearImage: true,
       editForm: {
         ...this.state.editForm,
-        image: ""
-      }
+        image: "",
+      },
     });
   };
 
   // Update handleSubmit to properly call the API service with file upload support
   handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { editForm, selectedFile, clearImage } = this.state;
+    const { editForm, selectedFile, clearImage, user } = this.state;
     const { ApiPutService, dispatch } = this.props;
 
     // Validate form before submission
@@ -255,8 +278,12 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       if (selectedFile) {
         // Use FormData for file upload
         const formData = new FormData();
-        formData.append("username", editForm.username);
-        formData.append("email", editForm.email);
+        if (editForm.username !== user?.username) {
+          formData.append("username", editForm.username);
+        }
+        if (editForm.email !== user?.email) {
+          formData.append("email", editForm.email);
+        }
         formData.append("image", selectedFile);
 
         // Use the file upload service
@@ -266,22 +293,30 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         );
       } else {
         // Use regular JSON for non-file updates
-        const updateData: {
-          username: string;
-          email: string;
-          image?: null;
-        } = {
-          username: editForm.username,
-          email: editForm.email,
-        };
+        const partialUpdateData: Partial<UserUpdateRequestBody> = {};
 
+        if (editForm.username !== user?.username) {
+          partialUpdateData.username = editForm.username;
+        }
+        if (editForm.email !== user?.email) {
+          partialUpdateData.email = editForm.email;
+        }
         if (clearImage) {
-          updateData.image = null;
+          partialUpdateData.image = null;
+        }
+
+        // Only send request if there are changes
+        if (Object.keys(partialUpdateData).length === 0) {
+          this.setState({
+            isSubmitting: false,
+            isEditing: false,
+          });
+          return;
         }
 
         response = await ApiPutService!.put<User>(
           API_ENDPOINTS.ME, // Use ME endpoint for updates
-          updateData
+          partialUpdateData
         );
       }
 
@@ -348,18 +383,19 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   // Handle file selection for image upload
   handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    
+
     // Clean up previous blob URL if it exists
     if (this.state.imagePreviewUrl && URL.revokeObjectURL) {
       URL.revokeObjectURL(this.state.imagePreviewUrl);
     }
 
     // Create new blob URL for preview
-    const imagePreviewUrl = file && URL.createObjectURL ? URL.createObjectURL(file) : null;
+    const imagePreviewUrl =
+      file && URL.createObjectURL ? URL.createObjectURL(file) : null;
 
-    this.setState({ 
+    this.setState({
       selectedFile: file,
-      imagePreviewUrl 
+      imagePreviewUrl,
     });
 
     // Clear previous error messages when a new file is selected
@@ -536,7 +572,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         <ButtonContainer>
           <SaveButton
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !this.hasChanges()}
             data-testid="save-profile-button"
           >
             {isSubmitting ? t("profile.saving") : t("profile.saveChanges")}

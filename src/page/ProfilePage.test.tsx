@@ -164,33 +164,70 @@ describe("ProfilePage", () => {
       );
     });
 
-    it("excludes image field from request when no file is selected", async () => {
+    it("sends only the changed fields for partial updates", async () => {
       const { mockPut } = await setup({ withAuth: true });
 
-      fireEvent.click(await screen.findByTestId("edit-profile-button"));
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Change only the username
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "updateduser" },
       });
+
+      // Submit the form
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      await waitFor(() => expect(mockPut).toHaveBeenCalled());
-
-      // Verify that the request data does NOT contain the image field
-      expect(mockPut).toHaveBeenCalledWith(
-        API_ENDPOINTS.ME,
-        expect.not.objectContaining({
-          image: expect.anything(),
-        })
-      );
-
-      // Verify that only username and email are included
-      expect(mockPut).toHaveBeenCalledWith(
-        API_ENDPOINTS.ME,
-        expect.objectContaining({
+      // Verify that only the username is sent in the request
+      await waitFor(() => {
+        expect(mockPut).toHaveBeenCalledWith(API_ENDPOINTS.ME, {
           username: "updateduser",
-          email: baseUser.email,
-        })
+        });
+      });
+    });
+
+    it("sends only changed fields with image upload", async () => {
+      await setup({ withAuth: true });
+      (axiosApiServiceUpdateUserWithFile.put as Mock).mockResolvedValue({
+        ...baseUser,
+        username: "updateduser",
+        image: "new-image.jpg",
+      });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
       );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Change only the username
+      fireEvent.change(screen.getByTestId("username-input"), {
+        target: { value: "updateduser" },
+      });
+
+      // Select a file
+      const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+      const fileInput = screen.getByTestId("image-file-input");
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId("save-profile-button"));
+
+      // Verify that only the username and image are sent in the request
+      await waitFor(() => {
+        const formData = (axiosApiServiceUpdateUserWithFile.put as Mock).mock
+          .calls[0][1] as FormData;
+        expect(formData.get("username")).toBe("updateduser");
+        expect(formData.has("email")).toBe(false);
+        expect(formData.get("image")).toBe(file);
+      });
     });
 
     it("makes image field read-only in edit form", async () => {
@@ -463,9 +500,7 @@ describe("ProfilePage", () => {
 
       // Wait for the success message to ensure the form has been processed
       await waitFor(() => {
-        expect(
-          screen.getByTestId("success-message")
-        ).toBeInTheDocument();
+        expect(screen.getByTestId("success-message")).toBeInTheDocument();
       });
 
       // Re-enter edit mode to check the state of the button
@@ -493,7 +528,9 @@ describe("ProfilePage", () => {
     });
 
     it("enables clear image button when there is an existing profile image", async () => {
-      await setup({ userData: { ...baseUser, image: "https://example.com/image.jpg" } });
+      await setup({
+        userData: { ...baseUser, image: "https://example.com/image.jpg" },
+      });
 
       // Wait for user data to load
       await waitFor(() =>
@@ -547,9 +584,7 @@ describe("ProfilePage", () => {
 
       // 5. Assert that the error message is cleared
       await waitFor(() => {
-        expect(
-          screen.queryByTestId("error-message")
-        ).not.toBeInTheDocument();
+        expect(screen.queryByTestId("error-message")).not.toBeInTheDocument();
       });
     });
 
@@ -584,9 +619,7 @@ describe("ProfilePage", () => {
 
       // 5. Wait for the success message
       await waitFor(() => {
-        expect(
-          screen.getByTestId("success-message")
-        ).toBeInTheDocument();
+        expect(screen.getByTestId("success-message")).toBeInTheDocument();
       });
 
       // 6. Re-enter edit mode
@@ -615,6 +648,11 @@ describe("ProfilePage", () => {
       // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
+      // Change the username to trigger an update
+      fireEvent.change(screen.getByTestId("username-input"), {
+        target: { value: "new-username" },
+      });
+
       // Submit the form to trigger the success message
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
@@ -635,7 +673,7 @@ describe("ProfilePage", () => {
     });
 
     it("displays success message after successful profile update", async () => {
-      const { mockPut: _ } = await setup();
+      await setup();
 
       // Wait for user data to load
       await waitFor(() =>
@@ -657,6 +695,84 @@ describe("ProfilePage", () => {
           "Profile updated successfully"
         );
       });
+    });
+
+    it("disables save button when no changes have been made", async () => {
+      await setup({ withAuth: true });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Verify save button is initially disabled (no changes)
+      const saveButton = screen.getByTestId("save-profile-button");
+      expect(saveButton).toBeDisabled();
+
+      // Make a change to username
+      fireEvent.change(screen.getByTestId("username-input"), {
+        target: { value: "updateduser" },
+      });
+
+      // Verify save button is now enabled
+      expect(saveButton).toBeEnabled();
+
+      // Revert the change
+      fireEvent.change(screen.getByTestId("username-input"), {
+        target: { value: "user1" },
+      });
+
+      // Verify save button is disabled again
+      expect(saveButton).toBeDisabled();
+    });
+
+    it("enables save button when file is selected", async () => {
+      await setup({ withAuth: true });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Verify save button is initially disabled
+      const saveButton = screen.getByTestId("save-profile-button");
+      expect(saveButton).toBeDisabled();
+
+      // Select a file
+      const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+      const fileInput = screen.getByTestId("image-file-input");
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      // Verify save button is enabled after file selection
+      expect(saveButton).toBeEnabled();
+    });
+
+    it("enables save button when clear image is clicked", async () => {
+      await setup({ withAuth: true });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Verify save button is initially disabled
+      const saveButton = screen.getByTestId("save-profile-button");
+      expect(saveButton).toBeDisabled();
+
+      // Click clear image button
+      fireEvent.click(screen.getByTestId("clear-image-button"));
+
+      // Verify save button is enabled after clear image
+      expect(saveButton).toBeEnabled();
     });
   });
 
