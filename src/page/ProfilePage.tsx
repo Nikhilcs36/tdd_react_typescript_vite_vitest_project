@@ -84,7 +84,6 @@ interface ProfilePageState {
     image: string;
   };
   validationErrors: Record<string, string>;
-  isSubmitting: boolean;
   successMessage: string | null;
   showDeleteConfirmation: boolean;
   selectedFile: File | null;
@@ -115,7 +114,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       image: "",
     },
     validationErrors: {},
-    isSubmitting: false,
     successMessage: null,
     showDeleteConfirmation: false,
     selectedFile: null,
@@ -269,7 +267,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       return;
     }
 
-    this.setState({ isSubmitting: true, successMessage: null });
+    this.setState({ successMessage: null });
     dispatch(updateUserStart());
 
     try {
@@ -308,7 +306,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         // Only send request if there are changes
         if (Object.keys(partialUpdateData).length === 0) {
           this.setState({
-            isSubmitting: false,
             isEditing: false,
           });
           return;
@@ -323,7 +320,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       // Update state with new user data
       this.setState({
         user: response,
-        isSubmitting: false,
         isEditing: false,
         successMessage: this.props.t("profile.successMessage"),
         selectedFile: null, // Clear selected file after successful upload
@@ -360,7 +356,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       if (error.response?.data?.validationErrors) {
         this.setState({
           validationErrors: error.response.data.validationErrors,
-          isSubmitting: false,
         });
       } else {
         // Check if the error message is one of our known error keys
@@ -373,9 +368,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           errorMessage = error.response.data.image[0];
         }
         dispatch(updateUserFailure(errorMessage));
-        this.setState({
-          isSubmitting: false,
-        });
       }
     }
   };
@@ -452,7 +444,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   };
 
   renderEditForm() {
-    const { editForm, isSubmitting, validationErrors } = this.state;
+    const { editForm, validationErrors } = this.state;
     const { t } = this.props;
 
     return (
@@ -467,7 +459,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
             name="username"
             value={editForm.username}
             onChange={this.handleInputChange}
-            disabled={isSubmitting}
             data-testid="username-input"
           />
           {validationErrors.username && (
@@ -485,7 +476,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
             type="email"
             value={editForm.email}
             onChange={this.handleInputChange}
-            disabled={isSubmitting}
             data-testid="email-input"
           />
           {validationErrors.email && (
@@ -533,7 +523,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
               type="file"
               accept="image/*"
               onChange={this.handleFileChange}
-              disabled={isSubmitting}
               data-testid="image-file-input"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               ref={this.fileInputRef} // Attach the ref here
@@ -572,15 +561,14 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         <ButtonContainer>
           <SaveButton
             type="submit"
-            disabled={isSubmitting || !this.hasChanges()}
+            disabled={!this.hasChanges()}
             data-testid="save-profile-button"
           >
-            {isSubmitting ? t("profile.saving") : t("profile.saveChanges")}
+            {t("profile.saveChanges")}
           </SaveButton>
           <CancelButton
             type="button"
             onClick={this.toggleEditMode}
-            disabled={isSubmitting}
             data-testid="cancel-edit-button"
           >
             {t("profile.cancel")}
