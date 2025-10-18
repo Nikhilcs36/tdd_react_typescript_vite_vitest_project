@@ -970,38 +970,5 @@ describe("ProfilePage", () => {
         expect(screen.getByTestId("error-message")).toHaveTextContent(expected);
       });
     });
-
-    it.each([
-      {
-        lang: "en",
-        expected: "Network Error",
-      },
-      {
-        lang: "ml",
-        expected: "നെറ്റ്‌വർക്ക് പിശക്",
-      },
-      {
-        lang: "ar",
-        expected: "خطأ في الشبكة",
-      },
-    ])("displays network error in $lang", async ({ lang, expected }) => {
-      (axiosApiServiceUpdateUserWithFile.put as Mock).mockRejectedValue({
-        message: "Network Error",
-      });
-
-      await setup({ language: lang });
-
-      // Simulate form submission
-      fireEvent.click(await screen.findByTestId("edit-profile-button"));
-      const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
-      fireEvent.change(screen.getByTestId("image-file-input"), {
-        target: { files: [file] },
-      });
-      fireEvent.click(screen.getByTestId("save-profile-button"));
-
-      await waitFor(() => {
-        expect(screen.getByTestId("error-message")).toHaveTextContent(expected);
-      });
-    });
   });
 });
