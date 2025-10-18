@@ -190,20 +190,15 @@ export const handlers = [
       );
     }
 
-    // For the ME endpoint, return the first user as the current user
-    const currentUser = page1.results[0];
+    // For the ME endpoint, return a specific user to match the Django backend response
+    const currentUser = {
+      id: 13,
+      username: "test002",
+      email: "test002@gmail.com",
+      image: null,
+    };
 
-    if (!currentUser) {
-      return HttpResponse.json(
-        { message: "User not found", languageReceived: acceptLanguage },
-        { status: 404 }
-      );
-    }
-
-    return HttpResponse.json(
-      { ...currentUser, languageReceived: acceptLanguage },
-      { status: 200 }
-    );
+    return HttpResponse.json(currentUser, { status: 200 });
   }),
 
   // Mock API for user login (msw) ----(5)
