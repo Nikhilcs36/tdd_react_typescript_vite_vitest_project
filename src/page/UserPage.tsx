@@ -146,9 +146,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
       });
     } catch (error: any) {
       // Check if the error message is one of our known error keys
-      const errorMessage =
-        error.response?.data?.detail ||
-        error.message;
+      const errorMessage = error.response?.data?.detail || error.message;
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
@@ -287,9 +285,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         });
       } else {
         // Check if the error message is one of our known error keys
-        const errorMessage =
-          error.response?.data?.detail ||
-          error.message;
+        const errorMessage = error.response?.data?.detail || error.message;
         dispatch(updateUserFailure(errorMessage));
         this.setState({
           isSubmitting: false,
@@ -504,11 +500,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     if (error) {
       const { t } = this.props;
       const translatedError =
-        error === "Not found."
-          ? t("profile.errors.userNotFound")
-          : error === "Update failed"
-          ? t("profile.errors.updateFailed")
-          : error;
+        error === "Not found." ? t("profile.errors.userNotFound") : error;
       return (
         <ErrorAlert data-testid="error-message">{translatedError}</ErrorAlert>
       );

@@ -80,7 +80,6 @@ i18n.use(initReactI18next).init({
           successMessage: "Profile updated successfully",
           errors: {
             userNotFound: "User not found",
-            updateFailed: "Update failed",
             "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
               "Invalid image format. Only JPG, JPEG, and PNG are allowed.",
             "Image size cannot exceed 2097152 bytes.":
@@ -173,7 +172,6 @@ i18n.use(initReactI18next).init({
           successMessage: "പ്രൊഫൈൽ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു",
           errors: {
             userNotFound: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
-            updateFailed: "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
             "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
               "അസാധുവായ ചിത്ര ഫോർമാറ്റ്. JPG, JPEG, PNG എന്നിവ മാത്രം അനുവദനീയമാണ്.",
             "Image size cannot exceed 2097152 bytes.":
@@ -266,7 +264,6 @@ i18n.use(initReactI18next).init({
           successMessage: "تم تحديث الملف الشخصي بنجاح",
           errors: {
             userNotFound: "لم يتم العثور على المستخدم",
-            updateFailed: "فشل التحديث",
             "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
               "تنسيق الصورة غير صالح. يُسمح فقط بصيغ JPG وJPEG وPNG.",
             "Image size cannot exceed 2097152 bytes.":
