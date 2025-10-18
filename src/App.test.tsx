@@ -250,8 +250,10 @@ describe("Routing", () => {
     await waitFor(() => {
       // Check if the profile page component is rendered
       expect(screen.getByTestId("profile-page")).toBeInTheDocument();
-      expect(screen.getByTestId("username")).toHaveTextContent("user1");
-      expect(screen.getByTestId("email")).toHaveTextContent("user1@mail.com");
+      expect(screen.getByTestId("username")).toHaveTextContent("test002");
+      expect(screen.getByTestId("email")).toHaveTextContent(
+        "test002@gmail.com"
+      );
     });
   });
 
@@ -340,8 +342,10 @@ describe("Routing", () => {
     await waitFor(() => {
       // Check if the profile page component is rendered
       expect(screen.getByTestId("profile-page")).toBeInTheDocument();
-      expect(screen.getByTestId("username")).toHaveTextContent("user1");
-      expect(screen.getByTestId("email")).toHaveTextContent("user1@mail.com");
+      expect(screen.getByTestId("username")).toHaveTextContent("test002");
+      expect(screen.getByTestId("email")).toHaveTextContent(
+        "test002@gmail.com"
+      );
     });
   });
 });
