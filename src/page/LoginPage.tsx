@@ -40,9 +40,8 @@ interface LoginResponse {
 }
 
 interface ErrorResponse {
-  non_field_errors?: string[];
-  email?: string[];
-  password?: string[];
+  validationErrors?: Record<string, string>;
+  apiErrorMessage?: string;
 }
 
 interface LoginState {
@@ -153,20 +152,11 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     } catch (error) {
       const apiError = error as { response?: { data?: ErrorResponse } };
       if (apiError.response?.data) {
-        const { non_field_errors, email, password } = apiError.response.data;
-        if (non_field_errors) {
-          this.setState({
-            apiErrorMessage: `login.errors.${non_field_errors[0]}`,
-          });
-        } else {
-          const newValidationErrors: Record<string, string> = {};
-          if (email) {
-            newValidationErrors.email = email[0];
-          }
-          if (password) {
-            newValidationErrors.password = password[0];
-          }
-          this.setState({ validationErrors: newValidationErrors });
+        const { validationErrors, apiErrorMessage } = apiError.response.data;
+        if (apiErrorMessage) {
+          this.setState({ apiErrorMessage });
+        } else if (validationErrors) {
+          this.setState({ validationErrors });
         }
       } else {
         this.setState({

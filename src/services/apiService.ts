@@ -6,6 +6,7 @@ import {
   UserUpdateRequestBody,
 } from "../utils/validationRules";
 import store from "../store";
+import { handleDjangoErrors } from "../utils/djangoErrorHandler";
 
 export interface ApiService<T = Record<string, any>> {
   post: <R>(url: string, body?: T) => Promise<R>;
@@ -38,22 +39,16 @@ export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
       });
       return response.data;
     } catch (error: any) {
-      // Handle Django error response format
       if (error.response?.status === 400) {
-        const djangoErrors = error.response.data;
-        // Convert Django array format to object format expected by frontend
-        const validationErrors: Record<string, string> = {};
-        Object.keys(djangoErrors).forEach((key) => {
-          if (
-            Array.isArray(djangoErrors[key]) &&
-            djangoErrors[key].length > 0
-          ) {
-            validationErrors[key] = djangoErrors[key][0]; // Take first error message
-          } else {
-            validationErrors[key] = djangoErrors[key];
-          }
-        });
-        throw { response: { data: { validationErrors } } };
+        const standardizedError = handleDjangoErrors(error.response.data);
+        throw {
+          response: {
+            data: {
+              validationErrors: standardizedError.fieldErrors,
+              nonFieldErrors: standardizedError.nonFieldErrors,
+            },
+          },
+        };
       }
       throw error;
     }
@@ -74,22 +69,16 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      // Handle Django error response format
       if (response.status === 400) {
-        const djangoErrors = errorData;
-        // Convert Django array format to object format expected by frontend
-        const validationErrors: Record<string, string> = {};
-        Object.keys(djangoErrors).forEach((key) => {
-          if (
-            Array.isArray(djangoErrors[key]) &&
-            djangoErrors[key].length > 0
-          ) {
-            validationErrors[key] = djangoErrors[key][0]; // Take first error message
-          } else {
-            validationErrors[key] = djangoErrors[key];
-          }
-        });
-        throw { response: { data: { validationErrors } } };
+        const standardizedError = handleDjangoErrors(errorData);
+        throw {
+          response: {
+            data: {
+              validationErrors: standardizedError.fieldErrors,
+              nonFieldErrors: standardizedError.nonFieldErrors,
+            },
+          },
+        };
       }
       throw { response: { data: errorData } };
     }
@@ -235,13 +224,28 @@ export const axiosApiServiceGetCurrentUser: ApiGetService = {
       throw new Error("Authentication token not found");
     }
 
-    const response = await axios.get<T>(url, {
-      headers: {
-        "Accept-Language": i18n.language,
-        Authorization: `JWT ${accessToken}`,
-      },
-    });
-    return response.data;
+    try {
+      const response = await axios.get<T>(url, {
+        headers: {
+          "Accept-Language": i18n.language,
+          Authorization: `JWT ${accessToken}`,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 400 || error.response?.status === 401) {
+        const standardizedError = handleDjangoErrors(error.response.data);
+        throw {
+          response: {
+            data: {
+              validationErrors: standardizedError.fieldErrors,
+              nonFieldErrors: standardizedError.nonFieldErrors,
+            },
+          },
+        };
+      }
+      throw error;
+    }
   },
 };
 
@@ -262,9 +266,21 @@ export const fetchApiServiceGetCurrentUser: ApiGetService = {
         Authorization: `JWT ${accessToken}`,
       },
     });
+
     if (!response.ok) {
       const errorData = await response.json();
-      throw errorData;
+      if (response.status === 400 || response.status === 401) {
+        const standardizedError = handleDjangoErrors(errorData);
+        throw {
+          response: {
+            data: {
+              validationErrors: standardizedError.fieldErrors,
+              nonFieldErrors: standardizedError.nonFieldErrors,
+            },
+          },
+        };
+      }
+      throw { response: { data: errorData } }; // Match Axios error format
     }
     return response.json() as T;
   },
@@ -321,12 +337,30 @@ export const fetchApiServiceGetUser: ApiGetService = {
 // Axios implementation for login
 export const axiosApiServiceLogin: ApiService<LoginRequestBody> = {
   post: async <R>(url: string, body?: LoginRequestBody) => {
-    const response = await axios.post<R>(url, body, {
-      headers: {
-        "Accept-Language": i18n.language,
-      },
-    });
-    return response.data;
+    try {
+      const response = await axios.post<R>(url, body, {
+        headers: {
+          "Accept-Language": i18n.language,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        const standardizedError = handleDjangoErrors(
+          error.response.data,
+          "login.errors."
+        );
+        throw {
+          response: {
+            data: {
+              validationErrors: standardizedError.fieldErrors,
+              apiErrorMessage: standardizedError.nonFieldErrors[0],
+            },
+          },
+        };
+      }
+      throw error;
+    }
   },
 };
 
@@ -345,6 +379,20 @@ export const fetchApiServiceLogin: ApiService<LoginRequestBody> = {
     const responseData = await response.json();
 
     if (!response.ok) {
+      if (response.status === 400) {
+        const standardizedError = handleDjangoErrors(
+          responseData,
+          "login.errors."
+        );
+        throw {
+          response: {
+            data: {
+              validationErrors: standardizedError.fieldErrors,
+              apiErrorMessage: standardizedError.nonFieldErrors[0],
+            },
+          },
+        };
+      }
       throw { response: { data: responseData } }; // Match Axios error format
     }
 
@@ -373,22 +421,16 @@ export const axiosApiServiceLogout: ApiService = {
       );
       return response.data;
     } catch (error: any) {
-      // Handle Django error response format
       if (error.response?.status === 400 || error.response?.status === 401) {
-        const djangoErrors = error.response.data;
-        // Convert Django array format to object format expected by frontend
-        const validationErrors: Record<string, string> = {};
-        Object.keys(djangoErrors).forEach((key) => {
-          if (
-            Array.isArray(djangoErrors[key]) &&
-            djangoErrors[key].length > 0
-          ) {
-            validationErrors[key] = djangoErrors[key][0]; // Take first error message
-          } else {
-            validationErrors[key] = djangoErrors[key];
-          }
-        });
-        throw { response: { data: { validationErrors } } };
+        const standardizedError = handleDjangoErrors(error.response.data);
+        throw {
+          response: {
+            data: {
+              validationErrors: standardizedError.fieldErrors,
+              nonFieldErrors: standardizedError.nonFieldErrors,
+            },
+          },
+        };
       }
       throw error;
     }
@@ -419,22 +461,16 @@ export const fetchApiServiceLogout: ApiService = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      // Handle Django error response format
       if (response.status === 400 || response.status === 401) {
-        const djangoErrors = errorData;
-        // Convert Django array format to object format expected by frontend
-        const validationErrors: Record<string, string> = {};
-        Object.keys(djangoErrors).forEach((key) => {
-          if (
-            Array.isArray(djangoErrors[key]) &&
-            djangoErrors[key].length > 0
-          ) {
-            validationErrors[key] = djangoErrors[key][0]; // Take first error message
-          } else {
-            validationErrors[key] = djangoErrors[key];
-          }
-        });
-        throw { response: { data: { validationErrors } } };
+        const standardizedError = handleDjangoErrors(errorData);
+        throw {
+          response: {
+            data: {
+              validationErrors: standardizedError.fieldErrors,
+              nonFieldErrors: standardizedError.nonFieldErrors,
+            },
+          },
+        };
       }
       throw { response: { data: errorData } }; // Match Axios error format
     }
