@@ -119,8 +119,7 @@ export const handlers = [
   http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 1;
-    const size = Number(url.searchParams.get("page_size")) || 3;
-    const acceptLanguage = request.headers.get("Accept-Language");
+    const page_size = Number(url.searchParams.get("page_size")) || 3;
     const authHeader = request.headers.get("Authorization");
 
     let allUsers = [...page1.results];
@@ -136,20 +135,27 @@ export const handlers = [
       }
     }
 
-    const startIndex = (page - 1) * size;
-    const endIndex = startIndex + size;
+    const startIndex = (page - 1) * page_size;
+    const endIndex = startIndex + page_size;
     const paginatedUsers = allUsers.slice(startIndex, endIndex);
 
-    const totalPages = Math.ceil(allUsers.length / size);
+    const totalPages = Math.ceil(allUsers.length / page_size);
+
+    // Build full URLs for next and previous links to match Django backend
+    const baseUrl = "http://127.0.0.1:8000/api/user/users/";
+    const nextUrl =
+      page < totalPages
+        ? `${baseUrl}?page=${page + 1}&page_size=${page_size}`
+        : null;
+    const previousUrl =
+      page > 1 ? `${baseUrl}?page=${page - 1}&page_size=${page_size}` : null;
 
     return HttpResponse.json(
       {
         count: allUsers.length,
-        next: page < totalPages ? `?page=${page + 1}&page_size=${size}` : null,
-        previous: page > 1 ? `?page=${page - 1}&page_size=${size}` : null,
+        next: nextUrl,
+        previous: previousUrl,
         results: paginatedUsers,
-        languageReceived: acceptLanguage,
-        authHeaderReceived: authHeader ? "JWT [token]" : null,
       },
       { status: 200 }
     );

@@ -22,7 +22,7 @@ describe("UserList Pagination with 1-based indexing", () => {
         if (page === "1") {
           return HttpResponse.json({
             count: 6,
-        next: "?page=2&page_size=3",
+            next: "http://127.0.0.1:8000/api/user/users/?page=2&page_size=3",
             previous: null,
             results: [
               { id: 1, username: "user1", email: "user1@mail.com" },
@@ -34,7 +34,8 @@ describe("UserList Pagination with 1-based indexing", () => {
           return HttpResponse.json({
             count: 6,
             next: null,
-            previous: "?page=1&page_size=3",
+            previous:
+              "http://127.0.0.1:8000/api/user/users/?page=1&page_size=3",
             results: [
               { id: 4, username: "user4", email: "user4@mail.com" },
               { id: 5, username: "user5", email: "user5@mail.com" },

@@ -58,6 +58,8 @@ const emptyListAPISetup = () => {
       return HttpResponse.json({
         results: [],
         count: 0,
+        next: null,
+        previous: null,
       });
     })
   );
@@ -171,6 +173,8 @@ describe("User List", () => {
         return HttpResponse.json({
           results: [],
           count: 0,
+          next: null,
+          previous: null,
         });
       })
     );
@@ -572,8 +576,8 @@ describe("User List", () => {
           }),
           params: expect.objectContaining({
             page: 1,
-            page_size: 3
-          })
+            page_size: 3,
+          }),
         })
       );
     });
