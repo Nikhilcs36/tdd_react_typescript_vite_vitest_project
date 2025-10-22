@@ -159,7 +159,11 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
       const response = await axios.get<T>(url, { headers, params });
       return response.data;
     } catch (error: any) {
-      if (error.response?.status === 400 || error.response?.status === 401 || error.response?.status === 403) {
+      if (
+        error.response?.status === 400 ||
+        error.response?.status === 401 ||
+        error.response?.status === 403
+      ) {
         const standardizedError = handleDjangoErrors(error.response.data);
         throw {
           response: {
@@ -207,7 +211,7 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
     // Handle both absolute and relative URLs
     let finalUrl = url;
     if (page !== undefined || page_size !== undefined) {
-      const urlObj = new URL(url,  window.location.origin);
+      const urlObj = new URL(url, window.location.origin);
       if (page !== undefined) urlObj.searchParams.set("page", page.toString());
       if (page_size !== undefined)
         urlObj.searchParams.set("page_size", page_size.toString());
@@ -221,7 +225,11 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (response.status === 400 || response.status === 401 || response.status === 403) {
+      if (
+        response.status === 400 ||
+        response.status === 401 ||
+        response.status === 403
+      ) {
         const standardizedError = handleDjangoErrors(errorData);
         throw {
           response: {
