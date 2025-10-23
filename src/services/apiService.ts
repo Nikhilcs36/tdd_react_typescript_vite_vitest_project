@@ -39,10 +39,15 @@ export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
       });
       return response.data;
     } catch (error: any) {
-      if (error.response?.status === 400) {
+      if (
+        error.response?.status === 400 ||
+        error.response?.status === 401 ||
+        error.response?.status === 403
+      ) {
         const standardizedError = handleDjangoErrors(error.response.data);
         throw {
           response: {
+            status: error.response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               nonFieldErrors: standardizedError.nonFieldErrors,
@@ -69,10 +74,15 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (response.status === 400) {
+      if (
+        response.status === 400 ||
+        response.status === 401 ||
+        response.status === 403
+      ) {
         const standardizedError = handleDjangoErrors(errorData);
         throw {
           response: {
+            status: response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               nonFieldErrors: standardizedError.nonFieldErrors,
@@ -80,7 +90,7 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
           },
         };
       }
-      throw { response: { data: errorData } };
+      throw { response: { data: errorData } }; // Match Axios1 error format
     }
     return response.json() as T;
   },
@@ -167,6 +177,7 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
         const standardizedError = handleDjangoErrors(error.response.data);
         throw {
           response: {
+            status: error.response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               nonFieldErrors: standardizedError.nonFieldErrors,
@@ -233,6 +244,7 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
         const standardizedError = handleDjangoErrors(errorData);
         throw {
           response: {
+            status: response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               nonFieldErrors: standardizedError.nonFieldErrors,
@@ -271,6 +283,7 @@ export const axiosApiServiceGetCurrentUser: ApiGetService = {
         const standardizedError = handleDjangoErrors(error.response.data);
         throw {
           response: {
+            status: error.response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               nonFieldErrors: standardizedError.nonFieldErrors,
@@ -285,7 +298,7 @@ export const axiosApiServiceGetCurrentUser: ApiGetService = {
 
 // Fetch implementation for getCurrentUser (me endpoint)
 export const fetchApiServiceGetCurrentUser: ApiGetService = {
-  get: async <T>(url: string): Promise<T> => {
+  get: async <T>(url: string) => {
     // Get authentication state from Redux store
     const authState = store.getState().auth;
     const accessToken: string | null = authState.accessToken;
@@ -307,6 +320,7 @@ export const fetchApiServiceGetCurrentUser: ApiGetService = {
         const standardizedError = handleDjangoErrors(errorData);
         throw {
           response: {
+            status: response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               nonFieldErrors: standardizedError.nonFieldErrors,
@@ -386,6 +400,7 @@ export const axiosApiServiceLogin: ApiService<LoginRequestBody> = {
         );
         throw {
           response: {
+            status: error.response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               apiErrorMessage: standardizedError.nonFieldErrors[0],
@@ -420,6 +435,7 @@ export const fetchApiServiceLogin: ApiService<LoginRequestBody> = {
         );
         throw {
           response: {
+            status: response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               apiErrorMessage: standardizedError.nonFieldErrors[0],
@@ -459,6 +475,7 @@ export const axiosApiServiceLogout: ApiService = {
         const standardizedError = handleDjangoErrors(error.response.data);
         throw {
           response: {
+            status: error.response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               nonFieldErrors: standardizedError.nonFieldErrors,
@@ -499,6 +516,7 @@ export const fetchApiServiceLogout: ApiService = {
         const standardizedError = handleDjangoErrors(errorData);
         throw {
           response: {
+            status: response.status,
             data: {
               validationErrors: standardizedError.fieldErrors,
               nonFieldErrors: standardizedError.nonFieldErrors,

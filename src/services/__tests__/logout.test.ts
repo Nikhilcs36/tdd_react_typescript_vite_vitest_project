@@ -28,7 +28,7 @@ describe("Logout Error Handling with MSW", () => {
         await axiosApiServiceLogout.post(API_ENDPOINTS.LOGOUT);
         expect.fail("Should have thrown an error");
       } catch (error: any) {
-        expect(error.response.data.validationErrors.detail).toBe(
+        expect(error.response.data.nonFieldErrors).toContain(
           "refresh_token_not_valid"
         );
         expect(error.response.data.validationErrors.languageReceived).toBe(
@@ -62,7 +62,7 @@ describe("Logout Error Handling with MSW", () => {
         await fetchApiServiceLogout.post(API_ENDPOINTS.LOGOUT);
         expect.fail("Should have thrown an error");
       } catch (error: any) {
-        expect(error.response.data.validationErrors.detail).toBe(
+        expect(error.response.data.nonFieldErrors).toContain(
           "refresh_token_not_valid"
         );
         expect(error.response.data.validationErrors.languageReceived).toBe(

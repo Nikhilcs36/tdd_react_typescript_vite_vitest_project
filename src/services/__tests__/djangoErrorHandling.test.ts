@@ -65,6 +65,64 @@ describe("Django Error Handling", () => {
         });
       }
     });
+
+    // Test Django 403 Forbidden error handling
+    it("should handle Django 403 Forbidden error correctly", async () => {
+      const django403Error = {
+        response: {
+          status: 403,
+          data: {
+            detail: "You do not have permission to perform this action.",
+          },
+        },
+      };
+
+      mockedAxios.post.mockRejectedValueOnce(django403Error);
+
+      try {
+        await axiosApiServiceSignUp.post("/api/user/create/", {
+          username: "testuser",
+          email: "test@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        });
+        expect.fail("Should have thrown an error");
+      } catch (error: any) {
+        expect(error.response.status).toBe(403);
+        expect(error.response.data.nonFieldErrors).toEqual([
+          "You do not have permission to perform this action.",
+        ]);
+      }
+    });
+
+    // Test Django 401 Unauthorized error handling
+    it("should handle Django 401 Unauthorized error correctly", async () => {
+      const django401Error = {
+        response: {
+          status: 401,
+          data: {
+            message: "Token is invalid or expired",
+          },
+        },
+      };
+
+      mockedAxios.post.mockRejectedValueOnce(django401Error);
+
+      try {
+        await axiosApiServiceSignUp.post("/api/user/create/", {
+          username: "testuser",
+          email: "test@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        });
+        expect.fail("Should have thrown an error");
+      } catch (error: any) {
+        expect(error.response.status).toBe(401);
+        expect(error.response.data.nonFieldErrors).toEqual([
+          "Token is invalid or expired",
+        ]);
+      }
+    });
   });
 
   describe("fetchApiServiceSignUp", () => {
@@ -122,6 +180,62 @@ describe("Django Error Handling", () => {
         expect(error.response.data.validationErrors).toEqual({
           username: "Username already exists",
         });
+      }
+    });
+
+    // Test Django 403 Forbidden error handling for fetch
+    it("should handle Django 403 Forbidden error correctly for fetch", async () => {
+      const django403Error = {
+        detail: "You do not have permission to perform this action.",
+      };
+
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => django403Error,
+      });
+
+      try {
+        await fetchApiServiceSignUp.post("/api/user/create/", {
+          username: "testuser",
+          email: "test@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        });
+        expect.fail("Should have thrown an error");
+      } catch (error: any) {
+        expect(error.response.status).toBe(403);
+        expect(error.response.data.nonFieldErrors).toEqual([
+          "You do not have permission to perform this action.",
+        ]);
+      }
+    });
+
+    // Test Django 401 Unauthorized error handling for fetch
+    it("should handle Django 401 Unauthorized error correctly for fetch", async () => {
+      const django401Error = {
+        message: "Token is invalid or expired",
+      };
+
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => django401Error,
+      });
+
+      try {
+        await fetchApiServiceSignUp.post("/api/user/create/", {
+          username: "testuser",
+          email: "test@example.com",
+          password: "Password1",
+          passwordRepeat: "Password1",
+        });
+        expect.fail("Should have thrown an error");
+      } catch (error: any) {
+        expect(error.response.status).toBe(401);
+        expect(error.response.data.nonFieldErrors).toEqual([
+          "Token is invalid or expired",
+        ]);
       }
     });
   });
