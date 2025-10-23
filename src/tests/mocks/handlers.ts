@@ -122,6 +122,23 @@ export const handlers = [
     const page_size = Number(url.searchParams.get("page_size")) || 3;
     const authHeader = request.headers.get("Authorization");
 
+    // Check authentication - return 401 Unauthorized if no valid token
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { message: "Token is invalid or expired" },
+        { status: 401 }
+      );
+    }
+
+    // Check authorization - return 403 Forbidden for specific scenarios
+    // For example, if trying to access page beyond what's allowed
+    if (page > 3) {
+      return HttpResponse.json(
+        { detail: "You do not have permission to perform this action." },
+        { status: 403 }
+      );
+    }
+
     let allUsers = [...page1.results];
 
     if (authHeader && authHeader.startsWith("JWT ")) {

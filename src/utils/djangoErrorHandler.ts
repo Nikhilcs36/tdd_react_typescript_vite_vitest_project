@@ -65,10 +65,14 @@ export const handleDjangoErrors = (
     const message = Array.isArray(errorValue) ? errorValue[0] : errorValue;
 
     // Add translation prefix if provided
-    const finalMessage = translationPrefix ? `${translationPrefix}${message}` : message;
+    const finalMessage = translationPrefix
+      ? `${translationPrefix}${message}`
+      : message;
 
     // Separate field-specific errors from non-field errors
-    if (key === "non_field_errors") {
+    // Django REST Framework uses different field names for different error types
+    // Treat 'detail' and 'message' as non-field errors for authentication/authorization contexts
+    if (key === "non_field_errors" || key === "detail" || key === "message") {
       standardizedError.nonFieldErrors.push(finalMessage);
     } else {
       standardizedError.fieldErrors[key] = finalMessage;
