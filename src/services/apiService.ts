@@ -7,6 +7,7 @@ import {
 } from "../utils/validationRules";
 import store from "../store";
 import { handleDjangoErrors } from "../utils/djangoErrorHandler";
+import { handleApiError } from "./errorService";
 
 export interface ApiService<T = Record<string, any>> {
   post: <R>(url: string, body?: T) => Promise<R>;
@@ -39,23 +40,7 @@ export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
       });
       return response.data;
     } catch (error: any) {
-      if (
-        error.response?.status === 400 ||
-        error.response?.status === 401 ||
-        error.response?.status === 403
-      ) {
-        const standardizedError = handleDjangoErrors(error.response.data);
-        throw {
-          response: {
-            status: error.response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw error;
+      throw handleApiError(error, { endpoint: url, operation: "signup" });
     }
   },
 };
@@ -74,23 +59,7 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (
-        response.status === 400 ||
-        response.status === 401 ||
-        response.status === 403
-      ) {
-        const standardizedError = handleDjangoErrors(errorData);
-        throw {
-          response: {
-            status: response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw { response: { data: errorData } }; // Match Axios1 error format
+      throw handleApiError({ response: { status: response.status, data: errorData } }, { endpoint: url, operation: "signup" });
     }
     return response.json() as T;
   },

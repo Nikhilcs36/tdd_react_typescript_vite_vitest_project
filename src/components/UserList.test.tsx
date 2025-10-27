@@ -19,10 +19,14 @@ import { Provider } from "react-redux";
 import store from "../store";
 import { loginSuccess } from "../store/actions";
 import { logoutSuccess } from "../store/actions";
+import * as loggingService from "../services/loggingService";
 
 // Mock axios API call
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
+
+// Mock the logging service
+vi.mock("../services/loggingService");
 
 beforeEach(() => {
   vi.restoreAllMocks(); // Clears all spies/mocks before each test
@@ -886,6 +890,41 @@ describe("User List", () => {
       expect(await screen.findByText("user2")).toBeInTheDocument();
       expect(await screen.findByText("user3")).toBeInTheDocument();
       expect(await screen.findByText("user4")).toBeInTheDocument();
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("logs a standardized error response when the API call fails", async () => {
+      // Spy on the logError function
+      const logSpy = vi.spyOn(loggingService, "logError");
+
+      // Mock the API to return a realistic error response with JSON body
+      server.use(
+        http.get(API_ENDPOINTS.GET_USERS, () => {
+          return HttpResponse.json(
+            { detail: "Internal server error" },
+            { status: 500 }
+          );
+        })
+      );
+
+      setup(true);
+
+      // Wait for the error to be processed and verify the raw Axios error structure is preserved for logging
+      await waitFor(() => {
+        expect(logSpy).toHaveBeenCalled();
+        
+        // Get the actual error response that was logged (raw Axios format)
+        const loggedError = logSpy.mock.calls[0][0] as any;
+        
+        // Verify the raw Axios error structure is preserved for debugging
+        expect(loggedError.response).toBeDefined();
+        expect(loggedError.response.data).toBeDefined();
+        expect(loggedError.response.data.detail).toBe('Internal server error');
+        
+        // The centralized error handling preserves the original error structure for logging
+        // while displaying user-friendly messages to the UI
+      });
     });
   });
 });

@@ -8,6 +8,8 @@ import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { connect, ConnectedProps } from "react-redux";
 import { RootState } from "../store";
+import ErrorDisplay from "./ErrorDisplay";
+import { logError } from "../services/loggingService";
 
 const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
 const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
@@ -41,6 +43,7 @@ interface UserListState {
   loading: boolean;
   showSpinner: boolean;
   showButtonDisabled: boolean;
+  error: any | null;
 }
 
 class UserList extends Component<UserListPageProps, UserListState> {
@@ -56,6 +59,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
     loading: false,
     showSpinner: false,
     showButtonDisabled: false,
+    error: null,
   };
 
   // Browser-compatible timeout IDs
@@ -105,6 +109,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
       loading: true,
       showSpinner: false,
       showButtonDisabled: false,
+      error: null,
     });
 
     // Set up delayed UI states
@@ -152,8 +157,9 @@ class UserList extends Component<UserListPageProps, UserListState> {
         loading: false,
         showSpinner: false,
         showButtonDisabled: false,
+        error: error,
       });
-      console.error("Error fetching users:", error);
+      logError(error);
     }
   };
 
@@ -184,6 +190,24 @@ class UserList extends Component<UserListPageProps, UserListState> {
           </CardHeader>
           <UserContainer>
             <p>{t("userlist.loginRequiredMessage")}</p>
+          </UserContainer>
+        </Card>
+      );
+    }
+
+    // Display error if there is one
+    if (this.state.error) {
+      return (
+        <Card>
+          <CardHeader>
+            <Title>{t("userlist.title")}</Title>
+          </CardHeader>
+          <UserContainer>
+            <ErrorDisplay
+              error={this.state.error}
+              onRetry={() => this.fetchUsers(this.state.page.currentPage)}
+              title={t("userlist.title")}
+            />
           </UserContainer>
         </Card>
       );

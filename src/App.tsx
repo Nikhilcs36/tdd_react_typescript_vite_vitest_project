@@ -25,6 +25,7 @@ import store, { RootState } from "./store";
 import { useLogout } from "./components/logout/useLogout";
 import LogoutMessage from "./components/logout/LogoutMessage";
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -126,42 +127,44 @@ export const AppContent = ({
         </NavRight>
       </NavBar>
       <Content>
-        <LogoutMessage />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route
-            path="/signup"
-            element={<SignUpPage apiService={axiosApiServiceSignUp} />}
-          />
-          <Route
-            path="/login"
-            element={<LoginPage apiService={axiosApiServiceLogin} />}
-          />
-          <Route
-            path="/user/:id"
-            element={
-              <UserPageWrapper
-                ApiGetService={axiosApiServiceGetUser}
-                ApiPutService={axiosApiServiceUpdateUser}
-              />
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProfilePageWrapper
-                ApiGetService={axiosApiServiceGetCurrentUser}
-                ApiPutService={axiosApiServiceUpdateUser}
-              />
-            }
-          />
-          <Route
-            path="/activate/:token"
-            element={
-              <AccountActivationPage apiService={axiosApiServiceActivation} />
-            }
-          />
-        </Routes>
+        <ErrorBoundary>
+          <LogoutMessage />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route
+              path="/signup"
+              element={<SignUpPage apiService={axiosApiServiceSignUp} />}
+            />
+            <Route
+              path="/login"
+              element={<LoginPage apiService={axiosApiServiceLogin} />}
+            />
+            <Route
+              path="/user/:id"
+              element={
+                <UserPageWrapper
+                  ApiGetService={axiosApiServiceGetUser}
+                  ApiPutService={axiosApiServiceUpdateUser}
+                />
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProfilePageWrapper
+                  ApiGetService={axiosApiServiceGetCurrentUser}
+                  ApiPutService={axiosApiServiceUpdateUser}
+                />
+              }
+            />
+            <Route
+              path="/activate/:token"
+              element={
+                <AccountActivationPage apiService={axiosApiServiceActivation} />
+              }
+            />
+          </Routes>
+        </ErrorBoundary>
       </Content>
       <LanguageSwitcher />
     </I18nextProvider>
