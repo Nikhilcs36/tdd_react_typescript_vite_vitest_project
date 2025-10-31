@@ -377,7 +377,7 @@ describe("Login Page", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId("api-error")).toHaveTextContent(
+        expect(screen.getByTestId("error-display")).toHaveTextContent(
           "No active account found with the given credentials"
         );
       });
@@ -387,7 +387,7 @@ describe("Login Page", () => {
 
       // Ensure error disappears
       await waitFor(() => {
-        expect(screen.queryByTestId("api-error")).not.toBeInTheDocument();
+        expect(screen.queryByTestId("error-display")).not.toBeInTheDocument();
       });
     });
 
@@ -404,8 +404,8 @@ describe("Login Page", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId("api-error")).toHaveTextContent(
-          "An unexpected error occurred."
+        expect(screen.getByTestId("error-display")).toHaveTextContent(
+          "Something went wrong on our end. Please try again later."
         );
       });
     });
@@ -421,7 +421,7 @@ describe("Login Page", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId("api-error")).toHaveTextContent(
+        expect(screen.getByTestId("error-display")).toHaveTextContent(
           "No active account found with the given credentials"
         );
       });
@@ -511,7 +511,7 @@ describe("Login Page", () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByTestId("api-error")).toHaveTextContent(
+          expect(screen.getByTestId("error-display")).toHaveTextContent(
             expectedMessage
           );
         });
@@ -706,6 +706,98 @@ describe("Login Page", () => {
       expect(state.auth.user?.id).toBe(1);
       expect(state.auth.user?.username).toBe("testuser");
       // No assertion for token since it's1 not stored
+    });
+  });
+
+  describe("Centralized Error Handling", () => {
+    it("displays ErrorDisplay component for network errors", async () => {
+      mockedAxios.post.mockRejectedValue({
+        response: null, // Network error (no response)
+      });
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("error-display")).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Network connection failed. Please check your internet connection."
+          )
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("displays ErrorDisplay component for server errors (500)", async () => {
+      mockedAxios.post.mockRejectedValue({
+        response: {
+          status: 500,
+          data: { detail: "Internal server error" },
+        },
+      });
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("error-display")).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Something went wrong on our end. Please try again later."
+          )
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("supports retry functionality for network errors", async () => {
+      mockedAxios.post
+        .mockRejectedValueOnce({
+          response: null, // Network error (no response)
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: 13,
+            username: "testuser",
+            email: "testuser@gmail.com",
+            access: "mock-access-token",
+            refresh: "mock-refresh-token",
+          },
+        });
+
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("error-display")).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Network connection failed. Please check your internet connection."
+          )
+        ).toBeInTheDocument();
+      });
+
+      // Click retry button
+      await userEvent.click(screen.getByText("Try Again"));
+
+      await waitFor(() => {
+        expect(mockedNavigate).toHaveBeenCalledWith("/");
+      });
     });
   });
 });

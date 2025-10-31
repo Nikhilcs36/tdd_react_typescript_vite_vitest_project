@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/actions";
+import ErrorDisplay from "../components/ErrorDisplay";
+import { logError } from "../services/loggingService";
 
 const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100 dark:bg-dark-primary`;
 
@@ -30,8 +32,6 @@ const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
 const ErrorWrapper = tw.div`relative mb-6 min-h-[20px]`;
 const ErrorMessage = tw.div`absolute top-full left-0 mt-1 text-red-700 text-sm min-h-[20px] leading-tight`;
 
-const ApiErrorMessage = tw.div`mb-4 p-3 text-red-700 bg-red-100 rounded text-center`;
-
 interface LoginResponse {
   id: number;
   username: string;
@@ -39,17 +39,12 @@ interface LoginResponse {
   refresh: string;
 }
 
-interface ErrorResponse {
-  validationErrors?: Record<string, string>;
-  apiErrorMessage?: string;
-}
-
 interface LoginState {
   email: string;
   password: string;
   isSubmitting: boolean;
   validationErrors: Record<string, string>;
-  apiErrorMessage: string;
+  apiError: any | null;
   touched: {
     email: boolean;
     password: boolean;
@@ -69,7 +64,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     password: "",
     isSubmitting: false,
     validationErrors: {},
-    apiErrorMessage: "",
+    apiError: null,
     touched: {
       email: false,
       password: false,
@@ -103,11 +98,8 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
               ...prev.touched,
               [id]: true,
             },
-            apiErrorMessage: "", // Clear API error on input change
-          } as Pick<
-            LoginState,
-            "email" | "password" | "touched" | "apiErrorMessage"
-          >),
+            apiError: null, // Clear API error on input change
+          } as Pick<LoginState, "email" | "password" | "touched" | "apiError">),
         this.validateFields
       );
     }
@@ -125,7 +117,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
 
   handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    this.setState({ isSubmitting: true, apiErrorMessage: "" });
+    this.setState({ isSubmitting: true, apiError: null });
 
     try {
       const { email, password } = this.state;
@@ -150,26 +142,37 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       // Redirect using navigate prop
       this.props.navigate("/"); // Redirect to home page
     } catch (error) {
-      const apiError = error as { response?: { data?: ErrorResponse } };
-      if (apiError.response?.data) {
-        const { validationErrors, apiErrorMessage } = apiError.response.data;
-        if (apiErrorMessage) {
-          this.setState({ apiErrorMessage });
-        } else if (validationErrors) {
-          this.setState({ validationErrors });
-        }
-      } else {
-        this.setState({
-          apiErrorMessage: "login.errors.generic",
-        });
-      }
+      this.setState({ apiError: error });
+      logError(error);
     } finally {
       this.setState({ isSubmitting: false });
     }
   };
 
+  handleRetry = () => {
+    // Create a proper form event for the retry functionality
+    const formElement = document.createElement("form");
+    const formEvent = {
+      preventDefault: () => {},
+      target: formElement,
+      currentTarget: formElement,
+      nativeEvent: new Event("submit"),
+      bubbles: true,
+      cancelable: true,
+      defaultPrevented: false,
+      eventPhase: 3,
+      isTrusted: true,
+      timeStamp: Date.now(),
+      type: "submit",
+      isDefaultPrevented: () => false,
+      stopPropagation: () => {},
+      persist: () => {},
+    } as unknown as React.FormEvent<HTMLFormElement>;
+    this.handleSubmit(formEvent);
+  };
+
   render() {
-    const { validationErrors, apiErrorMessage } = this.state;
+    const { validationErrors, apiError } = this.state;
     const { t } = this.props;
 
     return (
@@ -181,11 +184,14 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         >
           <Title>{t("login.title")}</Title>
 
-          {/* API Error Message (e.g., "Invalid credentials") */}
-          {apiErrorMessage && (
-            <ApiErrorMessage data-testid="api-error">
-              {t(apiErrorMessage)}
-            </ApiErrorMessage>
+          {/* Centralized Error Display */}
+          {apiError && (
+            <ErrorDisplay
+              error={apiError}
+              onRetry={this.handleRetry}
+              title={t("login.title")}
+              data-testid="error-display"
+            />
           )}
 
           {/* Email Field */}

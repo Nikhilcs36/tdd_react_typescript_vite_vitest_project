@@ -1,7 +1,7 @@
-import React from 'react';
-import tw from 'twin.macro';
-import { useTranslation } from 'react-i18next';
-import { getUserFriendlyErrorMessage } from '../services/errorService';
+import React from "react";
+import tw from "twin.macro";
+import { useTranslation } from "react-i18next";
+import { getUserFriendlyErrorMessage } from "../services/errorService";
 
 // Styled components for error display
 const ErrorContainer = tw.div`bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4`;
@@ -14,43 +14,44 @@ interface ErrorDisplayProps {
   onRetry?: () => void;
   title?: string;
   className?: string;
+  "data-testid"?: string;
 }
 
 /**
  * Reusable error display component that shows user-friendly error messages
  * with i18n support and optional retry functionality
  */
-const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
-  error,
-  onRetry,
-  title,
-  className = ''
-}) => {
+const ErrorDisplay: React.FC<ErrorDisplayProps> = (props) => {
+  const {
+    error,
+    onRetry,
+    title,
+    className = "",
+    "data-testid": dataTestId,
+  } = props;
   const { t } = useTranslation();
 
   // Get user-friendly error message
   // For JavaScript Error objects, use the error message directly
   // For API errors, use the centralized error handler
-  const errorMessage = error instanceof Error 
-    ? error.message 
-    : getUserFriendlyErrorMessage(error);
-  
+  const errorMessage =
+    error instanceof Error ? error.message : getUserFriendlyErrorMessage(error);
+
   // Default title based on error type
-  const defaultTitle = error.response?.status === 401 
-    ? t('errors.title.authentication', { defaultValue: 'Authentication Error' })
-    : t('errors.title.general', { defaultValue: 'Error' });
+  const defaultTitle =
+    error.response?.status === 401
+      ? t("errors.title.authentication", {
+          defaultValue: "Authentication Error",
+        })
+      : t("errors.title.general", { defaultValue: "Error" });
 
   return (
-    <ErrorContainer className={className}>
-      <ErrorTitle>
-        {title || defaultTitle}
-      </ErrorTitle>
-      <ErrorMessage>
-        {errorMessage}
-      </ErrorMessage>
+    <ErrorContainer className={className} data-testid={dataTestId}>
+      <ErrorTitle>{title || defaultTitle}</ErrorTitle>
+      <ErrorMessage>{errorMessage}</ErrorMessage>
       {onRetry && (
         <RetryButton onClick={onRetry}>
-          {t('errors.retry', { defaultValue: 'Try Again' })}
+          {t("errors.retry", { defaultValue: "Try Again" })}
         </RetryButton>
       )}
     </ErrorContainer>
