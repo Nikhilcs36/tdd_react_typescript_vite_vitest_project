@@ -97,6 +97,25 @@ i18n.use(initReactI18next).init({
           chooseFile: "Choose file",
           noFileChosen: "No file chosen",
         },
+        errors: {
+          title: {
+            authentication: "Authentication Error",
+            general: "Error",
+          },
+          retry: "Try Again",
+          401: {
+            token_invalid_or_expired: "Your session has expired. Please log in again.",
+          },
+          403: {
+            permission_denied: "You don't have permission to perform this action.",
+          },
+          500: {
+            internal_server_error: "Something went wrong on our end. Please try again later.",
+          },
+          network: {
+            network_error: "Network connection failed. Please check your internet connection.",
+          },
+        },
       },
     },
     ml: {
@@ -188,6 +207,25 @@ i18n.use(initReactI18next).init({
           chooseFile: "ഫയൽ തിരഞ്ഞെടുക്കുക",
           noFileChosen: "ഫയൽ തിരഞ്ഞെടുത്തിട്ടില്ല",
         },
+        errors: {
+          title: {
+            authentication: "അധികാര പരിശോധന പിശക്",
+            general: "പിശക്",
+          },
+          retry: "വീണ്ടും ശ്രമിക്കുക",
+          401: {
+            token_invalid_or_expired: "നിങ്ങളുടെ സെഷൻ കാലഹരണപ്പെട്ടിരിക്കുന്നു. ദയവായി വീണ്ടും ലോഗിൻ ചെയ്യുക.",
+          },
+          403: {
+            permission_denied: "ഈ പ്രവർത്തനം നടത്താൻ നിങ്ങൾക്ക് അനുമതി ഇല്ല.",
+          },
+          500: {
+            internal_server_error: "ഞങ്ങളുടെ ഭാഗത്ത് എന്തോ പിശക് സംഭവിച്ചു. ദയവായി പിന്നീട് വീണ്ടും ശ്രമിക്കുക.",
+          },
+          network: {
+            network_error: "നെറ്റ്‌വർക്ക് കണക്ഷൻ പരാജയപ്പെട്ടു. ദയവായി നിങ്ങളുടെ ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക.",
+          },
+        },
       },
     },
     ar: {
@@ -277,6 +315,25 @@ i18n.use(initReactI18next).init({
         fileInput: {
           chooseFile: "اختر ملف",
           noFileChosen: "لم يتم اختيار ملف",
+        },
+        errors: {
+          title: {
+            authentication: "خطأ المصادقة",
+            general: "خطأ",
+          },
+          retry: "حاول مرة أخرى",
+          401: {
+            token_invalid_or_expired: "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.",
+          },
+          403: {
+            permission_denied: "ليس لديك إذن لأداء هذا الإجراء.",
+          },
+          500: {
+            internal_server_error: "حدث خطأ من جانبنا. يرجى المحاولة مرة أخرى لاحقًا.",
+          },
+          network: {
+            network_error: "فشل الاتصال بالشبكة. يرجى التحقق من اتصالك بالإنترنت.",
+          },
         },
       },
     },

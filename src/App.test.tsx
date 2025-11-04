@@ -7,6 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import React from "react";
 import App, { AppContent } from "./App";
 import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
@@ -21,6 +22,7 @@ import {
 import { API_ENDPOINTS } from "./services/apiEndpoints";
 import { fillAndSubmitLoginForm } from "./tests/testUtils";
 import LoginPageWrapper from "./page/LoginPage";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Mock the UserPageWrapper component to prevent state updates in tests
 // Provide realistic content for integration tests that expect specific elements
@@ -61,6 +63,44 @@ describe("App", () => {
   it("renders the App component", () => {
     render(<App />);
     screen.debug();
+  });
+});
+
+describe("Error Handling", () => {
+  it("displays a fallback UI when a rendering error occurs", () => {
+    // Create a component that throws an error during the render phase
+    const ErrorThrowingComponent = () => {
+      // This will throw an error during the render phase, which ErrorBoundary can catch
+      throw new Error("Test render error");
+    };
+
+    // Suppress console.error for this test
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/error-trigger"]}>
+          <Routes>
+            <Route 
+              path="/error-trigger" 
+              element={
+                <ErrorBoundary>
+                  <ErrorThrowingComponent />
+                </ErrorBoundary>
+              } 
+            />
+            <Route path="*" element={<AppContent />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // The ErrorDisplay component shows "Application Error" as the title
+    // and the error message from the error object
+    expect(screen.getByText("Application Error")).toBeInTheDocument();
+    expect(screen.getByText("Test render error")).toBeInTheDocument();
+
+    vi.restoreAllMocks();
   });
 });
 

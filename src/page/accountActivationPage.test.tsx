@@ -139,8 +139,15 @@ describe("Account Activation Page", () => {
     // Check that the API call actually returned an error response
     await expect(apiSpy.mock.results[0].value).rejects.toEqual(
       expect.objectContaining({
-        message: "Activation failed",
-        languageReceived: "en",
+        response: expect.objectContaining({
+          status: 400,
+          data: expect.objectContaining({
+            message: "Activation failed",
+            validationErrors: expect.objectContaining({
+              languageReceived: "en",
+            }),
+          }),
+        }),
       })
     );
   });

@@ -229,7 +229,7 @@ describe("Login Page", () => {
       mockedAxios.post.mockRejectedValue({
         response: {
           status: 400,
-          data: { non_field_errors: ["no_active_account"] },
+          data: { nonFieldErrors: ["no_active_account"] },
         },
       });
       renderWithProviders(
@@ -238,11 +238,9 @@ describe("Login Page", () => {
 
       await fillAndSubmitLoginForm(validCredentials);
       await waitFor(() => {
-        expect(
-          screen.getByText(
-            "No active account found with the given credentials."
-          )
-        ).toBeInTheDocument();
+        expect(screen.getByTestId("api-error")).toHaveTextContent(
+          "No active account found with the given credentials."
+        );
       });
     });
 
@@ -496,7 +494,7 @@ describe("Login Page", () => {
           response: {
             status: 400,
             data: {
-              non_field_errors: ["no_active_account"],
+              nonFieldErrors: ["no_active_account"],
             },
           },
         });

@@ -170,10 +170,11 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
             body
           );
           this.setState({ successMessage: true });
-        } catch (error: any) {
-          const validationErrors = error.response?.data?.validationErrors || {};
-          this.setState({ validationErrors, isSubmitting: false });
-        }
+    } catch (error: any) {
+      const apiError = error as { response?: { data?: { validationErrors?: Record<string, string> } } };
+      const validationErrors = apiError.response?.data?.validationErrors || {};
+      this.setState({ validationErrors, isSubmitting: false });
+    }
       }
     );
   };
