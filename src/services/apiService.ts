@@ -6,7 +6,20 @@ import {
   UserUpdateRequestBody,
 } from "../utils/validationRules";
 import store from "../store";
-import { handleDjangoErrors } from "../utils/djangoErrorHandler";
+import { handleApiError, shouldDisplayErrorToUser } from "./errorService";
+import { setGlobalError } from "../store/globalErrorSlice";
+
+// Axios interceptor for centralized error handling
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const processedError = handleApiError(error);
+    if (shouldDisplayErrorToUser(processedError)) {
+      store.dispatch(setGlobalError(processedError));
+    }
+    return Promise.reject(processedError);
+  }
+);
 
 export interface ApiService<T = Record<string, any>> {
   post: <R>(url: string, body?: T) => Promise<R>;
@@ -31,32 +44,12 @@ export interface ApiDeleteService {
 // Axios implementation signup (Django compatible)
 export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
   post: async <T>(url: string, body?: Record<string, any>) => {
-    try {
-      const response = await axios.post<T>(url, body, {
-        headers: {
-          "Accept-Language": i18n.language, // Attach the current language header
-        },
-      });
-      return response.data;
-    } catch (error: any) {
-      if (
-        error.response?.status === 400 ||
-        error.response?.status === 401 ||
-        error.response?.status === 403
-      ) {
-        const standardizedError = handleDjangoErrors(error.response.data);
-        throw {
-          response: {
-            status: error.response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw error;
-    }
+    const response = await axios.post<T>(url, body, {
+      headers: {
+        "Accept-Language": i18n.language, // Attach the current language header
+      },
+    });
+    return response.data;
   },
 };
 
@@ -74,23 +67,10 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (
-        response.status === 400 ||
-        response.status === 401 ||
-        response.status === 403
-      ) {
-        const standardizedError = handleDjangoErrors(errorData);
-        throw {
-          response: {
-            status: response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw { response: { data: errorData } }; // Match Axios1 error format
+      throw handleApiError(
+        { response: { status: response.status, data: errorData } },
+        { endpoint: url, operation: "signup" }
+      );
     }
     return response.json() as T;
   },
@@ -124,7 +104,10 @@ export const fetchApiServiceActivation: ApiService = {
     });
     if (!response.ok) {
       const errorData = await response.json(); // Extract the actual error message
-      throw errorData; // Throw the full error object
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
     return response.json() as T;
   },
@@ -143,7 +126,10 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
 
     // Require authentication for user list access
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "get" }
+      );
     }
 
     // Build headers with basic requirements
@@ -165,28 +151,8 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
     // Django expects snake_case parameters for pagination
     const params = { page, page_size };
 
-    try {
-      const response = await axios.get<T>(url, { headers, params });
-      return response.data;
-    } catch (error: any) {
-      if (
-        error.response?.status === 400 ||
-        error.response?.status === 401 ||
-        error.response?.status === 403
-      ) {
-        const standardizedError = handleDjangoErrors(error.response.data);
-        throw {
-          response: {
-            status: error.response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw error;
-    }
+    const response = await axios.get<T>(url, { headers, params });
+    return response.data;
   },
 };
 
@@ -204,7 +170,10 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
 
     // Require authentication for user list access
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "get" }
+      );
     }
 
     // Build headers with basic requirements
@@ -236,23 +205,10 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (
-        response.status === 400 ||
-        response.status === 401 ||
-        response.status === 403
-      ) {
-        const standardizedError = handleDjangoErrors(errorData);
-        throw {
-          response: {
-            status: response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw { response: { data: errorData } }; // Match Axios error format
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
 
     return response.json() as T;
@@ -267,32 +223,19 @@ export const axiosApiServiceGetCurrentUser: ApiGetService = {
     const accessToken: string | null = authState.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "get" }
+      );
     }
 
-    try {
-      const response = await axios.get<T>(url, {
-        headers: {
-          "Accept-Language": i18n.language,
-          Authorization: `JWT ${accessToken}`,
-        },
-      });
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 400 || error.response?.status === 401) {
-        const standardizedError = handleDjangoErrors(error.response.data);
-        throw {
-          response: {
-            status: error.response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw error;
-    }
+    const response = await axios.get<T>(url, {
+      headers: {
+        "Accept-Language": i18n.language,
+        Authorization: `JWT ${accessToken}`,
+      },
+    });
+    return response.data;
   },
 };
 
@@ -304,7 +247,10 @@ export const fetchApiServiceGetCurrentUser: ApiGetService = {
     const accessToken: string | null = authState.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "get" }
+      );
     }
 
     const response = await fetch(url, {
@@ -316,19 +262,10 @@ export const fetchApiServiceGetCurrentUser: ApiGetService = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (response.status === 400 || response.status === 401) {
-        const standardizedError = handleDjangoErrors(errorData);
-        throw {
-          response: {
-            status: response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw { response: { data: errorData } }; // Match Axios error format
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
     return response.json() as T;
   },
@@ -342,7 +279,10 @@ export const axiosApiServiceGetUser: ApiGetService = {
     const accessToken: string | null = authState.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "get" }
+      );
     }
 
     const response = await axios.get<T>(url, {
@@ -364,7 +304,10 @@ export const fetchApiServiceGetUser: ApiGetService = {
     const accessToken: string | null = authState.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "get" }
+      );
     }
 
     const response = await fetch(url, {
@@ -376,7 +319,10 @@ export const fetchApiServiceGetUser: ApiGetService = {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw errorData;
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
     return response.json() as T;
   },
@@ -385,31 +331,12 @@ export const fetchApiServiceGetUser: ApiGetService = {
 // Axios implementation for login
 export const axiosApiServiceLogin: ApiService<LoginRequestBody> = {
   post: async <R>(url: string, body?: LoginRequestBody) => {
-    try {
-      const response = await axios.post<R>(url, body, {
-        headers: {
-          "Accept-Language": i18n.language,
-        },
-      });
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 400) {
-        const standardizedError = handleDjangoErrors(
-          error.response.data,
-          "login.errors."
-        );
-        throw {
-          response: {
-            status: error.response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              apiErrorMessage: standardizedError.nonFieldErrors[0],
-            },
-          },
-        };
-      }
-      throw error;
-    }
+    const response = await axios.post<R>(url, body, {
+      headers: {
+        "Accept-Language": i18n.language,
+      },
+    });
+    return response.data;
   },
 };
 
@@ -425,28 +352,15 @@ export const fetchApiServiceLogin: ApiService<LoginRequestBody> = {
       body: JSON.stringify(body),
     });
 
-    const responseData = await response.json();
-
     if (!response.ok) {
-      if (response.status === 400) {
-        const standardizedError = handleDjangoErrors(
-          responseData,
-          "login.errors."
-        );
-        throw {
-          response: {
-            status: response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              apiErrorMessage: standardizedError.nonFieldErrors[0],
-            },
-          },
-        };
-      }
-      throw { response: { data: responseData } }; // Match Axios error format
+      const errorData = await response.json();
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
 
-    return responseData as R;
+    return response.json() as R;
   },
 };
 
@@ -458,33 +372,17 @@ export const axiosApiServiceLogout: ApiService = {
     const accessToken: string | null = authState.accessToken;
     const refreshToken: string | null = authState.refreshToken;
 
-    try {
-      const response = await axios.post<R>(
-        url,
-        { refresh: refreshToken }, // Send refresh token in body for blacklisting
-        {
-          headers: {
-            "Accept-Language": i18n.language,
-            Authorization: `JWT ${accessToken}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 400 || error.response?.status === 401) {
-        const standardizedError = handleDjangoErrors(error.response.data);
-        throw {
-          response: {
-            status: error.response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
+    const response = await axios.post<R>(
+      url,
+      { refresh: refreshToken }, // Send refresh token in body for blacklisting
+      {
+        headers: {
+          "Accept-Language": i18n.language,
+          Authorization: `JWT ${accessToken}`,
+        },
       }
-      throw error;
-    }
+    );
+    return response.data;
   },
 };
 
@@ -497,7 +395,10 @@ export const fetchApiServiceLogout: ApiService = {
     const refreshToken: string | null = authState.refreshToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "post" }
+      );
     }
 
     const response = await fetch(url, {
@@ -512,19 +413,10 @@ export const fetchApiServiceLogout: ApiService = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (response.status === 400 || response.status === 401) {
-        const standardizedError = handleDjangoErrors(errorData);
-        throw {
-          response: {
-            status: response.status,
-            data: {
-              validationErrors: standardizedError.fieldErrors,
-              nonFieldErrors: standardizedError.nonFieldErrors,
-            },
-          },
-        };
-      }
-      throw { response: { data: errorData } }; // Match Axios error format
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
 
     // Handle cases where the response might not have a body (e.g., 204 No Content)
@@ -546,7 +438,10 @@ export const axiosApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
     const accessToken: string | null = store.getState().auth.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "put" }
+      );
     }
 
     const response = await axios.put(url, body, {
@@ -572,7 +467,10 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
     const accessToken: string | null = store.getState().auth.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "put" }
+      );
     }
 
     const response = await fetch(url, {
@@ -588,7 +486,10 @@ export const fetchApiServiceUpdateUser: ApiPutService<UserUpdateRequestBody> = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw errorData;
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
 
     return response.json() as T;
@@ -602,7 +503,10 @@ export const axiosApiServiceUpdateUserWithFile: ApiPutServiceWithFile = {
     const accessToken: string | null = store.getState().auth.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "put" }
+      );
     }
 
     const response = await axios.put(url, body, {
@@ -624,7 +528,10 @@ export const fetchApiServiceUpdateUserWithFile: ApiPutServiceWithFile = {
     const accessToken: string | null = store.getState().auth.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "delete" }
+      );
     }
 
     const response = await fetch(url, {
@@ -640,7 +547,10 @@ export const fetchApiServiceUpdateUserWithFile: ApiPutServiceWithFile = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw errorData;
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
 
     return response.json() as T;
@@ -654,7 +564,10 @@ export const axiosApiServiceDeleteUser: ApiDeleteService = {
     const accessToken: string | null = store.getState().auth.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "delete" }
+      );
     }
 
     const response = await axios.delete<R>(url, {
@@ -675,7 +588,10 @@ export const fetchApiServiceDeleteUser: ApiDeleteService = {
     const accessToken: string | null = store.getState().auth.accessToken;
 
     if (!accessToken) {
-      throw new Error("Authentication token not found");
+      throw handleApiError(
+        { message: "Authentication token not found" },
+        { endpoint: url, operation: "delete" }
+      );
     }
 
     const response = await fetch(url, {
@@ -689,7 +605,10 @@ export const fetchApiServiceDeleteUser: ApiDeleteService = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw errorData;
+      // Delegate error handling to the centralized error service
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
     }
 
     // Handle 204 No Content response

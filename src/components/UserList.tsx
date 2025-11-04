@@ -122,11 +122,7 @@ class UserList extends Component<UserListPageProps, UserListState> {
         next: string | null;
         previous: string | null;
         results: User[];
-      }>(
-        API_ENDPOINTS.GET_USERS,
-        pageNumber,
-        this.state.page.size
-      );
+      }>(API_ENDPOINTS.GET_USERS, pageNumber, this.state.page.size);
 
       // Clear timeouts if request completes before delay
       clearTimeout(this.spinnerTimeout);
@@ -153,7 +149,6 @@ class UserList extends Component<UserListPageProps, UserListState> {
         showSpinner: false,
         showButtonDisabled: false,
       });
-      console.error("Error fetching users:", error);
     }
   };
 

@@ -31,9 +31,7 @@ export const useLogout = (apiService: ApiService) => {
         const refreshEvent = new CustomEvent("userListRefresh");
         window.dispatchEvent(refreshEvent);
       }, 0);
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    } catch (error) {}
   };
 
   return { logout };

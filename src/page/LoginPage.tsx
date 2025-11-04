@@ -42,6 +42,8 @@ interface LoginResponse {
 interface ErrorResponse {
   validationErrors?: Record<string, string>;
   apiErrorMessage?: string;
+  nonFieldErrors?: string[];
+  non_field_errors?: string[]; // Keep for backward compatibility
 }
 
 interface LoginState {
@@ -152,8 +154,12 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     } catch (error) {
       const apiError = error as { response?: { data?: ErrorResponse } };
       if (apiError.response?.data) {
-        const { validationErrors, apiErrorMessage } = apiError.response.data;
-        if (apiErrorMessage) {
+        const { validationErrors, apiErrorMessage, nonFieldErrors } = apiError.response.data;
+        
+        // Handle Django nonFieldErrors format (standardized by errorService)
+        if (nonFieldErrors && nonFieldErrors.length > 0) {
+          this.setState({ apiErrorMessage: `login.errors.${nonFieldErrors[0]}` });
+        } else if (apiErrorMessage) {
           this.setState({ apiErrorMessage });
         } else if (validationErrors) {
           this.setState({ validationErrors });

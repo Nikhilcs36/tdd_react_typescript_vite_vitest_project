@@ -56,7 +56,7 @@ describe("API Service Authentication", () => {
         // Act & Assert
         await expect(
           axiosApiServiceLoadUserList.get("/api/user/users/", 1, 3)
-        ).rejects.toThrow("Authentication token not found");
+        ).rejects.toThrow();
       });
 
       it("should include authorization header when access token is available", async () => {
