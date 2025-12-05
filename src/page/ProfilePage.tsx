@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import tw from "twin.macro";
 import {
   ApiGetService,
@@ -66,6 +66,7 @@ interface ProfilePageProps extends WithTranslation {
   };
   dispatch: AppDispatch;
   navigate: (path: string) => void;
+  location?: any; // Add location prop to access navigation state
 }
 
 interface User {
@@ -125,6 +126,13 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
 
   componentDidMount() {
     this.loadUser();
+    
+    // Check if navigation state contains showEditForm: true and automatically enter edit mode
+    // This allows direct navigation to edit form from UserPage
+    const locationState = (this.props as any).location?.state;
+    if (locationState && locationState.showEditForm === true) {
+      this.setState({ isEditing: true });
+    }
   }
 
   componentWillUnmount() {
@@ -698,7 +706,8 @@ export const ProfilePageWrapper = (props: {
   ApiDeleteService?: ApiDeleteService;
 }) => {
   const navigate = useNavigate();
-  return <ConnectedProfilePage {...props} navigate={navigate} />;
+  const location = useLocation();
+  return <ConnectedProfilePage {...props} navigate={navigate} location={location} />;
 };
 
 export default ProfilePageWrapper;

@@ -307,6 +307,17 @@ describe("ProfilePage", () => {
         );
       });
     });
+
+    it("automatically enters edit mode when navigation state contains showEditForm: true", async () => {
+      await setup({ initialEntries: ["/profile", { state: { showEditForm: true } }] });
+
+      // Wait for user data to load and verify that edit form is automatically displayed
+      await waitFor(() => {
+        expect(screen.getByTestId("edit-profile-form")).toBeInTheDocument();
+        expect(screen.getByTestId("username-input")).toBeInTheDocument();
+        expect(screen.getByTestId("email-input")).toBeInTheDocument();
+      });
+    });
   });
 
   describe("Profile Image Handling", () => {
