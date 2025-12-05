@@ -51,6 +51,18 @@ const mockApiDeleteService = { delete: vi.fn() };
 // Mock URL.createObjectURL for file preview
 global.URL.createObjectURL = vi.fn(() => "blob:test-preview-url");
 
+// Mock useNavigate hook
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>(
+    "react-router-dom"
+  );
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 describe("ProfilePage", () => {
   const baseUser = {
     id: 1,
@@ -110,6 +122,7 @@ describe("ProfilePage", () => {
       mockGet,
       mockPut,
       mockDelete,
+      mockNavigate,
     };
   };
 
@@ -823,6 +836,46 @@ describe("ProfilePage", () => {
 
       // Verify edit button is displayed again
       expect(screen.getByTestId("edit-profile-button")).toBeInTheDocument();
+    });
+
+    it("navigates back to UserPage when canceling edit form accessed from UserPage", async () => {
+      const { userData, mockNavigate } = await setup({ 
+        initialEntries: ["/profile", { state: { showEditForm: true } }]
+      });
+
+      // Wait for edit form to be automatically displayed
+      await waitFor(() => {
+        expect(screen.getByTestId("edit-profile-form")).toBeInTheDocument();
+      });
+
+      // Click cancel button
+      fireEvent.click(screen.getByTestId("cancel-edit-button"));
+
+      // Verify navigation back to UserPage
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(`/user/${userData.id}`);
+      });
+    });
+
+    it("stays on ProfilePage when canceling edit form accessed directly", async () => {
+      const { mockNavigate } = await setup();
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode manually (not from UserPage)
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Click cancel button
+      fireEvent.click(screen.getByTestId("cancel-edit-button"));
+
+      // Verify no navigation occurred (stays on ProfilePage)
+      await waitFor(() => {
+        expect(mockNavigate).not.toHaveBeenCalled();
+        expect(screen.getByTestId("profile-page")).toBeInTheDocument();
+      });
     });
   });
 

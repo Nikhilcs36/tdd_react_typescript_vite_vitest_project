@@ -90,6 +90,7 @@ interface ProfilePageState {
   selectedFile: File | null;
   clearImage: boolean;
   imagePreviewUrl: string | null; // Store blob URL for cleanup
+  accessedFromUserPage: boolean; // Track if accessed from UserPage
 }
 
 class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
@@ -120,6 +121,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     selectedFile: null,
     clearImage: false,
     imagePreviewUrl: null, // Initialize image preview URL
+    accessedFromUserPage: false, // Initialize accessedFromUserPage
   };
 
   private successTimeout: NodeJS.Timeout | null = null;
@@ -131,7 +133,10 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     // This allows direct navigation to edit form from UserPage
     const locationState = (this.props as any).location?.state;
     if (locationState && locationState.showEditForm === true) {
-      this.setState({ isEditing: true });
+      this.setState({ 
+        isEditing: true,
+        accessedFromUserPage: true // Track that we came from UserPage
+      });
     }
   }
 
@@ -170,8 +175,14 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
 
   // Toggle edit mode
   toggleEditMode = () => {
-    const { user } = this.state;
+    const { user, accessedFromUserPage } = this.state;
     if (!user) return;
+
+    // If exiting edit mode and accessed from UserPage, navigate back to UserPage
+    if (this.state.isEditing && accessedFromUserPage) {
+      this.props.navigate(`/user/${user.id}`);
+      return;
+    }
 
     this.setState((prevState) => ({
       isEditing: !prevState.isEditing,
@@ -334,6 +345,12 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         clearImage: false, // Uncheck the clear image checkbox
         imagePreviewUrl: null, // Clear image preview after successful upload
       });
+
+      // If accessed from UserPage, navigate back to UserPage after successful update
+      if (this.state.accessedFromUserPage) {
+        this.props.navigate(`/user/${response.id}`);
+        return;
+      }
 
       // Reset the file input's value using the ref
       if (this.fileInputRef.current) {
