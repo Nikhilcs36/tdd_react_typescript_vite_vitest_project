@@ -60,7 +60,7 @@ interface UserPageProps extends WithTranslation {
     error: string | null;
   };
   dispatch: AppDispatch; // Properly typed dispatch function
-  navigate: (path: string) => void;
+  navigate: (path: string, state?: { state: { showEditForm: boolean } }) => void;
 }
 
 interface User {
@@ -164,22 +164,11 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     return Number(auth.user.id) === Number(user.id);
   };
 
-  // Toggle edit mode
-  toggleEditMode = () => {
-    const { user } = this.state;
-    if (!user) return;
-
-    this.setState((prevState) => ({
-      isEditing: !prevState.isEditing,
-      // Reset form data when entering edit mode
-      editForm: {
-        username: user.username,
-        email: user.email,
-        image: user.image || "",
-      },
-      validationErrors: {},
-      successMessage: null,
-    }));
+  // Navigate to profile page for editing
+  handleEditClick = () => {
+    // Navigate to profile page with state to show edit form directly
+    // This eliminates the extra click in the user profile editing flow
+    this.props.navigate("/profile", { state: { showEditForm: true } });
   };
 
   // Update handleInputChange to validate on each change
@@ -341,89 +330,6 @@ class UserPage extends Component<UserPageProps, UserPageState> {
     }
   };
 
-  renderEditForm() {
-    const { editForm, isSubmitting, validationErrors } = this.state;
-    const { t } = this.props;
-
-    return (
-      <FormContainer
-        data-testid="edit-profile-form"
-        onSubmit={this.handleSubmit}
-      >
-        <FormGroup>
-          <Label htmlFor="username">{t("profile.username")}</Label>
-          <Input
-            id="username"
-            name="username"
-            value={editForm.username}
-            onChange={this.handleInputChange}
-            disabled={isSubmitting}
-            data-testid="username-input"
-          />
-          {validationErrors.username && (
-            <ErrorMessage data-testid="username-error">
-              {validationErrors.username}
-            </ErrorMessage>
-          )}
-        </FormGroup>
-
-        <FormGroup>
-          <Label htmlFor="email">{t("profile.email")}</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={editForm.email}
-            onChange={this.handleInputChange}
-            disabled={isSubmitting}
-            data-testid="email-input"
-          />
-          {validationErrors.email && (
-            <ErrorMessage data-testid="email-error">
-              {validationErrors.email}
-            </ErrorMessage>
-          )}
-        </FormGroup>
-
-        <FormGroup>
-          <Label htmlFor="image">{t("profile.imageUrl")}</Label>
-          <Input
-            id="image"
-            name="image"
-            value={editForm.image}
-            onChange={this.handleInputChange}
-            disabled={isSubmitting}
-            placeholder="https://example.com/image.jpg"
-            data-testid="image-input"
-          />
-          {validationErrors.image && (
-            <ErrorMessage data-testid="image-error">
-              {validationErrors.image}
-            </ErrorMessage>
-          )}
-        </FormGroup>
-
-        <ButtonContainer>
-          <SaveButton
-            type="submit"
-            disabled={isSubmitting}
-            data-testid="save-profile-button"
-          >
-            {isSubmitting ? t("profile.saving") : t("profile.saveChanges")}
-          </SaveButton>
-          <CancelButton
-            type="button"
-            onClick={this.toggleEditMode}
-            disabled={isSubmitting}
-            data-testid="cancel-edit-button"
-          >
-            {t("profile.cancel")}
-          </CancelButton>
-        </ButtonContainer>
-      </FormContainer>
-    );
-  }
-
   renderProfileCard() {
     const { user, showDeleteConfirmation } = this.state;
     const { t } = this.props;
@@ -440,7 +346,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
         <ProfileEmail data-testid="email">{user.email}</ProfileEmail>
         {this.isOwnProfile() && (
           <EditButton
-            onClick={this.toggleEditMode}
+            onClick={this.handleEditClick}
             data-testid="edit-profile-button"
           >
             {t("profile.editProfile")}
@@ -486,7 +392,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   }
 
   renderContent() {
-    const { isEditing, successMessage } = this.state;
+    const { successMessage } = this.state;
     const { isLoading, error } = this.props.user;
 
     if (isLoading) {
@@ -513,7 +419,7 @@ class UserPage extends Component<UserPageProps, UserPageState> {
             {successMessage}
           </SuccessAlert>
         )}
-        {isEditing ? this.renderEditForm() : this.renderProfileCard()}
+        {this.renderProfileCard()}
       </>
     );
   }

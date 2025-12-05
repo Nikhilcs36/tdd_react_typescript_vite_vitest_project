@@ -35,12 +35,14 @@ const mockApiGetService = { get: vi.fn() };
 const mockApiPutService = { put: vi.fn() };
 const mockApiDeleteService = { delete: vi.fn() };
 
-// Mock useParams
+// Mock useParams and useNavigate
+const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => ({
   ...(await vi.importActual<typeof import("react-router-dom")>(
     "react-router-dom"
   )),
   useParams: () => ({ id: "1" }),
+  useNavigate: () => mockNavigate,
 }));
 
 describe("UserPage", () => {
@@ -126,24 +128,16 @@ describe("UserPage", () => {
       );
     });
 
-    it("preserves auth token during updates", async () => {
-      const { mockPut } = await setup({ withAuth: true });
+    it("navigates to profile page with edit state when edit button is clicked", async () => {
+      await setup({ withAuth: true });
 
       fireEvent.click(await screen.findByTestId("edit-profile-button"));
-      fireEvent.change(screen.getByTestId("username-input"), {
-        target: { value: "updateduser" },
-      });
-      fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      await waitFor(() => expect(mockPut).toHaveBeenCalled());
-      expect(store.getState().auth.accessToken).toBe("test-access-token");
-      expect(store.getState().auth.refreshToken).toBe("test-refresh-token");
-      expect(mockPut).toHaveBeenCalledWith(
-        API_ENDPOINTS.UPDATE_USER(1),
-        expect.objectContaining({
-          username: "updateduser",
-        })
-      );
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith("/profile", {
+          state: { showEditForm: true },
+        });
+      });
     });
 
     it("displays loading spinner", async () => {
@@ -175,36 +169,6 @@ describe("UserPage", () => {
         },
         { timeout: 3000 }
       );
-    });
-
-    it("handles update errors", async () => {
-      await setup();
-
-      // Wait for user data to load
-      await waitFor(() =>
-        expect(screen.getByTestId("username")).toBeInTheDocument()
-      );
-
-      // Enter edit mode
-      fireEvent.click(screen.getByTestId("edit-profile-button"));
-
-      // Mock the update to fail
-      mockApiPutService.put.mockRejectedValueOnce({
-        response: { data: { detail: "Update failed" } },
-      });
-
-      // Make a change and submit the form
-      fireEvent.change(screen.getByTestId("username-input"), {
-        target: { value: "updateduser" },
-      });
-      fireEvent.click(screen.getByTestId("save-profile-button"));
-
-      // Verify error message is displayed
-      await waitFor(() => {
-        expect(screen.getByTestId("error-message")).toHaveTextContent(
-          "Update failed"
-        );
-      });
     });
   });
 
@@ -275,39 +239,6 @@ describe("UserPage", () => {
     ];
 
     it.each(languageCases)(
-      "displays $lang UI elements correctly",
-      async ({ lang, translations }) => {
-        await setup({ language: lang });
-
-        // Test initial state
-        await waitFor(() =>
-          expect(screen.getByTestId("username")).toBeInTheDocument()
-        );
-        expect(screen.getByTestId("edit-profile-button")).toHaveTextContent(
-          translations.edit
-        );
-
-        // Test edit mode
-        fireEvent.click(screen.getByTestId("edit-profile-button"));
-        expect(screen.getByTestId("save-profile-button")).toHaveTextContent(
-          translations.save
-        );
-        expect(screen.getByTestId("cancel-edit-button")).toHaveTextContent(
-          translations.cancel
-        );
-
-        // Check form labels
-        expect(
-          screen.getByLabelText(translations.username)
-        ).toBeInTheDocument();
-        expect(screen.getByLabelText(translations.email)).toBeInTheDocument();
-        expect(
-          screen.getByLabelText(translations.imageUrl)
-        ).toBeInTheDocument();
-      }
-    );
-
-    it.each(languageCases)(
       "handles $lang API errors",
       async ({ lang, translations }) => {
         const mockError = vi.fn().mockRejectedValue({
@@ -331,67 +262,6 @@ describe("UserPage", () => {
     );
 
     it.each(languageCases)(
-      "handles $lang update errors",
-      async ({ lang, translations }) => {
-        await setup({ language: lang });
-
-        // Wait for user data to load
-        await waitFor(() =>
-          expect(screen.getByTestId("username")).toBeInTheDocument()
-        );
-
-        // Enter edit mode
-        fireEvent.click(screen.getByTestId("edit-profile-button"));
-
-        // Mock the update to fail
-        mockApiPutService.put.mockRejectedValueOnce({
-          response: { data: { detail: "Update failed" } },
-        });
-
-        // Make a change and submit the form
-        fireEvent.change(screen.getByTestId("username-input"), {
-          target: { value: "updateduser" },
-        });
-        fireEvent.click(screen.getByTestId("save-profile-button"));
-
-        // Verify error message is displayed
-        await waitFor(
-          () => {
-            expect(screen.getByTestId("error-message")).toHaveTextContent(
-              translations.updateError
-            );
-          },
-          { timeout: 3000 }
-        );
-      }
-    );
-
-    it.each(languageCases)(
-      "handles $lang success messages",
-      async ({ lang, translations }) => {
-        await setup({ language: lang });
-
-        // Wait for user data to load
-        await waitFor(() =>
-          expect(screen.getByTestId("username")).toBeInTheDocument()
-        );
-
-        // Enter edit mode
-        fireEvent.click(screen.getByTestId("edit-profile-button"));
-
-        // Submit the form
-        fireEvent.click(screen.getByTestId("save-profile-button"));
-
-        // Check success message
-        await waitFor(() => {
-          expect(screen.getByTestId("success-message")).toHaveTextContent(
-            translations.success
-          );
-        });
-      }
-    );
-
-    it.each(languageCases)(
       "maintains $lang text direction",
       async ({ lang, direction }) => {
         await setup({ language: lang });
@@ -401,101 +271,6 @@ describe("UserPage", () => {
     );
   });
 
-  describe("Profile Update", () => {
-    it("clears the profile edit success message after 3 seconds", async () => {
-      await setup();
-
-      // Wait for user data to load
-      await waitFor(() =>
-        expect(screen.getByTestId("username")).toBeInTheDocument()
-      );
-
-      // Enter edit mode
-      fireEvent.click(screen.getByTestId("edit-profile-button"));
-
-      // Submit the form to trigger the success message
-      fireEvent.click(screen.getByTestId("save-profile-button"));
-
-      // Check that the success message is displayed
-      await waitFor(() => {
-        expect(screen.getByTestId("success-message")).toBeInTheDocument();
-      });
-
-      // Check that the success message is no longer displayed after 3 seconds
-      await waitFor(
-        () => {
-          expect(
-            screen.queryByTestId("success-message")
-          ).not.toBeInTheDocument();
-        },
-        { timeout: 4000 } // Wait for 4 seconds to be safe
-      );
-    });
-
-    it("displays success message after successful profile update", async () => {
-      const { mockPut: _ } = await setup();
-
-      // Wait for user data to load
-      await waitFor(() =>
-        expect(screen.getByTestId("username")).toBeInTheDocument()
-      );
-
-      // Enter edit mode
-      fireEvent.click(screen.getByTestId("edit-profile-button"));
-
-      // Make a change and submit the form
-      fireEvent.change(screen.getByTestId("username-input"), {
-        target: { value: "updateduser" },
-      });
-      fireEvent.click(screen.getByTestId("save-profile-button"));
-
-      // Verify success message is displayed
-      await waitFor(() => {
-        expect(screen.getByTestId("success-message")).toHaveTextContent(
-          "Profile updated successfully"
-        );
-      });
-    });
-  });
-
-  describe("Edit Form Cancellation", () => {
-    it("reverts changes and exits edit mode when cancel button is clicked", async () => {
-      const { userData } = await setup();
-
-      // Wait for user data to load
-      await waitFor(() =>
-        expect(screen.getByTestId("username")).toHaveTextContent(
-          userData.username
-        )
-      );
-
-      // Enter edit mode
-      fireEvent.click(screen.getByTestId("edit-profile-button"));
-
-      // Make changes to the form
-      fireEvent.change(screen.getByTestId("username-input"), {
-        target: { value: "changedusername" },
-      });
-      fireEvent.change(screen.getByTestId("email-input"), {
-        target: { value: "changed@example.com" },
-      });
-
-      // Click cancel button
-      fireEvent.click(screen.getByTestId("cancel-edit-button"));
-
-      // Verify edit mode is exited (edit form is no longer displayed)
-      expect(screen.queryByTestId("edit-profile-form")).not.toBeInTheDocument();
-
-      // Verify profile card is displayed with original data
-      expect(screen.getByTestId("username")).toHaveTextContent(
-        userData.username
-      );
-      expect(screen.getByTestId("email")).toHaveTextContent(userData.email);
-
-      // Verify edit button is displayed again
-      expect(screen.getByTestId("edit-profile-button")).toBeInTheDocument();
-    });
-  });
   describe("User Deletion Workflow", () => {
     it("clears delete success message after 3 seconds", async () => {
       await setup({ withAuth: true });
