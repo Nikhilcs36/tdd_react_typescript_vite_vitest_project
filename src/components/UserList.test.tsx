@@ -24,6 +24,11 @@ import { logoutSuccess } from "../store/actions";
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
 
+// Mock DashboardContainer to prevent API calls during UserList tests
+vi.mock("./dashboard/DashboardContainer", () => ({
+  default: () => <div data-testid="dashboard-container">Dashboard Container</div>
+}));
+
 beforeEach(() => {
   vi.restoreAllMocks(); // Clears all spies/mocks before each test
 });
