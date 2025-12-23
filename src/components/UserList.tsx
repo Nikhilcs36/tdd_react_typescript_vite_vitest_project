@@ -8,6 +8,7 @@ import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { connect, ConnectedProps } from "react-redux";
 import { RootState } from "../store";
+import DashboardContainer from "./dashboard/DashboardContainer";
 
 const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
 const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
@@ -185,35 +186,42 @@ class UserList extends Component<UserListPageProps, UserListState> {
     }
 
     return (
-      <Card>
-        <CardHeader>
-          <Title>{t("userlist.title")}</Title>
-        </CardHeader>
-        <UserContainer>
-          {this.state.showSpinner ? (
-            <Spinner data-testid="spinner" />
-          ) : this.state.page.results && this.state.page.results.length > 0 ? (
-            this.state.page.results.map((user, index) => (
-              <div key={user.id || `user-${index}`}>
-                <UserListItem user={user} onClick={this.handleUserClick} />
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <Title>{t("userlist.title")}</Title>
+          </CardHeader>
+          <UserContainer>
+            {this.state.showSpinner ? (
+              <Spinner data-testid="spinner" />
+            ) : this.state.page.results && this.state.page.results.length > 0 ? (
+              this.state.page.results.map((user, index) => (
+                <div key={user.id || `user-${index}`}>
+                  <UserListItem user={user} onClick={this.handleUserClick} />
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                {t("userlist.emptyPageMessage")}
               </div>
-            ))
-          ) : (
-            <div className="text-center text-gray-500">
-              {t("userlist.emptyPageMessage")}
-            </div>
-          )}
-        </UserContainer>
-        <Pagination
-          next={this.state.page.next}
-          previous={this.state.page.previous}
-          count={this.state.page.count}
-          pageSize={this.state.page.size}
-          currentPage={this.state.page.currentPage}
-          onPageChange={this.fetchUsers}
-          loading={this.state.loading}
-        />
-      </Card>
+            )}
+          </UserContainer>
+          <Pagination
+            next={this.state.page.next}
+            previous={this.state.page.previous}
+            count={this.state.page.count}
+            pageSize={this.state.page.size}
+            currentPage={this.state.page.currentPage}
+            onPageChange={this.fetchUsers}
+            loading={this.state.loading}
+          />
+        </Card>
+
+        {/* Dashboard Section */}
+        {this.state.page.results && this.state.page.results.length > 0 && (
+          <DashboardContainer />
+        )}
+      </div>
     );
   }
 }

@@ -1,0 +1,207 @@
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import tw from 'twin.macro';
+import { RootState } from '../../store';
+import { UserStats, LoginActivityResponse, ChartData, AdminDashboardData } from '../../types/loginTracking';
+import { getUserStats, getLoginActivity, getLoginTrends, getLoginComparison, getLoginDistribution, getAdminDashboard, getAdminCharts } from '../../services/loginTrackingService';
+import UserDashboardCard from './UserDashboardCard';
+import LoginActivityTable from './LoginActivityTable';
+import LoginTrendsChart from './LoginTrendsChart';
+
+// Styled components
+const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
+const DashboardGrid = tw.div`grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8`;
+const ChartGrid = tw.div`grid grid-cols-1 lg:grid-cols-2 gap-6`;
+const SectionTitle = tw.h2`text-2xl font-bold mb-6 dark:text-dark-text`;
+const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400 py-8`;
+
+interface DashboardContainerProps {
+  userId?: number;
+  isAdmin?: boolean;
+}
+
+/**
+ * DashboardContainer Component
+ * Orchestrates the fetching and display of all dashboard components
+ * Handles parallel data fetching for optimal performance
+ */
+const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId, isAdmin = false }) => {
+  const { t } = useTranslation();
+  const authState = useSelector((state: RootState) => state.auth);
+  const currentUserId = userId || authState.user?.id;
+
+  // State management
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [loginActivity, setLoginActivity] = useState<LoginActivityResponse | null>(null);
+  const [loginTrends, setLoginTrends] = useState<ChartData | null>(null);
+  const [loginComparison, setLoginComparison] = useState<ChartData | null>(null);
+  const [loginDistribution, setLoginDistribution] = useState<ChartData | null>(null);
+  const [adminDashboard, setAdminDashboard] = useState<AdminDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch all dashboard data in parallel
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!currentUserId) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Execute all API calls in parallel
+        const [
+          userStatsResponse,
+          loginActivityResponse,
+          trendsResponse,
+          comparisonResponse,
+          distributionResponse,
+          adminDashboardResponse,
+          adminChartsResponse
+        ] = await Promise.allSettled([
+          getUserStats(),
+          getLoginActivity(1, 5),
+          getLoginTrends(),
+          getLoginComparison(),
+          getLoginDistribution(),
+          isAdmin ? getAdminDashboard() : Promise.resolve(null),
+          isAdmin ? getAdminCharts() : Promise.resolve(null)
+        ]);
+
+        // Process responses
+        if (userStatsResponse.status === 'fulfilled') {
+          setUserStats(userStatsResponse.value);
+        }
+
+        if (loginActivityResponse.status === 'fulfilled') {
+          setLoginActivity(loginActivityResponse.value);
+        }
+
+        if (trendsResponse.status === 'fulfilled') {
+          setLoginTrends(trendsResponse.value);
+        }
+
+        if (comparisonResponse.status === 'fulfilled') {
+          setLoginComparison(comparisonResponse.value);
+        }
+
+        if (distributionResponse.status === 'fulfilled') {
+          setLoginDistribution(distributionResponse.value);
+        }
+
+        if (isAdmin && adminDashboardResponse.status === 'fulfilled') {
+          setAdminDashboard(adminDashboardResponse.value);
+        }
+
+        if (isAdmin && adminChartsResponse.status === 'fulfilled') {
+          // Admin charts data is available but not currently used in the UI
+        }
+
+        // Check if any critical requests failed
+        const criticalFailures = [
+          userStatsResponse.status === 'rejected',
+          loginActivityResponse.status === 'rejected',
+          trendsResponse.status === 'rejected'
+        ];
+
+        if (criticalFailures.some(failed => failed)) {
+          setError(t('dashboard.error_loading_data'));
+        }
+
+      } catch (err) {
+        setError(t('dashboard.error_loading_data'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [currentUserId, isAdmin, t]);
+
+  // Render loading state
+  if (loading) {
+    return (
+      <DashboardContainerWrapper>
+        <div className="flex items-center justify-center h-64">
+          <div data-testid="spinner" className="w-12 h-12 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+        </div>
+      </DashboardContainerWrapper>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <DashboardContainerWrapper>
+        <ErrorMessage>
+          {error}
+        </ErrorMessage>
+      </DashboardContainerWrapper>
+    );
+  }
+
+  return (
+    <DashboardContainerWrapper>
+      {/* User Statistics Section */}
+      <SectionTitle>{t('dashboard.user_statistics')}</SectionTitle>
+      <DashboardGrid>
+        <UserDashboardCard 
+          userStats={userStats} 
+          loading={false} 
+        />
+      </DashboardGrid>
+
+      {/* Login Activity Section */}
+      <SectionTitle>{t('dashboard.recent_activity')}</SectionTitle>
+      <LoginActivityTable 
+        loginActivity={loginActivity?.results || []} 
+        loading={false} 
+      />
+
+      {/* Charts Section */}
+      <SectionTitle>{t('dashboard.visualizations')}</SectionTitle>
+      <ChartGrid>
+        <LoginTrendsChart 
+          chartData={loginTrends} 
+          loading={false} 
+          chartType="line" 
+        />
+        <LoginTrendsChart 
+          chartData={loginComparison} 
+          loading={false} 
+          chartType="bar" 
+        />
+        <LoginTrendsChart 
+          chartData={loginDistribution} 
+          loading={false} 
+          chartType="pie" 
+        />
+      </ChartGrid>
+
+      {/* Admin Dashboard Section (if applicable) */}
+      {isAdmin && adminDashboard && (
+        <>
+          <SectionTitle>{t('dashboard.admin_overview')}</SectionTitle>
+          {/* Admin-specific components would go here */}
+          <div className="p-6 bg-white rounded-lg shadow-lg dark:bg-dark-secondary">
+            <h3 className="mb-4 text-lg font-semibold dark:text-dark-text">
+              {t('dashboard.admin_statistics')}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {t('dashboard.total_users', { count: adminDashboard.total_users })}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              {t('dashboard.active_users', { count: adminDashboard.active_users })}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              {t('dashboard.total_logins', { count: adminDashboard.total_logins })}
+            </p>
+          </div>
+        </>
+      )}
+    </DashboardContainerWrapper>
+  );
+};
+
+export default DashboardContainer;
