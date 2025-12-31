@@ -7,7 +7,7 @@ const secureLS = new SecureLS({ encodingType: "aes" });
 
 export interface AuthState {
   isAuthenticated: boolean;
-  user: { id: number; username: string; image?: string } | null;
+  user: { id: number; username: string; image?: string; is_staff: boolean; is_superuser: boolean } | null;
   accessToken: string | null;
   refreshToken: string | null;
   showLogoutMessage: boolean;
@@ -39,6 +39,8 @@ const authSlice = createSlice({
         state.user = {
           id: action.payload.id,
           username: action.payload.username,
+          is_staff: action.payload.is_staff,
+          is_superuser: action.payload.is_superuser,
         };
         state.accessToken = action.payload.access;
         state.refreshToken = action.payload.refresh;
@@ -46,7 +48,12 @@ const authSlice = createSlice({
         // Store tokens in secure storage
         secureLS.set("authState", {
           isAuthenticated: true,
-          user: { id: action.payload.id, username: action.payload.username },
+          user: {
+            id: action.payload.id,
+            username: action.payload.username,
+            is_staff: action.payload.is_staff,
+            is_superuser: action.payload.is_superuser
+          },
           accessToken: action.payload.access,
           refreshToken: action.payload.refresh,
           showLogoutMessage: false, // Ensure logout message is hidden in storage too

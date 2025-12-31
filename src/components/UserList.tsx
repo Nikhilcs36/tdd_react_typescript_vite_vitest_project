@@ -4,11 +4,11 @@ import tw from "twin.macro";
 import { ApiGetService } from "../services/apiService";
 import UserListItem from "./UserListItem";
 import Pagination from "./Pagination";
-import { withTranslation, WithTranslation } from "react-i18next";
+import { withTranslation, WithTranslation, useTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { connect, ConnectedProps } from "react-redux";
 import { RootState } from "../store";
-import DashboardContainer from "./dashboard/DashboardContainer";
+import { useUserAuthorization } from "../utils/authorization";
 
 const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
 const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
@@ -185,43 +185,39 @@ class UserList extends Component<UserListPageProps, UserListState> {
       );
     }
 
+    // Check admin access using the authorization hook
+    // Since this is a class component, we need to use the hook in the wrapper
+    // The wrapper component will handle the admin check
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <Title>{t("userlist.title")}</Title>
-          </CardHeader>
-          <UserContainer>
-            {this.state.showSpinner ? (
-              <Spinner data-testid="spinner" />
-            ) : this.state.page.results && this.state.page.results.length > 0 ? (
-              this.state.page.results.map((user, index) => (
-                <div key={user.id || `user-${index}`}>
-                  <UserListItem user={user} onClick={this.handleUserClick} />
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500">
-                {t("userlist.emptyPageMessage")}
+      <Card>
+        <CardHeader>
+          <Title>{t("userlist.title")}</Title>
+        </CardHeader>
+        <UserContainer>
+          {this.state.showSpinner ? (
+            <Spinner data-testid="spinner" />
+          ) : this.state.page.results && this.state.page.results.length > 0 ? (
+            this.state.page.results.map((user, index) => (
+              <div key={user.id || `user-${index}`}>
+                <UserListItem user={user} onClick={this.handleUserClick} />
               </div>
-            )}
-          </UserContainer>
-          <Pagination
-            next={this.state.page.next}
-            previous={this.state.page.previous}
-            count={this.state.page.count}
-            pageSize={this.state.page.size}
-            currentPage={this.state.page.currentPage}
-            onPageChange={this.fetchUsers}
-            loading={this.state.loading}
-          />
-        </Card>
-
-        {/* Dashboard Section */}
-        {this.state.page.results && this.state.page.results.length > 0 && (
-          <DashboardContainer />
-        )}
-      </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-500">
+              {t("userlist.emptyPageMessage")}
+            </div>
+          )}
+        </UserContainer>
+        <Pagination
+          next={this.state.page.next}
+          previous={this.state.page.previous}
+          count={this.state.page.count}
+          pageSize={this.state.page.size}
+          currentPage={this.state.page.currentPage}
+          onPageChange={this.fetchUsers}
+          loading={this.state.loading}
+        />
+      </Card>
     );
   }
 }
@@ -237,6 +233,23 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 // Wrapper component to inject `useNavigate` for class component
 function UserListWithRouter(props: Omit<UserListPageProps, "navigate">) {
   const navigate = useNavigate(); // useNavigate hook to get navigation function
+  const { isAdmin } = useUserAuthorization(); // Check admin access
+  const { t } = useTranslation(); // Get translation function
+
+  // If user is authenticated but not an admin, show access denied message
+  if (props.isAuthenticated && !isAdmin) {
+    return (
+      <Card>
+        <CardHeader>
+          <Title>{t("userlist.accessDeniedTitle")}</Title>
+        </CardHeader>
+        <UserContainer>
+          <p>{t("userlist.accessDeniedMessage")}</p>
+        </UserContainer>
+      </Card>
+    );
+  }
+
   return <UserList {...props} navigate={navigate} />; //Pass navigate as a prop
 }
 

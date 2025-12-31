@@ -115,4 +115,26 @@ describe('Dashboard Components i18n Integration', () => {
 
     expect(screen.getByText(expectedLoading)).toBeInTheDocument();
   });
+
+  // Test for dashboard.title translation used in navigation
+  it.each([
+    {
+      lang: "en",
+      expectedTitle: "Dashboard"
+    },
+    {
+      lang: "ml",
+      expectedTitle: "ഡാഷ്ബോർഡ്"
+    },
+    {
+      lang: "ar",
+      expectedTitle: "لوحة التحكم"
+    }
+  ])("displays dashboard title correctly in $lang", async ({ lang, expectedTitle }) => {
+    await i18n.changeLanguage(lang);
+
+    // Test that the translation key exists and returns expected value
+    const translatedTitle = i18n.t('dashboard.title');
+    expect(translatedTitle).toBe(expectedTitle);
+  });
 });

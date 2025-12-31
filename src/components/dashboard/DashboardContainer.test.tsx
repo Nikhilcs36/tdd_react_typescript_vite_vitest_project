@@ -17,6 +17,22 @@ vi.mock('react-redux', () => ({
   useSelector: vi.fn()
 }));
 
+// Mock the authorization hook
+vi.mock('../../utils/authorization', () => ({
+  useUserAuthorization: vi.fn(() => ({
+    isAdmin: vi.fn(() => false),
+    isCurrentUser: vi.fn((id: number) => id === 1),
+    canAccessUserData: vi.fn((id: number) => id === 1),
+    getUserRole: vi.fn(() => ({
+      isStaff: false,
+      isSuperuser: false,
+      isAdmin: false,
+      userId: 1
+    })),
+    user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false }
+  }))
+}));
+
 // Mock the login tracking service
 vi.mock('../../services/loginTrackingService', () => ({
   getUserStats: vi.fn(),
@@ -97,18 +113,20 @@ describe('DashboardContainer', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock useSelector to return authenticated user
     (useSelector as any).mockImplementation((callback: any) => {
       const state = {
         auth: {
           isAuthenticated: true,
-          user: { id: 1, username: 'testuser' },
+          user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false },
           accessToken: 'test-token'
         }
       };
       return callback(state);
     });
+
+    // The mock is already set up in the vi.mock above
   });
 
   it('should render loading state initially', async () => {
@@ -160,7 +178,23 @@ describe('DashboardContainer', () => {
     });
   });
 
-  it('should render admin section when isAdmin prop is true', async () => {
+  it('should render admin section when user is admin', async () => {
+    // Mock the authorization hook to return admin permissions for this test
+    const { useUserAuthorization } = await import('../../utils/authorization');
+    const mockUseUserAuthorization = vi.mocked(useUserAuthorization);
+    mockUseUserAuthorization.mockReturnValue({
+      isAdmin: vi.fn(() => true),
+      isCurrentUser: vi.fn((id: number) => id === 1),
+      canAccessUserData: vi.fn((id: number) => true),
+      getUserRole: vi.fn(() => ({
+        isStaff: false,
+        isSuperuser: true,
+        isAdmin: true,
+        userId: 1
+      })),
+      user: { id: 1, username: 'admin', is_staff: false, is_superuser: true }
+    });
+
     // Mock successful API responses including admin data
     (getUserStats as any).mockResolvedValue(mockUserStats);
     (getLoginActivity as any).mockResolvedValue(mockLoginActivity);
@@ -170,7 +204,7 @@ describe('DashboardContainer', () => {
     (getAdminDashboard as any).mockResolvedValue(mockAdminDashboard);
     (getAdminCharts as any).mockResolvedValue(mockChartData);
 
-    render(<DashboardContainer isAdmin={true} />);
+    render(<DashboardContainer />);
 
     await waitFor(() => {
       expect(screen.getByText('dashboard.admin_overview')).toBeInTheDocument();

@@ -11,7 +11,8 @@ import {
   UserStats,
   LoginActivityResponse,
   AdminDashboardData,
-  ChartData
+  ChartData,
+  AdminUserStatsResponse
 } from '../types/loginTracking';
 
 export interface ApiGetService {
@@ -97,15 +98,17 @@ export const fetchApiServiceLoginTracking: ApiGetService = {
 
 // Specific service functions for each endpoint
 export const loginTrackingService = {
-  // User Statistics
-  getUserStats: async (): Promise<UserStats> => {
-    return fetchApiServiceLoginTracking.get<UserStats>(API_ENDPOINTS.USER_STATS);
+  // User Statistics - supports both current user and specific user by ID
+  getUserStats: async (userId?: number): Promise<UserStats> => {
+    const endpoint = userId ? API_ENDPOINTS.USER_STATS_BY_ID(userId) : API_ENDPOINTS.USER_STATS;
+    return fetchApiServiceLoginTracking.get<UserStats>(endpoint);
   },
 
-  // Login Activity with pagination
-  getLoginActivity: async (page: number = 1, page_size: number = 10): Promise<LoginActivityResponse> => {
+  // Login Activity with pagination - supports both current user and specific user by ID
+  getLoginActivity: async (page: number = 1, page_size: number = 10, userId?: number): Promise<LoginActivityResponse> => {
+    const endpoint = userId ? API_ENDPOINTS.LOGIN_ACTIVITY_BY_ID(userId) : API_ENDPOINTS.LOGIN_ACTIVITY;
     return fetchApiServiceLoginTracking.get<LoginActivityResponse>(
-      API_ENDPOINTS.LOGIN_ACTIVITY,
+      endpoint,
       page,
       page_size
     );
@@ -132,6 +135,25 @@ export const loginTrackingService = {
   getAdminCharts: async (): Promise<ChartData> => {
     return fetchApiServiceLoginTracking.get<ChartData>(API_ENDPOINTS.ADMIN_CHARTS);
   },
+
+  // Admin User Stats - batch statistics for multiple users with optional filters
+  getAdminUserStats: async (userIds?: number[], isActive?: boolean): Promise<AdminUserStatsResponse> => {
+    let url = API_ENDPOINTS.ADMIN_USER_STATS;
+    const params = new URLSearchParams();
+
+    if (userIds?.length) {
+      userIds.forEach(id => params.append('user_ids[]', id.toString()));
+    }
+    if (isActive !== undefined) {
+      params.append('is_active', isActive.toString());
+    }
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    return fetchApiServiceLoginTracking.get<AdminUserStatsResponse>(url);
+  },
 };
 
 // Export individual functions for easier testing
@@ -143,4 +165,5 @@ export const {
   getLoginDistribution,
   getAdminDashboard,
   getAdminCharts,
+  getAdminUserStats,
 } = loginTrackingService;

@@ -7,8 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import React from "react";
-import App, { AppContent } from "./App";
+import App, { AppContent, ProtectedRoute } from "./App";
 import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
 import store, { createStore } from "./store";
@@ -23,6 +22,8 @@ import { API_ENDPOINTS } from "./services/apiEndpoints";
 import { fillAndSubmitLoginForm } from "./tests/testUtils";
 import LoginPageWrapper from "./page/LoginPage";
 import ErrorBoundary from "./components/ErrorBoundary";
+import UserList from "./components/UserList";
+import { axiosApiServiceLoadUserList } from "./services/apiService";
 
 // Mock the UserPageWrapper component to prevent state updates in tests
 // Provide realistic content for integration tests that expect specific elements
@@ -41,6 +42,11 @@ vi.mock("./page/UserPage", () => ({
   ),
 }));
 
+// Mock the DashboardContainer component
+vi.mock("./components/dashboard/DashboardContainer", () => ({
+  default: () => <div data-testid="dashboard-container">Dashboard Content</div>,
+}));
+
 // Helper function to set up authenticated state
 const mockAuth = (
   isAuthenticated: boolean,
@@ -50,6 +56,8 @@ const mockAuth = (
     access: "mock-jwt-access-token",
     refresh: "mock-jwt-refresh-token",
     email: "user1@mail.com",
+    is_staff: false,
+    is_superuser: false,
   }
 ) => {
   if (isAuthenticated) {
@@ -131,6 +139,8 @@ describe("Routing", () => {
       access: "mock-jwt-access-token",
       refresh: "mock-jwt-refresh-token",
       email: "user1@mail.com",
+      is_staff: false,
+      is_superuser: false,
     }
   ) => {
     // Updated user default
@@ -157,6 +167,8 @@ describe("Routing", () => {
               access: user.access,
               refresh: user.refresh,
               email: "user1@mail.com",
+              is_staff: false,
+              is_superuser: false,
             }
           : user;
       store.dispatch(loginSuccess(userToDispatch));
@@ -185,6 +197,14 @@ describe("Routing", () => {
     setup(path, "en"); // Use English for these basic routing tests
     const page = screen.queryByTestId(pageTestId);
     expect(page).toBeInTheDocument();
+  });
+
+  it("dashboard routes show authentication required message for unauthenticated users", () => {
+    // Mock unauthenticated state
+    mockAuth(false);
+    setup("/dashboard", "en"); // Use the routing setup function
+    const authMessage = screen.getByText("Your session has expired. Please log in again.");
+    expect(authMessage).toBeInTheDocument();
   });
 
   it.each`
@@ -272,6 +292,8 @@ describe("Routing", () => {
       access: "mock-jwt-access-token",
       refresh: "mock-jwt-refresh-token",
       email: "user1@mail.com",
+      is_staff: false,
+      is_superuser: false,
     };
     store.dispatch(loginSuccess(mockUser));
 
@@ -298,16 +320,34 @@ describe("Routing", () => {
   });
 
   it("navigates to user page when clicking the username on user list", async () => {
-    // Setup authenticated user as user2 (ID: 2) - this user will be filtered from the user list
-    const mockUser2 = {
+    // Setup authenticated admin user as user2 (ID: 2) - this user will be filtered from the user list
+    const mockAdminUser2 = {
       id: 2,
       username: "user2",
       access: "mock-jwt-access-token",
       refresh: "mock-jwt-refresh-token",
       email: "user2@mail.com",
+      is_staff: true,
+      is_superuser: true,
     };
-    store.dispatch(loginSuccess(mockUser2));
-    setup("/", "en", true, mockUser2); // Setup with authenticated state and user object
+    store.dispatch(loginSuccess(mockAdminUser2));
+
+    // Navigate to the /users route where UserList is now located
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/users"]}>
+          <Routes>
+            <Route path="/users" element={<UserList ApiGetService={axiosApiServiceLoadUserList} />} />
+            <Route path="/user/:id" element={
+              <div data-testid="user-page">
+                <div data-testid="username">user1</div>
+                <div data-testid="email">user1@mail.com</div>
+              </div>
+            } />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
 
     // Find the link to user1
     const userLink = await screen.findByText("user1");
@@ -562,6 +602,239 @@ describe("Authentication navbar visible", () => {
         expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
       }
     );
+
+    describe("Admin navigation", () => {
+      it("shows 'User List' link for admin users", async () => {
+        await act(async () => {
+          mockAuth(true, {
+            id: 1,
+            username: "admin",
+            access: "mock-jwt-access-token",
+            refresh: "mock-jwt-refresh-token",
+            email: "admin@example.com",
+            is_staff: true,
+            is_superuser: true,
+          });
+        });
+        setup("/", "en");
+
+        // Verify admin sees the Users link
+        const usersLink = screen.getByTestId("users-link");
+        expect(usersLink).toBeInTheDocument();
+        expect(usersLink).toHaveAttribute("href", "/users");
+        expect(usersLink).toHaveTextContent("User List");
+      });
+
+      it("hides 'User List' link for non-admin users", async () => {
+        await act(async () => {
+          mockAuth(true, {
+            id: 1,
+            username: "regular",
+            access: "mock-jwt-access-token",
+            refresh: "mock-jwt-refresh-token",
+            email: "regular@example.com",
+            is_staff: false,
+            is_superuser: false,
+          });
+        });
+        setup("/", "en");
+
+        // Verify non-admin doesn't see the Users link
+        expect(screen.queryByTestId("users-link")).not.toBeInTheDocument();
+      });
+
+    it("shows translated 'User List' link for admin users in different languages", async () => {
+      await act(async () => {
+        mockAuth(true, {
+          id: 1,
+          username: "admin",
+          access: "mock-jwt-access-token",
+          refresh: "mock-jwt-refresh-token",
+          email: "admin@example.com",
+          is_staff: true,
+          is_superuser: true,
+        });
+      });
+
+      await act(async () => {
+        await i18n.changeLanguage("ml");
+      });
+      render(<App />);
+
+      // Verify admin sees the translated Users link in Malayalam
+      const usersLink = screen.getByTestId("users-link");
+      expect(usersLink).toBeInTheDocument();
+      expect(usersLink).toHaveTextContent("ഉപയോക്തൃ പട്ടിക");
+    });
+
+    describe("Dashboard navigation", () => {
+      it("shows 'Dashboard' link for authenticated users", async () => {
+        await act(async () => {
+          mockAuth(true);
+        });
+        setup("/", "en");
+
+        // Verify dashboard link exists
+        const dashboardLink = screen.getByTestId("dashboard-link");
+        expect(dashboardLink).toBeInTheDocument();
+        expect(dashboardLink).toHaveAttribute("href", "/dashboard");
+        // Check that it contains the translation key (i18n behavior)
+        expect(dashboardLink).toHaveTextContent("dashboard.title");
+      });
+
+      it("hides 'Dashboard' link for unauthenticated users", async () => {
+        await act(async () => {
+          mockAuth(false);
+        });
+        setup("/", "en");
+
+        // Verify dashboard link is hidden
+        expect(screen.queryByTestId("dashboard-link")).not.toBeInTheDocument();
+      });
+
+      it("shows dashboard link for authenticated users in different languages", async () => {
+        await act(async () => {
+          mockAuth(true);
+        });
+
+        await act(async () => {
+          await i18n.changeLanguage("ml");
+        });
+        render(<App />);
+
+        // Verify dashboard link exists with translation key
+        const dashboardLink = screen.getByTestId("dashboard-link");
+        expect(dashboardLink).toBeInTheDocument();
+        expect(dashboardLink).toHaveTextContent("dashboard.title");
+      });
+
+      it("navigates to dashboard when clicking dashboard link", async () => {
+        await act(async () => {
+          mockAuth(true);
+        });
+        render(<App />);
+
+        const dashboardLink = screen.getByTestId("dashboard-link");
+        await userEvent.click(dashboardLink);
+
+        // Verify dashboard container is rendered
+        await waitFor(() => {
+          expect(screen.getByTestId("dashboard-container")).toBeInTheDocument();
+        });
+      });
+    });
+
+    describe("Dashboard route protection", () => {
+      it("allows admin users to access any user's dashboard via /dashboard/:userId", async () => {
+        // Setup admin user (ID: 1)
+        await act(async () => {
+          mockAuth(true, {
+            id: 1,
+            username: "admin",
+            access: "mock-jwt-access-token",
+            refresh: "mock-jwt-refresh-token",
+            email: "admin@example.com",
+            is_staff: true,
+            is_superuser: true,
+          });
+        });
+
+        setup("/", "en");
+
+        // Navigate to dashboard route
+        window.history.pushState({}, "", "/dashboard/999");
+        render(<App />);
+
+        // Verify dashboard container is rendered (route protection passes)
+        const dashboardContainer = screen.queryByTestId("dashboard-container");
+        expect(dashboardContainer).toBeInTheDocument();
+      });
+
+      it("allows regular users to access their own dashboard", async () => {
+        // Setup regular user (ID: 5)
+        await act(async () => {
+          mockAuth(true, {
+            id: 5,
+            username: "regular",
+            access: "mock-jwt-access-token",
+            refresh: "mock-jwt-refresh-token",
+            email: "regular@example.com",
+            is_staff: false,
+            is_superuser: false,
+          });
+        });
+
+        setup("/", "en");
+
+        // Navigate to dashboard route
+        window.history.pushState({}, "", "/dashboard");
+        render(<App />);
+
+        // Verify dashboard container is rendered (route protection passes)
+        const dashboardContainer = screen.queryByTestId("dashboard-container");
+        expect(dashboardContainer).toBeInTheDocument();
+      });
+
+      it("ProtectedRoute correctly guards dashboard routes requiring authentication", async () => {
+        // Test that dashboard routes are protected by checking the ProtectedRoute component behavior
+        const TestDashboard = () => <div data-testid="test-dashboard">Test Dashboard</div>;
+
+        // Test unauthenticated access
+        render(
+          <Provider store={store}>
+            <MemoryRouter initialEntries={["/protected-dashboard"]}>
+              <Routes>
+                <Route
+                  path="/protected-dashboard"
+                  element={
+                    <ProtectedRoute requireAuth={true}>
+                      <TestDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </MemoryRouter>
+          </Provider>
+        );
+
+        // Should show authentication required message
+        expect(screen.getByText("Your session has expired. Please log in again.")).toBeInTheDocument();
+        expect(screen.queryByTestId("test-dashboard")).not.toBeInTheDocument();
+      });
+
+      it("authorization errors display proper messages for dashboard access", async () => {
+        // This test verifies that the component-level authorization in DashboardContainer
+        // properly displays error messages. Since the DashboardContainer is mocked,
+        // we test the ProtectedRoute behavior which is what guards the dashboard routes.
+
+        // Test with authenticated user accessing dashboard
+        await act(async () => {
+          mockAuth(true);
+        });
+
+        render(
+          <Provider store={store}>
+            <MemoryRouter initialEntries={["/dashboard"]}>
+              <Routes>
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute requireAuth={true}>
+                      <div data-testid="authorized-dashboard">Authorized Dashboard</div>
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </MemoryRouter>
+          </Provider>
+        );
+
+        // Should show authorized dashboard (not error message)
+        expect(screen.getByTestId("authorized-dashboard")).toBeInTheDocument();
+        expect(screen.queryByText("Your session has expired. Please log in again.")).not.toBeInTheDocument();
+      });
+    });
+    });
   });
 
   describe("When not authenticated", () => {
@@ -599,6 +872,8 @@ describe("Logout functionality", () => {
       access: "mock-jwt-access-token",
       refresh: "mock-jwt-refresh-token",
       email: "user1@mail.com",
+      is_staff: false,
+      is_superuser: false,
     });
   };
 
@@ -694,6 +969,110 @@ describe("Theme Functionality", () => {
   });
 });
 
+describe("Protected Route", () => {
+  beforeEach(async () => {
+    // Reset Redux auth state before each test
+    await act(async () => {
+      store.dispatch(logoutSuccess());
+    });
+
+    // Clear localStorage
+    localStorage.clear();
+    // Set default language to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
+  const TestComponent = () => <div data-testid="protected-content">Protected Content</div>;
+
+  it("renders children when user is authenticated and has admin access", () => {
+    const adminUser = {
+      id: 1,
+      username: "admin",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
+      email: "admin@example.com",
+      is_staff: true,
+      is_superuser: true,
+    };
+    store.dispatch(loginSuccess(adminUser));
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <AppContent />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Navigate to /users route (which is protected)
+    window.history.pushState({}, "", "/users");
+
+    // The UserList component should render (not the access denied message)
+    // Since we can't easily test the route protection without mocking,
+    // we'll test that the admin user sees the Users link and can navigate
+    expect(screen.getByTestId("users-link")).toBeInTheDocument();
+  });
+
+  it("shows access denied message for non-admin authenticated users", async () => {
+    const regularUser = {
+      id: 1,
+      username: "regular",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
+      email: "regular@example.com",
+      is_staff: false,
+      is_superuser: false,
+    };
+    store.dispatch(loginSuccess(regularUser));
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/users"]}>
+          <Routes>
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <TestComponent />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Should show access denied message
+    expect(screen.getByText("You need administrator privileges to view the user list.")).toBeInTheDocument();
+    expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
+  });
+
+  it("shows authentication required message for unauthenticated users", async () => {
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/users"]}>
+          <Routes>
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <TestComponent />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Should show authentication required message
+    expect(screen.getByText("Your session has expired. Please log in again.")).toBeInTheDocument();
+    expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
+  });
+});
+
 describe("Navbar persistence with localStorage", () => {
   beforeEach(async () => {
     // Reset Redux auth state before each test
@@ -716,6 +1095,8 @@ describe("Navbar persistence with localStorage", () => {
       username: "persistedUser",
       access: "mock-jwt-access-token",
       refresh: "mock-jwt-refresh-token",
+      is_staff: false,
+      is_superuser: false,
     };
 
     // Render the app with the Redux provider

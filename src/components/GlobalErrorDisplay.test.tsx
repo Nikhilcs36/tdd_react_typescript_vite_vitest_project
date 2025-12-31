@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
+import { BrowserRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import i18n from '../locale/i18n';
 import GlobalErrorDisplay from './GlobalErrorDisplay';
@@ -16,11 +17,13 @@ describe('GlobalErrorDisplay', () => {
       globalError: { error: null }
     });
     const { container } = render(
-      <Provider store={store}>
-        <I18nextProvider i18n={i18n}>
-          <GlobalErrorDisplay />
-        </I18nextProvider>
-      </Provider>
+      <BrowserRouter>
+        <Provider store={store}>
+          <I18nextProvider i18n={i18n}>
+            <GlobalErrorDisplay />
+          </I18nextProvider>
+        </Provider>
+      </BrowserRouter>
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -34,11 +37,13 @@ describe('GlobalErrorDisplay', () => {
       globalError: { error }
     });
     render(
-      <Provider store={store}>
-        <I18nextProvider i18n={i18n}>
-          <GlobalErrorDisplay />
-        </I18nextProvider>
-      </Provider>
+      <BrowserRouter>
+        <Provider store={store}>
+          <I18nextProvider i18n={i18n}>
+            <GlobalErrorDisplay />
+          </I18nextProvider>
+        </Provider>
+      </BrowserRouter>
     );
     expect(screen.getByText('Error')).toBeInTheDocument();
     expect(screen.getByText('Something went wrong on our end. Please try again later.')).toBeInTheDocument();
@@ -56,11 +61,13 @@ describe('GlobalErrorDisplay', () => {
     store.dispatch = vi.fn();
 
     render(
-      <Provider store={store}>
-        <I18nextProvider i18n={i18n}>
-          <GlobalErrorDisplay />
-        </I18nextProvider>
-      </Provider>
+      <BrowserRouter>
+        <Provider store={store}>
+          <I18nextProvider i18n={i18n}>
+            <GlobalErrorDisplay />
+          </I18nextProvider>
+        </Provider>
+      </BrowserRouter>
     );
 
     fireEvent.click(screen.getByText('Try Again'));

@@ -37,6 +37,11 @@ export interface AdminDashboardData {
   user_growth: Record<string, number>;
 }
 
+// Admin User Stats Response Interface for batch user statistics
+export interface AdminUserStatsResponse {
+  [userId: string]: UserStats;
+}
+
 // Chart Data Interface for visualization
 export interface ChartData {
   labels: string[];
@@ -86,4 +91,12 @@ export const isAdminDashboardData = (response: any): response is AdminDashboardD
 
 export const isChartData = (response: any): response is ChartData => {
   return response && Array.isArray(response.labels) && Array.isArray(response.datasets);
+};
+
+export const isAdminUserStatsResponse = (response: any): response is AdminUserStatsResponse => {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) {
+    return false;
+  }
+  const values = Object.values(response);
+  return values.length > 0 && values.every(isUserStats);
 };

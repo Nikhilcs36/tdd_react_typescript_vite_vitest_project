@@ -5,6 +5,7 @@ import tw from 'twin.macro';
 import { RootState } from '../../store';
 import { UserStats, LoginActivityResponse, ChartData, AdminDashboardData } from '../../types/loginTracking';
 import { getUserStats, getLoginActivity, getLoginTrends, getLoginComparison, getLoginDistribution, getAdminDashboard, getAdminCharts } from '../../services/loginTrackingService';
+import { useUserAuthorization } from '../../utils/authorization';
 import UserDashboardCard from './UserDashboardCard';
 import LoginActivityTable from './LoginActivityTable';
 import LoginTrendsChart from './LoginTrendsChart';
@@ -24,10 +25,11 @@ interface DashboardContainerProps {
 /**
  * DashboardContainer Component
  * Orchestrates the fetching and display of all dashboard components
- * Handles parallel data fetching for optimal performance
+ * Handles role-based access control and user-specific data fetching
  */
-const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId, isAdmin = false }) => {
+const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const { t } = useTranslation();
+  const { isAdmin, canAccessUserData } = useUserAuthorization();
   const authState = useSelector((state: RootState) => state.auth);
   const currentUserId = userId || authState.user?.id;
 
@@ -41,15 +43,29 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId, isAdmin
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all dashboard data in parallel
+  // Check authorization before fetching data
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (!currentUserId) return;
+      if (!currentUserId) {
+        setError(t('dashboard.user_not_found'));
+        setLoading(false);
+        return;
+      }
+
+      // Check if user can access the requested dashboard data
+      if (!canAccessUserData(currentUserId)) {
+        setError(t('dashboard.unauthorized_access'));
+        setLoading(false);
+        return;
+      }
 
       setLoading(true);
       setError(null);
 
       try {
+        // Determine which user data to fetch based on authorization
+        const targetUserId = isAdmin() && userId ? userId : undefined;
+
         // Execute all API calls in parallel
         const [
           userStatsResponse,
@@ -60,13 +76,13 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId, isAdmin
           adminDashboardResponse,
           adminChartsResponse
         ] = await Promise.allSettled([
-          getUserStats(),
-          getLoginActivity(1, 5),
+          getUserStats(targetUserId),
+          getLoginActivity(1, 5, targetUserId),
           getLoginTrends(),
           getLoginComparison(),
           getLoginDistribution(),
-          isAdmin ? getAdminDashboard() : Promise.resolve(null),
-          isAdmin ? getAdminCharts() : Promise.resolve(null)
+          isAdmin() ? getAdminDashboard() : Promise.resolve(null),
+          isAdmin() ? getAdminCharts() : Promise.resolve(null)
         ]);
 
         // Process responses
@@ -90,11 +106,11 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId, isAdmin
           setLoginDistribution(distributionResponse.value);
         }
 
-        if (isAdmin && adminDashboardResponse.status === 'fulfilled') {
+        if (isAdmin() && adminDashboardResponse.status === 'fulfilled') {
           setAdminDashboard(adminDashboardResponse.value);
         }
 
-        if (isAdmin && adminChartsResponse.status === 'fulfilled') {
+        if (isAdmin() && adminChartsResponse.status === 'fulfilled') {
           // Admin charts data is available but not currently used in the UI
         }
 
@@ -117,7 +133,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId, isAdmin
     };
 
     fetchDashboardData();
-  }, [currentUserId, isAdmin, t]);
+  }, [currentUserId, userId, isAdmin, canAccessUserData, t]);
 
   // Render loading state
   if (loading) {
@@ -180,7 +196,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId, isAdmin
       </ChartGrid>
 
       {/* Admin Dashboard Section (if applicable) */}
-      {isAdmin && adminDashboard && (
+      {isAdmin() && adminDashboard && (
         <>
           <SectionTitle>{t('dashboard.admin_overview')}</SectionTitle>
           {/* Admin-specific components would go here */}
