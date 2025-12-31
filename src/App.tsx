@@ -9,6 +9,8 @@ import LoginPage from "./page/LoginPage";
 import UserPageWrapper from "./page/UserPage";
 import ProfilePageWrapper from "./page/ProfilePage";
 import AccountActivationPage from "./page/accountActivationPage";
+import UserList from "./components/UserList";
+import DashboardContainer from "./components/dashboard/DashboardContainer";
 import {
   axiosApiServiceActivation,
   axiosApiServiceGetUser,
@@ -17,16 +19,19 @@ import {
   axiosApiServiceSignUp,
   axiosApiServiceUpdateUser,
   axiosApiServiceLogout,
+  axiosApiServiceLoadUserList,
   ApiService,
 } from "./services/apiService";
 import tw from "twin.macro";
 import { Provider, useSelector } from "react-redux";
 import store, { RootState } from "./store";
 import { useLogout } from "./components/logout/useLogout";
+import { useUserAuthorization } from "./utils/authorization";
 import LogoutMessage from "./components/logout/LogoutMessage";
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalErrorDisplay from "./components/GlobalErrorDisplay";
+import { ReactElement } from "react";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -66,6 +71,49 @@ const Content = tw.div`
   dark:bg-dark-primary
 `;
 
+// Protected Route Component for admin-only routes
+interface ProtectedRouteProps {
+  children: ReactElement;
+  requireAdmin?: boolean;
+  requireAuth?: boolean;
+}
+
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requireAdmin = false,
+  requireAuth = true
+}) => {
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
+  const { isAdmin } = useUserAuthorization();
+  const { t } = useTranslation();
+
+  // Check authentication requirement
+  if (requireAuth && !isAuthenticated) {
+    return (
+      <div className="container px-4 py-8 mx-auto">
+        <div className="py-8 text-center text-red-500 dark:text-red-400">
+          {t("errors.401.token_invalid_or_expired")}
+        </div>
+      </div>
+    );
+  }
+
+  // Check admin requirement
+  if (requireAdmin && (!isAuthenticated || !isAdmin())) {
+    return (
+      <div className="container px-4 py-8 mx-auto">
+        <div className="py-8 text-center text-red-500 dark:text-red-400">
+          {t("userlist.accessDeniedMessage")}
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+};
+
 interface AppContentProps {
   logoutApiService?: ApiService;
 }
@@ -77,6 +125,7 @@ export const AppContent = ({
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
+  const { isAdmin } = useUserAuthorization();
   const { logout: logoutUser } = useLogout(logoutApiService);
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -109,9 +158,17 @@ export const AppContent = ({
         <NavRight>
           {isAuthenticated ? (
             <>
+              <NavLink to="/dashboard" data-testid="dashboard-link">
+                {t("dashboard.title")}
+              </NavLink>
               <NavLink to="/profile" data-testid="my-profile-link">
                 {t("myProfile")}
               </NavLink>
+              {isAdmin() && (
+                <NavLink to="/users" data-testid="users-link">
+                  {t("userlist.title")}
+                </NavLink>
+              )}
               <StyledButton onClick={logoutUser} data-testid="logout-link">
                 {t("logout.title")}
               </StyledButton>
@@ -163,6 +220,30 @@ export const AppContent = ({
               path="/activate/:token"
               element={
                 <AccountActivationPage apiService={axiosApiServiceActivation} />
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <UserList ApiGetService={axiosApiServiceLoadUserList} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute requireAuth={true}>
+                  <DashboardContainer />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/:userId"
+              element={
+                <ProtectedRoute requireAuth={true}>
+                  <DashboardContainer />
+                </ProtectedRoute>
               }
             />
           </Routes>

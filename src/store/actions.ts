@@ -7,5 +7,7 @@ export const loginSuccess = createAction<{
   username: string;
   access: string;
   refresh: string;
+  is_staff: boolean;
+  is_superuser: boolean;
 }>(AUTH_LOGIN_SUCCESS);
 export const logoutSuccess = createAction(AUTH_LOGOUT_SUCCESS);

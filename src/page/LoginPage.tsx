@@ -37,6 +37,8 @@ interface LoginResponse {
   username: string;
   access: string;
   refresh: string;
+  is_staff: boolean;
+  is_superuser: boolean;
 }
 
 interface ErrorResponse {
@@ -139,13 +141,15 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         }
       );
 
-      // Dispatch loginSuccess action with id, username, access and refresh tokens
+      // Dispatch loginSuccess action with id, username, access, refresh, and role fields
       this.props.dispatch(
         loginSuccess({
           id: response.id,
           username: response.username,
           access: response.access,
           refresh: response.refresh,
+          is_staff: response.is_staff,
+          is_superuser: response.is_superuser,
         })
       );
 

@@ -16,7 +16,7 @@ export interface BackendError {
 /**
  * Maps HTTP status codes to user-friendly error messages with translation support
  */
-export const ERROR_MAPPINGS: Record<number, BackendError> = {
+export const ERROR_MAPPINGS: Record<number | string, BackendError> = {
   401: {
     status: 401,
     message: "Token is invalid or expired",
@@ -28,6 +28,12 @@ export const ERROR_MAPPINGS: Record<number, BackendError> = {
     message: "You do not have permission to perform this action",
     translationKey: "errors.403.permission_denied",
     userFriendlyMessage: "You don't have permission to perform this action.",
+  },
+  "403_AUTH": {
+    status: 403,
+    message: "You need administrator privileges to access this resource",
+    translationKey: "userlist.accessDeniedMessage",
+    userFriendlyMessage: "You need administrator privileges to access this resource.",
   },
   500: {
     status: 500,

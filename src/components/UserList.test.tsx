@@ -20,20 +20,28 @@ import store from "../store";
 import { loginSuccess } from "../store/actions";
 import { logoutSuccess } from "../store/actions";
 
+// Global variable to control mock behavior
+let mockIsAdmin = false;
+
+// Mock the authorization hook
+vi.mock("../utils/authorization", () => ({
+  useUserAuthorization: vi.fn(() => ({
+    isAdmin: mockIsAdmin,
+  })),
+}));
+
 // Mock axios API call
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
-
-// Mock DashboardContainer to prevent API calls during UserList tests
-vi.mock("./dashboard/DashboardContainer", () => ({
-  default: () => <div data-testid="dashboard-container">Dashboard Container</div>
-}));
 
 beforeEach(() => {
   vi.restoreAllMocks(); // Clears all spies/mocks before each test
 });
 
-const setup = (authenticated = false) => {
+const setup = (authenticated = false, isAdmin = false) => {
+  // Set the global mock variable
+  mockIsAdmin = isAdmin;
+
   if (authenticated) {
     store.dispatch(
       loginSuccess({
@@ -41,6 +49,8 @@ const setup = (authenticated = false) => {
         username: "testuser",
         access: "mock-access-token",
         refresh: "mock-refresh-token",
+        is_staff: isAdmin,
+        is_superuser: isAdmin,
       })
     );
   } else {
@@ -99,18 +109,18 @@ describe("User List", () => {
   });
 
   it("displays three users in list when authenticated", async () => {
-    setup(true);
+    setup(true, true);
     const users = await screen.findAllByText(/user\d/); // uses a regex to match "user1", "user2", "user3"
     expect(users).toHaveLength(3);
   });
   it("displays next page button when authenticated", async () => {
-    setup(true);
+    setup(true, true);
     await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
     expect(screen.getByTestId("next-button")).toBeInTheDocument();
   });
 
   it("displays next page after clicking next when authenticated", async () => {
-    setup(true);
+    setup(true, true);
     await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
     userEvent.click(screen.getByTestId("next-button"));
     const firstUserOnPage2 = await screen.findByText("user5");
@@ -118,7 +128,7 @@ describe("User List", () => {
   });
 
   it("Disabled next button on last page when authenticated", async () => {
-    setup(true);
+    setup(true, true);
     await screen.findByText("user2"); // user1 is filtered out
     // Go to Page 2
     userEvent.click(screen.getByTestId("next-button"));
@@ -128,13 +138,13 @@ describe("User List", () => {
   });
 
   it("Disabled previous button on first page when authenticated", async () => {
-    setup(true);
+    setup(true, true);
     await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
     expect(screen.getByTestId("prev-button")).toBeDisabled();
   });
 
   it("displays previous button on second page when authenticated", async () => {
-    setup(true);
+    setup(true, true);
     await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
     userEvent.click(screen.getByTestId("next-button"));
     await screen.findByText("user5");
@@ -142,7 +152,7 @@ describe("User List", () => {
   });
 
   it("navigates back when clicking previous button when authenticated", async () => {
-    setup(true);
+    setup(true, true);
     await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
     userEvent.click(screen.getByTestId("next-button"));
     await screen.findByText("user5");
@@ -183,7 +193,7 @@ describe("User List", () => {
         });
       })
     );
-    setup(true);
+    setup(true, true);
     const noUsersMessage = await screen.findByText("No users found");
     expect(noUsersMessage).toBeInTheDocument();
   });
@@ -196,7 +206,7 @@ describe("User List", () => {
       })
     );
 
-    setup(true);
+    setup(true, true);
 
     const nextButton = await screen.findByTestId("next-button");
 
@@ -217,7 +227,7 @@ describe("User List", () => {
   });
 
   it("disables and re-enables 'Previous' button while loading", async () => {
-    setup(true);
+    setup(true, true);
 
     const nextButton = await screen.findByTestId("next-button");
     const prevButton = screen.getByTestId("prev-button");
@@ -255,7 +265,7 @@ describe("User List", () => {
       })
     );
 
-    setup(true);
+    setup(true, true);
 
     const nextButton = await screen.findByTestId("next-button");
     const prevButton = screen.getByTestId("prev-button");
@@ -317,7 +327,7 @@ describe("User List", () => {
   });
 
   it("renders default profile image and user profile image", async () => {
-    setup(true);
+    setup(true, true);
 
     // Ensure users are loaded first - user1 is excluded as authenticated user, so look for user2
     await screen.findByText("user2");
@@ -351,7 +361,7 @@ describe("User List", () => {
     // Default Language Tests
     describe("Default Language", () => {
       it("renders userlist in English by default", async () => {
-        setup(true);
+        setup(true, true);
         await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
         expect(screen.getByText("User List")).toBeInTheDocument();
         expect(screen.getByText("Next")).toBeInTheDocument();
@@ -360,7 +370,7 @@ describe("User List", () => {
 
       it("renders userlist emptyPageMessage in English by default", async () => {
         emptyListAPISetup();
-        setup(true);
+        setup(true, true);
         const noUsersMessage = await screen.findByText("No users found");
         expect(noUsersMessage).toBeInTheDocument();
       });
@@ -371,7 +381,7 @@ describe("User List", () => {
         await act(async () => {
           await i18n.changeLanguage("ml");
         });
-        setup(true);
+        setup(true, true);
         await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
         expect(screen.getByText("ഉപയോക്തൃ പട്ടിക")).toBeInTheDocument();
         expect(screen.getByText("അടുത്തത്")).toBeInTheDocument();
@@ -383,7 +393,7 @@ describe("User List", () => {
           await i18n.changeLanguage("ml");
         });
         emptyListAPISetup();
-        setup(true);
+        setup(true, true);
         const noUsersMessage = await screen.findByText(
           "ഉപയോക്താക്കളെയൊന്നും കണ്ടെത്തിയില്ല"
         );
@@ -394,7 +404,7 @@ describe("User List", () => {
         await act(async () => {
           await i18n.changeLanguage("ar");
         });
-        setup(true);
+        setup(true, true);
         await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
         expect(screen.getByText("قائمة المستخدمين")).toBeInTheDocument();
         expect(screen.getByText("التالي")).toBeInTheDocument();
@@ -406,7 +416,7 @@ describe("User List", () => {
           await i18n.changeLanguage("ar");
         });
         emptyListAPISetup();
-        setup(true);
+        setup(true, true);
         const noUsersMessage = await screen.findByText(
           "لم يتم العثور على أي مستخدمين"
         );
@@ -426,7 +436,7 @@ describe("User List", () => {
             })
           );
 
-          setup(true);
+          setup(true, true);
 
           // Initial page load
           await screen.findByText("user2");
@@ -454,7 +464,7 @@ describe("User List", () => {
             })
           );
 
-          setup(true);
+          setup(true, true);
 
           await screen.findByText("user2");
           const nextButton = screen.getByTestId("next-button");
@@ -480,7 +490,7 @@ describe("User List", () => {
             })
           );
 
-          setup(true);
+          setup(true, true);
 
           // Initial page load
           await screen.findByText("user2");
@@ -526,7 +536,7 @@ describe("User List", () => {
             })
           );
 
-          setup(true);
+          setup(true, true);
 
           await screen.findByText("user2");
           const nextButton = screen.getByTestId("next-button");
@@ -551,7 +561,7 @@ describe("User List", () => {
 
   describe("Authorization Headers", () => {
     it("should include Authorization header when user is authenticated (axios)", async () => {
-      setup(true); // Use the setup function for authenticated state
+      setup(true, true); // Use the setup function for authenticated admin state
 
       // Mock axios to capture the request
       mockedAxios.get.mockResolvedValue({
@@ -588,7 +598,7 @@ describe("User List", () => {
     });
 
     it("should include Authorization header when user is authenticated (fetch)", async () => {
-      setup(true); // Use the setup function for authenticated state
+      setup(true, true); // Use the setup function for authenticated admin state
 
       // Setup MSW handler to capture authorization header
       let capturedAuthHeader: string | null = null;
@@ -696,6 +706,8 @@ describe("User List", () => {
           username: "user2",
           access: "mock-access-token",
           refresh: "mock-refresh-token",
+          is_staff: false,
+          is_superuser: false,
         })
       );
 
@@ -736,6 +748,8 @@ describe("User List", () => {
           username: "user2",
           access: "mock-access-token",
           refresh: "mock-refresh-token",
+          is_staff: false,
+          is_superuser: false,
         })
       );
 
@@ -798,6 +812,8 @@ describe("User List", () => {
           username: "authenticateduser",
           access: "mock-access-token",
           refresh: "mock-refresh-token",
+          is_staff: false,
+          is_superuser: false,
         })
       );
 
@@ -823,6 +839,9 @@ describe("User List", () => {
 
   describe("User List Refresh Event", () => {
     it("should refresh user list when userListRefresh event is dispatched", async () => {
+      // Setup admin user first
+      setup(true, true);
+
       // Mock API to track calls
       const mockGet = vi.fn();
       mockGet
@@ -886,11 +905,77 @@ describe("User List", () => {
         })
       );
 
-      setup(true);
+      setup(true, true);
 
       expect(await screen.findByText("user2")).toBeInTheDocument();
       expect(await screen.findByText("user3")).toBeInTheDocument();
       expect(await screen.findByText("user4")).toBeInTheDocument();
+    });
+  });
+
+  describe("Admin Access Controls", () => {
+    beforeEach(() => {
+      // Reset auth state before each test
+      store.dispatch(logoutSuccess());
+    });
+
+    it("displays user list when authenticated user is admin", async () => {
+      setup(true, true); // authenticated = true, isAdmin = true
+      const users = await screen.findAllByText(/user\d/);
+      expect(users).toHaveLength(3);
+      expect(screen.getByText("User List")).toBeInTheDocument();
+    });
+
+    it("displays access denied message when authenticated user is not admin", async () => {
+      setup(true, false); // authenticated = true, isAdmin = false
+      const accessDeniedMessage = await screen.findByText("Access Denied");
+      expect(accessDeniedMessage).toBeInTheDocument();
+      expect(screen.getByText("You need administrator privileges to view the user list.")).toBeInTheDocument();
+    });
+
+    it("displays translated access denied message when authenticated user is not admin", async () => {
+      // Change language to Malayalam
+      act(() => {
+        i18n.changeLanguage("ml");
+      });
+
+      setup(true, false); // authenticated = true, isAdmin = false
+
+      const accessDeniedTitle = await screen.findByText("അക്സസ് നിഷേധിച്ചു");
+      expect(accessDeniedTitle).toBeInTheDocument();
+      expect(screen.getByText("ഉപയോക്തൃ പട്ടിക കാണാൻ നിങ്ങൾക്ക് അഡ്മിനിസ്ട്രേറ്റർ അനുമതികൾ ആവശ്യമാണ്.")).toBeInTheDocument();
+
+      // Reset language back to English for other tests
+      act(() => {
+        i18n.changeLanguage("en");
+      });
+    });
+
+    it("displays Arabic access denied message when authenticated user is not admin", async () => {
+      // Change language to Arabic
+      act(() => {
+        i18n.changeLanguage("ar");
+      });
+
+      setup(true, false); // authenticated = true, isAdmin = false
+
+      const accessDeniedTitle = await screen.findByText("تم رفض الوصول");
+      expect(accessDeniedTitle).toBeInTheDocument();
+      expect(screen.getByText("تحتاج إلى صلاحيات المسؤول لعرض قائمة المستخدمين.")).toBeInTheDocument();
+
+      // Reset language back to English for other tests
+      act(() => {
+        i18n.changeLanguage("en");
+      });
+    });
+
+
+
+    it("shows login required message when not authenticated (takes precedence over admin check)", async () => {
+      setup(false, false); // authenticated = false, isAdmin = false
+      const loginMessage = await screen.findByText("Please login to view users");
+      expect(loginMessage).toBeInTheDocument();
+      expect(screen.queryByText("Access Denied")).not.toBeInTheDocument();
     });
   });
 });

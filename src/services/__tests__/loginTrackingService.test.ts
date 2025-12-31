@@ -6,9 +6,10 @@ import {
   getLoginComparison,
   getLoginDistribution,
   getAdminDashboard,
-  getAdminCharts
+  getAdminCharts,
+  getAdminUserStats
 } from '../loginTrackingService';
-import { UserStats, LoginActivityResponse, ChartData, AdminDashboardData } from '../../types/loginTracking';
+import { UserStats, LoginActivityResponse, ChartData, AdminDashboardData, AdminUserStatsResponse } from '../../types/loginTracking';
 
 // Mock the errorService
 vi.mock('../errorService', () => ({
@@ -42,7 +43,7 @@ describe('loginTrackingService', () => {
 
   // Test getUserStats function
   describe('getUserStats', () => {
-    it('should fetch user stats successfully', async () => {
+    it('should fetch current user stats successfully', async () => {
       const mockResponse: UserStats = {
         total_logins: 42,
         last_login: "2025-12-13 14:30:25",
@@ -58,6 +59,32 @@ describe('loginTrackingService', () => {
 
       const result = await getUserStats();
       expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/stats/'),
+        expect.any(Object)
+      );
+    });
+
+    it('should fetch specific user stats when userId provided', async () => {
+      const mockResponse: UserStats = {
+        total_logins: 25,
+        last_login: "2025-12-12 10:15:30",
+        weekly_data: {"2025-12-06": 2, "2025-12-07": 4},
+        monthly_data: {"2025-11": 10, "2025-12": 15},
+        login_trend: 65
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getUserStats(123);
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/123/dashboard/stats/'),
+        expect.any(Object)
+      );
     });
 
     it('should handle errors properly', async () => {
@@ -73,7 +100,7 @@ describe('loginTrackingService', () => {
 
   // Test getLoginActivity function
   describe('getLoginActivity', () => {
-    it('should fetch login activity with pagination successfully', async () => {
+    it('should fetch current user login activity with pagination successfully', async () => {
       const mockResponse: LoginActivityResponse = {
         count: 7,
         results: [
@@ -95,6 +122,38 @@ describe('loginTrackingService', () => {
 
       const result = await getLoginActivity(2, 10);
       expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/login-activity/'),
+        expect.any(Object)
+      );
+    });
+
+    it('should fetch specific user login activity when userId provided', async () => {
+      const mockResponse: LoginActivityResponse = {
+        count: 5,
+        results: [
+          {
+            id: 456,
+            username: "otheruser",
+            timestamp: "2025-12-12 10:15:30",
+            ip_address: "192.168.1.200",
+            user_agent: "Mozilla/5.0...",
+            success: true
+          }
+        ]
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getLoginActivity(1, 5, 456);
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/456/dashboard/login-activity/'),
+        expect.any(Object)
+      );
     });
 
     it('should handle pagination parameters correctly', async () => {
@@ -109,7 +168,7 @@ describe('loginTrackingService', () => {
       });
 
       await getLoginActivity(3, 20);
-      
+
       // Verify fetch was called with correct URL including pagination params
       expect(globalThis.fetch).toHaveBeenCalledWith(
         expect.stringContaining('page=3'),
@@ -305,6 +364,142 @@ describe('loginTrackingService', () => {
       });
 
       await expect(getAdminCharts()).rejects.toBeDefined();
+    });
+  });
+
+  // Test getAdminUserStats function
+  describe('getAdminUserStats', () => {
+    it('should fetch admin user stats for specific users successfully', async () => {
+      const mockResponse: AdminUserStatsResponse = {
+        "1": {
+          total_logins: 42,
+          last_login: "2025-12-13 14:30:25",
+          weekly_data: {"2025-12-07": 5, "2025-12-08": 3},
+          monthly_data: {"2025-11": 15, "2025-12": 27},
+          login_trend: 80
+        },
+        "2": {
+          total_logins: 25,
+          last_login: "2025-12-12 10:15:30",
+          weekly_data: {"2025-12-06": 2, "2025-12-07": 4},
+          monthly_data: {"2025-11": 10, "2025-12": 15},
+          login_trend: 65
+        }
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getAdminUserStats([1, 2]);
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/dashboard/users/stats/?user_ids%5B%5D=1&user_ids%5B%5D=2'),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle user_ids filter correctly', async () => {
+      const mockResponse: AdminUserStatsResponse = {
+        "1": {
+          total_logins: 42,
+          last_login: "2025-12-13 14:30:25",
+          weekly_data: {},
+          monthly_data: {},
+          login_trend: 80
+        }
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      await getAdminUserStats([1]);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('user_ids%5B%5D=1'),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle is_active filter correctly', async () => {
+      const mockResponse: AdminUserStatsResponse = {
+        "1": {
+          total_logins: 42,
+          last_login: "2025-12-13 14:30:25",
+          weekly_data: {},
+          monthly_data: {},
+          login_trend: 80
+        }
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      await getAdminUserStats(undefined, true);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('is_active=true'),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle both user_ids and is_active filters', async () => {
+      const mockResponse: AdminUserStatsResponse = {
+        "1": {
+          total_logins: 42,
+          last_login: "2025-12-13 14:30:25",
+          weekly_data: {},
+          monthly_data: {},
+          login_trend: 80
+        }
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      await getAdminUserStats([1, 2], false);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('user_ids%5B%5D=1&user_ids%5B%5D=2&is_active=false'),
+        expect.any(Object)
+      );
+    });
+
+    it('should fetch all users when no filters provided', async () => {
+      const mockResponse: AdminUserStatsResponse = {
+        "1": {
+          total_logins: 42,
+          last_login: "2025-12-13 14:30:25",
+          weekly_data: {},
+          monthly_data: {},
+          login_trend: 80
+        }
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      await getAdminUserStats();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/dashboard/users/stats/'),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle errors in admin user stats fetch', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: () => Promise.resolve({ detail: 'Forbidden' }),
+      });
+
+      await expect(getAdminUserStats()).rejects.toBeDefined();
     });
   });
 

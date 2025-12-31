@@ -12,6 +12,8 @@ i18n.use(initReactI18next).init({
     en: {
       translation: {
         home: "Home",
+        welcomeTitle: "Welcome to Your Dashboard",
+        welcomeMessage: "Access your profile, view statistics, and manage your account.",
         myProfile: "My Profile",
         signup: {
           title: "Sign Up",
@@ -49,6 +51,8 @@ i18n.use(initReactI18next).init({
           pageInfo: "Page {{current}} of {{total}} ({{count}} users)",
           emptyPageMessage: "No users found",
           loginRequiredMessage: "Please login to view users",
+          accessDeniedTitle: "Access Denied",
+          accessDeniedMessage: "You need administrator privileges to view the user list.",
         },
         login: {
           title: "Login",
@@ -117,6 +121,7 @@ i18n.use(initReactI18next).init({
           },
         },
         dashboard: {
+          title: "Dashboard",
           user_stats: "User Statistics",
           total_logins: "Total Logins",
           last_login: "Last Login",
@@ -151,6 +156,8 @@ i18n.use(initReactI18next).init({
       // Malayalam
       translation: {
         home: "ഹോം",
+        welcomeTitle: "നിങ്ങളുടെ ഡാഷ്ബോർഡിലേക്ക് സ്വാഗതം",
+        welcomeMessage: "നിങ്ങളുടെ പ്രൊഫൈൽ ആക്സസ് ചെയ്യുക, സ്ഥിതിവിവരക്കണക്കുകൾ കാണുക, നിങ്ങളുടെ അക്കൗണ്ട് മാനേജ് ചെയ്യുക.",
         myProfile: "എന്റെ പ്രൊഫൈൽ",
         signup: {
           title: "രജിസ്റ്റർ ചെയ്യുക",
@@ -188,6 +195,8 @@ i18n.use(initReactI18next).init({
           pageInfo: "പേജ് {{current}} / {{total}} ({{count}} ഉപയോക്താക്കൾ)",
           emptyPageMessage: "ഉപയോക്താക്കളെയൊന്നും കണ്ടെത്തിയില്ല",
           loginRequiredMessage: "ഉപയോക്താക്കളെ കാണാൻ ദയവായി ലോഗിൻ ചെയ്യുക",
+          accessDeniedTitle: "അക്സസ് നിഷേധിച്ചു",
+          accessDeniedMessage: "ഉപയോക്തൃ പട്ടിക കാണാൻ നിങ്ങൾക്ക് അഡ്മിനിസ്ട്രേറ്റർ അനുമതികൾ ആവശ്യമാണ്.",
         },
         login: {
           title: "ലോഗിൻ",
@@ -256,6 +265,7 @@ i18n.use(initReactI18next).init({
           },
         },
         dashboard: {
+          title: "ഡാഷ്ബോർഡ്",
           user_stats: "ഉപയോക്തൃ സ്ഥിതിവിവരക്കണക്കുകൾ",
           total_logins: "ആകെ ലോഗിനുകൾ",
           last_login: "അവസാന ലോഗിൻ",
@@ -290,6 +300,8 @@ i18n.use(initReactI18next).init({
       // Arabic (RTL)
       translation: {
         home: "الرئيسية",
+        welcomeTitle: "مرحباً بك في لوحة التحكم الخاصة بك",
+        welcomeMessage: "يمكنك الوصول إلى ملفك الشخصي وعرض الإحصائيات وإدارة حسابك.",
         myProfile: "ملفي",
         signup: {
           title: "تسجيل حساب جديد",
@@ -327,6 +339,8 @@ i18n.use(initReactI18next).init({
           pageInfo: "صفحة {{current}} من {{total}} ({{count}} مستخدمين)",
           emptyPageMessage: "لم يتم العثور على أي مستخدمين",
           loginRequiredMessage: "يرجى تسجيل الدخول لعرض المستخدمين",
+          accessDeniedTitle: "تم رفض الوصول",
+          accessDeniedMessage: "تحتاج إلى صلاحيات المسؤول لعرض قائمة المستخدمين.",
         },
         login: {
           title: "تسجيل الدخول",
@@ -394,6 +408,7 @@ i18n.use(initReactI18next).init({
           },
         },
         dashboard: {
+          title: "لوحة التحكم",
           user_stats: "إحصائيات المستخدم",
           total_logins: "إجمالي عمليات تسجيل الدخول",
           last_login: "آخر تسجيل دخول",

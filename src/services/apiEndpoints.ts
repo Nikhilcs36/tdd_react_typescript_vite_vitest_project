@@ -22,4 +22,9 @@ export const API_ENDPOINTS = {
   LOGIN_DISTRIBUTION: "/api/user/dashboard/charts/distribution/",
   ADMIN_DASHBOARD: "/api/admin/dashboard/",
   ADMIN_CHARTS: "/api/admin/charts/",
+
+  // User-specific endpoints for authorization
+  USER_STATS_BY_ID: (userId: number) => `/api/user/${userId}/dashboard/stats/`,
+  LOGIN_ACTIVITY_BY_ID: (userId: number) => `/api/user/${userId}/dashboard/login-activity/`,
+  ADMIN_USER_STATS: "/api/admin/dashboard/users/stats/",
 };
