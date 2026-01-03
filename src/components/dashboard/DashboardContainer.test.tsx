@@ -4,6 +4,16 @@ import DashboardContainer from './DashboardContainer';
 import { useSelector } from 'react-redux';
 import { getUserStats, getLoginActivity, getLoginTrends, getLoginComparison, getLoginDistribution, getAdminDashboard, getAdminCharts } from '../../services/loginTrackingService';
 
+// Mock i18n to avoid initReactI18next issues
+vi.mock('../../locale/i18n', () => ({
+  default: {
+    language: 'en',
+    changeLanguage: vi.fn(),
+    on: vi.fn(),
+    dir: vi.fn(() => 'ltr'),
+  },
+}));
+
 // Mock the translation function
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -12,9 +22,10 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-// Mock Redux useSelector
+// Mock Redux useSelector and useDispatch
 vi.mock('react-redux', () => ({
-  useSelector: vi.fn()
+  useSelector: vi.fn(),
+  useDispatch: vi.fn(() => vi.fn())
 }));
 
 // Mock the authorization hook
@@ -69,6 +80,22 @@ vi.mock('./LoginTrendsChart', () => ({
   )
 }));
 
+vi.mock('./DashboardFilters', () => ({
+  default: ({ disabled }: any) => (
+    <div data-testid="dashboard-filters">
+      {disabled ? 'Filters Disabled' : 'Dashboard Filters'}
+    </div>
+  )
+}));
+
+vi.mock('./DashboardUserList', () => ({
+  default: () => (
+    <div data-testid="dashboard-user-list">
+      User List Component
+    </div>
+  )
+}));
+
 describe('DashboardContainer', () => {
   const mockUserStats = {
     total_logins: 42,
@@ -114,13 +141,19 @@ describe('DashboardContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock useSelector to return authenticated user
+    // Mock useSelector to return authenticated user and dashboard state
     (useSelector as any).mockImplementation((callback: any) => {
       const state = {
         auth: {
           isAuthenticated: true,
           user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false },
           accessToken: 'test-token'
+        },
+        dashboard: {
+          activeFilter: 'all',
+          selectedUserIds: [],
+          isLoading: false,
+          error: null
         }
       };
       return callback(state);
@@ -170,6 +203,8 @@ describe('DashboardContainer', () => {
     (getUserStats as any).mockRejectedValue(new Error('API Error'));
     (getLoginActivity as any).mockResolvedValue(mockLoginActivity);
     (getLoginTrends as any).mockResolvedValue(mockChartData);
+    (getLoginComparison as any).mockResolvedValue(mockChartData);
+    (getLoginDistribution as any).mockResolvedValue(mockChartData);
 
     render(<DashboardContainer />);
 
@@ -184,8 +219,8 @@ describe('DashboardContainer', () => {
     const mockUseUserAuthorization = vi.mocked(useUserAuthorization);
     mockUseUserAuthorization.mockReturnValue({
       isAdmin: vi.fn(() => true),
-      isCurrentUser: vi.fn((id: number) => id === 1),
-      canAccessUserData: vi.fn((id: number) => true),
+      isCurrentUser: vi.fn(() => true),
+      canAccessUserData: vi.fn(() => true),
       getUserRole: vi.fn(() => ({
         isStaff: false,
         isSuperuser: true,
@@ -207,6 +242,8 @@ describe('DashboardContainer', () => {
     render(<DashboardContainer />);
 
     await waitFor(() => {
+      expect(screen.getByTestId('dashboard-filters')).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-user-list')).toBeInTheDocument();
       expect(screen.getByText('dashboard.admin_overview')).toBeInTheDocument();
       expect(screen.getByText('dashboard.total_users')).toBeInTheDocument();
       expect(screen.getByText('dashboard.active_users')).toBeInTheDocument();
@@ -239,6 +276,12 @@ describe('DashboardContainer', () => {
           isAuthenticated: false,
           user: null,
           accessToken: null
+        },
+        dashboard: {
+          activeFilter: 'all',
+          selectedUserIds: [],
+          isLoading: false,
+          error: null
         }
       };
       return callback(state);

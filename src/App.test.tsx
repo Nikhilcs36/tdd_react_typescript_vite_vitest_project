@@ -678,8 +678,8 @@ describe("Authentication navbar visible", () => {
         const dashboardLink = screen.getByTestId("dashboard-link");
         expect(dashboardLink).toBeInTheDocument();
         expect(dashboardLink).toHaveAttribute("href", "/dashboard");
-        // Check that it contains the translation key (i18n behavior)
-        expect(dashboardLink).toHaveTextContent("dashboard.title");
+        // Check that it contains the translated text (i18n behavior)
+        expect(dashboardLink).toHaveTextContent("Dashboard");
       });
 
       it("hides 'Dashboard' link for unauthenticated users", async () => {
@@ -702,10 +702,10 @@ describe("Authentication navbar visible", () => {
         });
         render(<App />);
 
-        // Verify dashboard link exists with translation key
+        // Verify dashboard link exists with translated text
         const dashboardLink = screen.getByTestId("dashboard-link");
         expect(dashboardLink).toBeInTheDocument();
-        expect(dashboardLink).toHaveTextContent("dashboard.title");
+        expect(dashboardLink).toHaveTextContent("ഡാഷ്ബോർഡ്");
       });
 
       it("navigates to dashboard when clicking dashboard link", async () => {

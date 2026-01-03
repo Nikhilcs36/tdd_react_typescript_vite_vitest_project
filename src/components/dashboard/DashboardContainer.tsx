@@ -9,6 +9,8 @@ import { useUserAuthorization } from '../../utils/authorization';
 import UserDashboardCard from './UserDashboardCard';
 import LoginActivityTable from './LoginActivityTable';
 import LoginTrendsChart from './LoginTrendsChart';
+import DashboardFilters from './DashboardFilters';
+import DashboardUserList from './DashboardUserList';
 
 // Styled components
 const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
@@ -31,9 +33,8 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const { t } = useTranslation();
   const { isAdmin, canAccessUserData } = useUserAuthorization();
   const authState = useSelector((state: RootState) => state.auth);
+  const dashboardState = useSelector((state: RootState) => state.dashboard);
   const currentUserId = userId || authState.user?.id;
-
-  // State management
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loginActivity, setLoginActivity] = useState<LoginActivityResponse | null>(null);
   const [loginTrends, setLoginTrends] = useState<ChartData | null>(null);
@@ -66,6 +67,11 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         // Determine which user data to fetch based on authorization
         const targetUserId = isAdmin() && userId ? userId : undefined;
 
+        // Determine chart filtering based on active filter and selected users
+        const chartUserIds = dashboardState.activeFilter === 'specific' && dashboardState.selectedUserIds.length > 0
+          ? dashboardState.selectedUserIds
+          : undefined;
+
         // Execute all API calls in parallel
         const [
           userStatsResponse,
@@ -78,9 +84,9 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         ] = await Promise.allSettled([
           getUserStats(targetUserId),
           getLoginActivity(1, 5, targetUserId),
-          getLoginTrends(),
-          getLoginComparison(),
-          getLoginDistribution(),
+          getLoginTrends(chartUserIds),
+          getLoginComparison(chartUserIds),
+          getLoginDistribution(chartUserIds),
           isAdmin() ? getAdminDashboard() : Promise.resolve(null),
           isAdmin() ? getAdminCharts() : Promise.resolve(null)
         ]);
@@ -133,7 +139,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     };
 
     fetchDashboardData();
-  }, [currentUserId, userId, isAdmin, canAccessUserData, t]);
+  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds]);
 
   // Render loading state
   if (loading) {
@@ -159,6 +165,18 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
   return (
     <DashboardContainerWrapper>
+      {/* Dashboard Filters - Only show for admins */}
+      {isAdmin() && (
+        <DashboardFilters
+          disabled={loading}
+        />
+      )}
+
+      {/* User List Section - Only show for admins */}
+      {isAdmin() && (
+        <DashboardUserList />
+      )}
+
       {/* User Statistics Section */}
       <SectionTitle>{t('dashboard.user_statistics')}</SectionTitle>
       <DashboardGrid>

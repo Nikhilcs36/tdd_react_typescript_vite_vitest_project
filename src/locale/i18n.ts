@@ -148,7 +148,19 @@ i18n.use(initReactI18next).init({
           admin_overview: "Admin Overview",
           admin_statistics: "Admin Statistics",
           total_users: "Total Users: {{count}}",
-          active_users: "Active Users: {{count}}"
+          active_users: "Active Users: {{count}}",
+          filters: {
+            allUsers: "All Users",
+            specificUsers: "Specific Users",
+            adminOnly: "Admin Only"
+          },
+          user_list: {
+            title: "Users",
+            empty: "No users found",
+            error_loading: "Error loading users"
+          },
+          user_not_found: "User not found",
+          unauthorized_access: "Unauthorized access to dashboard data"
         },
       },
     },
@@ -292,7 +304,14 @@ i18n.use(initReactI18next).init({
           admin_overview: "അഡ്മിൻ അവലോകനം",
           admin_statistics: "അഡ്മിൻ സ്ഥിതിവിവരക്കണക്കുകൾ",
           total_users: "ആകെ ഉപയോക്താക്കൾ: {{count}}",
-          active_users: "സജീവ ഉപയോക്താക്കൾ: {{count}}"
+          active_users: "സജീവ ഉപയോക്താക്കൾ: {{count}}",
+          filters: {
+            allUsers: "എല്ലാ ഉപയോക്താക്കളും",
+            specificUsers: "നിർദ്ദിഷ്ട ഉപയോക്താക്കൾ",
+            adminOnly: "അഡ്മിൻ മാത്രം"
+          },
+          user_not_found: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
+          unauthorized_access: "ഡാഷ്ബോർഡ് ഡാറ്റയിലേക്ക് അനധികൃത ആക്സസ്"
         },
       },
     },
@@ -435,7 +454,14 @@ i18n.use(initReactI18next).init({
           admin_overview: "نظرة عامة للمسؤول",
           admin_statistics: "إحصائيات المسؤول",
           total_users: "إجمالي المستخدمين: {{count}}",
-          active_users: "المستخدمون النشطون: {{count}}"
+          active_users: "المستخدمون النشطون: {{count}}",
+          filters: {
+            allUsers: "جميع المستخدمين",
+            specificUsers: "مستخدمون محددون",
+            adminOnly: "الإدارة فقط"
+          },
+          user_not_found: "لم يتم العثور على المستخدم",
+          unauthorized_access: "وصول غير مصرح به لبيانات لوحة التحكم"
         },
       },
     },

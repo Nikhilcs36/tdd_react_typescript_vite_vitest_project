@@ -3,7 +3,50 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '../../../locale/i18n';
 import LoginTrendsChart from '../LoginTrendsChart';
 import { ChartData } from '../../../types/loginTracking';
-import { describe, beforeEach, it, expect } from 'vitest';
+import { describe, beforeEach, it, expect, vi } from 'vitest';
+
+// Mock Chart.js to avoid canvas context issues in tests
+vi.mock('chart.js', () => ({
+  Chart: Object.assign(vi.fn().mockImplementation(() => ({
+    destroy: vi.fn(),
+    update: vi.fn(),
+    resize: vi.fn(),
+  })), {
+    register: vi.fn(), // Add register method for ChartJS.register() calls
+  }),
+  CategoryScale: vi.fn(),
+  LinearScale: vi.fn(),
+  BarController: vi.fn(),
+  LineController: vi.fn(),
+  PieController: vi.fn(),
+  BarElement: vi.fn(),
+  LineElement: vi.fn(),
+  PointElement: vi.fn(),
+  ArcElement: vi.fn(),
+  Title: vi.fn(),
+  Tooltip: vi.fn(),
+  Legend: vi.fn(),
+  Filler: vi.fn(),
+}));
+
+// Mock react-chartjs-2 to avoid actual chart rendering
+vi.mock('react-chartjs-2', () => ({
+  Bar: ({ 'data-testid': testId, ...props }: any) => (
+    <div data-testid={testId || 'bar-chart'} role="img" {...props}>
+      Mock Bar Chart
+    </div>
+  ),
+  Line: ({ 'data-testid': testId, ...props }: any) => (
+    <div data-testid={testId || 'line-chart'} role="img" {...props}>
+      Mock Line Chart
+    </div>
+  ),
+  Pie: ({ 'data-testid': testId, ...props }: any) => (
+    <div data-testid={testId || 'pie-chart'} role="img" {...props}>
+      Mock Pie Chart
+    </div>
+  ),
+}));
 
 // Mock data for testing
 const mockChartData: ChartData = {
