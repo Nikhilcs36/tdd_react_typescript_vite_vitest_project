@@ -114,17 +114,35 @@ export const loginTrackingService = {
     );
   },
 
-  // Chart Data Endpoints
-  getLoginTrends: async (): Promise<ChartData> => {
-    return fetchApiServiceLoginTracking.get<ChartData>(API_ENDPOINTS.LOGIN_TRENDS);
+  // Chart Data Endpoints - support user filtering for specific filter mode
+  getLoginTrends: async (userIds?: number[]): Promise<ChartData> => {
+    let url = API_ENDPOINTS.LOGIN_TRENDS;
+    if (userIds?.length) {
+      const params = new URLSearchParams();
+      userIds.forEach(id => params.append('user_ids', id.toString()));
+      url += `?${params.toString()}`;
+    }
+    return fetchApiServiceLoginTracking.get<ChartData>(url);
   },
 
-  getLoginComparison: async (): Promise<ChartData> => {
-    return fetchApiServiceLoginTracking.get<ChartData>(API_ENDPOINTS.LOGIN_COMPARISON);
+  getLoginComparison: async (userIds?: number[]): Promise<ChartData> => {
+    let url = API_ENDPOINTS.LOGIN_COMPARISON;
+    if (userIds?.length) {
+      const params = new URLSearchParams();
+      userIds.forEach(id => params.append('user_ids', id.toString()));
+      url += `?${params.toString()}`;
+    }
+    return fetchApiServiceLoginTracking.get<ChartData>(url);
   },
 
-  getLoginDistribution: async (): Promise<ChartData> => {
-    return fetchApiServiceLoginTracking.get<ChartData>(API_ENDPOINTS.LOGIN_DISTRIBUTION);
+  getLoginDistribution: async (userIds?: number[]): Promise<ChartData> => {
+    let url = API_ENDPOINTS.LOGIN_DISTRIBUTION;
+    if (userIds?.length) {
+      const params = new URLSearchParams();
+      userIds.forEach(id => params.append('user_ids', id.toString()));
+      url += `?${params.toString()}`;
+    }
+    return fetchApiServiceLoginTracking.get<ChartData>(url);
   },
 
   // Admin Endpoints

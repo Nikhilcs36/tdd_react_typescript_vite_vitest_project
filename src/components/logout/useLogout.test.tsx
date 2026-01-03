@@ -59,6 +59,8 @@ describe("useLogout Hook", () => {
         username: "testuser",
         access: "mock-access-token",
         refresh: "mock-refresh-token",
+        is_staff: false,
+        is_superuser: false,
       })
     );
   });
