@@ -477,4 +477,421 @@ export const handlers = [
       }
     );
   }),
+
+  // Mock API for user dashboard stats ----(10)
+  http.get(API_ENDPOINTS.USER_STATS, async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { message: "Token is invalid or expired" },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        total_logins: 39,
+        last_login: "2026-01-03 09:35:14",
+        weekly_data: {
+          "2025-50": 4,
+          "2025-51": 20,
+          "2025-52": 15
+        },
+        monthly_data: {
+          "2025-12": 26,
+          "2026-01": 13
+        },
+        login_trend: -50
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for login activity ----(11)
+  http.get(API_ENDPOINTS.LOGIN_ACTIVITY, async ({ request }) => {
+    const url = new URL(request.url);
+    const page = Number(url.searchParams.get("page")) || 1;
+    const page_size = Number(url.searchParams.get("page_size")) || 10;
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { message: "Token is invalid or expired" },
+        { status: 401 }
+      );
+    }
+
+    const allActivities = [
+      {
+        id: 66,
+        username: "admin",
+        timestamp: "2026-01-03 09:36:18",
+        ip_address: "172.18.0.1",
+        user_agent: "PostmanRuntime/7.51.0",
+        success: true
+      },
+      {
+        id: 65,
+        username: "admin",
+        timestamp: "2026-01-03 09:35:14",
+        ip_address: "172.18.0.1",
+        user_agent: "PostmanRuntime/7.51.0",
+        success: true
+      },
+      {
+        id: 64,
+        username: "admin",
+        timestamp: "2026-01-03 09:27:24",
+        ip_address: "172.18.0.1",
+        user_agent: "PostmanRuntime/7.51.0",
+        success: true
+      }
+    ];
+
+    const startIndex = (page - 1) * page_size;
+    const endIndex = startIndex + page_size;
+    const paginatedActivities = allActivities.slice(startIndex, endIndex);
+
+    const totalPages = Math.ceil(allActivities.length / page_size);
+    const baseUrl = "http://127.0.0.1:8000/api/user/dashboard/login-activity/";
+    const nextUrl = page < totalPages ? `${baseUrl}?page=${page + 1}&page_size=${page_size}` : null;
+    const previousUrl = page > 1 ? `${baseUrl}?page=${page - 1}&page_size=${page_size}` : null;
+
+    return HttpResponse.json(
+      {
+        count: allActivities.length,
+        next: nextUrl,
+        previous: previousUrl,
+        results: paginatedActivities
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for login trends chart ----(12)
+  http.get(API_ENDPOINTS.LOGIN_TRENDS, async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { message: "Token is invalid or expired" },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        "login_trends": {
+          "labels": [
+            "2025-12-04",
+            "2025-12-05",
+            "2025-12-06",
+            "2025-12-07",
+            "2025-12-08",
+            "2025-12-09",
+            "2025-12-10",
+            "2025-12-11",
+            "2025-12-12",
+            "2025-12-13",
+            "2025-12-14",
+            "2025-12-15",
+            "2025-12-16",
+            "2025-12-17",
+            "2025-12-18",
+            "2025-12-19",
+            "2025-12-20",
+            "2025-12-21",
+            "2025-12-22",
+            "2025-12-23",
+            "2025-12-24",
+            "2025-12-25",
+            "2025-12-26",
+            "2025-12-27",
+            "2025-12-28",
+            "2025-12-29",
+            "2025-12-30",
+            "2025-12-31",
+            "2026-01-01",
+            "2026-01-02",
+            "2026-01-03"
+          ],
+          "datasets": [
+            {
+              "label": "Successful Logins",
+              "data": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2,
+                0,
+                2,
+                8,
+                7,
+                0,
+                1,
+                0,
+                2,
+                1,
+                0,
+                1,
+                0,
+                7,
+                14
+              ],
+              "borderColor": "#4caf50",
+              "backgroundColor": "rgba(76, 175, 80, 0.1)"
+            },
+            {
+              "label": "Failed Logins",
+              "data": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1
+              ],
+              "borderColor": "#f44336",
+              "backgroundColor": "rgba(244, 67, 54, 0.1)"
+            }
+          ]
+        }
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for login comparison chart ----(13)
+  http.get(API_ENDPOINTS.LOGIN_COMPARISON, async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { message: "Token is invalid or expired" },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        "login_comparison": {
+          "labels": [
+            "2025-12-15",
+            "2025-12-22",
+            "2025-12-29"
+          ],
+          "datasets": [
+            {
+              "label": "Login Count",
+              "data": [
+                4,
+                20,
+                23
+              ],
+              "backgroundColor": "#2196f3"
+            }
+          ]
+        }
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for login distribution chart ----(14)
+  http.get(API_ENDPOINTS.LOGIN_DISTRIBUTION, async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { message: "Token is invalid or expired" },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        "login_distribution": {
+          "success_ratio": {
+            "labels": [
+              "Successful",
+              "Failed"
+            ],
+            "datasets": [
+              {
+                "data": [
+                  47,
+                  3
+                ],
+                "backgroundColor": [
+                  "#4caf50",
+                  "#f44336"
+                ]
+              }
+            ]
+          },
+          "user_agents": {
+            "labels": [
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+              "PostmanRuntime/7.51.0",
+              "PostmanRuntime/7.49.1"
+            ],
+            "datasets": [
+              {
+                "data": [
+                  30,
+                  17,
+                  3
+                ],
+                "backgroundColor": [
+                  "#2196f3",
+                  "#4caf50",
+                  "#ff9800",
+                  "#9c27b0",
+                  "#607d8b"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for admin dashboard ----(15)
+  http.get(API_ENDPOINTS.ADMIN_DASHBOARD, async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { message: "Token is invalid or expired" },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        total_users: 6,
+        active_users: 6,
+        total_logins: 66,
+        login_activity: [
+          {
+            id: 70,
+            username: "admin",
+            timestamp: "2026-01-03 09:40:41",
+            ip_address: "172.18.0.1",
+            user_agent: "PostmanRuntime/7.51.0",
+            success: true
+          },
+          {
+            id: 69,
+            username: "admin",
+            timestamp: "2026-01-03 09:39:35",
+            ip_address: "172.18.0.1",
+            user_agent: "PostmanRuntime/7.51.0",
+            success: true
+          }
+        ],
+        user_growth: {
+          "2025-12": 6
+        }
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for admin charts ----(16)
+  http.get(API_ENDPOINTS.ADMIN_CHARTS, async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { message: "Token is invalid or expired" },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        admin_charts: {
+          user_growth: {
+            labels: [],
+            datasets: [
+              {
+                label: "New Users",
+                data: [],
+                borderColor: "#2196f3"
+              }
+            ]
+          },
+          login_activity: {
+            labels: ["2025-12-19"],
+            datasets: [
+              {
+                label: "Daily Logins",
+                data: [6],
+                borderColor: "#4caf50"
+              }
+            ]
+          },
+          success_ratio: {
+            labels: ["Successful", "Failed"],
+            datasets: [
+              {
+                data: [6, 1],
+                backgroundColor: ["#4caf50", "#f44336"]
+              }
+            ]
+          }
+        }
+      },
+      { status: 200 }
+    );
+  }),
 ];

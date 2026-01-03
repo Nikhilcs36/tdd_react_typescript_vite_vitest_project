@@ -194,7 +194,7 @@ describe('loginTrackingService', () => {
   // Test getLoginTrends function
   describe('getLoginTrends', () => {
     it('should fetch login trends chart data successfully', async () => {
-      const mockResponse: ChartData = {
+      const chartData: ChartData = {
         labels: ['Jan', 'Feb', 'Mar', 'Apr'],
         datasets: [{
           label: 'Login Trends',
@@ -205,13 +205,15 @@ describe('loginTrackingService', () => {
         }]
       };
 
+      const mockResponse = { login_trends: chartData };
+
       (globalThis.fetch as any).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       });
 
       const result = await getLoginTrends();
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual(chartData);
     });
 
     it('should handle errors in login trends fetch', async () => {
@@ -228,7 +230,7 @@ describe('loginTrackingService', () => {
   // Test getLoginComparison function
   describe('getLoginComparison', () => {
     it('should fetch login comparison chart data successfully', async () => {
-      const mockResponse: ChartData = {
+      const chartData: ChartData = {
         labels: ['User A', 'User B', 'User C'],
         datasets: [{
           label: 'Login Comparison',
@@ -239,13 +241,15 @@ describe('loginTrackingService', () => {
         }]
       };
 
+      const mockResponse = { login_comparison: chartData };
+
       (globalThis.fetch as any).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       });
 
       const result = await getLoginComparison();
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual(chartData);
     });
 
     it('should handle errors in login comparison fetch', async () => {
@@ -262,15 +266,23 @@ describe('loginTrackingService', () => {
   // Test getLoginDistribution function
   describe('getLoginDistribution', () => {
     it('should fetch login distribution chart data successfully', async () => {
-      const mockResponse: ChartData = {
-        labels: ['Mobile', 'Desktop', 'Tablet'],
+      const chartData: ChartData = {
+        labels: ['Successful', 'Failed'],
         datasets: [{
           label: 'Login Distribution',
-          data: [45, 40, 15],
-          backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe'],
-          borderColor: '#36a2eb',
-          borderWidth: 2
+          data: [90, 10],
+          backgroundColor: ['#4caf50', '#f44336']
         }]
+      };
+
+      const mockResponse = {
+        login_distribution: {
+          success_ratio: chartData,
+          user_agents: {
+            labels: ['Chrome', 'Firefox'],
+            datasets: [{ data: [60, 40], backgroundColor: ['#2196f3', '#ff9800'] }]
+          }
+        }
       };
 
       (globalThis.fetch as any).mockResolvedValue({
@@ -279,7 +291,7 @@ describe('loginTrackingService', () => {
       });
 
       const result = await getLoginDistribution();
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual(chartData); // Should return success_ratio chart data
     });
 
     it('should handle errors in login distribution fetch', async () => {
@@ -336,7 +348,7 @@ describe('loginTrackingService', () => {
   // Test getAdminCharts function
   describe('getAdminCharts', () => {
     it('should fetch admin charts data successfully', async () => {
-      const mockResponse: ChartData = {
+      const chartData: ChartData = {
         labels: ['Active Users', 'Inactive Users'],
         datasets: [{
           label: 'User Status',
@@ -347,13 +359,15 @@ describe('loginTrackingService', () => {
         }]
       };
 
+      const mockResponse = { admin_charts: chartData };
+
       (globalThis.fetch as any).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       });
 
       const result = await getAdminCharts();
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual(chartData);
     });
 
     it('should handle errors in admin charts fetch', async () => {

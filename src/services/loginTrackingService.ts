@@ -122,7 +122,8 @@ export const loginTrackingService = {
       userIds.forEach(id => params.append('user_ids', id.toString()));
       url += `?${params.toString()}`;
     }
-    return fetchApiServiceLoginTracking.get<ChartData>(url);
+    const response = await fetchApiServiceLoginTracking.get<{ login_trends: ChartData }>(url);
+    return response.login_trends;
   },
 
   getLoginComparison: async (userIds?: number[]): Promise<ChartData> => {
@@ -132,7 +133,8 @@ export const loginTrackingService = {
       userIds.forEach(id => params.append('user_ids', id.toString()));
       url += `?${params.toString()}`;
     }
-    return fetchApiServiceLoginTracking.get<ChartData>(url);
+    const response = await fetchApiServiceLoginTracking.get<{ login_comparison: ChartData }>(url);
+    return response.login_comparison;
   },
 
   getLoginDistribution: async (userIds?: number[]): Promise<ChartData> => {
@@ -142,7 +144,9 @@ export const loginTrackingService = {
       userIds.forEach(id => params.append('user_ids', id.toString()));
       url += `?${params.toString()}`;
     }
-    return fetchApiServiceLoginTracking.get<ChartData>(url);
+    const response = await fetchApiServiceLoginTracking.get<{ login_distribution: { success_ratio: ChartData; user_agents: ChartData } }>(url);
+    // Return the success_ratio chart as the primary chart data for distribution
+    return response.login_distribution.success_ratio;
   },
 
   // Admin Endpoints
@@ -151,7 +155,8 @@ export const loginTrackingService = {
   },
 
   getAdminCharts: async (): Promise<ChartData> => {
-    return fetchApiServiceLoginTracking.get<ChartData>(API_ENDPOINTS.ADMIN_CHARTS);
+    const response = await fetchApiServiceLoginTracking.get<{ admin_charts: ChartData }>(API_ENDPOINTS.ADMIN_CHARTS);
+    return response.admin_charts;
   },
 
   // Admin User Stats - batch statistics for multiple users with optional filters
