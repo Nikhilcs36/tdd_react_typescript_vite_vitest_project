@@ -83,7 +83,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           adminChartsResponse
         ] = await Promise.allSettled([
           getUserStats(targetUserId),
-          getLoginActivity(1, 5, targetUserId),
+          getLoginActivity(1, 15, targetUserId),
           getLoginTrends(chartUserIds),
           getLoginComparison(chartUserIds),
           getLoginDistribution(chartUserIds),

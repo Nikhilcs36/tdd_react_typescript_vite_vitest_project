@@ -34,7 +34,7 @@ export interface ApiPutServiceWithFile {
 }
 
 export interface ApiGetService {
-  get: <T>(url: string, page?: number, page_size?: number) => Promise<T>;
+  get: <T>(url: string, page?: number, size?: number) => Promise<T>;
 }
 
 export interface ApiDeleteService {
@@ -118,7 +118,7 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
   get: async <T>(
     url: string,
     page?: number,
-    page_size?: number
+    size?: number
   ): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
@@ -149,7 +149,7 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
     };
 
     // Django expects snake_case parameters for pagination
-    const params = { page, page_size };
+    const params = { page, size };
 
     const response = await axios.get<T>(url, { headers, params });
     return response.data;
@@ -161,7 +161,7 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
   get: async <T>(
     url: string,
     page?: number,
-    page_size?: number
+    size?: number
   ): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
@@ -190,11 +190,11 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
     // Django expects snake_case parameters for pagination
     // Handle both absolute and relative URLs
     let finalUrl = url;
-    if (page !== undefined || page_size !== undefined) {
+    if (page !== undefined || size !== undefined) {
       const urlObj = new URL(url, window.location.origin);
       if (page !== undefined) urlObj.searchParams.set("page", page.toString());
-      if (page_size !== undefined)
-        urlObj.searchParams.set("page_size", page_size.toString());
+      if (size !== undefined)
+        urlObj.searchParams.set("size", size.toString());
       finalUrl = urlObj.toString();
     }
 

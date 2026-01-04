@@ -591,7 +591,7 @@ describe("User List", () => {
           }),
           params: expect.objectContaining({
             page: 1,
-            page_size: 3,
+            size: 3,
           }),
         })
       );

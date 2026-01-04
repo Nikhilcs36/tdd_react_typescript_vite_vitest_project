@@ -90,7 +90,7 @@ describe("API Service Authentication", () => {
             "Accept-Language": "en",
             Authorization: "JWT mock-access-token",
           },
-          params: { page: 1, page_size: 3 },
+          params: { page: 1, size: 3 },
         });
       });
 
