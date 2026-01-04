@@ -175,7 +175,7 @@ describe('loginTrackingService', () => {
         expect.any(Object)
       );
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('page_size=20'),
+        expect.stringContaining('size=20'),
         expect.any(Object)
       );
     });

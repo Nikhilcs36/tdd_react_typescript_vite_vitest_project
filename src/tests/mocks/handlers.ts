@@ -115,11 +115,11 @@ export const handlers = [
     );
   }),
 
-  // Mock API for userlist (msw) - Authorization aware ----(3)
+// Mock API for userlist (msw) - Authorization aware ----(3)
   http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 1;
-    const page_size = Number(url.searchParams.get("page_size")) || 3;
+    const size = Number(url.searchParams.get("size")) || 3;
     const authHeader = request.headers.get("Authorization");
 
     // Check authentication - return 401 Unauthorized if no valid token
@@ -152,20 +152,20 @@ export const handlers = [
       }
     }
 
-    const startIndex = (page - 1) * page_size;
-    const endIndex = startIndex + page_size;
+    const startIndex = (page - 1) * size;
+    const endIndex = startIndex + size;
     const paginatedUsers = allUsers.slice(startIndex, endIndex);
 
-    const totalPages = Math.ceil(allUsers.length / page_size);
+    const totalPages = Math.ceil(allUsers.length / size);
 
     // Build full URLs for next and previous links to match Django backend
     const baseUrl = "http://127.0.0.1:8000/api/user/users/";
     const nextUrl =
       page < totalPages
-        ? `${baseUrl}?page=${page + 1}&page_size=${page_size}`
+        ? `${baseUrl}?page=${page + 1}&size=${size}`
         : null;
     const previousUrl =
-      page > 1 ? `${baseUrl}?page=${page - 1}&page_size=${page_size}` : null;
+      page > 1 ? `${baseUrl}?page=${page - 1}&size=${size}` : null;
 
     return HttpResponse.json(
       {
@@ -513,7 +513,7 @@ export const handlers = [
   http.get(API_ENDPOINTS.LOGIN_ACTIVITY, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 1;
-    const page_size = Number(url.searchParams.get("page_size")) || 10;
+    const size = Number(url.searchParams.get("size")) || 10;
     const authHeader = request.headers.get("Authorization");
 
     // Check authentication
@@ -551,14 +551,14 @@ export const handlers = [
       }
     ];
 
-    const startIndex = (page - 1) * page_size;
-    const endIndex = startIndex + page_size;
+    const startIndex = (page - 1) * size;
+    const endIndex = startIndex + size;
     const paginatedActivities = allActivities.slice(startIndex, endIndex);
 
-    const totalPages = Math.ceil(allActivities.length / page_size);
+    const totalPages = Math.ceil(allActivities.length / size);
     const baseUrl = "http://127.0.0.1:8000/api/user/dashboard/login-activity/";
-    const nextUrl = page < totalPages ? `${baseUrl}?page=${page + 1}&page_size=${page_size}` : null;
-    const previousUrl = page > 1 ? `${baseUrl}?page=${page - 1}&page_size=${page_size}` : null;
+    const nextUrl = page < totalPages ? `${baseUrl}?page=${page + 1}&size=${size}` : null;
+    const previousUrl = page > 1 ? `${baseUrl}?page=${page - 1}&size=${size}` : null;
 
     return HttpResponse.json(
       {

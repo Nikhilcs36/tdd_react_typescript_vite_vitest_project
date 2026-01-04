@@ -78,10 +78,30 @@ describe('LoginActivityTable', () => {
 
   it('should truncate long user agent strings', () => {
     render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} />);
-    
+
     // User agent should be displayed but might be truncated
     const mozillaElements = screen.getAllByText(/Mozilla/);
     expect(mozillaElements.length).toBeGreaterThan(0);
     expect(mozillaElements[0]).toBeInTheDocument();
+  });
+
+  it('should show scroll bar when content exceeds max height', () => {
+    // Create enough mock data to exceed max-h-96 (384px)
+    // Each row is roughly 50px, so 15 rows = ~750px > 384px
+    const manyActivities: LoginActivityItem[] = Array.from({ length: 15 }, (_, index) => ({
+      id: index + 1,
+      username: `testuser${index + 1}`,
+      timestamp: `2025-12-${String(index + 1).padStart(2, '0')} 14:30:25`,
+      ip_address: `192.168.1.${100 + index}`,
+      user_agent: `Mozilla/5.0 (Windows NT 10.0; Win64; x64) UserAgent${index}`,
+      success: index % 2 === 0 // Alternate success/failure
+    }));
+
+    render(<LoginActivityTable loginActivity={manyActivities} loading={false} />);
+
+    // Check that the scroll container has overflow-y-auto class
+    const scrollContainer = screen.getByText('dashboard.login_activity').closest('div')?.parentElement?.querySelector('.overflow-y-auto');
+    expect(scrollContainer).toBeInTheDocument();
+    expect(scrollContainer).toHaveClass('max-h-96');
   });
 });

@@ -86,38 +86,40 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = ({ loginActivity, 
       <TableHeader>
         <TableTitle>{t('dashboard.login_activity')}</TableTitle>
       </TableHeader>
-      <Table>
-        <TableHead>
-          <tr>
-            <TableHeaderCell>{t('dashboard.username')}</TableHeaderCell>
-            <TableHeaderCell>{t('dashboard.timestamp')}</TableHeaderCell>
-            <TableHeaderCell>{t('dashboard.ip_address')}</TableHeaderCell>
-            <TableHeaderCell>{t('dashboard.user_agent')}</TableHeaderCell>
-            <TableHeaderCell>{t('dashboard.status')}</TableHeaderCell>
-          </tr>
-        </TableHead>
-        <TableBody>
-          {loginActivity.map((activity) => (
-            <TableRow key={activity.id}>
-              <TableCell>{activity.username}</TableCell>
-              <TableCell>{formatTimestamp(activity.timestamp)}</TableCell>
-              <TableCell>{activity.ip_address}</TableCell>
-              <TableCell title={activity.user_agent}>
-                {truncateUserAgent(activity.user_agent)}
-              </TableCell>
-              <TableCell>
-                <StatusBadge className={
-                  activity.success 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                }>
-                  {activity.success ? t('dashboard.success') : t('dashboard.failed')}
-                </StatusBadge>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="overflow-y-auto max-h-96">
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeaderCell>{t('dashboard.username')}</TableHeaderCell>
+              <TableHeaderCell>{t('dashboard.timestamp')}</TableHeaderCell>
+              <TableHeaderCell>{t('dashboard.ip_address')}</TableHeaderCell>
+              <TableHeaderCell>{t('dashboard.user_agent')}</TableHeaderCell>
+              <TableHeaderCell>{t('dashboard.status')}</TableHeaderCell>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {loginActivity.map((activity) => (
+              <TableRow key={activity.id}>
+                <TableCell>{activity.username}</TableCell>
+                <TableCell>{formatTimestamp(activity.timestamp)}</TableCell>
+                <TableCell>{activity.ip_address}</TableCell>
+                <TableCell title={activity.user_agent}>
+                  {truncateUserAgent(activity.user_agent)}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge className={
+                    activity.success
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                  }>
+                    {activity.success ? t('dashboard.success') : t('dashboard.failed')}
+                  </StatusBadge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </TableContainer>
   );
 };

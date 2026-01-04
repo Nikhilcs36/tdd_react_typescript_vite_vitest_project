@@ -16,7 +16,7 @@ import {
 } from '../types/loginTracking';
 
 export interface ApiGetService {
-  get: <T>(url: string, page?: number, page_size?: number) => Promise<T>;
+  get: <T>(url: string, page?: number, size?: number) => Promise<T>;
 }
 
 // Common function to build headers with authentication
@@ -39,13 +39,13 @@ const buildHeaders = () => {
 
 // Axios implementation for login tracking
 export const axiosApiServiceLoginTracking: ApiGetService = {
-  get: async <T>(url: string, page?: number, page_size?: number): Promise<T> => {
+  get: async <T>(url: string, page?: number, size?: number): Promise<T> => {
     try {
       const headers = buildHeaders();
       const params: Record<string, any> = {};
 
       if (page !== undefined) params.page = page;
-      if (page_size !== undefined) params.page_size = page_size;
+      if (size !== undefined) params.size = size;
 
       // Using axios for actual implementation
       const { default: axios } = await import('axios');
@@ -63,15 +63,15 @@ export const axiosApiServiceLoginTracking: ApiGetService = {
 
 // Fetch implementation for login tracking (for MSW testing)
 export const fetchApiServiceLoginTracking: ApiGetService = {
-  get: async <T>(url: string, page?: number, page_size?: number): Promise<T> => {
+  get: async <T>(url: string, page?: number, size?: number): Promise<T> => {
     const headers = buildHeaders();
 
     // Handle pagination parameters for Django
     let finalUrl = url;
-    if (page !== undefined || page_size !== undefined) {
+    if (page !== undefined || size !== undefined) {
       const urlObj = new URL(url, window.location.origin);
       if (page !== undefined) urlObj.searchParams.set('page', page.toString());
-      if (page_size !== undefined) urlObj.searchParams.set('page_size', page_size.toString());
+      if (size !== undefined) urlObj.searchParams.set('size', size.toString());
       finalUrl = urlObj.toString();
     }
 
@@ -105,12 +105,12 @@ export const loginTrackingService = {
   },
 
   // Login Activity with pagination - supports both current user and specific user by ID
-  getLoginActivity: async (page: number = 1, page_size: number = 10, userId?: number): Promise<LoginActivityResponse> => {
+  getLoginActivity: async (page: number = 1, size: number = 10, userId?: number): Promise<LoginActivityResponse> => {
     const endpoint = userId ? API_ENDPOINTS.LOGIN_ACTIVITY_BY_ID(userId) : API_ENDPOINTS.LOGIN_ACTIVITY;
     return fetchApiServiceLoginTracking.get<LoginActivityResponse>(
       endpoint,
       page,
-      page_size
+      size
     );
   },
 

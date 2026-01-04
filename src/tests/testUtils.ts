@@ -74,7 +74,7 @@ export const createUserListHandler = (options?: {
   return http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 1;
-    const size = Number(url.searchParams.get("page_size")) || 3;
+    const size = Number(url.searchParams.get("size")) || 3;
 
     // Apply artificial delay for specific pages to test loading states
     if (options?.delayPage === page && options?.delayMs) {
@@ -89,11 +89,11 @@ export const createUserListHandler = (options?: {
     const endIndex = startIndex + size;
 
     const totalPages = Math.ceil(allUsers.length / size);
-    
+
     return HttpResponse.json({
       count: allUsers.length,
-      next: page < totalPages ? `?page=${page + 1}&page_size=${size}` : null,
-      previous: page > 1 ? `?page=${page - 1}&page_size=${size}` : null,
+      next: page < totalPages ? `?page=${page + 1}&size=${size}` : null,
+      previous: page > 1 ? `?page=${page - 1}&size=${size}` : null,
       results: allUsers.slice(startIndex, endIndex),
     });
   });
