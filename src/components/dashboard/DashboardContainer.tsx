@@ -15,7 +15,7 @@ import DashboardUserList from './DashboardUserList';
 // Styled components
 const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
 const DashboardGrid = tw.div`grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8`;
-const ChartGrid = tw.div`grid grid-cols-1 lg:grid-cols-2 gap-6`;
+const ChartGrid = tw.div`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8`;
 const SectionTitle = tw.h2`text-2xl font-bold mb-6 dark:text-dark-text`;
 const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400 py-8`;
 
@@ -218,7 +218,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         <>
           <SectionTitle>{t('dashboard.admin_overview')}</SectionTitle>
           {/* Admin-specific components would go here */}
-          <div className="p-6 bg-white rounded-lg shadow-lg dark:bg-dark-secondary">
+          <div className="p-6 mb-8 bg-white rounded-lg shadow-lg dark:bg-dark-secondary">
             <h3 className="mb-4 text-lg font-semibold dark:text-dark-text">
               {t('dashboard.admin_statistics')}
             </h3>

@@ -20,7 +20,7 @@ interface PaginatedResponse {
   results: User[];
 }
 
-const UserListContainer = tw.div`bg-white dark:bg-dark-secondary rounded-lg shadow-lg p-6`;
+const UserListContainer = tw.div`bg-white dark:bg-dark-secondary rounded-lg shadow-lg p-6 mb-8`;
 const UserListHeader = tw.h3`text-lg font-semibold mb-4 dark:text-dark-text`;
 const UserItem = tw.div`flex items-center space-x-3 p-3 border-b border-gray-200 dark:border-dark-accent last:border-b-0`;
 const UserCheckbox = tw.input`w-4 h-4 text-blue-600 rounded focus:ring-blue-500`;
