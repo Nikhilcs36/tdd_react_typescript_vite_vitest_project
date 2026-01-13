@@ -5,6 +5,7 @@ import dashboardReducer, {
   addSelectedUser,
   removeSelectedUser,
   clearSelectedUsers,
+  setDateRange,
   setLoading,
   setError,
   resetDashboardState,
@@ -15,6 +16,8 @@ describe('dashboardSlice', () => {
   const initialState: DashboardState = {
     activeFilter: 'all',
     selectedUserIds: [],
+    startDate: null,
+    endDate: null,
     isLoading: false,
     error: null,
   };
@@ -223,11 +226,68 @@ describe('dashboardSlice', () => {
     });
   });
 
+  describe('setDateRange', () => {
+    it('should set both start and end dates', () => {
+      const action = setDateRange({ startDate: '2023-01-01', endDate: '2023-12-31' });
+      const result = dashboardReducer(initialState, action);
+
+      expect(result.startDate).toBe('2023-01-01');
+      expect(result.endDate).toBe('2023-12-31');
+      expect(result.error).toBeNull();
+    });
+
+    it('should set start date only', () => {
+      const action = setDateRange({ startDate: '2023-01-01', endDate: null });
+      const result = dashboardReducer(initialState, action);
+
+      expect(result.startDate).toBe('2023-01-01');
+      expect(result.endDate).toBeNull();
+    });
+
+    it('should set end date only', () => {
+      const action = setDateRange({ startDate: null, endDate: '2023-12-31' });
+      const result = dashboardReducer(initialState, action);
+
+      expect(result.startDate).toBeNull();
+      expect(result.endDate).toBe('2023-12-31');
+    });
+
+    it('should clear both dates', () => {
+      const state = {
+        ...initialState,
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
+      };
+
+      const action = setDateRange({ startDate: null, endDate: null });
+      const result = dashboardReducer(state, action);
+
+      expect(result.startDate).toBeNull();
+      expect(result.endDate).toBeNull();
+    });
+
+    it('should replace existing dates', () => {
+      const state = {
+        ...initialState,
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
+      };
+
+      const action = setDateRange({ startDate: '2024-01-01', endDate: '2024-12-31' });
+      const result = dashboardReducer(state, action);
+
+      expect(result.startDate).toBe('2024-01-01');
+      expect(result.endDate).toBe('2024-12-31');
+    });
+  });
+
   describe('resetDashboardState', () => {
     it('should reset to initial state', () => {
       const state: DashboardState = {
         activeFilter: 'specific',
         selectedUserIds: [1, 2, 3],
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
         isLoading: true,
         error: 'Test error',
       };

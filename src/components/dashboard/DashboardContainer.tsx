@@ -5,12 +5,15 @@ import tw from 'twin.macro';
 import { RootState } from '../../store';
 import { UserStats, LoginActivityResponse, ChartData, AdminDashboardData } from '../../types/loginTracking';
 import { getUserStats, getLoginActivity, getLoginTrends, getLoginComparison, getLoginDistribution, getAdminDashboard, getAdminCharts } from '../../services/loginTrackingService';
+import { axiosApiServiceLoadUserList } from '../../services/apiService';
+import { API_ENDPOINTS } from '../../services/apiEndpoints';
 import { useUserAuthorization } from '../../utils/authorization';
 import UserDashboardCard from './UserDashboardCard';
 import LoginActivityTable from './LoginActivityTable';
 import LoginTrendsChart from './LoginTrendsChart';
 import DashboardFilters from './DashboardFilters';
 import DashboardUserList from './DashboardUserList';
+import DateRangePicker from './DateRangePicker';
 
 // Styled components
 const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
@@ -41,6 +44,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const [loginComparison, setLoginComparison] = useState<ChartData | null>(null);
   const [loginDistribution, setLoginDistribution] = useState<ChartData | null>(null);
   const [adminDashboard, setAdminDashboard] = useState<AdminDashboardData | null>(null);
+  const [adminUserIds, setAdminUserIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,10 +71,43 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         // Determine which user data to fetch based on authorization
         const targetUserId = isAdmin() && userId ? userId : undefined;
 
+        // Get date range from state
+        const startDate = dashboardState.startDate || undefined;
+        const endDate = dashboardState.endDate || undefined;
+
         // Determine chart filtering based on active filter and selected users
-        const chartUserIds = dashboardState.activeFilter === 'specific' && dashboardState.selectedUserIds.length > 0
-          ? dashboardState.selectedUserIds
-          : undefined;
+        let chartUserIds: number[] | undefined;
+
+        if (dashboardState.activeFilter === 'specific' && dashboardState.selectedUserIds.length > 0) {
+          chartUserIds = dashboardState.selectedUserIds;
+        } else if (dashboardState.activeFilter === 'admin') {
+          // For admin filter, use cached admin user IDs or fetch them
+          if (adminUserIds.length > 0) {
+            chartUserIds = adminUserIds;
+          } else {
+            // Fetch admin users first
+            try {
+              const response: any = await axiosApiServiceLoadUserList.get(
+                API_ENDPOINTS.GET_USERS,
+                1,
+                1000 // Fetch many to find all admins
+              );
+
+              if (Array.isArray(response.results)) {
+                const admins = response.results.filter((user: any) =>
+                  user.is_staff || user.is_superuser
+                );
+                const adminIds = admins.map((admin: any) => admin.id);
+                setAdminUserIds(adminIds);
+                chartUserIds = adminIds;
+              }
+            } catch (adminFetchError) {
+              console.warn('Failed to fetch admin users for admin filter:', adminFetchError);
+              chartUserIds = [];
+            }
+          }
+        }
+        // For 'all' filter, chartUserIds remains undefined (backend handles aggregated data)
 
         // Execute all API calls in parallel
         const [
@@ -82,11 +119,11 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           adminDashboardResponse,
           adminChartsResponse
         ] = await Promise.allSettled([
-          getUserStats(targetUserId),
-          getLoginActivity(1, 15, targetUserId),
-          getLoginTrends(chartUserIds),
-          getLoginComparison(chartUserIds),
-          getLoginDistribution(chartUserIds),
+          getUserStats(targetUserId, startDate, endDate),
+          getLoginActivity(1, 15, targetUserId, startDate, endDate),
+          getLoginTrends(chartUserIds, startDate, endDate),
+          getLoginComparison(chartUserIds, startDate, endDate),
+          getLoginDistribution(chartUserIds, startDate, endDate),
           isAdmin() ? getAdminDashboard() : Promise.resolve(null),
           isAdmin() ? getAdminCharts() : Promise.resolve(null)
         ]);
@@ -139,7 +176,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     };
 
     fetchDashboardData();
-  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds]);
+  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds, dashboardState.startDate, dashboardState.endDate]);
 
   // Render loading state
   if (loading) {
@@ -165,6 +202,9 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
   return (
     <DashboardContainerWrapper>
+      {/* Date Range Picker - Show for all users */}
+      <DateRangePicker disabled={loading} />
+
       {/* Dashboard Filters - Only show for admins */}
       {isAdmin() && (
         <DashboardFilters
