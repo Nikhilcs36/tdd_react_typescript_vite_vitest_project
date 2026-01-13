@@ -49,37 +49,39 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   };
 
   return (
-    <FilterContainer data-testid="dashboard-filters">
-      <FilterButton
-        className={getButtonClasses(activeFilter === 'all')}
-        onClick={() => handleFilterClick('all')}
-        disabled={disabled}
-        data-testid="filter-all-users"
-        aria-pressed={activeFilter === 'all'}
-      >
-        {t('dashboard.filters.allUsers')}
-      </FilterButton>
+    <div data-testid="dashboard-filters">
+      <FilterContainer>
+        <FilterButton
+          className={getButtonClasses(activeFilter === 'all')}
+          onClick={() => handleFilterClick('all')}
+          disabled={disabled}
+          data-testid="filter-all-users"
+          aria-pressed={activeFilter === 'all'}
+        >
+          {t('dashboard.filters.allUsers')}
+        </FilterButton>
 
-      <FilterButton
-        className={getButtonClasses(activeFilter === 'specific')}
-        onClick={() => handleFilterClick('specific')}
-        disabled={disabled}
-        data-testid="filter-specific-users"
-        aria-pressed={activeFilter === 'specific'}
-      >
-        {t('dashboard.filters.specificUsers')}
-      </FilterButton>
+        <FilterButton
+          className={getButtonClasses(activeFilter === 'specific')}
+          onClick={() => handleFilterClick('specific')}
+          disabled={disabled}
+          data-testid="filter-specific-users"
+          aria-pressed={activeFilter === 'specific'}
+        >
+          {t('dashboard.filters.specificUsers')}
+        </FilterButton>
 
-      <FilterButton
-        className={getButtonClasses(activeFilter === 'admin')}
-        onClick={() => handleFilterClick('admin')}
-        disabled={disabled}
-        data-testid="filter-admin-only"
-        aria-pressed={activeFilter === 'admin'}
-      >
-        {t('dashboard.filters.adminOnly')}
-      </FilterButton>
-    </FilterContainer>
+        <FilterButton
+          className={getButtonClasses(activeFilter === 'admin')}
+          onClick={() => handleFilterClick('admin')}
+          disabled={disabled}
+          data-testid="filter-admin-only"
+          aria-pressed={activeFilter === 'admin'}
+        >
+          {t('dashboard.filters.adminOnly')}
+        </FilterButton>
+      </FilterContainer>
+    </div>
   );
 };
 

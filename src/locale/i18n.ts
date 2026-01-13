@@ -154,6 +154,11 @@ i18n.use(initReactI18next).init({
             specificUsers: "Specific Users",
             adminOnly: "Admin Only"
           },
+          dateRange: {
+            startDate: "Start Date",
+            endDate: "End Date",
+            clear: "Clear Dates"
+          },
           user_list: {
             title: "Users",
             empty: "No users found",
@@ -310,6 +315,11 @@ i18n.use(initReactI18next).init({
             specificUsers: "നിർദ്ദിഷ്ട ഉപയോക്താക്കൾ",
             adminOnly: "അഡ്മിൻ മാത്രം"
           },
+          dateRange: {
+            startDate: "ആരംഭ തീയതി",
+            endDate: "അവസാന തീയതി",
+            clear: "തീയതികൾ മായ്ക്കുക"
+          },
           user_not_found: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
           unauthorized_access: "ഡാഷ്ബോർഡ് ഡാറ്റയിലേക്ക് അനധികൃത ആക്സസ്"
         },
@@ -459,6 +469,11 @@ i18n.use(initReactI18next).init({
             allUsers: "جميع المستخدمين",
             specificUsers: "مستخدمون محددون",
             adminOnly: "الإدارة فقط"
+          },
+          dateRange: {
+            startDate: "تاريخ البداية",
+            endDate: "تاريخ النهاية",
+            clear: "مسح التواريخ"
           },
           user_not_found: "لم يتم العثور على المستخدم",
           unauthorized_access: "وصول غير مصرح به لبيانات لوحة التحكم"

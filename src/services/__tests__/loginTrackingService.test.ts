@@ -87,6 +87,94 @@ describe('loginTrackingService', () => {
       );
     });
 
+    it('should include date parameters when provided', async () => {
+      const mockResponse: UserStats = {
+        total_logins: 15,
+        last_login: "2025-12-10 09:15:30",
+        weekly_data: {"2025-12-07": 3, "2025-12-08": 2},
+        monthly_data: {"2025-12": 15},
+        login_trend: 45
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getUserStats(undefined, '2025-12-01', '2025-12-31');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/stats/?start_date=2025-12-01&end_date=2025-12-31'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include date parameters for specific user', async () => {
+      const mockResponse: UserStats = {
+        total_logins: 10,
+        last_login: "2025-12-15 14:20:45",
+        weekly_data: {"2025-12-14": 1, "2025-12-15": 2},
+        monthly_data: {"2025-12": 10},
+        login_trend: 30
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getUserStats(456, '2025-12-10', '2025-12-20');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/456/dashboard/stats/?start_date=2025-12-10&end_date=2025-12-20'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include only start_date when end_date is not provided', async () => {
+      const mockResponse: UserStats = {
+        total_logins: 20,
+        last_login: "2025-12-05 11:30:15",
+        weekly_data: {"2025-12-01": 4, "2025-12-02": 3},
+        monthly_data: {"2025-11": 8, "2025-12": 12},
+        login_trend: 60
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getUserStats(undefined, '2025-12-01');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/stats/?start_date=2025-12-01'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include only end_date when start_date is not provided', async () => {
+      const mockResponse: UserStats = {
+        total_logins: 18,
+        last_login: "2025-11-30 16:45:20",
+        weekly_data: {"2025-11-24": 2, "2025-11-25": 1},
+        monthly_data: {"2025-11": 18},
+        login_trend: 50
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getUserStats(undefined, undefined, '2025-11-30');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/stats/?end_date=2025-11-30'),
+        expect.any(Object)
+      );
+    });
+
     it('should handle errors properly', async () => {
       (globalThis.fetch as any).mockResolvedValue({
         ok: false,
@@ -176,6 +264,147 @@ describe('loginTrackingService', () => {
       );
       expect(globalThis.fetch).toHaveBeenCalledWith(
         expect.stringContaining('size=20'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include date parameters when provided', async () => {
+      const mockResponse: LoginActivityResponse = {
+        count: 3,
+        results: [
+          {
+            id: 789,
+            username: "filtereduser",
+            timestamp: "2025-12-15 10:30:45",
+            ip_address: "192.168.1.150",
+            user_agent: "Mozilla/5.0...",
+            success: true
+          }
+        ]
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getLoginActivity(1, 10, undefined, '2025-12-01', '2025-12-31');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/login-activity/?start_date=2025-12-01&end_date=2025-12-31'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include date parameters for specific user', async () => {
+      const mockResponse: LoginActivityResponse = {
+        count: 2,
+        results: [
+          {
+            id: 999,
+            username: "specificuser",
+            timestamp: "2025-12-20 14:15:30",
+            ip_address: "192.168.1.180",
+            user_agent: "Mozilla/5.0...",
+            success: true
+          }
+        ]
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getLoginActivity(1, 5, 789, '2025-12-15', '2025-12-25');
+      expect(result).toEqual(mockResponse);
+
+      const fetchCall = (globalThis.fetch as any).mock.calls[0][0];
+      expect(fetchCall).toContain('/api/user/789/dashboard/login-activity/');
+      expect(fetchCall).toContain('start_date=2025-12-15');
+      expect(fetchCall).toContain('end_date=2025-12-25');
+    });
+
+    it('should include pagination and date parameters together', async () => {
+      const mockResponse: LoginActivityResponse = {
+        count: 25,
+        results: [
+          {
+            id: 111,
+            username: "paginateduser",
+            timestamp: "2025-12-10 09:45:15",
+            ip_address: "192.168.1.200",
+            user_agent: "Mozilla/5.0...",
+            success: true
+          }
+        ]
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getLoginActivity(2, 15, undefined, '2025-12-01', '2025-12-31');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/login-activity/?page=2&size=15&start_date=2025-12-01&end_date=2025-12-31'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include only start_date when end_date is not provided', async () => {
+      const mockResponse: LoginActivityResponse = {
+        count: 8,
+        results: [
+          {
+            id: 222,
+            username: "startonlyuser",
+            timestamp: "2025-12-05 11:20:30",
+            ip_address: "192.168.1.220",
+            user_agent: "Mozilla/5.0...",
+            success: true
+          }
+        ]
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getLoginActivity(1, 10, undefined, '2025-12-01');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/login-activity/?start_date=2025-12-01'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include only end_date when start_date is not provided', async () => {
+      const mockResponse: LoginActivityResponse = {
+        count: 12,
+        results: [
+          {
+            id: 333,
+            username: "endonlyuser",
+            timestamp: "2025-11-28 16:10:45",
+            ip_address: "192.168.1.240",
+            user_agent: "Mozilla/5.0...",
+            success: true
+          }
+        ]
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getLoginActivity(1, 10, undefined, undefined, '2025-11-30');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/login-activity/?end_date=2025-11-30'),
         expect.any(Object)
       );
     });

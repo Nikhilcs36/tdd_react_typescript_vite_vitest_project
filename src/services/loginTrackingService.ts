@@ -98,52 +98,111 @@ export const fetchApiServiceLoginTracking: ApiGetService = {
 
 // Specific service functions for each endpoint
 export const loginTrackingService = {
-  // User Statistics - supports both current user and specific user by ID
-  getUserStats: async (userId?: number): Promise<UserStats> => {
+  // User Statistics - supports both current user and specific user by ID, with optional date filtering
+  getUserStats: async (userId?: number, startDate?: string, endDate?: string): Promise<UserStats> => {
     const endpoint = userId ? API_ENDPOINTS.USER_STATS_BY_ID(userId) : API_ENDPOINTS.USER_STATS;
-    return fetchApiServiceLoginTracking.get<UserStats>(endpoint);
-  },
+    let url = endpoint;
 
-  // Login Activity with pagination - supports both current user and specific user by ID
-  getLoginActivity: async (page: number = 1, size: number = 10, userId?: number): Promise<LoginActivityResponse> => {
-    const endpoint = userId ? API_ENDPOINTS.LOGIN_ACTIVITY_BY_ID(userId) : API_ENDPOINTS.LOGIN_ACTIVITY;
-    return fetchApiServiceLoginTracking.get<LoginActivityResponse>(
-      endpoint,
-      page,
-      size
-    );
-  },
+    const params = new URLSearchParams();
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
 
-  // Chart Data Endpoints - support user filtering for specific filter mode
-  getLoginTrends: async (userIds?: number[]): Promise<ChartData> => {
-    let url = API_ENDPOINTS.LOGIN_TRENDS;
-    if (userIds?.length) {
-      const params = new URLSearchParams();
-      userIds.forEach(id => params.append('user_ids', id.toString()));
+    if (params.toString()) {
       url += `?${params.toString()}`;
     }
+
+    return fetchApiServiceLoginTracking.get<UserStats>(url);
+  },
+
+  // Login Activity with pagination - supports both current user and specific user by ID, with optional date filtering
+  getLoginActivity: async (page: number = 1, size: number = 10, userId?: number, startDate?: string, endDate?: string): Promise<LoginActivityResponse> => {
+    const endpoint = userId ? API_ENDPOINTS.LOGIN_ACTIVITY_BY_ID(userId) : API_ENDPOINTS.LOGIN_ACTIVITY;
+    let url = endpoint;
+
+    const params = new URLSearchParams();
+    if (page !== 1) params.append('page', page.toString());
+    if (size !== 10) params.append('size', size.toString());
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    return fetchApiServiceLoginTracking.get<LoginActivityResponse>(url);
+  },
+
+  // Chart Data Endpoints - support user filtering and date range filtering
+  getLoginTrends: async (userIds?: number[], startDate?: string, endDate?: string): Promise<ChartData> => {
+    let url = API_ENDPOINTS.LOGIN_TRENDS;
+    const params = new URLSearchParams();
+
+    if (userIds?.length) {
+      userIds.forEach(id => params.append('user_ids', id.toString()));
+    }
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
     const response = await fetchApiServiceLoginTracking.get<{ login_trends: ChartData }>(url);
     return response.login_trends;
   },
 
-  getLoginComparison: async (userIds?: number[]): Promise<ChartData> => {
+  getLoginComparison: async (userIds?: number[], startDate?: string, endDate?: string): Promise<ChartData> => {
     let url = API_ENDPOINTS.LOGIN_COMPARISON;
+    const params = new URLSearchParams();
+
     if (userIds?.length) {
-      const params = new URLSearchParams();
       userIds.forEach(id => params.append('user_ids', id.toString()));
+    }
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+
+    if (params.toString()) {
       url += `?${params.toString()}`;
     }
+
     const response = await fetchApiServiceLoginTracking.get<{ login_comparison: ChartData }>(url);
     return response.login_comparison;
   },
 
-  getLoginDistribution: async (userIds?: number[]): Promise<ChartData> => {
+  getLoginDistribution: async (userIds?: number[], startDate?: string, endDate?: string): Promise<ChartData> => {
     let url = API_ENDPOINTS.LOGIN_DISTRIBUTION;
+    const params = new URLSearchParams();
+
     if (userIds?.length) {
-      const params = new URLSearchParams();
       userIds.forEach(id => params.append('user_ids', id.toString()));
+    }
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+
+    if (params.toString()) {
       url += `?${params.toString()}`;
     }
+
     const response = await fetchApiServiceLoginTracking.get<{ login_distribution: { success_ratio: ChartData; user_agents: ChartData } }>(url);
     // Return the success_ratio chart as the primary chart data for distribution
     return response.login_distribution.success_ratio;

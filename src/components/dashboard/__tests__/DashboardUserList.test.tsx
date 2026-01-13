@@ -12,6 +12,8 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
   const defaultState: DashboardState = {
     activeFilter: 'all',
     selectedUserIds: [],
+    startDate: null,
+    endDate: null,
     isLoading: false,
     error: null,
     ...initialState,
