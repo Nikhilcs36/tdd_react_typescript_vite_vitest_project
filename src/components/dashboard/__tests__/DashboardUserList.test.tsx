@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -93,10 +93,33 @@ describe('DashboardUserList', () => {
       });
     });
 
-    it('shows loading state initially', () => {
+    it('shows loading state initially', async () => {
+      // Using delayed promise resolution to test loading state without act() warnings.
+      // This approach allows us to:
+      // 1. Verify the spinner is displayed initially (loading state)
+      // 2. Avoid act() warnings from component's useEffect API call on mount
+      // 3. Test the complete loading behavior (initial state → loading → loaded)
+      // Alternative approaches considered:
+      // - Wrapping render in act(): Would resolve API immediately, hiding loading state
+      // - Accepting warnings: Would pollute test output with expected warnings
+      // - Global mocking: Would affect other tests unnecessarily
+
+      // Create a promise that resolves after a short delay
+      const delayedPromise = new Promise<typeof mockPaginatedResponse>((resolve) => {
+        setTimeout(() => resolve(mockPaginatedResponse), 10);
+      });
+
+      mockGetUsers.mockReturnValue(delayedPromise);
+
       renderWithProviders(<DashboardUserList />);
 
+      // Verify loading state is shown initially (before promise resolves)
       expect(screen.getByTestId('spinner')).toBeInTheDocument();
+
+      // Wait for the promise to resolve and loading to complete
+      await waitFor(() => {
+        expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+      });
     });
 
     it('shows empty state when no users', async () => {
@@ -179,7 +202,9 @@ describe('DashboardUserList', () => {
       });
 
       const nextButton = screen.getByTestId('next-button');
-      fireEvent.click(nextButton);
+      await act(async () => {
+        fireEvent.click(nextButton);
+      });
 
       expect(mockGetUsers).toHaveBeenCalledWith('/api/user/users/', 2, 3);
     });
@@ -241,7 +266,9 @@ describe('DashboardUserList', () => {
       expect(checkboxes[0]).not.toBeChecked();
 
       // Update Redux state
-      store.dispatch({ type: 'dashboard/addSelectedUser', payload: 1 });
+      await act(async () => {
+        store.dispatch({ type: 'dashboard/addSelectedUser', payload: 1 });
+      });
 
       rerender(
         <Provider store={store}>
@@ -315,7 +342,9 @@ describe('DashboardUserList', () => {
       });
 
       // Simulate filter change from 'all' to 'specific'
-      store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'specific' });
+      await act(async () => {
+        store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'specific' });
+      });
 
       // The filter change should clear selections (this is handled by the filter component)
       // This test verifies the component receives the updated state
