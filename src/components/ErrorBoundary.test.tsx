@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ErrorBoundary from './ErrorBoundary';
 import { shouldDisplayErrorToUser } from '../services/errorService';
 import * as loggingService from '../services/loggingService';
+import i18n from '../locale/i18n';
 
 // Mock child component that throws an error
 const ErrorThrowingComponent = () => {
@@ -29,6 +30,15 @@ vi.mock('../services/errorService', () => ({
 vi.mock('../services/loggingService');
 
 describe('ErrorBoundary', () => {
+  beforeAll(async () => {
+    // Wait for i18n to initialize before running tests
+    if (!i18n.isInitialized) {
+      await new Promise((resolve) => {
+        i18n.on('initialized', resolve);
+      });
+    }
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock console.error to avoid test noise

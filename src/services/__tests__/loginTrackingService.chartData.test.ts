@@ -2,12 +2,13 @@
  * Login Tracking Service Chart Data Extraction Tests
  * Tests the chart data extraction from backend wrapper objects
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { API_ENDPOINTS } from '../apiEndpoints';
 import { getLoginTrends, getLoginComparison, getLoginDistribution } from '../loginTrackingService';
 import { server } from '../../tests/mocks/server';
+import i18n from '../../locale/i18n';
 
 // Mock store for authentication
 vi.mock('../../store', () => ({
@@ -20,14 +21,16 @@ vi.mock('../../store', () => ({
   },
 }));
 
-// Mock i18n
-vi.mock('../../locale/i18n', () => ({
-  default: {
-    language: 'en',
-  },
-}));
-
 describe('Login Tracking Service - Chart Data Extraction', () => {
+  beforeAll(async () => {
+    // Wait for i18n to initialize before running tests
+    if (!i18n.isInitialized) {
+      await new Promise((resolve) => {
+        i18n.on('initialized', resolve);
+      });
+    }
+  });
+
   beforeEach(() => {
     // Reset any mocks
     vi.clearAllMocks();
