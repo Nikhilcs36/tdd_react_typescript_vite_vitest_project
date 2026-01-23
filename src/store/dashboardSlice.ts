@@ -11,7 +11,7 @@ export interface DashboardState {
 }
 
 const initialState: DashboardState = {
-  activeFilter: 'all',
+  activeFilter: 'all' as DashboardFilterMode,
   selectedUserIds: [],
   startDate: null,
   endDate: null,

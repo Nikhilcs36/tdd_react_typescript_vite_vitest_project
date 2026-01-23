@@ -151,8 +151,9 @@ i18n.use(initReactI18next).init({
           active_users: "Active Users: {{count}}",
           filters: {
             allUsers: "All Users",
-            specificUsers: "Specific Users",
-            adminOnly: "Admin Only"
+            regularUsers: "Regular Users",
+            adminOnly: "Admin Only",
+            me: "Me"
           },
           dateRange: {
             startDate: "Start Date",
@@ -312,8 +313,9 @@ i18n.use(initReactI18next).init({
           active_users: "സജീവ ഉപയോക്താക്കൾ: {{count}}",
           filters: {
             allUsers: "എല്ലാ ഉപയോക്താക്കളും",
-            specificUsers: "നിർദ്ദിഷ്ട ഉപയോക്താക്കൾ",
-            adminOnly: "അഡ്മിൻ മാത്രം"
+            regularUsers: "സാധാരണ ഉപയോക്താക്കൾ",
+            adminOnly: "അഡ്മിൻ മാത്രം",
+            me: "ഞാൻ"
           },
           dateRange: {
             startDate: "ആരംഭ തീയതി",
@@ -467,8 +469,9 @@ i18n.use(initReactI18next).init({
           active_users: "المستخدمون النشطون: {{count}}",
           filters: {
             allUsers: "جميع المستخدمين",
-            specificUsers: "مستخدمون محددون",
-            adminOnly: "الإدارة فقط"
+            regularUsers: "المستخدمون العاديون",
+            adminOnly: "الإدارة فقط",
+            me: "أنا"
           },
           dateRange: {
             startDate: "تاريخ البداية",

@@ -34,7 +34,7 @@ export interface ApiPutServiceWithFile {
 }
 
 export interface ApiGetService {
-  get: <T>(url: string, page?: number, size?: number) => Promise<T>;
+  get: <T>(url: string, page?: number, size?: number, role?: 'admin' | 'regular', me?: boolean) => Promise<T>;
 }
 
 export interface ApiDeleteService {
@@ -118,7 +118,9 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
   get: async <T>(
     url: string,
     page?: number,
-    size?: number
+    size?: number,
+    role?: 'admin' | 'regular',
+    me?: boolean
   ): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
@@ -148,8 +150,12 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
       ...authHeaders,
     };
 
-    // Django expects snake_case parameters for pagination
-    const params = { page, size };
+    // Build query parameters
+    const params: Record<string, any> = {};
+    if (page !== undefined) params.page = page;
+    if (size !== undefined) params.size = size;
+    if (role) params.role = role;
+    if (me) params.me = 'true';
 
     const response = await axios.get<T>(url, { headers, params });
     return response.data;
@@ -161,7 +167,9 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
   get: async <T>(
     url: string,
     page?: number,
-    size?: number
+    size?: number,
+    role?: 'admin' | 'regular',
+    me?: boolean
   ): Promise<T> => {
     // Get authentication state from Redux store for authorization-aware user list
     const authState = store.getState().auth;
@@ -187,16 +195,14 @@ export const fetchApiServiceLoadUserList: ApiGetService = {
       headers["X-Authenticated-User-Id"] = String(authenticatedUserId);
     }
 
-    // Django expects snake_case parameters for pagination
-    // Handle both absolute and relative URLs
+    // Handle both absolute and relative URLs with query parameters
     let finalUrl = url;
-    if (page !== undefined || size !== undefined) {
-      const urlObj = new URL(url, window.location.origin);
-      if (page !== undefined) urlObj.searchParams.set("page", page.toString());
-      if (size !== undefined)
-        urlObj.searchParams.set("size", size.toString());
-      finalUrl = urlObj.toString();
-    }
+    const urlObj = new URL(url, window.location.origin);
+    if (page !== undefined) urlObj.searchParams.set("page", page.toString());
+    if (size !== undefined) urlObj.searchParams.set("size", size.toString());
+    if (role) urlObj.searchParams.set("role", role);
+    if (me) urlObj.searchParams.set("me", "true");
+    finalUrl = urlObj.toString();
 
     const response = await fetch(finalUrl, {
       method: "GET",
