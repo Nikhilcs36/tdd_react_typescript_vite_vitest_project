@@ -5,6 +5,7 @@ import { RootState } from '../../store';
 import { addSelectedUser, removeSelectedUser } from '../../store/dashboardSlice';
 import { axiosApiServiceLoadUserList } from '../../services/apiService';
 import { API_ENDPOINTS } from '../../services/apiEndpoints';
+import { DashboardFilterMode } from './DashboardFilters';
 import tw from 'twin.macro';
 
 interface User {
@@ -44,6 +45,7 @@ const DashboardUserList: React.FC = () => {
 
   // Redux state
   const selectedUserIds = useSelector((state: RootState) => state.dashboard.selectedUserIds);
+  const activeFilter = useSelector((state: RootState) => state.dashboard.activeFilter);
 
   // Local state
   const [users, setUsers] = useState<User[]>([]);
@@ -56,17 +58,39 @@ const DashboardUserList: React.FC = () => {
 
   const pageSize = 3; // Match the dashboard page size
 
-  // Fetch users on component mount and page changes
+  // Fetch users on component mount, page changes, and filter changes
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
         setError(null);
 
+        // Determine API parameters based on active filter
+        let role: 'admin' | 'regular' | undefined;
+        let me: boolean | undefined;
+
+        switch (activeFilter) {
+          case 'regular':
+            role = 'regular';
+            break;
+          case 'admin':
+            role = 'admin';
+            break;
+          case 'me':
+            me = true;
+            break;
+          case 'all':
+          default:
+            // No additional parameters for 'all'
+            break;
+        }
+
         const response: PaginatedResponse = await axiosApiServiceLoadUserList.get(
           API_ENDPOINTS.GET_USERS,
           currentPage,
-          pageSize
+          pageSize,
+          role,
+          me
         );
 
         // Handle malformed responses
@@ -85,7 +109,7 @@ const DashboardUserList: React.FC = () => {
     };
 
     fetchUsers();
-  }, [currentPage, t]);
+  }, [currentPage, activeFilter, t]);
 
   // Handle user selection
   const handleUserToggle = (userId: number) => {

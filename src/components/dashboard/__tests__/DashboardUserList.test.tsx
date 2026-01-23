@@ -206,7 +206,7 @@ describe('DashboardUserList', () => {
         fireEvent.click(nextButton);
       });
 
-      expect(mockGetUsers).toHaveBeenCalledWith('/api/user/users/', 2, 3);
+      expect(mockGetUsers).toHaveBeenCalledWith('/api/user/users/', 2, 3, undefined, undefined);
     });
   });
 

@@ -5,7 +5,7 @@ import { RootState } from '../../store';
 import { setActiveFilter } from '../../store/dashboardSlice';
 import tw from 'twin.macro';
 
-export type DashboardFilterMode = 'all' | 'specific' | 'admin';
+export type DashboardFilterMode = 'all' | 'regular' | 'admin' | 'me';
 
 interface DashboardFiltersProps {
   disabled?: boolean;
@@ -20,7 +20,7 @@ const FilterButton = tw.button`
 /**
  * DashboardFilters Component
  * Provides filter controls for dashboard data context
- * Supports three modes: all users, specific users, admin only
+ * Supports four modes: all users, regular users, admin only, me
  * Uses Redux state for filter management
  */
 const DashboardFilters: React.FC<DashboardFiltersProps> = ({
@@ -62,13 +62,13 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </FilterButton>
 
         <FilterButton
-          className={getButtonClasses(activeFilter === 'specific')}
-          onClick={() => handleFilterClick('specific')}
+          className={getButtonClasses(activeFilter === 'regular')}
+          onClick={() => handleFilterClick('regular')}
           disabled={disabled}
-          data-testid="filter-specific-users"
-          aria-pressed={activeFilter === 'specific'}
+          data-testid="filter-regular-users"
+          aria-pressed={activeFilter === 'regular'}
         >
-          {t('dashboard.filters.specificUsers')}
+          {t('dashboard.filters.regularUsers')}
         </FilterButton>
 
         <FilterButton
@@ -79,6 +79,16 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
           aria-pressed={activeFilter === 'admin'}
         >
           {t('dashboard.filters.adminOnly')}
+        </FilterButton>
+
+        <FilterButton
+          className={getButtonClasses(activeFilter === 'me')}
+          onClick={() => handleFilterClick('me')}
+          disabled={disabled}
+          data-testid="filter-me"
+          aria-pressed={activeFilter === 'me'}
+        >
+          {t('dashboard.filters.me')}
         </FilterButton>
       </FilterContainer>
     </div>

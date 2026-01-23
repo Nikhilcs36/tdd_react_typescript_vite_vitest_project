@@ -78,9 +78,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         // Determine chart filtering based on active filter and selected users
         let chartUserIds: number[] | undefined;
 
-        if (dashboardState.activeFilter === 'specific' && dashboardState.selectedUserIds.length > 0) {
-          chartUserIds = dashboardState.selectedUserIds;
-        } else if (dashboardState.activeFilter === 'admin') {
+        if (dashboardState.activeFilter === 'admin') {
           // For admin filter, use cached admin user IDs or fetch them
           if (adminUserIds.length > 0) {
             chartUserIds = adminUserIds;
@@ -90,14 +88,12 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
               const response: any = await axiosApiServiceLoadUserList.get(
                 API_ENDPOINTS.GET_USERS,
                 1,
-                1000 // Fetch many to find all admins
+                1000,
+                'admin' // Use the role parameter
               );
 
               if (Array.isArray(response.results)) {
-                const admins = response.results.filter((user: any) =>
-                  user.is_staff || user.is_superuser
-                );
-                const adminIds = admins.map((admin: any) => admin.id);
+                const adminIds = response.results.map((admin: any) => admin.id);
                 setAdminUserIds(adminIds);
                 chartUserIds = adminIds;
               }
@@ -106,6 +102,26 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
               chartUserIds = [];
             }
           }
+        } else if (dashboardState.activeFilter === 'regular') {
+          // For regular users filter, fetch regular users
+          try {
+            const response: any = await axiosApiServiceLoadUserList.get(
+              API_ENDPOINTS.GET_USERS,
+              1,
+              1000,
+              'regular'
+            );
+
+            if (Array.isArray(response.results)) {
+              chartUserIds = response.results.map((user: any) => user.id);
+            }
+          } catch (regularFetchError) {
+            console.warn('Failed to fetch regular users for regular filter:', regularFetchError);
+            chartUserIds = [];
+          }
+        } else if (dashboardState.activeFilter === 'me') {
+          // For 'me' filter, use current user's ID
+          chartUserIds = [currentUserId].filter(Boolean) as number[];
         }
         // For 'all' filter, chartUserIds remains undefined (backend handles aggregated data)
 
