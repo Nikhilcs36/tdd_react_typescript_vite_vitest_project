@@ -4,6 +4,7 @@ import { DashboardFilterMode } from '../components/dashboard/DashboardFilters';
 export interface DashboardState {
   activeFilter: DashboardFilterMode;
   selectedUserIds: number[];
+  selectedDashboardUserId: number | null;
   startDate: string | null;
   endDate: string | null;
   isLoading: boolean;
@@ -13,6 +14,7 @@ export interface DashboardState {
 const initialState: DashboardState = {
   activeFilter: 'all' as DashboardFilterMode,
   selectedUserIds: [],
+  selectedDashboardUserId: null,
   startDate: null,
   endDate: null,
   isLoading: false,
@@ -44,6 +46,13 @@ const dashboardSlice = createSlice({
     clearSelectedUsers: (state) => {
       state.selectedUserIds = [];
     },
+    setSelectedDashboardUser: (state, action: PayloadAction<number | null>) => {
+      state.selectedDashboardUserId = action.payload;
+      state.error = null;
+    },
+    clearSelectedDashboardUser: (state) => {
+      state.selectedDashboardUserId = null;
+    },
     setDateRange: (state, action: PayloadAction<{ startDate: string | null; endDate: string | null }>) => {
       state.startDate = action.payload.startDate;
       state.endDate = action.payload.endDate;
@@ -66,6 +75,8 @@ export const {
   addSelectedUser,
   removeSelectedUser,
   clearSelectedUsers,
+  setSelectedDashboardUser,
+  clearSelectedDashboardUser,
   setDateRange,
   setLoading,
   setError,
