@@ -5,6 +5,8 @@ import dashboardReducer, {
   addSelectedUser,
   removeSelectedUser,
   clearSelectedUsers,
+  setSelectedDashboardUser,
+  clearSelectedDashboardUser,
   setDateRange,
   setLoading,
   setError,
@@ -16,6 +18,7 @@ describe('dashboardSlice', () => {
   const initialState: DashboardState = {
     activeFilter: 'all',
     selectedUserIds: [],
+    selectedDashboardUserId: null,
     startDate: null,
     endDate: null,
     isLoading: false,
@@ -34,16 +37,16 @@ describe('dashboardSlice', () => {
         selectedUserIds: [1, 2, 3],
       };
 
-      const action = setActiveFilter('specific');
+      const action = setActiveFilter('admin');
       const result = dashboardReducer(state, action);
 
-      expect(result.activeFilter).toBe('specific');
+      expect(result.activeFilter).toBe('admin');
       expect(result.selectedUserIds).toEqual([]);
       expect(result.error).toBeNull();
     });
 
     it('should handle all filter modes', () => {
-      const filterModes: ('all' | 'specific' | 'admin')[] = ['all', 'specific', 'admin'];
+      const filterModes: ('all' | 'regular' | 'admin' | 'me')[] = ['all', 'regular', 'admin', 'me'];
 
       filterModes.forEach(mode => {
         const action = setActiveFilter(mode);
@@ -284,8 +287,9 @@ describe('dashboardSlice', () => {
   describe('resetDashboardState', () => {
     it('should reset to initial state', () => {
       const state: DashboardState = {
-        activeFilter: 'specific',
+        activeFilter: 'admin',
         selectedUserIds: [1, 2, 3],
+        selectedDashboardUserId: 5,
         startDate: '2023-01-01',
         endDate: '2023-12-31',
         isLoading: true,
@@ -299,13 +303,68 @@ describe('dashboardSlice', () => {
     });
   });
 
+  describe('setSelectedDashboardUser', () => {
+    it('should set the selected dashboard user ID', () => {
+      const action = setSelectedDashboardUser(5);
+      const result = dashboardReducer(initialState, action);
+
+      expect(result.selectedDashboardUserId).toBe(5);
+      expect(result.error).toBeNull();
+    });
+
+    it('should replace existing selected dashboard user ID', () => {
+      const state = {
+        ...initialState,
+        selectedDashboardUserId: 3,
+      };
+
+      const action = setSelectedDashboardUser(7);
+      const result = dashboardReducer(state, action);
+
+      expect(result.selectedDashboardUserId).toBe(7);
+    });
+
+    it('should handle null value', () => {
+      const state = {
+        ...initialState,
+        selectedDashboardUserId: 5,
+      };
+
+      const action = setSelectedDashboardUser(null);
+      const result = dashboardReducer(state, action);
+
+      expect(result.selectedDashboardUserId).toBeNull();
+    });
+  });
+
+  describe('clearSelectedDashboardUser', () => {
+    it('should clear the selected dashboard user ID', () => {
+      const state = {
+        ...initialState,
+        selectedDashboardUserId: 5,
+      };
+
+      const action = clearSelectedDashboardUser();
+      const result = dashboardReducer(state, action);
+
+      expect(result.selectedDashboardUserId).toBeNull();
+    });
+
+    it('should handle clearing when already null', () => {
+      const action = clearSelectedDashboardUser();
+      const result = dashboardReducer(initialState, action);
+
+      expect(result.selectedDashboardUserId).toBeNull();
+    });
+  });
+
   describe('integration scenarios', () => {
     it('should handle filter change workflow', () => {
       let state = initialState;
 
-      // Set filter to specific
-      state = dashboardReducer(state, setActiveFilter('specific'));
-      expect(state.activeFilter).toBe('specific');
+      // Set filter to admin
+      state = dashboardReducer(state, setActiveFilter('admin'));
+      expect(state.activeFilter).toBe('admin');
       expect(state.selectedUserIds).toEqual([]);
 
       // Add some users
@@ -314,8 +373,8 @@ describe('dashboardSlice', () => {
       expect(state.selectedUserIds).toEqual([1, 2]);
 
       // Change filter (should clear selections)
-      state = dashboardReducer(state, setActiveFilter('admin'));
-      expect(state.activeFilter).toBe('admin');
+      state = dashboardReducer(state, setActiveFilter('regular'));
+      expect(state.activeFilter).toBe('regular');
       expect(state.selectedUserIds).toEqual([]);
     });
 
@@ -334,6 +393,22 @@ describe('dashboardSlice', () => {
       // Clear error
       state = dashboardReducer(state, setError(null));
       expect(state.error).toBeNull();
+    });
+
+    it('should handle dashboard user selection workflow', () => {
+      let state = initialState;
+
+      // Set dashboard user
+      state = dashboardReducer(state, setSelectedDashboardUser(10));
+      expect(state.selectedDashboardUserId).toBe(10);
+
+      // Change filter (should not affect dashboard user selection)
+      state = dashboardReducer(state, setActiveFilter('admin'));
+      expect(state.selectedDashboardUserId).toBe(10);
+
+      // Clear dashboard user
+      state = dashboardReducer(state, clearSelectedDashboardUser());
+      expect(state.selectedDashboardUserId).toBeNull();
     });
   });
 });

@@ -96,6 +96,14 @@ vi.mock('./DashboardUserList', () => ({
   )
 }));
 
+vi.mock('./UserSelectorDropdown', () => ({
+  default: ({ disabled }: any) => (
+    <div data-testid="user-selector-dropdown">
+      {disabled ? 'Dropdown Disabled' : 'User Selector Dropdown'}
+    </div>
+  )
+}));
+
 describe('DashboardContainer', () => {
   const mockUserStats = {
     total_logins: 42,
@@ -293,6 +301,103 @@ describe('DashboardContainer', () => {
       expect(getUserStats).not.toHaveBeenCalled();
       expect(getLoginActivity).not.toHaveBeenCalled();
       expect(getLoginTrends).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Checkbox to Dropdown Integration', () => {
+    it('should update dropdown default and dashboard data when checkboxes change', async () => {
+      // Mock admin user
+      const { useUserAuthorization } = await import('../../utils/authorization');
+      const mockUseUserAuthorization = vi.mocked(useUserAuthorization);
+      mockUseUserAuthorization.mockReturnValue({
+        isAdmin: vi.fn(() => true),
+        isCurrentUser: vi.fn(() => true),
+        canAccessUserData: vi.fn(() => true),
+        getUserRole: vi.fn(() => ({
+          isStaff: false,
+          isSuperuser: true,
+          isAdmin: true,
+          userId: 1
+        })),
+        user: { id: 1, username: 'admin', is_staff: false, is_superuser: true }
+      });
+
+      // Mock different user data for verification
+      const user1Stats = { total_logins: 42, last_login: '2023-12-22T10:00:00Z' };
+      const user2Stats = { total_logins: 25, last_login: '2023-12-21T09:00:00Z' };
+      const user1Activity = { count: 5, results: [{ id: 1, username: 'user1' }] };
+      const user2Activity = { count: 3, results: [{ id: 2, username: 'user2' }] };
+
+      // Mock API calls - initially return user1 data (first user)
+      (getUserStats as any).mockResolvedValue(user1Stats);
+      (getLoginActivity as any).mockResolvedValue(user1Activity);
+      (getLoginTrends as any).mockResolvedValue(mockChartData);
+      (getLoginComparison as any).mockResolvedValue(mockChartData);
+      (getLoginDistribution as any).mockResolvedValue(mockChartData);
+
+      // Mock useSelector to simulate state changes
+      let currentDashboardState: any = {
+        activeFilter: 'all' as const,
+        selectedUserIds: [] as number[],
+        selectedDashboardUserId: null as number | null,
+        startDate: null,
+        endDate: null,
+        isLoading: false,
+        error: null
+      };
+
+      (useSelector as any).mockImplementation((callback: any) => {
+        const state = {
+          auth: {
+            isAuthenticated: true,
+            user: { id: 1, username: 'admin', is_staff: false, is_superuser: true },
+            accessToken: 'test-token'
+          },
+          dashboard: currentDashboardState
+        };
+        return callback(state);
+      });
+
+      const { rerender } = render(<DashboardContainer />);
+
+      // Initial state: No checkboxes selected, should show all users, dropdown defaults to first user (1)
+      await waitFor(() => {
+        expect(screen.getByTestId('user-dashboard-card')).toHaveTextContent('User Stats: 42');
+        expect(screen.getByTestId('login-activity-table')).toHaveTextContent('Activity: 1 items');
+        expect(screen.getByTestId('user-selector-dropdown')).toBeInTheDocument();
+      });
+
+      // Simulate selecting checkboxes for users 1, 2, 3
+      currentDashboardState = {
+        ...currentDashboardState,
+        selectedUserIds: [1, 2, 3]
+      };
+
+      // Update API mocks to return user2 data (new first user)
+      (getUserStats as any).mockResolvedValue(user2Stats);
+      (getLoginActivity as any).mockResolvedValue(user2Activity);
+
+      rerender(<DashboardContainer />);
+
+      // After checkbox selection: Dropdown should default to first selected user (1), dashboard shows user 1 data
+      await waitFor(() => {
+        expect(screen.getByTestId('user-dashboard-card')).toHaveTextContent('User Stats: 25');
+        expect(screen.getByTestId('login-activity-table')).toHaveTextContent('Activity: 1 items');
+      });
+
+      // Simulate changing checkbox selection to users 2, 3, 4
+      currentDashboardState = {
+        ...currentDashboardState,
+        selectedUserIds: [2, 3, 4]
+      };
+
+      rerender(<DashboardContainer />);
+
+      // After checkbox change: Dropdown should default to first selected user (2), dashboard shows user 2 data
+      await waitFor(() => {
+        expect(screen.getByTestId('user-dashboard-card')).toHaveTextContent('User Stats: 25');
+        expect(screen.getByTestId('login-activity-table')).toHaveTextContent('Activity: 1 items');
+      });
     });
   });
 });

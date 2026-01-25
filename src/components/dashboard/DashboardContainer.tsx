@@ -14,6 +14,7 @@ import LoginTrendsChart from './LoginTrendsChart';
 import DashboardFilters from './DashboardFilters';
 import DashboardUserList from './DashboardUserList';
 import DateRangePicker from './DateRangePicker';
+import UserSelectorDropdown from './UserSelectorDropdown';
 
 // Styled components
 const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
@@ -68,8 +69,16 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
       setError(null);
 
       try {
-        // Determine which user data to fetch based on authorization
-        const targetUserId = isAdmin() && userId ? userId : undefined;
+        // Determine which user data to fetch based on authorization and dropdown selection
+        let targetUserId: number | undefined;
+
+        if (isAdmin()) {
+          // For admins, use the selected dashboard user from dropdown, or fallback to passed userId
+          targetUserId = dashboardState.selectedDashboardUserId || userId;
+        } else {
+          // For regular users, use passed userId or current user
+          targetUserId = userId;
+        }
 
         // Get date range from state
         const startDate = dashboardState.startDate || undefined;
@@ -192,7 +201,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     };
 
     fetchDashboardData();
-  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds, dashboardState.startDate, dashboardState.endDate]);
+  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds, dashboardState.selectedDashboardUserId, dashboardState.startDate, dashboardState.endDate]);
 
   // Render loading state
   if (loading) {
@@ -231,6 +240,11 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
       {/* User List Section - Only show for admins */}
       {isAdmin() && (
         <DashboardUserList />
+      )}
+
+      {/* User Selector Dropdown - Only show for admins */}
+      {isAdmin() && (
+        <UserSelectorDropdown disabled={loading} />
       )}
 
       {/* User Statistics Section */}
