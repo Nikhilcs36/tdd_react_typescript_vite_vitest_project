@@ -41,6 +41,7 @@ interface LoginTrendsChartProps {
   chartData: ChartData | null;
   loading: boolean;
   chartType: 'line' | 'bar' | 'pie';
+  customTitle?: string;
 }
 
 /**
@@ -48,8 +49,19 @@ interface LoginTrendsChartProps {
  * Displays login trends data in various chart formats
  * Shows loading state, error state, and success state
  */
-const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading, chartType }) => {
+const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading, chartType, customTitle }) => {
   const { t, i18n } = useTranslation();
+
+  // Get the chart title - use customTitle if provided, otherwise use default
+  const getChartTitle = () => {
+    if (customTitle) return customTitle;
+
+    return chartType === 'line'
+      ? t('dashboard.login_trends')
+      : chartType === 'bar'
+      ? t('dashboard.login_comparison')
+      : t('dashboard.login_distribution');
+  };
 
   // Chart options configuration with RTL support
   const chartOptions = {
@@ -61,12 +73,8 @@ const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading,
         rtl: i18n.language === 'ar', // Enable RTL for Arabic
       },
       title: {
-        display: true,
-        text: chartType === 'line' 
-          ? t('dashboard.login_trends')
-          : chartType === 'bar'
-          ? t('dashboard.login_comparison')
-          : t('dashboard.login_distribution'),
+        display: !customTitle, // Hide chart title if customTitle is provided (header shows it)
+        text: getChartTitle(),
       },
     },
     // RTL layout configuration
@@ -81,11 +89,7 @@ const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading,
       <ChartContainer data-testid="chart-loading">
         <ChartHeader>
           <ChartTitle>
-            {chartType === 'line' 
-              ? t('dashboard.login_trends')
-              : chartType === 'bar'
-              ? t('dashboard.login_comparison')
-              : t('dashboard.login_distribution')}
+            {getChartTitle()}
           </ChartTitle>
         </ChartHeader>
         <div className="flex items-center justify-center h-64">
@@ -101,11 +105,7 @@ const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading,
       <ChartContainer>
         <ChartHeader>
           <ChartTitle>
-            {chartType === 'line' 
-              ? t('dashboard.login_trends')
-              : chartType === 'bar'
-              ? t('dashboard.login_comparison')
-              : t('dashboard.login_distribution')}
+            {getChartTitle()}
           </ChartTitle>
         </ChartHeader>
         <ErrorMessage>
@@ -116,20 +116,16 @@ const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading,
   }
 
   // Render empty state - add comprehensive null checking
-  if (!chartData || 
-      !chartData.labels || 
-      !chartData.datasets || 
-      chartData.labels.length === 0 || 
+  if (!chartData ||
+      !chartData.labels ||
+      !chartData.datasets ||
+      chartData.labels.length === 0 ||
       chartData.datasets.length === 0) {
     return (
       <ChartContainer>
         <ChartHeader>
           <ChartTitle>
-            {chartType === 'line' 
-              ? t('dashboard.login_trends')
-              : chartType === 'bar'
-              ? t('dashboard.login_comparison')
-              : t('dashboard.login_distribution')}
+            {getChartTitle()}
           </ChartTitle>
         </ChartHeader>
         <EmptyState>
@@ -157,11 +153,7 @@ const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading,
     <ChartContainer>
       <ChartHeader>
         <ChartTitle>
-          {chartType === 'line' 
-            ? t('dashboard.login_trends')
-            : chartType === 'bar'
-            ? t('dashboard.login_comparison')
-            : t('dashboard.login_distribution')}
+          {getChartTitle()}
         </ChartTitle>
       </ChartHeader>
       <div className="h-64 mt-4">

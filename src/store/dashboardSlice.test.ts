@@ -7,6 +7,7 @@ import dashboardReducer, {
   clearSelectedUsers,
   setSelectedDashboardUser,
   clearSelectedDashboardUser,
+  setChartMode,
   setDateRange,
   setLoading,
   setError,
@@ -19,6 +20,7 @@ describe('dashboardSlice', () => {
     activeFilter: 'all',
     selectedUserIds: [],
     selectedDashboardUserId: null,
+    chartMode: 'individual',
     startDate: null,
     endDate: null,
     isLoading: false,
@@ -290,6 +292,7 @@ describe('dashboardSlice', () => {
         activeFilter: 'admin',
         selectedUserIds: [1, 2, 3],
         selectedDashboardUserId: 5,
+        chartMode: 'grouped',
         startDate: '2023-01-01',
         endDate: '2023-12-31',
         isLoading: true,
@@ -355,6 +358,36 @@ describe('dashboardSlice', () => {
       const result = dashboardReducer(initialState, action);
 
       expect(result.selectedDashboardUserId).toBeNull();
+    });
+  });
+
+  describe('setChartMode', () => {
+    it('should set chart mode to individual', () => {
+      const action = setChartMode('individual');
+      const result = dashboardReducer(initialState, action);
+
+      expect(result.chartMode).toBe('individual');
+      expect(result.error).toBeNull();
+    });
+
+    it('should set chart mode to grouped', () => {
+      const action = setChartMode('grouped');
+      const result = dashboardReducer(initialState, action);
+
+      expect(result.chartMode).toBe('grouped');
+      expect(result.error).toBeNull();
+    });
+
+    it('should replace existing chart mode', () => {
+      const state = {
+        ...initialState,
+        chartMode: 'individual' as const,
+      };
+
+      const action = setChartMode('grouped');
+      const result = dashboardReducer(state, action);
+
+      expect(result.chartMode).toBe('grouped');
     });
   });
 

@@ -11,11 +11,24 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-// Mock Chart.js components
+// Mock Chart.js components with options capture
+let capturedLineOptions: any;
+let capturedBarOptions: any;
+let capturedPieOptions: any;
+
 vi.mock('react-chartjs-2', () => ({
-  Line: () => <div data-testid="line-chart" />,
-  Bar: () => <div data-testid="bar-chart" />,
-  Pie: () => <div data-testid="pie-chart" />,
+  Line: (props: any) => {
+    capturedLineOptions = props.options;
+    return <div data-testid="line-chart" />;
+  },
+  Bar: (props: any) => {
+    capturedBarOptions = props.options;
+    return <div data-testid="bar-chart" />;
+  },
+  Pie: (props: any) => {
+    capturedPieOptions = props.options;
+    return <div data-testid="pie-chart" />;
+  },
 }));
 
 describe('LoginTrendsChart', () => {
@@ -167,10 +180,60 @@ describe('LoginTrendsChart', () => {
       labels: null,
       datasets: [{ data: [1, 2, 3], label: 'Test' }]
     } as any;
-    
+
     render(<LoginTrendsChart chartData={invalidChartData} loading={false} chartType="line" />);
-    
+
     expect(screen.getByText('dashboard.no_chart_data')).toBeInTheDocument();
     expect(screen.queryByTestId('line-chart')).not.toBeInTheDocument();
+  });
+
+  it('should display custom title when provided', () => {
+    const customTitle = "Custom Chart Title - User Data";
+    render(<LoginTrendsChart chartData={mockChartData} loading={false} chartType="line" customTitle={customTitle} />);
+
+    expect(screen.getByText(customTitle)).toBeInTheDocument();
+    expect(screen.queryByText('dashboard.login_trends')).not.toBeInTheDocument();
+  });
+
+  it('should use custom title in loading state', () => {
+    const customTitle = "Loading Custom Title";
+    render(<LoginTrendsChart chartData={null} loading={true} chartType="line" customTitle={customTitle} />);
+
+    expect(screen.getByText(customTitle)).toBeInTheDocument();
+    expect(screen.queryByText('dashboard.login_trends')).not.toBeInTheDocument();
+  });
+
+  it('should use custom title in error state', () => {
+    const customTitle = "Error Custom Title";
+    render(<LoginTrendsChart chartData={null} loading={false} chartType="line" customTitle={customTitle} />);
+
+    expect(screen.getByText(customTitle)).toBeInTheDocument();
+    expect(screen.queryByText('dashboard.login_trends')).not.toBeInTheDocument();
+  });
+
+  it('should use custom title in empty state', () => {
+    const emptyChartData: ChartData = {
+      labels: [],
+      datasets: []
+    };
+    const customTitle = "Empty Custom Title";
+
+    render(<LoginTrendsChart chartData={emptyChartData} loading={false} chartType="line" customTitle={customTitle} />);
+
+    expect(screen.getByText(customTitle)).toBeInTheDocument();
+    expect(screen.queryByText('dashboard.login_trends')).not.toBeInTheDocument();
+  });
+
+  it('should hide chart title when customTitle is provided', () => {
+    const customTitle = "Custom Chart Title";
+    render(<LoginTrendsChart chartData={mockChartData} loading={false} chartType="line" customTitle={customTitle} />);
+
+    expect(capturedLineOptions.plugins.title.display).toBe(false);
+  });
+
+  it('should show chart title when no customTitle is provided', () => {
+    render(<LoginTrendsChart chartData={mockChartData} loading={false} chartType="line" />);
+
+    expect(capturedLineOptions.plugins.title.display).toBe(true);
   });
 });

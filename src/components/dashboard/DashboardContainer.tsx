@@ -15,6 +15,7 @@ import DashboardFilters from './DashboardFilters';
 import DashboardUserList from './DashboardUserList';
 import DateRangePicker from './DateRangePicker';
 import UserSelectorDropdown from './UserSelectorDropdown';
+import ChartModeToggle from './ChartModeToggle';
 
 // Styled components
 const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
@@ -46,6 +47,8 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const [loginDistribution, setLoginDistribution] = useState<ChartData | null>(null);
   const [adminDashboard, setAdminDashboard] = useState<AdminDashboardData | null>(null);
   const [adminUserIds, setAdminUserIds] = useState<number[]>([]);
+  const [selectedUserInfo, setSelectedUserInfo] = useState<{ id: number; username: string; email: string } | null>(null);
+  const [selectedGroupUsers, setSelectedGroupUsers] = useState<{ id: number; username: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,55 +87,72 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         const startDate = dashboardState.startDate || undefined;
         const endDate = dashboardState.endDate || undefined;
 
-        // Determine chart filtering based on active filter and selected users
+        // Determine chart filtering based on chart mode and user selections
         let chartUserIds: number[] | undefined;
 
-        if (dashboardState.activeFilter === 'admin') {
-          // For admin filter, use cached admin user IDs or fetch them
-          if (adminUserIds.length > 0) {
-            chartUserIds = adminUserIds;
+        if (dashboardState.chartMode === 'individual') {
+          // Individual mode: Show charts for the selected dashboard user
+          chartUserIds = dashboardState.selectedDashboardUserId ? [dashboardState.selectedDashboardUserId] : undefined;
+        } else {
+          // Group mode: Show aggregated charts based on selected users or all users
+          if (dashboardState.selectedUserIds.length > 0) {
+            // If checkboxes are selected, aggregate those users
+            chartUserIds = dashboardState.selectedUserIds;
           } else {
-            // Fetch admin users first
+            // If no checkboxes selected, aggregate all users (don't filter)
+            // chartUserIds remains undefined to indicate "all users"
+          }
+        }
+
+        // For backward compatibility with filter-based logic, apply filters only in Group mode
+        if (dashboardState.chartMode === 'grouped') {
+          if (dashboardState.activeFilter === 'admin') {
+            // For admin filter, use cached admin user IDs or fetch them
+            if (adminUserIds.length > 0) {
+              chartUserIds = adminUserIds;
+            } else {
+              // Fetch admin users first
+              try {
+                const response: any = await axiosApiServiceLoadUserList.get(
+                  API_ENDPOINTS.GET_USERS,
+                  1,
+                  1000,
+                  'admin' // Use the role parameter
+                );
+
+                if (Array.isArray(response.results)) {
+                  const adminIds = response.results.map((admin: any) => admin.id);
+                  setAdminUserIds(adminIds);
+                  chartUserIds = adminIds;
+                }
+              } catch (adminFetchError) {
+                console.warn('Failed to fetch admin users for admin filter:', adminFetchError);
+                chartUserIds = [];
+              }
+            }
+          } else if (dashboardState.activeFilter === 'regular') {
+            // For regular users filter, fetch regular users
             try {
               const response: any = await axiosApiServiceLoadUserList.get(
                 API_ENDPOINTS.GET_USERS,
                 1,
                 1000,
-                'admin' // Use the role parameter
+                'regular'
               );
 
               if (Array.isArray(response.results)) {
-                const adminIds = response.results.map((admin: any) => admin.id);
-                setAdminUserIds(adminIds);
-                chartUserIds = adminIds;
+                chartUserIds = response.results.map((user: any) => user.id);
               }
-            } catch (adminFetchError) {
-              console.warn('Failed to fetch admin users for admin filter:', adminFetchError);
+            } catch (regularFetchError) {
+              console.warn('Failed to fetch regular users for regular filter:', regularFetchError);
               chartUserIds = [];
             }
+          } else if (dashboardState.activeFilter === 'me') {
+            // For 'me' filter, use current user's ID
+            chartUserIds = [currentUserId].filter(Boolean) as number[];
           }
-        } else if (dashboardState.activeFilter === 'regular') {
-          // For regular users filter, fetch regular users
-          try {
-            const response: any = await axiosApiServiceLoadUserList.get(
-              API_ENDPOINTS.GET_USERS,
-              1,
-              1000,
-              'regular'
-            );
-
-            if (Array.isArray(response.results)) {
-              chartUserIds = response.results.map((user: any) => user.id);
-            }
-          } catch (regularFetchError) {
-            console.warn('Failed to fetch regular users for regular filter:', regularFetchError);
-            chartUserIds = [];
-          }
-        } else if (dashboardState.activeFilter === 'me') {
-          // For 'me' filter, use current user's ID
-          chartUserIds = [currentUserId].filter(Boolean) as number[];
+          // For 'all' filter, chartUserIds remains undefined (backend handles aggregated data)
         }
-        // For 'all' filter, chartUserIds remains undefined (backend handles aggregated data)
 
         // Execute all API calls in parallel
         const [
@@ -201,7 +221,67 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     };
 
     fetchDashboardData();
-  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds, dashboardState.selectedDashboardUserId, dashboardState.startDate, dashboardState.endDate]);
+  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds, dashboardState.selectedDashboardUserId, dashboardState.chartMode, dashboardState.startDate, dashboardState.endDate]);
+
+  // Fetch selected user info for chart titles
+  useEffect(() => {
+    const fetchSelectedUserInfo = async () => {
+      if (dashboardState.selectedDashboardUserId && isAdmin()) {
+        try {
+          // Use the specific user endpoint instead of filtering the user list
+          const response: any = await axiosApiServiceLoadUserList.get(
+            API_ENDPOINTS.GET_USER_BY_ID(dashboardState.selectedDashboardUserId)
+          );
+
+          if (response && response.id) {
+            setSelectedUserInfo({
+              id: response.id,
+              username: response.username,
+              email: response.email
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to fetch selected user info:', error);
+          setSelectedUserInfo(null);
+        }
+      } else {
+        setSelectedUserInfo(null);
+      }
+    };
+
+    fetchSelectedUserInfo();
+  }, [dashboardState.selectedDashboardUserId, isAdmin]);
+
+  // Fetch selected group users info for chart titles
+  useEffect(() => {
+    const fetchSelectedGroupUsers = async () => {
+      if (dashboardState.selectedUserIds.length > 0 && isAdmin()) {
+        try {
+          // Fetch user details for selected IDs
+          const userPromises = dashboardState.selectedUserIds.map(userId =>
+            axiosApiServiceLoadUserList.get(API_ENDPOINTS.GET_USER_BY_ID(userId))
+          );
+
+          const userResponses = await Promise.all(userPromises);
+          const users = userResponses
+            .filter((response: any) => response && response.id)
+            .map((response: any) => ({
+              id: response.id,
+              username: response.username
+            }));
+
+          setSelectedGroupUsers(users);
+        } catch (error) {
+          console.warn('Failed to fetch selected group users:', error);
+          setSelectedGroupUsers([]);
+        }
+      } else {
+        setSelectedGroupUsers([]);
+      }
+    };
+
+    fetchSelectedGroupUsers();
+  }, [dashboardState.selectedUserIds, isAdmin]);
 
   // Render loading state
   if (loading) {
@@ -224,6 +304,39 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
       </DashboardContainerWrapper>
     );
   }
+
+  // Generate custom chart titles based on chart mode and user selection
+  const getChartTitle = (baseKey: string) => {
+    if (dashboardState.chartMode === 'individual') {
+      // Individual mode: Show selected username only
+      if (selectedUserInfo && isAdmin()) {
+        return `${t(baseKey)} - ${selectedUserInfo.username}`;
+      } else if (dashboardState.selectedDashboardUserId && isAdmin()) {
+        // Fallback if user info not loaded yet
+        return `${t(baseKey)} - ${t('dashboard.user_selector.label').toLowerCase()}`;
+      }
+    } else {
+      // Group mode: Show actual usernames
+      if (dashboardState.selectedUserIds.length > 0 && selectedGroupUsers.length > 0) {
+        // Format usernames: show first 3, then "+X more" if more than 3
+        const maxDisplay = 3;
+        const displayedUsers = selectedGroupUsers.slice(0, maxDisplay);
+        const remainingCount = selectedGroupUsers.length - maxDisplay;
+
+        const userList = displayedUsers.map(user => user.username).join(', ');
+        const suffix = remainingCount > 0 ? `, +${remainingCount} more` : '';
+
+        return `${t(baseKey)} - Group (${userList}${suffix})`;
+      } else if (dashboardState.selectedUserIds.length > 0) {
+        // Fallback while loading user info
+        return `${t(baseKey)} - Group (${dashboardState.selectedUserIds.length} users)`;
+      } else {
+        // No selection - all users
+        return `${t(baseKey)} - All Users`;
+      }
+    }
+    return t(baseKey);
+  };
 
   return (
     <DashboardContainerWrapper>
@@ -250,36 +363,40 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
       {/* User Statistics Section */}
       <SectionTitle>{t('dashboard.user_statistics')}</SectionTitle>
       <DashboardGrid>
-        <UserDashboardCard 
-          userStats={userStats} 
-          loading={false} 
+        <UserDashboardCard
+          userStats={userStats}
+          loading={false}
         />
       </DashboardGrid>
 
       {/* Login Activity Section */}
       <SectionTitle>{t('dashboard.recent_activity')}</SectionTitle>
-      <LoginActivityTable 
-        loginActivity={loginActivity?.results || []} 
-        loading={false} 
+      <LoginActivityTable
+        loginActivity={loginActivity?.results || []}
+        loading={false}
       />
 
       {/* Charts Section */}
       <SectionTitle>{t('dashboard.visualizations')}</SectionTitle>
+      <ChartModeToggle disabled={loading} />
       <ChartGrid>
-        <LoginTrendsChart 
-          chartData={loginTrends} 
-          loading={false} 
-          chartType="line" 
+        <LoginTrendsChart
+          chartData={loginTrends}
+          loading={false}
+          chartType="line"
+          customTitle={getChartTitle('dashboard.login_trends')}
         />
-        <LoginTrendsChart 
-          chartData={loginComparison} 
-          loading={false} 
-          chartType="bar" 
+        <LoginTrendsChart
+          chartData={loginComparison}
+          loading={false}
+          chartType="bar"
+          customTitle={getChartTitle('dashboard.login_comparison')}
         />
-        <LoginTrendsChart 
-          chartData={loginDistribution} 
-          loading={false} 
-          chartType="pie" 
+        <LoginTrendsChart
+          chartData={loginDistribution}
+          loading={false}
+          chartType="pie"
+          customTitle={getChartTitle('dashboard.login_distribution')}
         />
       </ChartGrid>
 

@@ -5,6 +5,7 @@ export interface DashboardState {
   activeFilter: DashboardFilterMode;
   selectedUserIds: number[];
   selectedDashboardUserId: number | null;
+  chartMode: 'individual' | 'grouped';
   startDate: string | null;
   endDate: string | null;
   isLoading: boolean;
@@ -15,6 +16,7 @@ const initialState: DashboardState = {
   activeFilter: 'all' as DashboardFilterMode,
   selectedUserIds: [],
   selectedDashboardUserId: null,
+  chartMode: 'individual' as const,
   startDate: null,
   endDate: null,
   isLoading: false,
@@ -53,6 +55,10 @@ const dashboardSlice = createSlice({
     clearSelectedDashboardUser: (state) => {
       state.selectedDashboardUserId = null;
     },
+    setChartMode: (state, action: PayloadAction<'individual' | 'grouped'>) => {
+      state.chartMode = action.payload;
+      state.error = null;
+    },
     setDateRange: (state, action: PayloadAction<{ startDate: string | null; endDate: string | null }>) => {
       state.startDate = action.payload.startDate;
       state.endDate = action.payload.endDate;
@@ -77,6 +83,7 @@ export const {
   clearSelectedUsers,
   setSelectedDashboardUser,
   clearSelectedDashboardUser,
+  setChartMode,
   setDateRange,
   setLoading,
   setError,
