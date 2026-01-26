@@ -443,7 +443,7 @@ describe("signup page", () => {
           expect(
             screen.getByRole("button", { name: "Sign Up" })
           ).toBeDisabled();
-        });
+        }, 30000); // Increased timeout to 30 seconds for backend API calls
       });
     });
 

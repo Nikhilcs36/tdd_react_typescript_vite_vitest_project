@@ -171,6 +171,11 @@ i18n.use(initReactI18next).init({
             error_loading: "Error loading users",
             no_users: "No users available"
           },
+          chart_mode: {
+            label: "Chart Mode",
+            individual: "Individual",
+            group: "Group"
+          },
           user_not_found: "User not found",
           unauthorized_access: "Unauthorized access to dashboard data"
         },
@@ -334,6 +339,11 @@ i18n.use(initReactI18next).init({
             error_loading: "ഉപയോക്താക്കളെ ലോഡ് ചെയ്യുന്നതിൽ പിശക്",
             no_users: "ഉപയോക്താക്കളെ ലഭ്യമല്ല"
           },
+          chart_mode: {
+            label: "ചാർട്ട് മോഡ്",
+            individual: "വ്യക്തിഗതം",
+            group: "ഗ്രൂപ്പ്"
+          },
           user_not_found: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
           unauthorized_access: "ഡാഷ്ബോർഡ് ഡാറ്റയിലേക്ക് അനധികൃത ആക്സസ്"
         },
@@ -495,6 +505,11 @@ i18n.use(initReactI18next).init({
             aria_label: "اختر مستخدم للوحة التحكم",
             error_loading: "خطأ في تحميل المستخدمين",
             no_users: "لا يوجد مستخدمون متاحون"
+          },
+          chart_mode: {
+            label: "وضع الرسم البياني",
+            individual: "فردي",
+            group: "مجموعة"
           },
           user_not_found: "لم يتم العثور على المستخدم",
           unauthorized_access: "وصول غير مصرح به لبيانات لوحة التحكم"
