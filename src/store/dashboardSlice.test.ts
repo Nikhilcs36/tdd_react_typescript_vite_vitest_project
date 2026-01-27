@@ -7,12 +7,14 @@ import dashboardReducer, {
   clearSelectedUsers,
   setSelectedDashboardUser,
   clearSelectedDashboardUser,
+  setCurrentDropdownUsers,
   setChartMode,
   setDateRange,
   setLoading,
   setError,
   resetDashboardState,
   DashboardState,
+  DashboardUser,
 } from './dashboardSlice';
 
 describe('dashboardSlice', () => {
@@ -20,6 +22,7 @@ describe('dashboardSlice', () => {
     activeFilter: 'all',
     selectedUserIds: [],
     selectedDashboardUserId: null,
+    currentDropdownUsers: [],
     chartMode: 'individual',
     startDate: null,
     endDate: null,
@@ -292,6 +295,7 @@ describe('dashboardSlice', () => {
         activeFilter: 'admin',
         selectedUserIds: [1, 2, 3],
         selectedDashboardUserId: 5,
+        currentDropdownUsers: [],
         chartMode: 'grouped',
         startDate: '2023-01-01',
         endDate: '2023-12-31',
@@ -358,6 +362,53 @@ describe('dashboardSlice', () => {
       const result = dashboardReducer(initialState, action);
 
       expect(result.selectedDashboardUserId).toBeNull();
+    });
+  });
+
+  describe('setCurrentDropdownUsers', () => {
+    it('should set the current dropdown users', () => {
+      const users: DashboardUser[] = [
+        { id: 1, username: 'user1', email: 'user1@example.com' },
+        { id: 2, username: 'user2', email: 'user2@example.com' },
+      ];
+
+      const action = setCurrentDropdownUsers(users);
+      const result = dashboardReducer(initialState, action);
+
+      expect(result.currentDropdownUsers).toEqual(users);
+      expect(result.error).toBeNull();
+    });
+
+    it('should replace existing dropdown users', () => {
+      const state = {
+        ...initialState,
+        currentDropdownUsers: [
+          { id: 1, username: 'old', email: 'old@example.com' },
+        ],
+      };
+
+      const newUsers: DashboardUser[] = [
+        { id: 2, username: 'new', email: 'new@example.com' },
+      ];
+
+      const action = setCurrentDropdownUsers(newUsers);
+      const result = dashboardReducer(state, action);
+
+      expect(result.currentDropdownUsers).toEqual(newUsers);
+    });
+
+    it('should handle empty array', () => {
+      const state = {
+        ...initialState,
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@example.com' },
+        ],
+      };
+
+      const action = setCurrentDropdownUsers([]);
+      const result = dashboardReducer(state, action);
+
+      expect(result.currentDropdownUsers).toEqual([]);
     });
   });
 

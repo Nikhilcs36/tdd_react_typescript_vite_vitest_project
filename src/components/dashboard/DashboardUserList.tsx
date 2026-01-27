@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { addSelectedUser, removeSelectedUser } from '../../store/dashboardSlice';
 import { axiosApiServiceLoadUserList } from '../../services/apiService';
 import { API_ENDPOINTS } from '../../services/apiEndpoints';
-import { DashboardFilterMode } from './DashboardFilters';
 import tw from 'twin.macro';
 
 interface User {
@@ -56,10 +55,25 @@ const DashboardUserList: React.FC = () => {
   const [hasNext, setHasNext] = useState(false);
   const [hasPrevious, setHasPrevious] = useState(false);
 
+  // Ref to prevent multiple concurrent API calls
+  const hasFetchedRef = useRef(false);
+  const currentFetchKeyRef = useRef<string>('');
+
   const pageSize = 3; // Match the dashboard page size
 
   // Fetch users on component mount, page changes, and filter changes
   useEffect(() => {
+    // Create a unique key for this fetch based on dependencies
+    const fetchKey = `${activeFilter}-${currentPage}`;
+
+    // Prevent multiple concurrent fetches for the same parameters
+    if (currentFetchKeyRef.current === fetchKey && hasFetchedRef.current) {
+      return;
+    }
+
+    currentFetchKeyRef.current = fetchKey;
+    hasFetchedRef.current = true;
+
     const fetchUsers = async () => {
       try {
         setLoading(true);

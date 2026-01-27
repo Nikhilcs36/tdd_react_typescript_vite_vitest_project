@@ -1,10 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DashboardFilterMode } from '../components/dashboard/DashboardFilters';
 
+export interface DashboardUser {
+  id: number;
+  username: string;
+  email: string;
+}
+
 export interface DashboardState {
   activeFilter: DashboardFilterMode;
   selectedUserIds: number[];
   selectedDashboardUserId: number | null;
+  currentDropdownUsers: DashboardUser[];
   chartMode: 'individual' | 'grouped';
   startDate: string | null;
   endDate: string | null;
@@ -16,6 +23,7 @@ const initialState: DashboardState = {
   activeFilter: 'all' as DashboardFilterMode,
   selectedUserIds: [],
   selectedDashboardUserId: null,
+  currentDropdownUsers: [],
   chartMode: 'individual' as const,
   startDate: null,
   endDate: null,
@@ -67,6 +75,10 @@ const dashboardSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
+    setCurrentDropdownUsers: (state, action: PayloadAction<DashboardUser[]>) => {
+      state.currentDropdownUsers = action.payload;
+      state.error = null;
+    },
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
       state.isLoading = false;
@@ -83,6 +95,7 @@ export const {
   clearSelectedUsers,
   setSelectedDashboardUser,
   clearSelectedDashboardUser,
+  setCurrentDropdownUsers,
   setChartMode,
   setDateRange,
   setLoading,
