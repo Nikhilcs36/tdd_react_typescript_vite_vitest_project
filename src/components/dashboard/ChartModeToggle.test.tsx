@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import ChartModeToggle from './ChartModeToggle';
-import dashboardReducer, { DashboardState, setChartMode } from '../../store/dashboardSlice';
+import dashboardReducer, { DashboardState } from '../../store/dashboardSlice';
 
 // Mock i18n to avoid initReactI18next issues
 vi.mock('../../locale/i18n', () => ({
@@ -28,6 +28,10 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
     activeFilter: 'all',
     selectedUserIds: [],
     selectedDashboardUserId: null,
+    currentDropdownUsers: [
+      { id: 1, username: 'user1', email: 'user1@test.com' },
+      { id: 2, username: 'user2', email: 'user2@test.com' }
+    ], // Default to multiple users so group button shows
     chartMode: 'individual',
     startDate: null,
     endDate: null,
@@ -140,5 +144,44 @@ describe('ChartModeToggle', () => {
 
     expect(individualButton.closest('button')).toBeDisabled();
     expect(groupButton.closest('button')).toBeDisabled();
+  });
+
+  it('hides group button when only one user is available', () => {
+    renderWithProviders(<ChartModeToggle />, {
+      currentDropdownUsers: [{ id: 1, username: 'user1' }] // Only one user
+    });
+
+    const individualButton = screen.getByText('dashboard.chart_mode.individual');
+    const groupButton = screen.queryByText('dashboard.chart_mode.group');
+
+    expect(individualButton).toBeInTheDocument();
+    expect(groupButton).not.toBeInTheDocument();
+  });
+
+  it('shows group button when multiple users are available', () => {
+    renderWithProviders(<ChartModeToggle />, {
+      currentDropdownUsers: [
+        { id: 1, username: 'user1' },
+        { id: 2, username: 'user2' }
+      ] // Multiple users
+    });
+
+    const individualButton = screen.getByText('dashboard.chart_mode.individual');
+    const groupButton = screen.getByText('dashboard.chart_mode.group');
+
+    expect(individualButton).toBeInTheDocument();
+    expect(groupButton).toBeInTheDocument();
+  });
+
+  it('switches to individual mode when group becomes unavailable', async () => {
+    const { store } = renderWithProviders(<ChartModeToggle />, {
+      chartMode: 'grouped',
+      currentDropdownUsers: [{ id: 1, username: 'user1' }] // Only one user
+    });
+
+    await waitFor(() => {
+      const state = store.getState().dashboard;
+      expect(state.chartMode).toBe('individual');
+    });
   });
 });

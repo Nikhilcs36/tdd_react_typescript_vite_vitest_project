@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
@@ -27,8 +27,19 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
   const { t } = useTranslation();
   const dispatch = useDispatch();
 
-  // Get current chart mode from Redux state
+  // Get current chart mode and dropdown users from Redux state
   const chartMode = useSelector((state: RootState) => state.dashboard.chartMode);
+  const currentDropdownUsers = useSelector((state: RootState) => state.dashboard.currentDropdownUsers);
+
+  // Auto-switch to individual mode if group is selected but not available
+  useEffect(() => {
+    if (chartMode === 'grouped' && currentDropdownUsers.length <= 1) {
+      dispatch(setChartMode('individual'));
+    }
+  }, [chartMode, currentDropdownUsers.length, dispatch]);
+
+  // Show group button only when multiple users are available
+  const showGroupButton = currentDropdownUsers.length > 1;
 
   const handleModeChange = (mode: 'individual' | 'grouped') => {
     if (!disabled && mode !== chartMode) {
@@ -61,14 +72,16 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
         {t('dashboard.chart_mode.individual')}
       </ToggleButton>
 
-      <ToggleButton
-        className={getButtonClasses(chartMode === 'grouped')}
-        onClick={() => handleModeChange('grouped')}
-        disabled={disabled}
-        data-testid="chart-mode-group"
-      >
-        {t('dashboard.chart_mode.group')}
-      </ToggleButton>
+      {showGroupButton && (
+        <ToggleButton
+          className={getButtonClasses(chartMode === 'grouped')}
+          onClick={() => handleModeChange('grouped')}
+          disabled={disabled}
+          data-testid="chart-mode-group"
+        >
+          {t('dashboard.chart_mode.group')}
+        </ToggleButton>
+      )}
     </ToggleContainer>
   );
 };

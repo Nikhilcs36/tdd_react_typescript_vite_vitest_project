@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import tw from 'twin.macro';
@@ -46,14 +46,37 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const [loginComparison, setLoginComparison] = useState<ChartData | null>(null);
   const [loginDistribution, setLoginDistribution] = useState<ChartData | null>(null);
   const [adminDashboard, setAdminDashboard] = useState<AdminDashboardData | null>(null);
-  const [adminUserIds, setAdminUserIds] = useState<number[]>([]);
   const [selectedUserInfo, setSelectedUserInfo] = useState<{ id: number; username: string; email: string } | null>(null);
-  const [selectedGroupUsers, setSelectedGroupUsers] = useState<{ id: number; username: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Refs to prevent multiple concurrent API calls
+  const dashboardDataFetchedRef = useRef<string>('');
+  const selectedUserInfoFetchedRef = useRef<string>('');
+
   // Check authorization before fetching data
   useEffect(() => {
+    // Create a comprehensive fetch key for all dashboard data dependencies
+    const fetchKey = [
+      currentUserId,
+      userId,
+      isAdmin(),
+      dashboardState.activeFilter,
+      dashboardState.selectedUserIds?.slice().sort().join(','),
+      dashboardState.selectedDashboardUserId,
+      dashboardState.currentDropdownUsers?.map(u => u.id).sort().join(','),
+      dashboardState.chartMode,
+      dashboardState.startDate,
+      dashboardState.endDate
+    ].join('|');
+
+    // Prevent multiple concurrent fetches for the same parameters
+    if (dashboardDataFetchedRef.current === fetchKey) {
+      return;
+    }
+
+    dashboardDataFetchedRef.current = fetchKey;
+
     const fetchDashboardData = async () => {
       if (!currentUserId) {
         setError(t('dashboard.user_not_found'));
@@ -87,71 +110,15 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         const startDate = dashboardState.startDate || undefined;
         const endDate = dashboardState.endDate || undefined;
 
-        // Determine chart filtering based on chart mode and user selections
+        // Determine chart filtering based on chart mode and dropdown users
         let chartUserIds: number[] | undefined;
 
         if (dashboardState.chartMode === 'individual') {
           // Individual mode: Show charts for the selected dashboard user
           chartUserIds = dashboardState.selectedDashboardUserId ? [dashboardState.selectedDashboardUserId] : undefined;
         } else {
-          // Group mode: Show aggregated charts based on selected users or all users
-          if (dashboardState.selectedUserIds.length > 0) {
-            // If checkboxes are selected, aggregate those users
-            chartUserIds = dashboardState.selectedUserIds;
-          } else {
-            // If no checkboxes selected, aggregate all users (don't filter)
-            // chartUserIds remains undefined to indicate "all users"
-          }
-        }
-
-        // For backward compatibility with filter-based logic, apply filters only in Group mode
-        if (dashboardState.chartMode === 'grouped') {
-          if (dashboardState.activeFilter === 'admin') {
-            // For admin filter, use cached admin user IDs or fetch them
-            if (adminUserIds.length > 0) {
-              chartUserIds = adminUserIds;
-            } else {
-              // Fetch admin users first
-              try {
-                const response: any = await axiosApiServiceLoadUserList.get(
-                  API_ENDPOINTS.GET_USERS,
-                  1,
-                  1000,
-                  'admin' // Use the role parameter
-                );
-
-                if (Array.isArray(response.results)) {
-                  const adminIds = response.results.map((admin: any) => admin.id);
-                  setAdminUserIds(adminIds);
-                  chartUserIds = adminIds;
-                }
-              } catch (adminFetchError) {
-                console.warn('Failed to fetch admin users for admin filter:', adminFetchError);
-                chartUserIds = [];
-              }
-            }
-          } else if (dashboardState.activeFilter === 'regular') {
-            // For regular users filter, fetch regular users
-            try {
-              const response: any = await axiosApiServiceLoadUserList.get(
-                API_ENDPOINTS.GET_USERS,
-                1,
-                1000,
-                'regular'
-              );
-
-              if (Array.isArray(response.results)) {
-                chartUserIds = response.results.map((user: any) => user.id);
-              }
-            } catch (regularFetchError) {
-              console.warn('Failed to fetch regular users for regular filter:', regularFetchError);
-              chartUserIds = [];
-            }
-          } else if (dashboardState.activeFilter === 'me') {
-            // For 'me' filter, use current user's ID
-            chartUserIds = [currentUserId].filter(Boolean) as number[];
-          }
-          // For 'all' filter, chartUserIds remains undefined (backend handles aggregated data)
+          // Group mode: Show aggregated charts for all users currently in the dropdown
+          chartUserIds = dashboardState.currentDropdownUsers.map(user => user.id);
         }
 
         // Execute all API calls in parallel
@@ -221,16 +188,26 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     };
 
     fetchDashboardData();
-  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds, dashboardState.selectedDashboardUserId, dashboardState.chartMode, dashboardState.startDate, dashboardState.endDate]);
+  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds, dashboardState.selectedDashboardUserId, dashboardState.currentDropdownUsers, dashboardState.chartMode, dashboardState.startDate, dashboardState.endDate]);
 
   // Fetch selected user info for chart titles
   useEffect(() => {
+    const userId = dashboardState.selectedDashboardUserId;
+    const fetchKey = `user-${userId}`;
+
+    // Prevent multiple concurrent fetches for the same user
+    if (selectedUserInfoFetchedRef.current === fetchKey) {
+      return;
+    }
+
+    selectedUserInfoFetchedRef.current = fetchKey;
+
     const fetchSelectedUserInfo = async () => {
-      if (dashboardState.selectedDashboardUserId && isAdmin()) {
+      if (userId && isAdmin()) {
         try {
           // Use the specific user endpoint instead of filtering the user list
           const response: any = await axiosApiServiceLoadUserList.get(
-            API_ENDPOINTS.GET_USER_BY_ID(dashboardState.selectedDashboardUserId)
+            API_ENDPOINTS.GET_USER_BY_ID(userId)
           );
 
           if (response && response.id) {
@@ -252,36 +229,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     fetchSelectedUserInfo();
   }, [dashboardState.selectedDashboardUserId, isAdmin]);
 
-  // Fetch selected group users info for chart titles
-  useEffect(() => {
-    const fetchSelectedGroupUsers = async () => {
-      if (dashboardState.selectedUserIds.length > 0 && isAdmin()) {
-        try {
-          // Fetch user details for selected IDs
-          const userPromises = dashboardState.selectedUserIds.map(userId =>
-            axiosApiServiceLoadUserList.get(API_ENDPOINTS.GET_USER_BY_ID(userId))
-          );
-
-          const userResponses = await Promise.all(userPromises);
-          const users = userResponses
-            .filter((response: any) => response && response.id)
-            .map((response: any) => ({
-              id: response.id,
-              username: response.username
-            }));
-
-          setSelectedGroupUsers(users);
-        } catch (error) {
-          console.warn('Failed to fetch selected group users:', error);
-          setSelectedGroupUsers([]);
-        }
-      } else {
-        setSelectedGroupUsers([]);
-      }
-    };
-
-    fetchSelectedGroupUsers();
-  }, [dashboardState.selectedUserIds, isAdmin]);
+  // Note: selectedGroupUsers fetching was removed as it's no longer needed
 
   // Render loading state
   if (loading) {
@@ -316,24 +264,22 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         return `${t(baseKey)} - ${t('dashboard.user_selector.label').toLowerCase()}`;
       }
     } else {
-      // Group mode: Show actual usernames
-      if (dashboardState.selectedUserIds.length > 0 && selectedGroupUsers.length > 0) {
-        // Format usernames: show first 3, then "+X more" if more than 3
-        const maxDisplay = 3;
-        const displayedUsers = selectedGroupUsers.slice(0, maxDisplay);
-        const remainingCount = selectedGroupUsers.length - maxDisplay;
+      // Group mode: Show filter type with user count if users are selected
+      const filterLabels = {
+        all: t('dashboard.filters.allUsers'),
+        admin: t('dashboard.filters.adminOnly'),
+        regular: t('dashboard.filters.regularUsers'),
+        me: t('dashboard.filters.me'),
+      };
+      const filterLabel = filterLabels[dashboardState.activeFilter] || t('dashboard.filters.allUsers');
 
-        const userList = displayedUsers.map(user => user.username).join(', ');
-        const suffix = remainingCount > 0 ? `, +${remainingCount} more` : '';
-
-        return `${t(baseKey)} - Group (${userList}${suffix})`;
-      } else if (dashboardState.selectedUserIds.length > 0) {
-        // Fallback while loading user info
-        return `${t(baseKey)} - Group (${dashboardState.selectedUserIds.length} users)`;
-      } else {
-        // No selection - all users
-        return `${t(baseKey)} - All Users`;
+      // Add user count if any users are selected
+      if (dashboardState.selectedUserIds.length > 0) {
+        const selectedCount = dashboardState.selectedUserIds.length;
+        return `${t(baseKey)} - ${filterLabel} (${selectedCount} users selected)`;
       }
+
+      return `${t(baseKey)} - ${filterLabel}`;
     }
     return t(baseKey);
   };

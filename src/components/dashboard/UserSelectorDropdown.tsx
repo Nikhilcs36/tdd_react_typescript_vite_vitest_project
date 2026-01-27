@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
-import { setSelectedDashboardUser } from '../../store/dashboardSlice';
+import { setSelectedDashboardUser, setCurrentDropdownUsers } from '../../store/dashboardSlice';
 import { axiosApiServiceLoadUserList } from '../../services/apiService';
 import { API_ENDPOINTS } from '../../services/apiEndpoints';
-import { DashboardFilterMode } from './DashboardFilters';
 import tw from 'twin.macro';
 
 interface User {
@@ -59,8 +58,23 @@ const UserSelectorDropdown: React.FC<UserSelectorDropdownProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Ref to prevent multiple concurrent API calls
+  const hasFetchedRef = useRef(false);
+  const currentFetchKeyRef = useRef<string>('');
+
   // Fetch users based on current filter and selections
   useEffect(() => {
+    // Create a unique key for this fetch based on dependencies
+    const fetchKey = `${activeFilter}-${selectedUserIds.slice().sort().join(',')}`;
+
+    // Prevent multiple concurrent fetches for the same parameters
+    if (currentFetchKeyRef.current === fetchKey && hasFetchedRef.current) {
+      return;
+    }
+
+    currentFetchKeyRef.current = fetchKey;
+    hasFetchedRef.current = true;
+
     const fetchUsers = async () => {
       try {
         setLoading(true);
@@ -109,6 +123,9 @@ const UserSelectorDropdown: React.FC<UserSelectorDropdownProps> = ({
 
         setUsers(filteredUsers);
 
+        // Update Redux with current dropdown users (only once)
+        dispatch(setCurrentDropdownUsers(filteredUsers));
+
         // Set default selection to first user if not already set or if current selection is not in the list
         if (filteredUsers.length > 0) {
           const firstUserId = filteredUsers[0].id;
@@ -125,6 +142,7 @@ const UserSelectorDropdown: React.FC<UserSelectorDropdownProps> = ({
       } catch (err) {
         setError(t('dashboard.user_selector.error_loading'));
         setUsers([]);
+        // Don't dispatch setCurrentDropdownUsers on error to prevent cascading re-fetches
         if (selectedDashboardUserId) {
           dispatch(setSelectedDashboardUser(null));
         }
@@ -134,7 +152,7 @@ const UserSelectorDropdown: React.FC<UserSelectorDropdownProps> = ({
     };
 
     fetchUsers();
-  }, [selectedUserIds, activeFilter, selectedDashboardUserId, dispatch, t]);
+  }, [selectedUserIds, activeFilter, dispatch, t]);
 
   // Handle user selection change
   const handleUserChange = (event: React.ChangeEvent<HTMLSelectElement>) => {

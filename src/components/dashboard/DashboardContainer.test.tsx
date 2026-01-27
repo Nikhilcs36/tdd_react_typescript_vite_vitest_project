@@ -1,42 +1,305 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { I18nextProvider } from 'react-i18next';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import i18n from '../../locale/i18n';
 import DashboardContainer from './DashboardContainer';
+import dashboardReducer, { DashboardState } from '../../store/dashboardSlice';
+import authReducer, { AuthState } from '../../store/authSlice';
+import globalErrorReducer from '../../store/globalErrorSlice';
+import { getUserStats, getLoginActivity, getLoginTrends, getLoginComparison, getLoginDistribution, getAdminDashboard, getAdminCharts } from '../../services/loginTrackingService';
+import { axiosApiServiceLoadUserList } from '../../services/apiService';
 
-// Mock the entire DashboardContainer component to avoid memory-intensive operations
-vi.mock('./DashboardContainer', () => ({
-  default: ({ userId }: { userId?: number }) => (
-    <div data-testid="dashboard-container">
-      <div data-testid="user-dashboard-card">User Stats: 39</div>
-      <div data-testid="login-activity-table">Activity: 3 items</div>
-      <div data-testid="line-chart">line chart</div>
-      <div data-testid="bar-chart">bar chart</div>
-      <div data-testid="pie-chart">pie chart</div>
-      {userId === 1 && <div data-testid="user-selector-dropdown">User Selector Dropdown</div>}
-    </div>
-  )
+const createMockStore = (dashboardState: Partial<DashboardState> = {}, authState: Partial<AuthState> = {}) => {
+  const defaultDashboardState: DashboardState = {
+    activeFilter: 'all',
+    selectedUserIds: [],
+    startDate: null,
+    endDate: null,
+    isLoading: false,
+    error: null,
+    chartMode: 'individual',
+    selectedDashboardUserId: 1,
+    currentDropdownUsers: [],
+    ...dashboardState,
+  };
+
+  const defaultAuthState: AuthState = {
+    user: { id: 1, username: 'testuser', is_staff: true, is_superuser: false },
+    accessToken: 'fake-token',
+    refreshToken: 'fake-refresh-token',
+    isAuthenticated: true,
+    showLogoutMessage: false,
+    ...authState,
+  };
+
+  return configureStore({
+    reducer: {
+      dashboard: dashboardReducer,
+      auth: authReducer,
+      globalError: globalErrorReducer,
+    },
+    preloadedState: {
+      dashboard: defaultDashboardState,
+      auth: defaultAuthState,
+    },
+  });
+};
+
+const renderWithProviders = (component: React.ReactElement, dashboardState = {}, authState = {}) => {
+  const store = createMockStore(dashboardState, authState);
+  return { ...render(
+    <Provider store={store}>
+      <I18nextProvider i18n={i18n}>
+        {component}
+      </I18nextProvider>
+    </Provider>
+  ), store };
+};
+
+// Mock the API services
+vi.mock('../../services/loginTrackingService', () => ({
+  getUserStats: vi.fn(),
+  getLoginActivity: vi.fn(),
+  getLoginTrends: vi.fn(),
+  getLoginComparison: vi.fn(),
+  getLoginDistribution: vi.fn(),
+  getAdminDashboard: vi.fn(),
+  getAdminCharts: vi.fn(),
+}));
+
+vi.mock('../../services/apiService', () => ({
+  axiosApiServiceLoadUserList: {
+    get: vi.fn(),
+  },
+}));
+
+vi.mock('../../utils/authorization', () => ({
+  useUserAuthorization: () => ({
+    isAdmin: () => true,
+    canAccessUserData: () => true,
+  }),
+}));
+
+// Mock child components to avoid complex rendering
+vi.mock('./UserDashboardCard', () => ({
+  default: ({ userStats }: any) => <div data-testid="user-dashboard-card">{userStats ? 'User Stats Loaded' : 'No Stats'}</div>,
+}));
+
+vi.mock('./LoginActivityTable', () => ({
+  default: ({ loginActivity }: any) => <div data-testid="login-activity-table">{loginActivity?.length || 0} items</div>,
+}));
+
+vi.mock('./LoginTrendsChart', () => ({
+  default: ({ customTitle }: any) => <div data-testid="login-trends-chart">{customTitle}</div>,
+}));
+
+vi.mock('./DashboardFilters', () => ({
+  default: () => <div data-testid="dashboard-filters">Filters</div>,
+}));
+
+vi.mock('./DashboardUserList', () => ({
+  default: () => <div data-testid="dashboard-user-list">User List</div>,
+}));
+
+vi.mock('./DateRangePicker', () => ({
+  default: () => <div data-testid="date-range-picker">Date Picker</div>,
+}));
+
+vi.mock('./UserSelectorDropdown', () => ({
+  default: () => <div data-testid="user-selector-dropdown">User Selector</div>,
+}));
+
+vi.mock('./ChartModeToggle', () => ({
+  default: () => <div data-testid="chart-mode-toggle">Chart Mode Toggle</div>,
 }));
 
 describe('DashboardContainer', () => {
-  it('should render dashboard components', () => {
-    render(<DashboardContainer />);
+  // Basic rendering tests (fast, lightweight)
+  describe('Basic Rendering', () => {
+    // Mock the entire DashboardContainer component for basic rendering tests
+    const MockDashboardContainer = ({ userId }: { userId?: number }) => (
+      <div data-testid="dashboard-container">
+        <div data-testid="user-dashboard-card">User Stats: 39</div>
+        <div data-testid="login-activity-table">Activity: 3 items</div>
+        <div data-testid="line-chart">line chart</div>
+        <div data-testid="bar-chart">bar chart</div>
+        <div data-testid="pie-chart">pie chart</div>
+        {userId === 1 && <div data-testid="user-selector-dropdown">User Selector Dropdown</div>}
+      </div>
+    );
 
-    expect(screen.getByTestId('dashboard-container')).toBeInTheDocument();
-    expect(screen.getByTestId('user-dashboard-card')).toHaveTextContent('User Stats: 39');
-    expect(screen.getByTestId('login-activity-table')).toHaveTextContent('Activity: 3 items');
-    expect(screen.getByTestId('line-chart')).toHaveTextContent('line chart');
-    expect(screen.getByTestId('bar-chart')).toHaveTextContent('bar chart');
-    expect(screen.getByTestId('pie-chart')).toHaveTextContent('pie chart');
+    it('should render dashboard components', () => {
+      render(<MockDashboardContainer />);
+
+      expect(screen.getByTestId('dashboard-container')).toBeInTheDocument();
+      expect(screen.getByTestId('user-dashboard-card')).toHaveTextContent('User Stats: 39');
+      expect(screen.getByTestId('login-activity-table')).toHaveTextContent('Activity: 3 items');
+      expect(screen.getByTestId('line-chart')).toHaveTextContent('line chart');
+      expect(screen.getByTestId('bar-chart')).toHaveTextContent('bar chart');
+      expect(screen.getByTestId('pie-chart')).toHaveTextContent('pie chart');
+    });
+
+    it('should show user selector dropdown when userId is 1', () => {
+      render(<MockDashboardContainer userId={1} />);
+
+      expect(screen.getByTestId('user-selector-dropdown')).toBeInTheDocument();
+    });
+
+    it('should not show user selector dropdown when userId is not 1', () => {
+      render(<MockDashboardContainer userId={2} />);
+
+      expect(screen.queryByTestId('user-selector-dropdown')).not.toBeInTheDocument();
+    });
   });
 
-  it('should show user selector dropdown when userId is 1', () => {
-    render(<DashboardContainer userId={1} />);
+  // Integration tests (comprehensive, slower)
+  describe('Integration Tests', () => {
+    const mockUserStats = {
+      total_logins: 10,
+      last_login: '2023-01-01',
+      weekly_data: {},
+      monthly_data: {},
+      login_trend: 5
+    };
+  const mockLoginActivity = {
+    count: 3,
+    results: [
+      { id: 1, username: 'user1', timestamp: '2023-01-01', ip_address: '127.0.0.1', user_agent: 'test', success: true },
+      { id: 2, username: 'user2', timestamp: '2023-01-01', ip_address: '127.0.0.1', user_agent: 'test', success: true },
+      { id: 3, username: 'user3', timestamp: '2023-01-01', ip_address: '127.0.0.1', user_agent: 'test', success: true }
+    ]
+  };
+  const mockChartData = {
+    labels: ['Jan', 'Feb'],
+    datasets: [{
+      label: 'Test Data',
+      data: [1, 2],
+      backgroundColor: ['red', 'blue'],
+      borderColor: 'black',
+      borderWidth: 1
+    }]
+  };
 
-    expect(screen.getByTestId('user-selector-dropdown')).toBeInTheDocument();
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Setup default mocks
+    vi.mocked(getUserStats).mockResolvedValue(mockUserStats);
+    vi.mocked(getLoginActivity).mockResolvedValue(mockLoginActivity);
+    vi.mocked(getLoginTrends).mockResolvedValue(mockChartData);
+    vi.mocked(getLoginComparison).mockResolvedValue(mockChartData);
+    vi.mocked(getLoginDistribution).mockResolvedValue(mockChartData);
+    vi.mocked(getAdminDashboard).mockResolvedValue({
+      total_users: 10,
+      active_users: 8,
+      total_logins: 100,
+      login_activity: [],
+      user_growth: {}
+    });
+    vi.mocked(getAdminCharts).mockResolvedValue(mockChartData);
+    vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue({ id: 1, username: 'testuser', email: 'test@example.com' });
   });
 
-  it('should not show user selector dropdown when userId is not 1', () => {
-    render(<DashboardContainer userId={2} />);
+  it('should render dashboard components', async () => {
+    renderWithProviders(<DashboardContainer />);
 
-    expect(screen.queryByTestId('user-selector-dropdown')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('user-dashboard-card')).toBeInTheDocument();
+      expect(screen.getByTestId('login-activity-table')).toBeInTheDocument();
+      expect(screen.getAllByTestId('login-trends-chart')).toHaveLength(3); // line, bar, pie charts
+    });
+  });
+
+  it('should show user selector dropdown for admin users', async () => {
+    renderWithProviders(<DashboardContainer />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user-selector-dropdown')).toBeInTheDocument();
+    });
+  });
+
+  describe('Chart Title Generation', () => {
+    describe('Individual Mode', () => {
+      it('should show individual user title for individual mode', async () => {
+        const mockUserInfo = { id: 1, username: 'testuser', email: 'test@example.com' };
+        vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue(mockUserInfo);
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'individual',
+          selectedDashboardUserId: 1,
+        });
+
+        await waitFor(() => {
+          const chartTitles = screen.getAllByTestId('login-trends-chart');
+          expect(chartTitles[0]).toHaveTextContent('Login Trends - testuser');
+        });
+      });
+    });
+
+    describe('Group Mode', () => {
+      it('should show filter name without count when no users selected', async () => {
+        const currentDropdownUsers = [
+          { id: 1, username: 'user1' },
+          { id: 2, username: 'user2' },
+          { id: 3, username: 'user3' },
+        ];
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'grouped',
+          activeFilter: 'all',
+          selectedUserIds: [], // No users selected
+          currentDropdownUsers,
+        });
+
+        await waitFor(() => {
+          const chartTitles = screen.getAllByTestId('login-trends-chart');
+          expect(chartTitles[1]).toHaveTextContent('Login Comparison - All Users');
+        });
+      });
+
+      it('should show filter name with user count when users are selected', async () => {
+        const currentDropdownUsers = [
+          { id: 1, username: 'user1' },
+          { id: 2, username: 'user2' },
+          { id: 3, username: 'user3' },
+          { id: 4, username: 'user4' },
+          { id: 5, username: 'user5' },
+        ];
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'grouped',
+          activeFilter: 'all',
+          selectedUserIds: [1, 2, 3], // 3 users selected
+          currentDropdownUsers,
+        });
+
+        await waitFor(() => {
+          const chartTitles = screen.getAllByTestId('login-trends-chart');
+          expect(chartTitles[1]).toHaveTextContent('Login Comparison - All Users (3 users selected)');
+        });
+      });
+
+      it('should show admin filter with user count when admin users selected', async () => {
+        const currentDropdownUsers = [
+          { id: 1, username: 'admin1' },
+          { id: 2, username: 'admin2' },
+        ];
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'grouped',
+          activeFilter: 'admin',
+          selectedUserIds: [1], // 1 admin selected
+          currentDropdownUsers,
+        });
+
+        await waitFor(() => {
+          const chartTitles = screen.getAllByTestId('login-trends-chart');
+          expect(chartTitles[1]).toHaveTextContent('Login Comparison - Admin Only (1 users selected)');
+        });
+      });
+    });
+  });
   });
 });

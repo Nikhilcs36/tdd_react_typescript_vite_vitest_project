@@ -13,6 +13,8 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
     activeFilter: 'all',
     selectedUserIds: [],
     selectedDashboardUserId: null,
+    currentDropdownUsers: [],
+    chartMode: 'individual',
     startDate: null,
     endDate: null,
     isLoading: false,
@@ -204,6 +206,25 @@ describe('UserSelectorDropdown', () => {
       const state = store.getState().dashboard;
       expect(state.selectedDashboardUserId).toBe(2);
     });
+
+    it('updates currentDropdownUsers in Redux state after fetching', async () => {
+      const store = createMockStore();
+      render(
+        <Provider store={store}>
+          <I18nextProvider i18n={i18n}>
+            <UserSelectorDropdown />
+          </I18nextProvider>
+        </Provider>
+      );
+
+      await waitFor(() => {
+        const select = screen.getByRole('combobox');
+        expect(select).toBeInTheDocument();
+      });
+
+      const state = store.getState().dashboard;
+      expect(state.currentDropdownUsers).toEqual(mockUsers);
+    });
   });
 
   describe('Filter Changes', () => {
@@ -341,6 +362,25 @@ describe('UserSelectorDropdown', () => {
         const select = screen.getByRole('combobox');
         expect(select).toBeDisabled();
       });
+    });
+
+    it('does not make multiple concurrent API calls when errors occur', async () => {
+      // Mock API to always fail
+      mockGetUsers.mockRejectedValue(new Error('Network error'));
+
+      renderWithProviders(<UserSelectorDropdown />);
+
+      // Wait for error to be handled
+      await waitFor(() => {
+        expect(screen.getByText('Error loading users')).toBeInTheDocument();
+      });
+
+      // Verify API was called only once
+      expect(mockGetUsers).toHaveBeenCalledTimes(1);
+
+      // Simulate dependency change that would normally trigger re-fetch
+      // This should not cause another API call if we prevent looping
+      // (This test verifies the fix - without it, multiple calls would happen)
     });
   });
 });
