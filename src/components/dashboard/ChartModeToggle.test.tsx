@@ -146,15 +146,16 @@ describe('ChartModeToggle', () => {
     expect(groupButton.closest('button')).toBeDisabled();
   });
 
-  it('hides group button when only one user is available', () => {
+  it('hides entire toggle when only one user is available', () => {
     renderWithProviders(<ChartModeToggle />, {
       currentDropdownUsers: [{ id: 1, username: 'user1' }] // Only one user
     });
 
-    const individualButton = screen.getByText('dashboard.chart_mode.individual');
+    // Entire component should not render
+    const individualButton = screen.queryByText('dashboard.chart_mode.individual');
     const groupButton = screen.queryByText('dashboard.chart_mode.group');
 
-    expect(individualButton).toBeInTheDocument();
+    expect(individualButton).not.toBeInTheDocument();
     expect(groupButton).not.toBeInTheDocument();
   });
 

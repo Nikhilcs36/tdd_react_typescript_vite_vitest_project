@@ -32,14 +32,17 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
   const currentDropdownUsers = useSelector((state: RootState) => state.dashboard.currentDropdownUsers);
 
   // Auto-switch to individual mode if group is selected but not available
+  // This runs even when the toggle is hidden to ensure correct data fetching
   useEffect(() => {
     if (chartMode === 'grouped' && currentDropdownUsers.length <= 1) {
       dispatch(setChartMode('individual'));
     }
   }, [chartMode, currentDropdownUsers.length, dispatch]);
 
-  // Show group button only when multiple users are available
-  const showGroupButton = currentDropdownUsers.length > 1;
+  // Hide entire toggle when only one or no users are available
+  if (currentDropdownUsers.length <= 1) {
+    return null;
+  }
 
   const handleModeChange = (mode: 'individual' | 'grouped') => {
     if (!disabled && mode !== chartMode) {
@@ -72,16 +75,14 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
         {t('dashboard.chart_mode.individual')}
       </ToggleButton>
 
-      {showGroupButton && (
-        <ToggleButton
-          className={getButtonClasses(chartMode === 'grouped')}
-          onClick={() => handleModeChange('grouped')}
-          disabled={disabled}
-          data-testid="chart-mode-group"
-        >
-          {t('dashboard.chart_mode.group')}
-        </ToggleButton>
-      )}
+      <ToggleButton
+        className={getButtonClasses(chartMode === 'grouped')}
+        onClick={() => handleModeChange('grouped')}
+        disabled={disabled}
+        data-testid="chart-mode-group"
+      >
+        {t('dashboard.chart_mode.group')}
+      </ToggleButton>
     </ToggleContainer>
   );
 };
