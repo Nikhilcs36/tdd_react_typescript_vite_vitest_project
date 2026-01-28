@@ -146,7 +146,7 @@ export const loginTrackingService = {
     const params = new URLSearchParams();
 
     if (userIds?.length) {
-      userIds.forEach(id => params.append('user_ids', id.toString()));
+      userIds.forEach(id => params.append('user_ids[]', id.toString()));
     }
     if (startDate) {
       params.append('start_date', startDate);
@@ -168,7 +168,7 @@ export const loginTrackingService = {
     const params = new URLSearchParams();
 
     if (userIds?.length) {
-      userIds.forEach(id => params.append('user_ids', id.toString()));
+      userIds.forEach(id => params.append('user_ids[]', id.toString()));
     }
     if (startDate) {
       params.append('start_date', startDate);
@@ -190,7 +190,7 @@ export const loginTrackingService = {
     const params = new URLSearchParams();
 
     if (userIds?.length) {
-      userIds.forEach(id => params.append('user_ids', id.toString()));
+      userIds.forEach(id => params.append('user_ids[]', id.toString()));
     }
     if (startDate) {
       params.append('start_date', startDate);
