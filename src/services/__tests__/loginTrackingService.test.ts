@@ -561,6 +561,145 @@ describe('loginTrackingService', () => {
 
       const result = await getAdminDashboard();
       expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/admin/dashboard/'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include user_ids parameters when provided', async () => {
+      const mockResponse: AdminDashboardData = {
+        total_users: 2,
+        active_users: 2,
+        total_logins: 45,
+        login_activity: [],
+        user_growth: {}
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getAdminDashboard([1, 2]);
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/admin/dashboard/?user_ids%5B%5D=1&user_ids%5B%5D=2'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include date range parameters when provided', async () => {
+      const mockResponse: AdminDashboardData = {
+        total_users: 3,
+        active_users: 3,
+        total_logins: 67,
+        login_activity: [],
+        user_growth: {}
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getAdminDashboard(undefined, '2025-01-01', '2025-12-31');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/admin/dashboard/?start_date=2025-01-01&end_date=2025-12-31'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include filter parameter when provided', async () => {
+      const mockResponse: AdminDashboardData = {
+        total_users: 5,
+        active_users: 5,
+        total_logins: 120,
+        login_activity: [],
+        user_growth: {}
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getAdminDashboard(undefined, undefined, undefined, 'admin_only');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/admin/dashboard/?filter=admin_only'),
+        expect.any(Object)
+      );
+    });
+
+    it('should combine all parameters correctly', async () => {
+      const mockResponse: AdminDashboardData = {
+        total_users: 1,
+        active_users: 1,
+        total_logins: 23,
+        login_activity: [],
+        user_growth: {}
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getAdminDashboard([1], '2025-06-01', '2025-06-30', 'active_only');
+      expect(result).toEqual(mockResponse);
+
+      const fetchCall = (globalThis.fetch as any).mock.calls[0][0];
+      expect(fetchCall).toContain('/api/user/admin/dashboard/');
+      expect(fetchCall).toContain('user_ids%5B%5D=1');
+      expect(fetchCall).toContain('start_date=2025-06-01');
+      expect(fetchCall).toContain('end_date=2025-06-30');
+      expect(fetchCall).toContain('filter=active_only');
+    });
+
+    it('should include only start_date when end_date is not provided', async () => {
+      const mockResponse: AdminDashboardData = {
+        total_users: 4,
+        active_users: 4,
+        total_logins: 89,
+        login_activity: [],
+        user_growth: {}
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getAdminDashboard(undefined, '2025-03-01');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/admin/dashboard/?start_date=2025-03-01'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include only end_date when start_date is not provided', async () => {
+      const mockResponse: AdminDashboardData = {
+        total_users: 6,
+        active_users: 6,
+        total_logins: 134,
+        login_activity: [],
+        user_growth: {}
+      };
+
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await getAdminDashboard(undefined, undefined, '2025-09-30');
+      expect(result).toEqual(mockResponse);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/admin/dashboard/?end_date=2025-09-30'),
+        expect.any(Object)
+      );
     });
 
     it('should handle errors in admin dashboard fetch', async () => {

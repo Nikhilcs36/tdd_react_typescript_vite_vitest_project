@@ -23,21 +23,21 @@ describe('Dashboard Components i18n Integration', () => {
     {
       lang: "en",
       expectedStats: "User Statistics",
-      expectedLogins: "Total Logins", 
+      expectedLogins: "Total Logins: 42",
       expectedLastLogin: "Last Login",
       expectedTrend: "Login Trend"
     },
     {
       lang: "ml",
       expectedStats: "ഉപയോക്തൃ സ്ഥിതിവിവരക്കണക്കുകൾ",
-      expectedLogins: "ആകെ ലോഗിനുകൾ",
-      expectedLastLogin: "അവസാന ലോഗിൻ", 
+      expectedLogins: "ആകെ ലോഗിനുകൾ: 42",
+      expectedLastLogin: "അവസാന ലോഗിൻ",
       expectedTrend: "ലോഗിൻ ട്രെൻഡ്"
     },
     {
       lang: "ar",
       expectedStats: "إحصائيات المستخدم",
-      expectedLogins: "إجمالي عمليات تسجيل الدخول",
+      expectedLogins: "إجمالي عمليات تسجيل الدخول: 42",
       expectedLastLogin: "آخر تسجيل دخول",
       expectedTrend: "اتجاه تسجيل الدخول"
     }

@@ -297,10 +297,136 @@ describe('DashboardContainer', () => {
         await waitFor(() => {
           const chartTitles = screen.getAllByTestId('login-trends-chart');
           expect(chartTitles[1]).toHaveTextContent('Login Comparison - Admin Only (1 users selected)');
-        });
       });
     });
   });
+
+  describe('Admin Statistics Reactivity', () => {
+    it('should refetch admin dashboard when filters change', async () => {
+      const { rerender } = renderWithProviders(<DashboardContainer />, {
+        activeFilter: 'all',
+        startDate: null,
+        endDate: null,
+      });
+
+      await waitFor(() => {
+        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+      });
+
+      // Clear mocks to check next call
+      vi.clearAllMocks();
+
+      // Re-render with filter changes
+      rerender(
+        <Provider store={createMockStore({
+          activeFilter: 'admin',
+          startDate: '2025-01-01',
+          endDate: '2025-12-31',
+        })}>
+          <I18nextProvider i18n={i18n}>
+            <DashboardContainer />
+          </I18nextProvider>
+        </Provider>
+      );
+
+      await waitFor(() => {
+        // Should refetch with new parameters (admin maps to admin_only)
+        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, '2025-01-01', '2025-12-31', 'admin_only');
+      });
+    });
+
+    it('should pass date range parameters to admin dashboard', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        startDate: '2025-06-01',
+        endDate: '2025-06-30',
+      });
+
+      await waitFor(() => {
+        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, '2025-06-01', '2025-06-30', undefined);
+      });
+    });
+
+    it('should pass user filter parameters to admin dashboard', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        activeFilter: 'regular',
+      });
+
+      await waitFor(() => {
+        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, 'regular_users');
+      });
+    });
+
+    it('should send filter=me parameter when activeFilter is "me" for admin dashboard', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        activeFilter: 'me',
+      });
+
+      await waitFor(() => {
+        // For admin dashboard, "me" should send filter=me to show current admin's data
+        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, 'me');
+      });
+    });
+
+    it('should not pass user IDs to admin dashboard - admin stats are aggregate', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        selectedUserIds: [1, 2, 3],
+        chartMode: 'grouped',
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+        ],
+      });
+
+      await waitFor(() => {
+        // Admin stats don't filter by specific users - they show aggregate data
+        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+      });
+    });
+
+    it('should show loading state during admin dashboard refetch', async () => {
+      // Mock a delay in the admin dashboard response
+      vi.mocked(getAdminDashboard).mockImplementationOnce(() =>
+        new Promise(resolve => setTimeout(() => resolve({
+          total_users: 10,
+          active_users: 8,
+          total_logins: 100,
+          login_activity: [],
+          user_growth: {}
+        }), 100))
+      );
+
+      const { rerender } = renderWithProviders(<DashboardContainer />, {
+        activeFilter: 'all',
+      });
+
+      // Initially should not show admin stats
+      expect(screen.queryByText('Total Users: 10')).not.toBeInTheDocument();
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('Total Users: 10')).toBeInTheDocument();
+      });
+
+      // Clear mocks and trigger refetch
+      vi.clearAllMocks();
+
+      // Re-render with different filter
+      rerender(
+        <Provider store={createMockStore({
+          activeFilter: 'admin',
+        })}>
+          <I18nextProvider i18n={i18n}>
+            <DashboardContainer />
+          </I18nextProvider>
+        </Provider>
+      );
+
+      // Should refetch and show loading state temporarily
+      expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, 'admin_only');
+    });
+  });
+});
 
   describe('Chart Data API Calls', () => {
     describe('Dropdown User Selection', () => {

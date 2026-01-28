@@ -54,6 +54,22 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const dashboardDataFetchedRef = useRef<string>('');
   const selectedUserInfoFetchedRef = useRef<string>('');
 
+  // Map frontend filter values to backend API values
+  const mapFilterToApiValue = (filter: string): string | undefined => {
+    switch (filter) {
+      case 'all':
+        return undefined; // No filter means all users
+      case 'admin':
+        return 'admin_only';
+      case 'regular':
+        return 'regular_users';
+      case 'me':
+        return 'me'; // Send filter=me for backend to filter by current admin user
+      default:
+        return undefined;
+    }
+  };
+
   // Check authorization before fetching data
   useEffect(() => {
     // Create a comprehensive fetch key for all dashboard data dependencies
@@ -121,6 +137,16 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           chartUserIds = dashboardState.currentDropdownUsers.map(user => user.id);
         }
 
+        // Determine admin dashboard filtering parameters
+        let adminUserIds: number[] | undefined;
+        let adminFilter: string | undefined;
+
+        if (isAdmin()) {
+          // Admin statistics show aggregate data based on filter type
+          // They don't follow the same individual/group mode logic as charts
+          adminFilter = mapFilterToApiValue(dashboardState.activeFilter);
+        }
+
         // Execute all API calls in parallel
         const [
           userStatsResponse,
@@ -136,7 +162,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           getLoginTrends(chartUserIds, startDate, endDate),
           getLoginComparison(chartUserIds, startDate, endDate),
           getLoginDistribution(chartUserIds, startDate, endDate),
-          isAdmin() ? getAdminDashboard() : Promise.resolve(null),
+          isAdmin() ? getAdminDashboard(adminUserIds, startDate, endDate, adminFilter) : Promise.resolve(null),
           isAdmin() ? getAdminCharts() : Promise.resolve(null)
         ]);
 
