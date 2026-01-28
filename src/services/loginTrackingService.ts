@@ -209,8 +209,33 @@ export const loginTrackingService = {
   },
 
   // Admin Endpoints
-  getAdminDashboard: async (): Promise<AdminDashboardData> => {
-    return fetchApiServiceLoginTracking.get<AdminDashboardData>(API_ENDPOINTS.ADMIN_DASHBOARD);
+  getAdminDashboard: async (
+    userIds?: number[],
+    startDate?: string,
+    endDate?: string,
+    filter?: string
+  ): Promise<AdminDashboardData> => {
+    let url = API_ENDPOINTS.ADMIN_DASHBOARD;
+    const params = new URLSearchParams();
+
+    if (userIds?.length) {
+      userIds.forEach(id => params.append('user_ids[]', id.toString()));
+    }
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+    if (filter) {
+      params.append('filter', filter);
+    }
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    return fetchApiServiceLoginTracking.get<AdminDashboardData>(url);
   },
 
   getAdminCharts: async (): Promise<ChartData> => {
