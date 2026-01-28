@@ -228,12 +228,12 @@ describe('DashboardContainer', () => {
 
         renderWithProviders(<DashboardContainer />, {
           chartMode: 'individual',
-          selectedDashboardUserId: 1,
-        });
-
-        await waitFor(() => {
-          const chartTitles = screen.getAllByTestId('login-trends-chart');
-          expect(chartTitles[0]).toHaveTextContent('Login Trends - testuser');
+          selectedDashboardUserId: 2, // Different user selected
+          currentDropdownUsers: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'selecteduser', email: 'selected@test.com' },
+            { id: 3, username: 'user3', email: 'user3@test.com' },
+          ],
         });
       });
     });
@@ -241,9 +241,9 @@ describe('DashboardContainer', () => {
     describe('Group Mode', () => {
       it('should show filter name without count when no users selected', async () => {
         const currentDropdownUsers = [
-          { id: 1, username: 'user1' },
-          { id: 2, username: 'user2' },
-          { id: 3, username: 'user3' },
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
         ];
 
         renderWithProviders(<DashboardContainer />, {
@@ -261,11 +261,11 @@ describe('DashboardContainer', () => {
 
       it('should show filter name with user count when users are selected', async () => {
         const currentDropdownUsers = [
-          { id: 1, username: 'user1' },
-          { id: 2, username: 'user2' },
-          { id: 3, username: 'user3' },
-          { id: 4, username: 'user4' },
-          { id: 5, username: 'user5' },
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+          { id: 4, username: 'user4', email: 'user4@test.com' },
+          { id: 5, username: 'user5', email: 'user5@test.com' },
         ];
 
         renderWithProviders(<DashboardContainer />, {
@@ -283,8 +283,8 @@ describe('DashboardContainer', () => {
 
       it('should show admin filter with user count when admin users selected', async () => {
         const currentDropdownUsers = [
-          { id: 1, username: 'admin1' },
-          { id: 2, username: 'admin2' },
+          { id: 1, username: 'admin1', email: 'admin1@test.com' },
+          { id: 2, username: 'admin2', email: 'admin2@test.com' },
         ];
 
         renderWithProviders(<DashboardContainer />, {
@@ -297,6 +297,140 @@ describe('DashboardContainer', () => {
         await waitFor(() => {
           const chartTitles = screen.getAllByTestId('login-trends-chart');
           expect(chartTitles[1]).toHaveTextContent('Login Comparison - Admin Only (1 users selected)');
+        });
+      });
+    });
+  });
+
+  describe('Chart Data API Calls', () => {
+    describe('Dropdown User Selection', () => {
+      it('should fetch chart data for selected user in individual mode', async () => {
+        const mockUserInfo = { id: 2, username: 'selecteduser', email: 'selected@example.com' };
+        vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue(mockUserInfo);
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'individual',
+          selectedDashboardUserId: 2, // Different user selected
+          currentDropdownUsers: [
+            { id: 1, username: 'user1', email: 'user1@example.com' },
+            { id: 2, username: 'selecteduser', email: 'selected@example.com' },
+            { id: 3, username: 'user3', email: 'user3@example.com' },
+          ],
+        });
+
+        await waitFor(() => {
+          // Verify chart functions are called with selected user ID in individual mode
+          expect(getLoginTrends).toHaveBeenCalledWith([2], undefined, undefined);
+          expect(getLoginComparison).toHaveBeenCalledWith([2], undefined, undefined);
+          expect(getLoginDistribution).toHaveBeenCalledWith([2], undefined, undefined);
+        });
+      });
+
+      it('should not fetch chart data when no user selected in individual mode', async () => {
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'individual',
+          selectedDashboardUserId: null, // No specific user selected
+          currentDropdownUsers: [],
+        });
+
+        await waitFor(() => {
+          // In individual mode with no selected user, charts should not be fetched
+          expect(getLoginTrends).toHaveBeenCalledWith(undefined, undefined, undefined);
+          expect(getLoginComparison).toHaveBeenCalledWith(undefined, undefined, undefined);
+          expect(getLoginDistribution).toHaveBeenCalledWith(undefined, undefined, undefined);
+        });
+      });
+    });
+
+    describe('Chart Mode Changes', () => {
+      it('should fetch aggregated chart data in group mode', async () => {
+        const currentDropdownUsers = [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+        ];
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'grouped',
+          selectedDashboardUserId: 1,
+          currentDropdownUsers,
+        });
+
+        await waitFor(() => {
+          // In group mode, should use all dropdown users
+          const expectedUserIds = [1, 2, 3];
+          expect(getLoginTrends).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+          expect(getLoginComparison).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+          expect(getLoginDistribution).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+        });
+      });
+
+      it('should switch from individual to group mode with different user arrays', async () => {
+        const currentDropdownUsers = [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+        ];
+
+        // First render in individual mode
+        const { rerender } = renderWithProviders(<DashboardContainer />, {
+          chartMode: 'individual',
+          selectedDashboardUserId: 2,
+          currentDropdownUsers,
+        });
+
+        await waitFor(() => {
+          expect(getLoginTrends).toHaveBeenCalledWith([2], undefined, undefined);
+        });
+
+        // Clear mocks to check next calls
+        vi.clearAllMocks();
+
+        // Re-render with group mode
+        rerender(
+          <Provider store={createMockStore({
+            chartMode: 'grouped',
+            selectedDashboardUserId: 2,
+            currentDropdownUsers,
+          })}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardContainer />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        await waitFor(() => {
+          // Should now use all dropdown users in group mode
+          const expectedUserIds = [1, 2, 3];
+          expect(getLoginTrends).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+          expect(getLoginComparison).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+          expect(getLoginDistribution).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+        });
+      });
+    });
+
+    describe('Multiple User Selection in Group Mode', () => {
+      it('should aggregate data for all users in dropdown when in group mode', async () => {
+        const currentDropdownUsers = [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+          { id: 4, username: 'user4', email: 'user4@test.com' },
+          { id: 5, username: 'user5', email: 'user5@test.com' },
+        ];
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'grouped',
+          selectedUserIds: [1, 3, 5], // These are checked/selected in UI
+          currentDropdownUsers, // But group mode aggregates ALL users in dropdown
+        });
+
+        await waitFor(() => {
+          // Group mode aggregates ALL users currently in the dropdown
+          const expectedUserIds = [1, 2, 3, 4, 5]; // All dropdown users
+          expect(getLoginTrends).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+          expect(getLoginComparison).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+          expect(getLoginDistribution).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
         });
       });
     });

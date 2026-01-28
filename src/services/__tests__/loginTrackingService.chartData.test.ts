@@ -4,7 +4,6 @@
  */
 import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
 import { API_ENDPOINTS } from '../apiEndpoints';
 import { getLoginTrends, getLoginComparison, getLoginDistribution } from '../loginTrackingService';
 import { server } from '../../tests/mocks/server';
@@ -92,8 +91,8 @@ describe('Login Tracking Service - Chart Data Extraction', () => {
 
       await getLoginTrends([1, 2]);
 
-      expect(capturedUrl).toContain('user_ids=1');
-      expect(capturedUrl).toContain('user_ids=2');
+      expect(capturedUrl).toContain('user_ids%5B%5D=1');
+      expect(capturedUrl).toContain('user_ids%5B%5D=2');
     });
   });
 
