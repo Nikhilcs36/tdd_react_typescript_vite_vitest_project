@@ -301,12 +301,60 @@ describe('DashboardContainer', () => {
     });
   });
 
+  describe('Admin Statistics Title Generation', () => {
+    it('should show admin statistics title with filter name when no users selected', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        activeFilter: 'all',
+        selectedUserIds: [], // No users selected
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+        ],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Admin Statistics - All Users')).toBeInTheDocument();
+      });
+    });
+
+    it('should show admin statistics title with filter name and user count when users selected', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        activeFilter: 'regular',
+        selectedUserIds: [1, 2], // 2 users selected
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+        ],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Admin Statistics - Regular Users (2 users selected)')).toBeInTheDocument();
+      });
+    });
+
+    it('should show admin statistics title with admin filter when admin users selected', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        activeFilter: 'admin',
+        selectedUserIds: [1], // 1 admin selected
+        currentDropdownUsers: [
+          { id: 1, username: 'admin1', email: 'admin1@test.com' },
+        ],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Admin Statistics - Admin Only (1 users selected)')).toBeInTheDocument();
+      });
+    });
+  });
+
   describe('Admin Statistics Reactivity', () => {
     it('should refetch admin dashboard when filters change', async () => {
       const { rerender } = renderWithProviders(<DashboardContainer />, {
         activeFilter: 'all',
         startDate: null,
         endDate: null,
+        selectedDashboardUserId: null, // No selected user
       });
 
       await waitFor(() => {
@@ -322,6 +370,7 @@ describe('DashboardContainer', () => {
           activeFilter: 'admin',
           startDate: '2025-01-01',
           endDate: '2025-12-31',
+          selectedDashboardUserId: null, // No selected user
         })}>
           <I18nextProvider i18n={i18n}>
             <DashboardContainer />
@@ -339,6 +388,7 @@ describe('DashboardContainer', () => {
       renderWithProviders(<DashboardContainer />, {
         startDate: '2025-06-01',
         endDate: '2025-06-30',
+        selectedDashboardUserId: null, // No selected user
       });
 
       await waitFor(() => {
@@ -349,6 +399,7 @@ describe('DashboardContainer', () => {
     it('should pass user filter parameters to admin dashboard', async () => {
       renderWithProviders(<DashboardContainer />, {
         activeFilter: 'regular',
+        selectedDashboardUserId: null, // No selected user
       });
 
       await waitFor(() => {
@@ -359,18 +410,21 @@ describe('DashboardContainer', () => {
     it('should send filter=me parameter when activeFilter is "me" for admin dashboard', async () => {
       renderWithProviders(<DashboardContainer />, {
         activeFilter: 'me',
+        selectedDashboardUserId: 1, // Selected user
+        chartMode: 'individual', // Individual mode uses selected user
       });
 
       await waitFor(() => {
-        // For admin dashboard, "me" should send filter=me to show current admin's data
-        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, 'me');
+        // For admin dashboard, "me" sends filter=me but also includes selected user ID
+        expect(getAdminDashboard).toHaveBeenCalledWith([1], undefined, undefined, 'me');
       });
     });
 
-    it('should not pass user IDs to admin dashboard - admin stats are aggregate', async () => {
+    it('should pass user IDs to admin dashboard based on chart mode', async () => {
       renderWithProviders(<DashboardContainer />, {
         selectedUserIds: [1, 2, 3],
         chartMode: 'grouped',
+        selectedDashboardUserId: 1,
         currentDropdownUsers: [
           { id: 1, username: 'user1', email: 'user1@test.com' },
           { id: 2, username: 'user2', email: 'user2@test.com' },
@@ -379,8 +433,44 @@ describe('DashboardContainer', () => {
       });
 
       await waitFor(() => {
-        // Admin stats don't filter by specific users - they show aggregate data
-        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+        // Admin stats now filter by users based on chart mode - group mode uses all dropdown users
+        expect(getAdminDashboard).toHaveBeenCalledWith([1, 2, 3], undefined, undefined, undefined);
+      });
+    });
+
+    it('should pass selected user ID to admin dashboard when dropdown user is selected', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        selectedDashboardUserId: 2,
+        chartMode: 'individual',
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'selecteduser', email: 'selected@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+        ],
+      });
+
+      await waitFor(() => {
+        // Admin stats should now filter by the selected dropdown user
+        expect(getAdminDashboard).toHaveBeenCalledWith([2], undefined, undefined, undefined);
+      });
+    });
+
+    it('should pass all dropdown user IDs to admin dashboard in group mode', async () => {
+      const currentDropdownUsers = [
+        { id: 1, username: 'user1', email: 'user1@test.com' },
+        { id: 2, username: 'user2', email: 'user2@test.com' },
+        { id: 3, username: 'user3', email: 'user3@test.com' },
+      ];
+
+      renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped',
+        selectedDashboardUserId: 1,
+        currentDropdownUsers,
+      });
+
+      await waitFor(() => {
+        // Admin stats should aggregate for all users in dropdown in group mode
+        expect(getAdminDashboard).toHaveBeenCalledWith([1, 2, 3], undefined, undefined, undefined);
       });
     });
 
@@ -398,6 +488,8 @@ describe('DashboardContainer', () => {
 
       const { rerender } = renderWithProviders(<DashboardContainer />, {
         activeFilter: 'all',
+        selectedDashboardUserId: 1, // Set selected user
+        chartMode: 'individual', // Individual mode uses selected user
       });
 
       // Initially should not show admin stats
@@ -415,6 +507,8 @@ describe('DashboardContainer', () => {
       rerender(
         <Provider store={createMockStore({
           activeFilter: 'admin',
+          selectedDashboardUserId: 1,
+          chartMode: 'individual',
         })}>
           <I18nextProvider i18n={i18n}>
             <DashboardContainer />
@@ -422,8 +516,8 @@ describe('DashboardContainer', () => {
         </Provider>
       );
 
-      // Should refetch and show loading state temporarily
-      expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, 'admin_only');
+      // Should refetch with user ID and new filter
+      expect(getAdminDashboard).toHaveBeenCalledWith([1], undefined, undefined, 'admin_only');
     });
   });
 });

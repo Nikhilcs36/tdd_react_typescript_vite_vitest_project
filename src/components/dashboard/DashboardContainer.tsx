@@ -142,8 +142,16 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         let adminFilter: string | undefined;
 
         if (isAdmin()) {
-          // Admin statistics show aggregate data based on filter type
-          // They don't follow the same individual/group mode logic as charts
+          // Admin statistics now respond to dropdown selection like user stats
+          if (dashboardState.chartMode === 'individual') {
+            // Individual mode: Show admin stats for the selected dashboard user
+            adminUserIds = dashboardState.selectedDashboardUserId ? [dashboardState.selectedDashboardUserId] : undefined;
+          } else {
+            // Group mode: Show aggregated admin stats for all users currently in the dropdown
+            adminUserIds = dashboardState.currentDropdownUsers.map(user => user.id);
+          }
+
+          // Still apply filter if needed (can be combined with user selection)
           adminFilter = mapFilterToApiValue(dashboardState.activeFilter);
         }
 
@@ -310,6 +318,25 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     return t(baseKey);
   };
 
+  // Generate custom admin statistics title based on filter and user selection
+  const getAdminStatsTitle = () => {
+    const filterLabels = {
+      all: t('dashboard.filters.allUsers'),
+      admin: t('dashboard.filters.adminOnly'),
+      regular: t('dashboard.filters.regularUsers'),
+      me: t('dashboard.filters.me'),
+    };
+    const filterLabel = filterLabels[dashboardState.activeFilter] || t('dashboard.filters.allUsers');
+
+    // Add user count if any users are selected
+    if (dashboardState.selectedUserIds.length > 0) {
+      const selectedCount = dashboardState.selectedUserIds.length;
+      return `${t('dashboard.admin_statistics')} - ${filterLabel} (${selectedCount} users selected)`;
+    }
+
+    return `${t('dashboard.admin_statistics')} - ${filterLabel}`;
+  };
+
   return (
     <DashboardContainerWrapper>
       {/* Date Range Picker - Show for all users */}
@@ -379,7 +406,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           {/* Admin-specific components would go here */}
           <div className="p-6 mb-8 bg-white rounded-lg shadow-lg dark:bg-dark-secondary">
             <h3 className="mb-4 text-lg font-semibold dark:text-dark-text">
-              {t('dashboard.admin_statistics')}
+              {getAdminStatsTitle()}
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
               {t('dashboard.total_users', { count: adminDashboard.total_users })}
