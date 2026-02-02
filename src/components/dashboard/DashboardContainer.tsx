@@ -415,7 +415,11 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
               {t('dashboard.active_users', { count: adminDashboard.active_users })}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              {t('dashboard.total_logins', { count: adminDashboard.total_logins })}
+              {t('dashboard.total_logins', {
+                count: adminDashboard.total_logins,
+                successful: adminDashboard.total_successful_logins,
+                failed: adminDashboard.total_failed_logins
+              })}
             </p>
           </div>
         </>

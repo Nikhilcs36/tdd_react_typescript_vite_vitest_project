@@ -123,7 +123,7 @@ i18n.use(initReactI18next).init({
         dashboard: {
           title: "Dashboard",
           user_stats: "User Statistics",
-          total_logins: "Total Logins: {{count}}",
+          total_logins: "Total Logins: {{count}} ({{successful}} success, {{failed}} failed)",
           last_login: "Last Login",
           login_trend: "Login Trend",
           error_loading_data: "Error loading dashboard data",
@@ -296,7 +296,7 @@ i18n.use(initReactI18next).init({
         dashboard: {
           title: "ഡാഷ്ബോർഡ്",
           user_stats: "ഉപയോക്തൃ സ്ഥിതിവിവരക്കണക്കുകൾ",
-          total_logins: "ആകെ ലോഗിനുകൾ: {{count}}",
+          total_logins: "ആകെ ലോഗിനുകൾ: {{count}} ({{successful}} വിജയം, {{failed}} പരാജയം)",
           last_login: "അവസാന ലോഗിൻ",
           login_trend: "ലോഗിൻ ട്രെൻഡ്",
           error_loading_data: "ഡാഷ്ബോർഡ് ഡാറ്റ ലോഡ് ചെയ്യുന്നതിൽ പിശക്",
@@ -463,7 +463,7 @@ i18n.use(initReactI18next).init({
         dashboard: {
           title: "لوحة التحكم",
           user_stats: "إحصائيات المستخدم",
-          total_logins: "إجمالي عمليات تسجيل الدخول: {{count}}",
+          total_logins: "إجمالي عمليات تسجيل الدخول: {{count}} ({{successful}} نجح, {{failed}} فشل)",
           last_login: "آخر تسجيل دخول",
           login_trend: "اتجاه تسجيل الدخول",
           error_loading_data: "خطأ في تحميل بيانات لوحة التحكم",

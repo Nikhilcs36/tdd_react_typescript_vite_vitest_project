@@ -819,6 +819,8 @@ export const handlers = [
         total_users: 6,
         active_users: 6,
         total_logins: 66,
+        total_successful_logins: 64,
+        total_failed_logins: 2,
         login_activity: [
           {
             id: 70,
@@ -834,7 +836,7 @@ export const handlers = [
             timestamp: "2026-01-03 09:39:35",
             ip_address: "172.18.0.1",
             user_agent: "PostmanRuntime/7.51.0",
-            success: true
+            success: false
           }
         ],
         user_growth: {
