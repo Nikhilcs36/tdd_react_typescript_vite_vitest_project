@@ -195,6 +195,8 @@ describe('DashboardContainer', () => {
       total_users: 10,
       active_users: 8,
       total_logins: 100,
+      total_successful_logins: 80,
+      total_failed_logins: 20,
       login_activity: [],
       user_growth: {}
     });
@@ -348,6 +350,34 @@ describe('DashboardContainer', () => {
     });
   });
 
+  describe('Admin Statistics Display', () => {
+    it('should display total logins with successful and failed breakdown', async () => {
+      const mockAdminDashboard = {
+        total_users: 10,
+        active_users: 8,
+        total_logins: 164,
+        total_successful_logins: 160,
+        total_failed_logins: 4,
+        login_activity: [
+          { id: 1, username: 'user1', timestamp: '2023-01-01', ip_address: '127.0.0.1', user_agent: 'test', success: true },
+          { id: 2, username: 'user2', timestamp: '2023-01-01', ip_address: '127.0.0.1', user_agent: 'test', success: true },
+          { id: 3, username: 'user3', timestamp: '2023-01-01', ip_address: '127.0.0.1', user_agent: 'test', success: true },
+          { id: 4, username: 'user4', timestamp: '2023-01-01', ip_address: '127.0.0.1', user_agent: 'test', success: true },
+          { id: 5, username: 'user5', timestamp: '2023-01-01', ip_address: '127.0.0.1', user_agent: 'test', success: false },
+        ],
+        user_growth: {}
+      };
+
+      vi.mocked(getAdminDashboard).mockResolvedValue(mockAdminDashboard);
+
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Total Logins: 164 (160 success, 4 failed)')).toBeInTheDocument();
+      });
+    });
+  });
+
   describe('Admin Statistics Reactivity', () => {
     it('should refetch admin dashboard when filters change', async () => {
       const { rerender } = renderWithProviders(<DashboardContainer />, {
@@ -481,6 +511,8 @@ describe('DashboardContainer', () => {
           total_users: 10,
           active_users: 8,
           total_logins: 100,
+          total_successful_logins: 80,
+          total_failed_logins: 20,
           login_activity: [],
           user_growth: {}
         }), 100))
