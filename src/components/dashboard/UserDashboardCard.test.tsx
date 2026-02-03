@@ -6,7 +6,15 @@ import { UserStats } from '../../types/loginTracking';
 // Mock the translation function
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string, options?: any) => {
+      if (key === 'dashboard.total_logins') {
+        return `Total Logins: ${options?.count} (${options?.successful || '{{successful}}'} success, ${options?.failed || '{{failed}}'} failed)`;
+      }
+      if (key === 'dashboard.user_total_logins') {
+        return `Total Logins: ${options?.count}`;
+      }
+      return key;
+    },
     i18n: { language: 'en' }
   }),
 }));
@@ -22,9 +30,9 @@ describe('UserDashboardCard', () => {
 
   it('should render user statistics correctly', () => {
     render(<UserDashboardCard userStats={mockUserStats} loading={false} />);
-    
+
     expect(screen.getByText('42')).toBeInTheDocument();
-    expect(screen.getByText('dashboard.total_logins')).toBeInTheDocument();
+    expect(screen.getByText('Total Logins: 42')).toBeInTheDocument();
     expect(screen.getByText('dashboard.last_login')).toBeInTheDocument();
     expect(screen.getByText('dashboard.login_trend')).toBeInTheDocument();
   });
@@ -61,10 +69,19 @@ describe('UserDashboardCard', () => {
 
   it('should format last login date correctly', () => {
     render(<UserDashboardCard userStats={mockUserStats} loading={false} />);
-    
+
     // The component formats the date, so we check for the formatted version
     // The formatted date should include "Dec" (month) and "2025" (year)
     expect(screen.getByText(/Dec/)).toBeInTheDocument();
     expect(screen.getByText(/2025/)).toBeInTheDocument();
+  });
+
+  it('should display total logins without breakdown format for user statistics', () => {
+    render(<UserDashboardCard userStats={mockUserStats} loading={false} />);
+
+    // Should show "Total Logins: 42" not "Total Logins: 42 ({{successful}} success, {{failed}} failed)"
+    expect(screen.getByText('Total Logins: 42')).toBeInTheDocument();
+    expect(screen.queryByText(/\{\{successful\}\}/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\{\{failed\}\}/)).not.toBeInTheDocument();
   });
 });
