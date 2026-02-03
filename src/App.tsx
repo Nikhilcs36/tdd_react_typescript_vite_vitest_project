@@ -9,7 +9,7 @@ import LoginPage from "./page/LoginPage";
 import UserPageWrapper from "./page/UserPage";
 import ProfilePageWrapper from "./page/ProfilePage";
 import AccountActivationPage from "./page/accountActivationPage";
-import UserList from "./components/UserList";
+import UserListPage from "./page/UserListPage";
 import DashboardContainer from "./components/dashboard/DashboardContainer";
 import {
   axiosApiServiceActivation,
@@ -226,7 +226,7 @@ export const AppContent = ({
               path="/users"
               element={
                 <ProtectedRoute requireAdmin={true}>
-                  <UserList ApiGetService={axiosApiServiceLoadUserList} />
+                  <UserListPage />
                 </ProtectedRoute>
               }
             />
