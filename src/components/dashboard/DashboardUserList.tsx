@@ -31,7 +31,7 @@ const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transpar
 const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400 py-4`;
 const EmptyMessage = tw.div`text-center text-gray-500 dark:text-gray-400 py-8`;
 const PaginationContainer = tw.div`flex justify-between items-center mt-6`;
-const PaginationButton = tw.button`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed`;
+const PaginationButton = tw.button`w-20 px-4 py-2 bg-blue-600 text-white flex justify-center items-center rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed`;
 
 /**
  * DashboardUserList Component
@@ -52,6 +52,7 @@ const DashboardUserList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [hasNext, setHasNext] = useState(false);
   const [hasPrevious, setHasPrevious] = useState(false);
 
@@ -112,6 +113,7 @@ const DashboardUserList: React.FC = () => {
         const userCount = typeof response.count === 'number' ? response.count : 0;
 
         setUsers(userResults);
+        setTotalCount(userCount);
         setTotalPages(Math.ceil(userCount / pageSize));
         setHasNext(response.next !== null);
         setHasPrevious(response.previous !== null);
@@ -209,14 +211,14 @@ const DashboardUserList: React.FC = () => {
             disabled={!hasPrevious}
             data-testid="prev-button"
           >
-            {t('pagination.previous')}
+            {t('userlist.buttonPrevious')}
           </PaginationButton>
 
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            {t('pagination.page_info', {
+            {t('userlist.pageInfo', {
               current: currentPage,
               total: totalPages,
-              count: users.length
+              count: totalCount
             })}
           </span>
 
@@ -225,7 +227,7 @@ const DashboardUserList: React.FC = () => {
             disabled={!hasNext}
             data-testid="next-button"
           >
-            {t('pagination.next')}
+            {t('userlist.buttonNext')}
           </PaginationButton>
         </PaginationContainer>
       )}

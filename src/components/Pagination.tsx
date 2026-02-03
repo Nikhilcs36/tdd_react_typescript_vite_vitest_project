@@ -4,7 +4,7 @@ import tw from "twin.macro";
 import { DjangoPaginationProps } from "../types/djangoPagination";
 
 const ButtonGroup = tw.div`flex justify-center mt-4 gap-2`;
-const Button = tw.button`px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300`;
+const Button = tw.button`w-20 px-4 py-2 bg-blue-600 text-white flex justify-center items-center rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed`;
 const PageInfo = tw.span`mx-2 flex items-center text-gray-600 dark:text-dark-text`;
 
 export interface PaginationProps extends WithTranslation, DjangoPaginationProps {}
