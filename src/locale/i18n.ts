@@ -46,6 +46,7 @@ i18n.use(initReactI18next).init({
         },
         userlist: {
           title: "User List",
+          subtitle: "Manage and view all users in the system",
           buttonNext: "Next",
           buttonPrevious: "Previous",
           pageInfo: "Page {{current}} of {{total}} ({{count}} users)",
@@ -220,6 +221,7 @@ i18n.use(initReactI18next).init({
         },
         userlist: {
           title: "ഉപയോക്തൃ പട്ടിക",
+          subtitle: "സിസ്റ്റത്തിലെ എല്ലാ ഉപയോക്താക്കളെയും മാനേജ് ചെയ്ത് കാണുക",
           buttonNext: "അടുത്തത്",
           buttonPrevious: "മുമ്പത്തേത്",
           pageInfo: "പേജ് {{current}} / {{total}} ({{count}} ഉപയോക്താക്കൾ)",
@@ -389,6 +391,7 @@ i18n.use(initReactI18next).init({
         },
         userlist: {
           title: "قائمة المستخدمين",
+          subtitle: "إدارة و عرض جميع المستخدمين في النظام",
           buttonNext: "التالي",
           buttonPrevious: "السابق",
           pageInfo: "صفحة {{current}} من {{total}} ({{count}} مستخدمين)",

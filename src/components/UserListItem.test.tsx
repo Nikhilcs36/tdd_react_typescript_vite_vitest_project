@@ -23,7 +23,7 @@ describe("UserListItem", () => {
 
     setup(mockUser);
 
-    const profileImage = screen.getByAltText("Profile") as HTMLImageElement;
+    const profileImage = screen.getByAltText("user1 profile") as HTMLImageElement;
     expect(profileImage).toBeInTheDocument();
     expect(profileImage.src).toContain(defaultProfileImage);
   });
@@ -38,7 +38,7 @@ describe("UserListItem", () => {
 
     setup(mockUser);
 
-    const profileImage = screen.getByAltText("Profile") as HTMLImageElement;
+    const profileImage = screen.getByAltText("user2 profile") as HTMLImageElement;
     expect(profileImage).toBeInTheDocument();
     expect(profileImage.src).toBe(mockUser.image);
   });

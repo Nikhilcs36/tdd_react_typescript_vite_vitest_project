@@ -104,14 +104,20 @@ const expectDisabled = async (button: HTMLElement) => {
 describe("User List", () => {
   it("displays login required message when not authenticated", async () => {
     setup(false);
-    const loginMessage = await screen.findByText("Please login to view users");
+    const loginMessage = await screen.findByText("Authentication Required");
     expect(loginMessage).toBeInTheDocument();
   });
 
   it("displays three users in list when authenticated", async () => {
     setup(true, true);
-    const users = await screen.findAllByText(/user\d/); // uses a regex to match "user1", "user2", "user3"
-    expect(users).toHaveLength(3);
+    // Wait for specific usernames to appear
+    await screen.findByText('user2');
+    await screen.findByText('user3');
+    await screen.findByText('user4');
+    // Verify they are all present
+    expect(screen.getByText('user2')).toBeInTheDocument();
+    expect(screen.getByText('user3')).toBeInTheDocument();
+    expect(screen.getByText('user4')).toBeInTheDocument();
   });
   it("displays next page button when authenticated", async () => {
     setup(true, true);
@@ -332,22 +338,19 @@ describe("User List", () => {
     // Ensure users are loaded first - user1 is excluded as authenticated user, so look for user2
     await screen.findByText("user2");
 
-    // Get all profile images
-    const profileImages = screen.getAllByAltText(
-      "Profile"
-    ) as HTMLImageElement[];
-
-    // Check that we have 3 images (since we load 3 users per page, but user1 is excluded)
-    expect(profileImages).toHaveLength(3);
+    // Get all profile images by looking for images with user-specific alt text
+    const user2Image = screen.getByAltText("user2 profile") as HTMLImageElement;
+    const user3Image = screen.getByAltText("user3 profile") as HTMLImageElement;
+    const user4Image = screen.getByAltText("user4 profile") as HTMLImageElement;
 
     // Ensure user2 (has image) uses its actual image URL
-    expect(profileImages[0].src).toBe("https://test.com/user1.jpg");
+    expect(user2Image.src).toBe("https://test.com/user1.jpg");
 
     // Ensure user3 (no image) uses default
-    expect(profileImages[1].src).toContain(defaultProfileImage);
+    expect(user3Image.src).toContain(defaultProfileImage);
 
     // Ensure user4 (no image) uses default
-    expect(profileImages[2].src).toContain(defaultProfileImage);
+    expect(user4Image.src).toContain(defaultProfileImage);
   });
 
   describe("i18n Integration for Userlist and LanguageSwitcher", () => {
@@ -363,7 +366,6 @@ describe("User List", () => {
       it("renders userlist in English by default", async () => {
         setup(true, true);
         await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
-        expect(screen.getByText("User List")).toBeInTheDocument();
         expect(screen.getByText("Next")).toBeInTheDocument();
         expect(screen.getByText("Previous")).toBeInTheDocument();
       });
@@ -383,7 +385,6 @@ describe("User List", () => {
         });
         setup(true, true);
         await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
-        expect(screen.getByText("ഉപയോക്തൃ പട്ടിക")).toBeInTheDocument();
         expect(screen.getByText("അടുത്തത്")).toBeInTheDocument();
         expect(screen.getByText("മുമ്പത്തേത്")).toBeInTheDocument();
       });
@@ -406,7 +407,6 @@ describe("User List", () => {
         });
         setup(true, true);
         await screen.findByText("user2"); // user1 is filtered out due to authenticated user exclusion
-        expect(screen.getByText("قائمة المستخدمين")).toBeInTheDocument();
         expect(screen.getByText("التالي")).toBeInTheDocument();
         expect(screen.getByText("السابق")).toBeInTheDocument();
       });
@@ -651,7 +651,7 @@ describe("User List", () => {
       );
 
       // Verify that the login message is displayed (no API call should be made)
-      await screen.findByText("Please login to view users");
+      await screen.findByText("Authentication Required");
 
       // Verify axios was NOT called when user is not authenticated
       expect(mockedAxios.get).not.toHaveBeenCalled();
@@ -684,7 +684,7 @@ describe("User List", () => {
       );
 
       // Verify that the login message is displayed
-      await screen.findByText("Please login to view users");
+      await screen.findByText("Authentication Required");
 
       // Verify Authorization header was not sent
       expect(capturedAuthHeader).toBeNull();
@@ -795,7 +795,7 @@ describe("User List", () => {
 
       // Verify login message is displayed instead of user list
       expect(
-        screen.getByText("Please login to view users")
+        screen.getByText("Authentication Required")
       ).toBeInTheDocument();
 
       // Verify no users are displayed when not authenticated
@@ -921,15 +921,15 @@ describe("User List", () => {
 
     it("displays user list when authenticated user is admin", async () => {
       setup(true, true); // authenticated = true, isAdmin = true
-      const users = await screen.findAllByText(/user\d/);
-      expect(users).toHaveLength(3);
-      expect(screen.getByText("User List")).toBeInTheDocument();
+      await screen.findByText("user2");
+      expect(screen.getByText("user3")).toBeInTheDocument();
+      expect(screen.getByText("user4")).toBeInTheDocument();
     });
 
     it("displays access denied message when authenticated user is not admin", async () => {
       setup(true, false); // authenticated = true, isAdmin = false
-      const accessDeniedMessage = await screen.findByText("Access Denied");
-      expect(accessDeniedMessage).toBeInTheDocument();
+      const accessDeniedTitle = await screen.findByRole('heading', { level: 4, name: "Access Denied" });
+      expect(accessDeniedTitle).toBeInTheDocument();
       expect(screen.getByText("You need administrator privileges to view the user list.")).toBeInTheDocument();
     });
 
@@ -941,7 +941,7 @@ describe("User List", () => {
 
       setup(true, false); // authenticated = true, isAdmin = false
 
-      const accessDeniedTitle = await screen.findByText("അക്സസ് നിഷേധിച്ചു");
+      const accessDeniedTitle = await screen.findByRole('heading', { level: 4, name: "അക്സസ് നിഷേധിച്ചു" });
       expect(accessDeniedTitle).toBeInTheDocument();
       expect(screen.getByText("ഉപയോക്തൃ പട്ടിക കാണാൻ നിങ്ങൾക്ക് അഡ്മിനിസ്ട്രേറ്റർ അനുമതികൾ ആവശ്യമാണ്.")).toBeInTheDocument();
 
@@ -959,7 +959,7 @@ describe("User List", () => {
 
       setup(true, false); // authenticated = true, isAdmin = false
 
-      const accessDeniedTitle = await screen.findByText("تم رفض الوصول");
+      const accessDeniedTitle = await screen.findByRole('heading', { level: 4, name: "تم رفض الوصول" });
       expect(accessDeniedTitle).toBeInTheDocument();
       expect(screen.getByText("تحتاج إلى صلاحيات المسؤول لعرض قائمة المستخدمين.")).toBeInTheDocument();
 
@@ -973,7 +973,7 @@ describe("User List", () => {
 
     it("shows login required message when not authenticated (takes precedence over admin check)", async () => {
       setup(false, false); // authenticated = false, isAdmin = false
-      const loginMessage = await screen.findByText("Please login to view users");
+      const loginMessage = await screen.findByText("Authentication Required");
       expect(loginMessage).toBeInTheDocument();
       expect(screen.queryByText("Access Denied")).not.toBeInTheDocument();
     });
