@@ -82,7 +82,7 @@ const UserDashboardCard: React.FC<UserDashboardCardProps> = ({ userStats, loadin
         {/* Total Logins */}
         <StatItem>
           <StatValue>{userStats.total_logins}</StatValue>
-          <StatLabel>{t('dashboard.total_logins', { count: userStats.total_logins })}</StatLabel>
+          <StatLabel>{t('dashboard.user_total_logins', { count: userStats.total_logins })}</StatLabel>
         </StatItem>
 
         {/* Last Login */}
