@@ -123,6 +123,7 @@ i18n.use(initReactI18next).init({
         },
         dashboard: {
           title: "Dashboard",
+          subtitle: "Monitor user activity and system statistics",
           user_stats: "User Statistics",
           total_logins: "Total Logins: {{count}} ({{successful}} success, {{failed}} failed)",
           user_total_logins: "Total Logins: {{count}}",
@@ -298,6 +299,7 @@ i18n.use(initReactI18next).init({
         },
         dashboard: {
           title: "ഡാഷ്ബോർഡ്",
+          subtitle: "ഉപയോക്തൃ പ്രവർത്തനവും സിസ്റ്റം സ്ഥിതിവിവരക്കണക്കുകളും നിരീക്ഷിക്കുക",
           user_stats: "ഉപയോക്തൃ സ്ഥിതിവിവരക്കണക്കുകൾ",
           total_logins: "ആകെ ലോഗിനുകൾ: {{count}} ({{successful}} വിജയം, {{failed}} പരാജയം)",
           user_total_logins: "ആകെ ലോഗിനുകൾ: {{count}}",
@@ -467,6 +469,7 @@ i18n.use(initReactI18next).init({
         },
         dashboard: {
           title: "لوحة التحكم",
+          subtitle: "مراقبة نشاط المستخدمين وإحصائيات النظام",
           user_stats: "إحصائيات المستخدم",
           total_logins: "إجمالي عمليات تسجيل الدخول: {{count}} ({{successful}} نجح, {{failed}} فشل)",
           user_total_logins: "إجمالي عمليات تسجيل الدخول: {{count}}",

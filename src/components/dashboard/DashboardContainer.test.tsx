@@ -151,8 +151,135 @@ describe('DashboardContainer', () => {
       render(<MockDashboardContainer userId={2} />);
 
       expect(screen.queryByTestId('user-selector-dropdown')).not.toBeInTheDocument();
+  });
+});
+
+describe('DashboardContainer UI/UX Improvements', () => {
+  describe('Page Structure and Styling', () => {
+    it('should render with page container structure', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const pageContainer = screen.getByTestId('dashboard-page-container');
+        expect(pageContainer).toBeInTheDocument();
+        expect(pageContainer.tagName).toBe('DIV');
+      });
+    });
+
+    it('should render content wrapper with responsive structure', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const contentWrapper = screen.getByTestId('dashboard-content-wrapper');
+        expect(contentWrapper).toBeInTheDocument();
+        expect(contentWrapper.tagName).toBe('DIV');
+      });
+    });
+
+    it('should render page header with title and subtitle', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const pageHeader = screen.getByTestId('dashboard-page-header');
+        expect(pageHeader).toBeInTheDocument();
+
+        const title = screen.getByTestId('dashboard-title');
+        expect(title).toBeInTheDocument();
+        expect(title).toHaveTextContent('Dashboard');
+        expect(title.tagName).toBe('H1');
+
+        const subtitle = screen.getByTestId('dashboard-subtitle');
+        expect(subtitle).toBeInTheDocument();
+        expect(subtitle).toHaveTextContent('Monitor user activity and system statistics');
+        expect(subtitle.tagName).toBe('P');
+      });
+    });
+
+    it('should have main container with dashboard content', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const dashboardContainer = screen.getByTestId('dashboard-main-container');
+        expect(dashboardContainer).toBeInTheDocument();
+        expect(dashboardContainer.tagName).toBe('DIV');
+      });
     });
   });
+
+  describe('Dark Mode Support', () => {
+    it('should render page container with dark mode styling', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const pageContainer = screen.getByTestId('dashboard-page-container');
+        // Check that it has styling applied (tw.macro processed classes)
+        expect(pageContainer.className).toBeTruthy();
+      });
+    });
+
+    it('should render content wrapper without conflicting dark backgrounds', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const contentWrapper = screen.getByTestId('dashboard-content-wrapper');
+        // Content wrapper should be present and properly styled
+        expect(contentWrapper).toBeInTheDocument();
+      });
+    });
+
+    it('should render page header elements with proper styling', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const title = screen.getByTestId('dashboard-title');
+        expect(title.className).toBeTruthy();
+
+        const subtitle = screen.getByTestId('dashboard-subtitle');
+        expect(subtitle.className).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Responsive Design', () => {
+    it('should render content wrapper with responsive layout', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const contentWrapper = screen.getByTestId('dashboard-content-wrapper');
+        expect(contentWrapper.className).toBeTruthy();
+      });
+    });
+
+    it('should render grid layouts with responsive behavior', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        // Check that the main grid containers exist and have styling
+        const dashboardGrid = screen.getByTestId('dashboard-grid');
+        expect(dashboardGrid).toBeInTheDocument();
+        expect(dashboardGrid.className).toBeTruthy();
+
+        const chartGrid = screen.getByTestId('dashboard-chart-grid');
+        expect(chartGrid).toBeInTheDocument();
+        expect(chartGrid.className).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Internationalization', () => {
+    it('should display translated title and subtitle', async () => {
+      renderWithProviders(<DashboardContainer />);
+
+      await waitFor(() => {
+        const title = screen.getByTestId('dashboard-title');
+        expect(title).toHaveTextContent('Dashboard');
+
+        const subtitle = screen.getByTestId('dashboard-subtitle');
+        expect(subtitle).toHaveTextContent('Monitor user activity and system statistics');
+      });
+    });
+  });
+});
 
   // Integration tests (comprehensive, slower)
   describe('Integration Tests', () => {

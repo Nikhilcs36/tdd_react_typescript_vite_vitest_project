@@ -18,6 +18,12 @@ import UserSelectorDropdown from './UserSelectorDropdown';
 import ChartModeToggle from './ChartModeToggle';
 
 // Styled components
+const PageContainer = tw.div`min-h-screen bg-gray-50 dark:bg-dark-primary py-8`;
+const ContentWrapper = tw.div`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8`;
+const PageHeader = tw.div`mb-8`;
+const Title = tw.h1`text-3xl font-bold text-gray-900 dark:text-dark-text mb-2`;
+const Subtitle = tw.p`text-gray-600 dark:text-gray-300`;
+
 const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
 const DashboardGrid = tw.div`grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8`;
 const ChartGrid = tw.div`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8`;
@@ -268,22 +274,38 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   // Render loading state
   if (loading) {
     return (
-      <DashboardContainerWrapper>
-        <div className="flex items-center justify-center h-64">
-          <div data-testid="spinner" className="w-12 h-12 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-        </div>
-      </DashboardContainerWrapper>
+      <PageContainer data-testid="dashboard-page-container">
+        <ContentWrapper data-testid="dashboard-content-wrapper">
+          <PageHeader data-testid="dashboard-page-header">
+            <Title data-testid="dashboard-title">{t('dashboard.title')}</Title>
+            <Subtitle data-testid="dashboard-subtitle">{t('dashboard.subtitle')}</Subtitle>
+          </PageHeader>
+          <DashboardContainerWrapper data-testid="dashboard-main-container">
+            <div className="flex items-center justify-center h-64">
+              <div data-testid="spinner" className="w-12 h-12 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+          </DashboardContainerWrapper>
+        </ContentWrapper>
+      </PageContainer>
     );
   }
 
   // Render error state
   if (error) {
     return (
-      <DashboardContainerWrapper>
-        <ErrorMessage>
-          {error}
-        </ErrorMessage>
-      </DashboardContainerWrapper>
+      <PageContainer data-testid="dashboard-page-container">
+        <ContentWrapper data-testid="dashboard-content-wrapper">
+          <PageHeader data-testid="dashboard-page-header">
+            <Title data-testid="dashboard-title">{t('dashboard.title')}</Title>
+            <Subtitle data-testid="dashboard-subtitle">{t('dashboard.subtitle')}</Subtitle>
+          </PageHeader>
+          <DashboardContainerWrapper data-testid="dashboard-main-container">
+            <ErrorMessage>
+              {error}
+            </ErrorMessage>
+          </DashboardContainerWrapper>
+        </ContentWrapper>
+      </PageContainer>
     );
   }
 
@@ -338,93 +360,102 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   };
 
   return (
-    <DashboardContainerWrapper>
-      {/* Date Range Picker - Show for all users */}
-      <DateRangePicker disabled={loading} />
+    <PageContainer data-testid="dashboard-page-container">
+      <ContentWrapper data-testid="dashboard-content-wrapper">
+        <PageHeader data-testid="dashboard-page-header">
+          <Title data-testid="dashboard-title">{t('dashboard.title')}</Title>
+          <Subtitle data-testid="dashboard-subtitle">{t('dashboard.subtitle')}</Subtitle>
+        </PageHeader>
 
-      {/* Dashboard Filters - Only show for admins */}
-      {isAdmin() && (
-        <DashboardFilters
-          disabled={loading}
-        />
-      )}
+        <DashboardContainerWrapper data-testid="dashboard-main-container">
+          {/* Date Range Picker - Show for all users */}
+          <DateRangePicker disabled={loading} />
 
-      {/* User List Section - Only show for admins */}
-      {isAdmin() && (
-        <DashboardUserList />
-      )}
+          {/* Dashboard Filters - Only show for admins */}
+          {isAdmin() && (
+            <DashboardFilters
+              disabled={loading}
+            />
+          )}
 
-      {/* User Selector Dropdown - Only show for admins */}
-      {isAdmin() && (
-        <UserSelectorDropdown disabled={loading} />
-      )}
+          {/* User List Section - Only show for admins */}
+          {isAdmin() && (
+            <DashboardUserList />
+          )}
 
-      {/* User Statistics Section */}
-      <SectionTitle>{t('dashboard.user_statistics')}</SectionTitle>
-      <DashboardGrid>
-        <UserDashboardCard
-          userStats={userStats}
-          loading={false}
-        />
-      </DashboardGrid>
+          {/* User Selector Dropdown - Only show for admins */}
+          {isAdmin() && (
+            <UserSelectorDropdown disabled={loading} />
+          )}
 
-      {/* Login Activity Section */}
-      <SectionTitle>{t('dashboard.recent_activity')}</SectionTitle>
-      <LoginActivityTable
-        loginActivity={loginActivity?.results || []}
-        loading={false}
-      />
+          {/* User Statistics Section */}
+          <SectionTitle>{t('dashboard.user_statistics')}</SectionTitle>
+          <DashboardGrid data-testid="dashboard-grid">
+            <UserDashboardCard
+              userStats={userStats}
+              loading={false}
+            />
+          </DashboardGrid>
 
-      {/* Charts Section */}
-      <SectionTitle>{t('dashboard.visualizations')}</SectionTitle>
-      <ChartModeToggle disabled={loading} />
-      <ChartGrid>
-        <LoginTrendsChart
-          chartData={loginTrends}
-          loading={false}
-          chartType="line"
-          customTitle={getChartTitle('dashboard.login_trends')}
-        />
-        <LoginTrendsChart
-          chartData={loginComparison}
-          loading={false}
-          chartType="bar"
-          customTitle={getChartTitle('dashboard.login_comparison')}
-        />
-        <LoginTrendsChart
-          chartData={loginDistribution}
-          loading={false}
-          chartType="pie"
-          customTitle={getChartTitle('dashboard.login_distribution')}
-        />
-      </ChartGrid>
+          {/* Login Activity Section */}
+          <SectionTitle>{t('dashboard.recent_activity')}</SectionTitle>
+          <LoginActivityTable
+            loginActivity={loginActivity?.results || []}
+            loading={false}
+          />
 
-      {/* Admin Dashboard Section (if applicable) */}
-      {isAdmin() && adminDashboard && (
-        <>
-          <SectionTitle>{t('dashboard.admin_overview')}</SectionTitle>
-          {/* Admin-specific components would go here */}
-          <div className="p-6 mb-8 bg-white rounded-lg shadow-lg dark:bg-dark-secondary">
-            <h3 className="mb-4 text-lg font-semibold dark:text-dark-text">
-              {getAdminStatsTitle()}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              {t('dashboard.total_users', { count: adminDashboard.total_users })}
-            </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              {t('dashboard.active_users', { count: adminDashboard.active_users })}
-            </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              {t('dashboard.total_logins', {
-                count: adminDashboard.total_logins,
-                successful: adminDashboard.total_successful_logins,
-                failed: adminDashboard.total_failed_logins
-              })}
-            </p>
-          </div>
-        </>
-      )}
-    </DashboardContainerWrapper>
+          {/* Charts Section */}
+          <SectionTitle>{t('dashboard.visualizations')}</SectionTitle>
+          <ChartModeToggle disabled={loading} />
+          <ChartGrid data-testid="dashboard-chart-grid">
+            <LoginTrendsChart
+              chartData={loginTrends}
+              loading={false}
+              chartType="line"
+              customTitle={getChartTitle('dashboard.login_trends')}
+            />
+            <LoginTrendsChart
+              chartData={loginComparison}
+              loading={false}
+              chartType="bar"
+              customTitle={getChartTitle('dashboard.login_comparison')}
+            />
+            <LoginTrendsChart
+              chartData={loginDistribution}
+              loading={false}
+              chartType="pie"
+              customTitle={getChartTitle('dashboard.login_distribution')}
+            />
+          </ChartGrid>
+
+          {/* Admin Dashboard Section (if applicable) */}
+          {isAdmin() && adminDashboard && (
+            <>
+              <SectionTitle>{t('dashboard.admin_overview')}</SectionTitle>
+              {/* Admin-specific components would go here */}
+              <div className="p-6 mb-8 bg-white rounded-lg shadow-lg dark:bg-dark-secondary">
+                <h3 className="mb-4 text-lg font-semibold dark:text-dark-text">
+                  {getAdminStatsTitle()}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {t('dashboard.total_users', { count: adminDashboard.total_users })}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {t('dashboard.active_users', { count: adminDashboard.active_users })}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {t('dashboard.total_logins', {
+                    count: adminDashboard.total_logins,
+                    successful: adminDashboard.total_successful_logins,
+                    failed: adminDashboard.total_failed_logins
+                  })}
+                </p>
+              </div>
+            </>
+          )}
+        </DashboardContainerWrapper>
+      </ContentWrapper>
+    </PageContainer>
   );
 };
 
