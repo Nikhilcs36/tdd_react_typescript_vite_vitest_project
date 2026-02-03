@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import Pagination from "./Pagination";
@@ -18,12 +19,19 @@ vi.mock("react-i18next", () => ({
   },
 }));
 
-// Mock twin.macro to avoid CSS-in-JS issues in tests
+// Mock twin.macro to return styled components with proper className
 vi.mock("twin.macro", () => ({
-  default: {
-    div: "div",
-    button: "button",
-    span: "span",
+  default: (template: TemplateStringsArray) => {
+    const className = template[0];
+    return (props: any) => {
+      const Component = className.includes("button") ? "button" :
+                       className.includes("span") ? "span" : "div";
+      return React.createElement(Component, {
+        ...props,
+        className: `${className} ${props.className || ""}`.trim(),
+        "data-tailwind-class": className, // Store original classes for testing
+      });
+    };
   },
 }));
 
@@ -331,4 +339,10 @@ describe("Pagination Component", () => {
       expect(pageInfo).toHaveTextContent("Page 5 of 1 (10 users)");
     });
   });
+
+
+
+
+
+
 });

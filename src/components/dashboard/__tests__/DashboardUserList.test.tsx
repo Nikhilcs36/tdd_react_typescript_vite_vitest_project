@@ -211,6 +211,50 @@ describe('DashboardUserList', () => {
 
       expect(mockGetUsers).toHaveBeenCalledWith('/api/user/users/', 2, 3, undefined, undefined);
     });
+
+    it('displays correct pagination button text using proper translation keys', async () => {
+      const paginatedResponse = {
+        count: 6,
+        next: 'http://test.com?page=2',
+        previous: 'http://test.com?page=1',
+        results: mockUsers,
+      };
+      mockGetUsers.mockResolvedValue(paginatedResponse);
+
+      renderWithProviders(<DashboardUserList />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('prev-button')).toBeInTheDocument();
+        expect(screen.getByTestId('next-button')).toBeInTheDocument();
+      });
+
+      // Check that buttons show translated text, not raw keys
+      const prevButton = screen.getByTestId('prev-button');
+      const nextButton = screen.getByTestId('next-button');
+
+      expect(prevButton).toHaveTextContent('Previous');
+      expect(nextButton).toHaveTextContent('Next');
+    });
+
+    it('displays correct page info using proper translation key', async () => {
+      const paginatedResponse = {
+        count: 6,
+        next: 'http://test.com?page=2',
+        previous: null,
+        results: mockUsers,
+      };
+      mockGetUsers.mockResolvedValue(paginatedResponse);
+
+      renderWithProviders(<DashboardUserList />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Page 1 of 2 (6 users)')).toBeInTheDocument();
+      });
+    });
+
+
+
+
   });
 
   describe('Error Handling', () => {
