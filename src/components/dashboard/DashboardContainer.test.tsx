@@ -96,7 +96,12 @@ vi.mock('./LoginTrendsChart', () => ({
 }));
 
 vi.mock('./DashboardFilters', () => ({
-  default: () => <div data-testid="dashboard-filters">Filters</div>,
+  default: ({ disabled }: any) => (
+    <div data-testid="dashboard-filters">
+      <button data-testid="filter-admin-only" disabled={disabled}>Admin Only</button>
+      Filters
+    </div>
+  ),
 }));
 
 vi.mock('./DashboardUserList', () => ({
@@ -788,31 +793,174 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
     });
 
-    describe('Multiple User Selection in Group Mode', () => {
-      it('should aggregate data for all users in dropdown when in group mode', async () => {
-        const currentDropdownUsers = [
+  describe('Multiple User Selection in Group Mode', () => {
+    it('should aggregate data for all users in dropdown when in group mode', async () => {
+      const currentDropdownUsers = [
+        { id: 1, username: 'user1', email: 'user1@test.com' },
+        { id: 2, username: 'user2', email: 'user2@test.com' },
+        { id: 3, username: 'user3', email: 'user3@test.com' },
+        { id: 4, username: 'user4', email: 'user4@test.com' },
+        { id: 5, username: 'user5', email: 'user5@test.com' },
+      ];
+
+      renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped',
+        selectedUserIds: [1, 3, 5], // These are checked/selected in UI
+        currentDropdownUsers, // But group mode aggregates ALL users in dropdown
+      });
+
+      await waitFor(() => {
+        // Group mode aggregates ALL users currently in the dropdown
+        const expectedUserIds = [1, 2, 3, 4, 5]; // All dropdown users
+        expect(getLoginTrends).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+        expect(getLoginComparison).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+        expect(getLoginDistribution).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+      });
+    });
+  });
+
+  // Tests for Granular Loading Implementation
+  describe('Granular Loading States (TDD)', () => {
+  describe('Previous Behavior - Global Loading Issue (FIXED)', () => {
+    it('should NOT show global loading spinner when filter changes (fixed behavior)', async () => {
+      // This test verifies that the global loading issue has been fixed
+      // Changing filters should no longer cause the entire dashboard to show loading
+      const { rerender } = renderWithProviders(<DashboardContainer />, {
+        activeFilter: 'all',
+      });
+
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+      });
+
+      // Change filter - should NOT trigger global loading after granular implementation
+      rerender(
+        <Provider store={createMockStore({
+          activeFilter: 'admin', // Changed from 'all' to 'admin'
+        })}>
+          <I18nextProvider i18n={i18n}>
+            <DashboardContainer />
+          </I18nextProvider>
+        </Provider>
+      );
+
+      // After granular loading, global spinner should NOT appear
+      expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+    });
+
+    it('should NOT show global loading spinner when chart mode toggles (fixed behavior)', async () => {
+      const { rerender } = renderWithProviders(<DashboardContainer />, {
+        chartMode: 'individual',
+        currentDropdownUsers: [
           { id: 1, username: 'user1', email: 'user1@test.com' },
           { id: 2, username: 'user2', email: 'user2@test.com' },
-          { id: 3, username: 'user3', email: 'user3@test.com' },
-          { id: 4, username: 'user4', email: 'user4@test.com' },
-          { id: 5, username: 'user5', email: 'user5@test.com' },
-        ];
+        ],
+      });
 
-        renderWithProviders(<DashboardContainer />, {
-          chartMode: 'grouped',
-          selectedUserIds: [1, 3, 5], // These are checked/selected in UI
-          currentDropdownUsers, // But group mode aggregates ALL users in dropdown
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+      });
+
+      // Toggle chart mode - should NOT trigger global loading after granular implementation
+      rerender(
+        <Provider store={createMockStore({
+          chartMode: 'grouped', // Changed from 'individual' to 'grouped'
+          currentDropdownUsers: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'user2', email: 'user2@test.com' },
+          ],
+        })}>
+          <I18nextProvider i18n={i18n}>
+            <DashboardContainer />
+          </I18nextProvider>
+        </Provider>
+      );
+
+      // After granular loading, global spinner should NOT appear
+      expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+    });
+  });
+
+    describe('Granular Loading Behavior', () => {
+      it('should NOT show global loading when only filters change', async () => {
+        // With granular loading, changing filters should not cause global loading
+        const { rerender } = renderWithProviders(<DashboardContainer />, {
+          activeFilter: 'all',
         });
 
         await waitFor(() => {
-          // Group mode aggregates ALL users currently in the dropdown
-          const expectedUserIds = [1, 2, 3, 4, 5]; // All dropdown users
-          expect(getLoginTrends).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
-          expect(getLoginComparison).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
-          expect(getLoginDistribution).toHaveBeenCalledWith(expectedUserIds, undefined, undefined);
+          expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
         });
+
+        // Change filter - should NOT trigger global loading with granular implementation
+        rerender(
+          <Provider store={createMockStore({
+            activeFilter: 'admin',
+          })}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardContainer />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        // Global spinner should NOT appear
+        expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+      });
+
+      it('should NOT show global loading when chart mode toggles', async () => {
+        // With granular loading, chart mode changes should not cause global loading
+        const { rerender } = renderWithProviders(<DashboardContainer />, {
+          chartMode: 'individual',
+          currentDropdownUsers: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'user2', email: 'user2@test.com' },
+          ],
+        });
+
+        await waitFor(() => {
+          expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+        });
+
+        // Toggle chart mode - should NOT trigger global loading
+        rerender(
+          <Provider store={createMockStore({
+            chartMode: 'grouped',
+            currentDropdownUsers: [
+              { id: 1, username: 'user1', email: 'user1@test.com' },
+              { id: 2, username: 'user2', email: 'user2@test.com' },
+            ],
+          })}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardContainer />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        // Global spinner should NOT appear
+        expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+      });
+
+      it('should allow user interaction with loaded sections during partial updates', async () => {
+        // With granular loading, users should be able to interact with loaded sections
+        renderWithProviders(<DashboardContainer />, {
+          activeFilter: 'all',
+        });
+
+        await waitFor(() => {
+          expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+          // User stats and activity table should be loaded and interactive
+          expect(screen.getByTestId('user-dashboard-card')).toBeInTheDocument();
+          expect(screen.getByTestId('login-activity-table')).toBeInTheDocument();
+        });
+
+        // Filter buttons should remain interactive
+        const filterButton = screen.getByTestId('filter-admin-only');
+        expect(filterButton).not.toBeDisabled();
       });
     });
+  });
   });
   });
 });

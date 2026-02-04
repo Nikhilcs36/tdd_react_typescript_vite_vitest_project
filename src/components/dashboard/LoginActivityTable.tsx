@@ -27,7 +27,7 @@ interface LoginActivityTableProps {
  * Displays login activity history in a tabular format
  * Shows loading state, empty state, and success state
  */
-const LoginActivityTable: React.FC<LoginActivityTableProps> = ({ loginActivity, loading }) => {
+const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({ loginActivity, loading }) => {
   const { t } = useTranslation();
 
   // Format the timestamp for display
@@ -122,6 +122,8 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = ({ loginActivity, 
       </div>
     </TableContainer>
   );
-};
+});
+
+LoginActivityTable.displayName = 'LoginActivityTable';
 
 export default LoginActivityTable;

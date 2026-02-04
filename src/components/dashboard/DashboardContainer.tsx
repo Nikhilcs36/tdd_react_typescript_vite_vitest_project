@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import tw from 'twin.macro';
 import { RootState } from '../../store';
 import { UserStats, LoginActivityResponse, ChartData, AdminDashboardData } from '../../types/loginTracking';
-import { getUserStats, getLoginActivity, getLoginTrends, getLoginComparison, getLoginDistribution, getAdminDashboard, getAdminCharts } from '../../services/loginTrackingService';
+import { getUserStats, getLoginActivity, getLoginTrends, getLoginComparison, getLoginDistribution, getAdminDashboard } from '../../services/loginTrackingService';
 import { axiosApiServiceLoadUserList } from '../../services/apiService';
 import { API_ENDPOINTS } from '../../services/apiEndpoints';
 import { useUserAuthorization } from '../../utils/authorization';
@@ -28,7 +28,7 @@ const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
 const DashboardGrid = tw.div`grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8`;
 const ChartGrid = tw.div`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8`;
 const SectionTitle = tw.h2`text-2xl font-bold mb-6 dark:text-dark-text`;
-const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400 py-8`;
+
 
 interface DashboardContainerProps {
   userId?: number;
@@ -53,7 +53,13 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const [loginDistribution, setLoginDistribution] = useState<ChartData | null>(null);
   const [adminDashboard, setAdminDashboard] = useState<AdminDashboardData | null>(null);
   const [selectedUserInfo, setSelectedUserInfo] = useState<{ id: number; username: string; email: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  // Granular loading states instead of global loading
+  const [userStatsLoading, setUserStatsLoading] = useState(true);
+  const [loginActivityLoading, setLoginActivityLoading] = useState(true);
+  const [chartsLoading, setChartsLoading] = useState(true);
+  const [adminDashboardLoading, setAdminDashboardLoading] = useState(true);
+
   const [error, setError] = useState<string | null>(null);
 
   // Refs to prevent multiple concurrent API calls
@@ -76,159 +82,154 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     }
   };
 
-  // Check authorization before fetching data
+  // Fetch user stats - triggered by user selection and date range changes
   useEffect(() => {
-    // Create a comprehensive fetch key for all dashboard data dependencies
-    const fetchKey = [
-      currentUserId,
-      userId,
-      isAdmin(),
-      dashboardState.activeFilter,
-      dashboardState.selectedUserIds?.slice().sort().join(','),
-      dashboardState.selectedDashboardUserId,
-      dashboardState.currentDropdownUsers?.map(u => u.id).sort().join(','),
-      dashboardState.chartMode,
-      dashboardState.startDate,
-      dashboardState.endDate
-    ].join('|');
+    const fetchKey = [currentUserId, dashboardState.selectedDashboardUserId, dashboardState.startDate, dashboardState.endDate].join('|');
 
-    // Prevent multiple concurrent fetches for the same parameters
     if (dashboardDataFetchedRef.current === fetchKey) {
       return;
     }
 
     dashboardDataFetchedRef.current = fetchKey;
 
-    const fetchDashboardData = async () => {
+    const fetchUserStats = async () => {
       if (!currentUserId) {
         setError(t('dashboard.user_not_found'));
-        setLoading(false);
+        setUserStatsLoading(false);
         return;
       }
 
-      // Check if user can access the requested dashboard data
       if (!canAccessUserData(currentUserId)) {
         setError(t('dashboard.unauthorized_access'));
-        setLoading(false);
+        setUserStatsLoading(false);
         return;
       }
 
-      setLoading(true);
+      setUserStatsLoading(true);
       setError(null);
 
       try {
-        // Determine which user data to fetch based on authorization and dropdown selection
-        let targetUserId: number | undefined;
-
-        if (isAdmin()) {
-          // For admins, use the selected dashboard user from dropdown, or fallback to passed userId
-          targetUserId = dashboardState.selectedDashboardUserId || userId;
-        } else {
-          // For regular users, use passed userId or current user
-          targetUserId = userId;
-        }
-
-        // Get date range from state
+        const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : userId;
         const startDate = dashboardState.startDate || undefined;
         const endDate = dashboardState.endDate || undefined;
 
-        // Determine chart filtering based on chart mode and dropdown users
-        let chartUserIds: number[] | undefined;
+        const response = await getUserStats(targetUserId, startDate, endDate);
+        setUserStats(response);
+      } catch (err) {
+        setError(t('dashboard.error_loading_data'));
+        setUserStats(null);
+      } finally {
+        setUserStatsLoading(false);
+      }
+    };
 
+    fetchUserStats();
+  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.selectedDashboardUserId, dashboardState.startDate, dashboardState.endDate]);
+
+  // Fetch login activity - triggered by user selection and date range changes
+  useEffect(() => {
+    const fetchLoginActivity = async () => {
+      setLoginActivityLoading(true);
+
+      try {
+        const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : userId;
+        const startDate = dashboardState.startDate || undefined;
+        const endDate = dashboardState.endDate || undefined;
+
+        const response = await getLoginActivity(1, 15, targetUserId, startDate, endDate);
+        setLoginActivity(response);
+      } catch (err) {
+        setLoginActivity(null);
+      } finally {
+        setLoginActivityLoading(false);
+      }
+    };
+
+    fetchLoginActivity();
+  }, [currentUserId, userId, isAdmin, dashboardState.selectedDashboardUserId, dashboardState.startDate, dashboardState.endDate]);
+
+  // Fetch charts - triggered by chart mode, user selection, and date range changes
+  useEffect(() => {
+    const fetchCharts = async () => {
+      setChartsLoading(true);
+
+      try {
+        const startDate = dashboardState.startDate || undefined;
+        const endDate = dashboardState.endDate || undefined;
+
+        let chartUserIds: number[] | undefined;
         if (dashboardState.chartMode === 'individual') {
-          // Individual mode: Show charts for the selected dashboard user
           chartUserIds = dashboardState.selectedDashboardUserId ? [dashboardState.selectedDashboardUserId] : undefined;
         } else {
-          // Group mode: Show aggregated charts for all users currently in the dropdown
           chartUserIds = dashboardState.currentDropdownUsers.map(user => user.id);
         }
 
-        // Determine admin dashboard filtering parameters
-        let adminUserIds: number[] | undefined;
-        let adminFilter: string | undefined;
-
-        if (isAdmin()) {
-          // Admin statistics now respond to dropdown selection like user stats
-          if (dashboardState.chartMode === 'individual') {
-            // Individual mode: Show admin stats for the selected dashboard user
-            adminUserIds = dashboardState.selectedDashboardUserId ? [dashboardState.selectedDashboardUserId] : undefined;
-          } else {
-            // Group mode: Show aggregated admin stats for all users currently in the dropdown
-            adminUserIds = dashboardState.currentDropdownUsers.map(user => user.id);
-          }
-
-          // Still apply filter if needed (can be combined with user selection)
-          adminFilter = mapFilterToApiValue(dashboardState.activeFilter);
-        }
-
-        // Execute all API calls in parallel
-        const [
-          userStatsResponse,
-          loginActivityResponse,
-          trendsResponse,
-          comparisonResponse,
-          distributionResponse,
-          adminDashboardResponse,
-          adminChartsResponse
-        ] = await Promise.allSettled([
-          getUserStats(targetUserId, startDate, endDate),
-          getLoginActivity(1, 15, targetUserId, startDate, endDate),
+        const [trendsResponse, comparisonResponse, distributionResponse] = await Promise.allSettled([
           getLoginTrends(chartUserIds, startDate, endDate),
           getLoginComparison(chartUserIds, startDate, endDate),
-          getLoginDistribution(chartUserIds, startDate, endDate),
-          isAdmin() ? getAdminDashboard(adminUserIds, startDate, endDate, adminFilter) : Promise.resolve(null),
-          isAdmin() ? getAdminCharts() : Promise.resolve(null)
+          getLoginDistribution(chartUserIds, startDate, endDate)
         ]);
-
-        // Process responses
-        if (userStatsResponse.status === 'fulfilled') {
-          setUserStats(userStatsResponse.value);
-        }
-
-        if (loginActivityResponse.status === 'fulfilled') {
-          setLoginActivity(loginActivityResponse.value);
-        }
 
         if (trendsResponse.status === 'fulfilled') {
           setLoginTrends(trendsResponse.value);
         }
-
         if (comparisonResponse.status === 'fulfilled') {
           setLoginComparison(comparisonResponse.value);
         }
-
         if (distributionResponse.status === 'fulfilled') {
           setLoginDistribution(distributionResponse.value);
         }
-
-        if (isAdmin() && adminDashboardResponse.status === 'fulfilled') {
-          setAdminDashboard(adminDashboardResponse.value);
-        }
-
-        if (isAdmin() && adminChartsResponse.status === 'fulfilled') {
-          // Admin charts data is available but not currently used in the UI
-        }
-
-        // Check if any critical requests failed
-        const criticalFailures = [
-          userStatsResponse.status === 'rejected',
-          loginActivityResponse.status === 'rejected',
-          trendsResponse.status === 'rejected'
-        ];
-
-        if (criticalFailures.some(failed => failed)) {
-          setError(t('dashboard.error_loading_data'));
-        }
-
       } catch (err) {
-        setError(t('dashboard.error_loading_data'));
+        setLoginTrends(null);
+        setLoginComparison(null);
+        setLoginDistribution(null);
       } finally {
-        setLoading(false);
+        setChartsLoading(false);
       }
     };
 
-    fetchDashboardData();
-  }, [currentUserId, userId, isAdmin, canAccessUserData, t, dashboardState.activeFilter, dashboardState.selectedUserIds, dashboardState.selectedDashboardUserId, dashboardState.currentDropdownUsers, dashboardState.chartMode, dashboardState.startDate, dashboardState.endDate]);
+    fetchCharts();
+  }, [dashboardState.chartMode, dashboardState.selectedDashboardUserId, dashboardState.currentDropdownUsers, dashboardState.startDate, dashboardState.endDate]);
+
+  // Fetch admin dashboard - triggered by admin filters, user selection, and date range changes
+  useEffect(() => {
+    if (!isAdmin()) {
+      setAdminDashboardLoading(false);
+      return;
+    }
+
+    const fetchAdminDashboard = async () => {
+      setAdminDashboardLoading(true);
+
+      try {
+        const startDate = dashboardState.startDate || undefined;
+        const endDate = dashboardState.endDate || undefined;
+
+        let adminUserIds: number[] | undefined;
+        if (dashboardState.chartMode === 'individual') {
+          adminUserIds = dashboardState.selectedDashboardUserId ? [dashboardState.selectedDashboardUserId] : undefined;
+        } else {
+          adminUserIds = dashboardState.currentDropdownUsers.map(user => user.id);
+        }
+
+        const adminFilter = mapFilterToApiValue(dashboardState.activeFilter);
+
+        const [adminDashboardResponse] = await Promise.allSettled([
+          getAdminDashboard(adminUserIds, startDate, endDate, adminFilter)
+        ]);
+
+        if (adminDashboardResponse.status === 'fulfilled') {
+          setAdminDashboard(adminDashboardResponse.value);
+        }
+      } catch (err) {
+        setAdminDashboard(null);
+      } finally {
+        setAdminDashboardLoading(false);
+      }
+    };
+
+    fetchAdminDashboard();
+  }, [isAdmin, dashboardState.activeFilter, dashboardState.chartMode, dashboardState.selectedDashboardUserId, dashboardState.currentDropdownUsers, dashboardState.startDate, dashboardState.endDate]);
 
   // Fetch selected user info for chart titles
   useEffect(() => {
@@ -270,44 +271,6 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   }, [dashboardState.selectedDashboardUserId, isAdmin]);
 
   // Note: selectedGroupUsers fetching was removed as it's no longer needed
-
-  // Render loading state
-  if (loading) {
-    return (
-      <PageContainer data-testid="dashboard-page-container">
-        <ContentWrapper data-testid="dashboard-content-wrapper">
-          <PageHeader data-testid="dashboard-page-header">
-            <Title data-testid="dashboard-title">{t('dashboard.title')}</Title>
-            <Subtitle data-testid="dashboard-subtitle">{t('dashboard.subtitle')}</Subtitle>
-          </PageHeader>
-          <DashboardContainerWrapper data-testid="dashboard-main-container">
-            <div className="flex items-center justify-center h-64">
-              <div data-testid="spinner" className="w-12 h-12 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-            </div>
-          </DashboardContainerWrapper>
-        </ContentWrapper>
-      </PageContainer>
-    );
-  }
-
-  // Render error state
-  if (error) {
-    return (
-      <PageContainer data-testid="dashboard-page-container">
-        <ContentWrapper data-testid="dashboard-content-wrapper">
-          <PageHeader data-testid="dashboard-page-header">
-            <Title data-testid="dashboard-title">{t('dashboard.title')}</Title>
-            <Subtitle data-testid="dashboard-subtitle">{t('dashboard.subtitle')}</Subtitle>
-          </PageHeader>
-          <DashboardContainerWrapper data-testid="dashboard-main-container">
-            <ErrorMessage>
-              {error}
-            </ErrorMessage>
-          </DashboardContainerWrapper>
-        </ContentWrapper>
-      </PageContainer>
-    );
-  }
 
   // Generate custom chart titles based on chart mode and user selection
   const getChartTitle = (baseKey: string) => {
@@ -369,12 +332,12 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
         <DashboardContainerWrapper data-testid="dashboard-main-container">
           {/* Date Range Picker - Show for all users */}
-          <DateRangePicker disabled={loading} />
+          <DateRangePicker disabled={false} />
 
           {/* Dashboard Filters - Only show for admins */}
           {isAdmin() && (
             <DashboardFilters
-              disabled={loading}
+              disabled={false}
             />
           )}
 
@@ -385,7 +348,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
           {/* User Selector Dropdown - Only show for admins */}
           {isAdmin() && (
-            <UserSelectorDropdown disabled={loading} />
+            <UserSelectorDropdown disabled={false} />
           )}
 
           {/* User Statistics Section */}
@@ -393,7 +356,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           <DashboardGrid data-testid="dashboard-grid">
             <UserDashboardCard
               userStats={userStats}
-              loading={false}
+              loading={userStatsLoading}
             />
           </DashboardGrid>
 
@@ -401,28 +364,28 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           <SectionTitle>{t('dashboard.recent_activity')}</SectionTitle>
           <LoginActivityTable
             loginActivity={loginActivity?.results || []}
-            loading={false}
+            loading={loginActivityLoading}
           />
 
           {/* Charts Section */}
           <SectionTitle>{t('dashboard.visualizations')}</SectionTitle>
-          <ChartModeToggle disabled={loading} />
+          <ChartModeToggle disabled={false} />
           <ChartGrid data-testid="dashboard-chart-grid">
             <LoginTrendsChart
               chartData={loginTrends}
-              loading={false}
+              loading={chartsLoading}
               chartType="line"
               customTitle={getChartTitle('dashboard.login_trends')}
             />
             <LoginTrendsChart
               chartData={loginComparison}
-              loading={false}
+              loading={chartsLoading}
               chartType="bar"
               customTitle={getChartTitle('dashboard.login_comparison')}
             />
             <LoginTrendsChart
               chartData={loginDistribution}
-              loading={false}
+              loading={chartsLoading}
               chartType="pie"
               customTitle={getChartTitle('dashboard.login_distribution')}
             />

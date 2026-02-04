@@ -446,9 +446,9 @@ describe('DashboardUserList', () => {
 
       // Clear default mock and set up mocks in sequence
       mockGetUsers.mockClear();
-      mockGetUsers.mockResolvedValueOnce(initialResponse);
-      mockGetUsers.mockResolvedValueOnce(page2Response);
-      mockGetUsers.mockResolvedValueOnce(regularUsersResponse);
+      mockGetUsers.mockResolvedValueOnce(initialResponse); // 1. Initial load
+      mockGetUsers.mockResolvedValueOnce(page2Response); // 2. Page 2 navigation
+      mockGetUsers.mockResolvedValueOnce(regularUsersResponse); // 3. Filter change with page reset
 
       const store = createMockStore({ activeFilter: 'all' });
       render(
@@ -484,12 +484,437 @@ describe('DashboardUserList', () => {
 
       // Verify API was called with page=1 for the new filter and component updated
       await waitFor(() => {
-        expect(mockGetUsers).toHaveBeenCalledTimes(3);
+        expect(mockGetUsers).toHaveBeenCalledTimes(3); // Initial + page 2 + filter change
         expect(mockGetUsers).toHaveBeenLastCalledWith('/api/user/users/', 1, 3, 'regular', undefined);
         expect(screen.getByText('regular1')).toBeInTheDocument();
         // Since regular users has only 1 page, pagination controls are not shown
         expect(screen.queryByText('Page 1 of 1 (3 users)')).not.toBeInTheDocument();
       });
+    });
+
+    it('filters users correctly when changing filter types', async () => {
+      // Setup different responses for different filter types
+      const allUsersResponse = {
+        count: 6,
+        next: null,
+        previous: null,
+        results: [
+          { id: 1, username: 'admin1', email: 'admin1@test.com' },
+          { id: 2, username: 'regular1', email: 'regular1@test.com' },
+          { id: 3, username: 'admin2', email: 'admin2@test.com' },
+          { id: 4, username: 'regular2', email: 'regular2@test.com' },
+          { id: 5, username: 'admin3', email: 'admin3@test.com' },
+          { id: 6, username: 'regular3', email: 'regular3@test.com' },
+        ],
+      };
+
+      const adminUsersResponse = {
+        count: 3,
+        next: null,
+        previous: null,
+        results: [
+          { id: 1, username: 'admin1', email: 'admin1@test.com' },
+          { id: 3, username: 'admin2', email: 'admin2@test.com' },
+          { id: 5, username: 'admin3', email: 'admin3@test.com' },
+        ],
+      };
+
+      const regularUsersResponse = {
+        count: 3,
+        next: null,
+        previous: null,
+        results: [
+          { id: 2, username: 'regular1', email: 'regular1@test.com' },
+          { id: 4, username: 'regular2', email: 'regular2@test.com' },
+          { id: 6, username: 'regular3', email: 'regular3@test.com' },
+        ],
+      };
+
+      const meUsersResponse = {
+        count: 1,
+        next: null,
+        previous: null,
+        results: [
+          { id: 99, username: 'currentuser', email: 'current@test.com' },
+        ],
+      };
+
+      // Set up mocks in sequence
+      mockGetUsers.mockClear();
+      mockGetUsers.mockResolvedValueOnce(allUsersResponse); // Initial load
+      mockGetUsers.mockResolvedValueOnce(adminUsersResponse); // After admin filter
+      mockGetUsers.mockResolvedValueOnce(regularUsersResponse); // After regular filter
+      mockGetUsers.mockResolvedValueOnce(meUsersResponse); // After me filter
+
+      const store = createMockStore({ activeFilter: 'all' });
+      render(
+        <Provider store={store}>
+          <I18nextProvider i18n={i18n}>
+            <DashboardUserList />
+          </I18nextProvider>
+        </Provider>
+      );
+
+      // Initial load should show all users
+      await waitFor(() => {
+        expect(screen.getByText('admin1')).toBeInTheDocument();
+        expect(screen.getByText('regular1')).toBeInTheDocument();
+      });
+
+      // Change to admin filter
+      await act(async () => {
+        store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'admin' });
+      });
+
+      await waitFor(() => {
+        expect(mockGetUsers).toHaveBeenLastCalledWith('/api/user/users/', 1, 3, 'admin', undefined);
+        expect(screen.getByText('admin1')).toBeInTheDocument();
+        expect(screen.getByText('admin2')).toBeInTheDocument();
+        expect(screen.queryByText('regular1')).not.toBeInTheDocument();
+      });
+
+      // Change to regular filter
+      await act(async () => {
+        store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'regular' });
+      });
+
+      await waitFor(() => {
+        expect(mockGetUsers).toHaveBeenLastCalledWith('/api/user/users/', 1, 3, 'regular', undefined);
+        expect(screen.getByText('regular1')).toBeInTheDocument();
+        expect(screen.getByText('regular2')).toBeInTheDocument();
+        expect(screen.queryByText('admin1')).not.toBeInTheDocument();
+      });
+
+      // Change to me filter
+      await act(async () => {
+        store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'me' });
+      });
+
+      await waitFor(() => {
+        expect(mockGetUsers).toHaveBeenLastCalledWith('/api/user/users/', 1, 3, undefined, true);
+        expect(screen.getByText('currentuser')).toBeInTheDocument();
+        expect(screen.queryByText('admin1')).not.toBeInTheDocument();
+        expect(screen.queryByText('regular1')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('Pagination Reset Edge Cases', () => {
+      it('handles rapid filter changes without breaking pagination', async () => {
+        const filterResponses = {
+          all: {
+            count: 12,
+            next: 'http://test.com?page=2',
+            previous: null,
+            results: [
+              { id: 1, username: 'user1', email: 'user1@test.com' },
+              { id: 2, username: 'user2', email: 'user2@test.com' },
+              { id: 3, username: 'user3', email: 'user3@test.com' },
+            ],
+          },
+          admin: {
+            count: 6,
+            next: 'http://test.com?page=2',
+            previous: null,
+            results: [
+              { id: 1, username: 'admin1', email: 'admin1@test.com' },
+              { id: 3, username: 'admin2', email: 'admin2@test.com' },
+              { id: 5, username: 'admin3', email: 'admin3@test.com' },
+            ],
+          },
+          regular: {
+            count: 6,
+            next: 'http://test.com?page=2',
+            previous: null,
+            results: [
+              { id: 2, username: 'regular1', email: 'regular1@test.com' },
+              { id: 4, username: 'regular2', email: 'regular2@test.com' },
+              { id: 6, username: 'regular3', email: 'regular3@test.com' },
+            ],
+          },
+        };
+
+        // Set up mocks that will be called in sequence
+        mockGetUsers.mockClear();
+        mockGetUsers.mockResolvedValueOnce(filterResponses.all); // Initial load
+        mockGetUsers.mockResolvedValueOnce(filterResponses.admin); // Change to admin
+        mockGetUsers.mockResolvedValueOnce(filterResponses.regular); // Change to regular
+        mockGetUsers.mockResolvedValueOnce(filterResponses.all); // Change back to all
+
+        const store = createMockStore({ activeFilter: 'all' });
+        render(
+          <Provider store={store}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardUserList />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        // Initial load
+        await waitFor(() => {
+          expect(screen.getByText('user1')).toBeInTheDocument();
+        });
+
+        // Rapid filter changes
+        await act(async () => {
+          store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'admin' });
+        });
+
+        await waitFor(() => {
+          expect(screen.getByText('admin1')).toBeInTheDocument();
+        });
+
+        await act(async () => {
+          store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'regular' });
+        });
+
+        await waitFor(() => {
+          expect(screen.getByText('regular1')).toBeInTheDocument();
+        });
+
+        await act(async () => {
+          store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'all' });
+        });
+
+        await waitFor(() => {
+          expect(screen.getByText('user1')).toBeInTheDocument();
+        });
+
+        // Verify all API calls were made with page=1 (reset pagination)
+        expect(mockGetUsers).toHaveBeenCalledTimes(4);
+        expect(mockGetUsers).toHaveBeenNthCalledWith(1, '/api/user/users/', 1, 3, undefined, undefined); // all
+        expect(mockGetUsers).toHaveBeenNthCalledWith(2, '/api/user/users/', 1, 3, 'admin', undefined); // admin
+        expect(mockGetUsers).toHaveBeenNthCalledWith(3, '/api/user/users/', 1, 3, 'regular', undefined); // regular
+        expect(mockGetUsers).toHaveBeenNthCalledWith(4, '/api/user/users/', 1, 3, undefined, undefined); // all
+      });
+
+
+
+      it('handles component re-mounting with different initial filter states', async () => {
+        // Test that component works correctly when mounted with different filter states
+        const adminResponse = {
+          count: 3,
+          next: null,
+          previous: null,
+          results: [
+            { id: 1, username: 'admin1', email: 'admin1@test.com' },
+            { id: 3, username: 'admin2', email: 'admin2@test.com' },
+            { id: 5, username: 'admin3', email: 'admin3@test.com' },
+          ],
+        };
+
+        mockGetUsers.mockResolvedValue(adminResponse);
+
+        // Mount component with admin filter as initial state
+        const store = createMockStore({ activeFilter: 'admin' });
+        const { rerender } = render(
+          <Provider store={store}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardUserList />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        await waitFor(() => {
+          expect(screen.getByText('admin1')).toBeInTheDocument();
+        });
+
+        // Re-mount with different filter
+        mockGetUsers.mockResolvedValue({
+          count: 3,
+          next: null,
+          previous: null,
+          results: [
+            { id: 2, username: 'regular1', email: 'regular1@test.com' },
+            { id: 4, username: 'regular2', email: 'regular2@test.com' },
+            { id: 6, username: 'regular3', email: 'regular3@test.com' },
+          ],
+        });
+
+        rerender(
+          <Provider store={createMockStore({ activeFilter: 'regular' })}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardUserList />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        await waitFor(() => {
+          expect(screen.getByText('regular1')).toBeInTheDocument();
+          expect(screen.queryByText('admin1')).not.toBeInTheDocument();
+        });
+      });
+
+      it('handles page 2 to regular filter switch without 404 error', async () => {
+        // Reproduce the exact issue: navigate to page 2 with "all users", then switch to "regular"
+        const allUsersPage1 = {
+          count: 9,
+          next: 'http://test.com?page=2',
+          previous: null,
+          results: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'user2', email: 'user2@test.com' },
+            { id: 3, username: 'user3', email: 'user3@test.com' },
+          ],
+        };
+
+        const allUsersPage2 = {
+          count: 9,
+          next: 'http://test.com?page=3',
+          previous: 'http://test.com?page=1',
+          results: [
+            { id: 4, username: 'user4', email: 'user4@test.com' },
+            { id: 5, username: 'user5', email: 'user5@test.com' },
+            { id: 6, username: 'user6', email: 'user6@test.com' },
+          ],
+        };
+
+        const regularUsersPage1 = {
+          count: 3,
+          next: null,
+          previous: null,
+          results: [
+            { id: 7, username: 'regular1', email: 'regular1@test.com' },
+            { id: 8, username: 'regular2', email: 'regular2@test.com' },
+            { id: 9, username: 'regular3', email: 'regular3@test.com' },
+          ],
+        };
+
+        mockGetUsers.mockClear();
+        mockGetUsers.mockResolvedValueOnce(allUsersPage1); // Initial load
+        mockGetUsers.mockResolvedValueOnce(allUsersPage2); // Navigate to page 2
+        mockGetUsers.mockResolvedValueOnce(regularUsersPage1); // Filter change to regular
+
+        const store = createMockStore({ activeFilter: 'all' });
+        render(
+          <Provider store={store}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardUserList />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        // Initial load (page 1)
+        await waitFor(() => {
+          expect(screen.getByText('user1')).toBeInTheDocument();
+          expect(screen.getByTestId('next-button')).toBeInTheDocument();
+        });
+
+        // Navigate to page 2
+        const nextButton = screen.getByTestId('next-button');
+        await act(async () => {
+          fireEvent.click(nextButton);
+        });
+
+        await waitFor(() => {
+          expect(screen.getByText('user4')).toBeInTheDocument();
+          expect(screen.getByText('Page 2 of 3 (9 users)')).toBeInTheDocument();
+        });
+
+        // CRITICAL TEST: Switch from "all users" (page 2) to "regular" filter
+        // This should NOT cause a 404 error
+        await act(async () => {
+          store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'regular' });
+        });
+
+        // Should show regular users without 404 error
+        await waitFor(() => {
+          expect(screen.getByText('regular1')).toBeInTheDocument();
+          expect(screen.getByText('regular2')).toBeInTheDocument();
+          expect(screen.queryByText('user4')).not.toBeInTheDocument(); // Should not show old page 2 results
+        });
+
+        // Verify API calls: should be called with page=1 for regular filter
+        expect(mockGetUsers).toHaveBeenCalledTimes(3);
+        expect(mockGetUsers).toHaveBeenNthCalledWith(1, '/api/user/users/', 1, 3, undefined, undefined); // Initial load
+        expect(mockGetUsers).toHaveBeenNthCalledWith(2, '/api/user/users/', 2, 3, undefined, undefined); // Page 2 navigation
+        expect(mockGetUsers).toHaveBeenNthCalledWith(3, '/api/user/users/', 1, 3, 'regular', undefined); // Filter change - page reset to 1
+      });
+
+      it('prevents duplicate API calls during rapid filter changes', async () => {
+        // Test that rapid filter changes don't cause multiple concurrent API calls
+        const allResponse = {
+          count: 6,
+          next: null,
+          previous: null,
+          results: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'user2', email: 'user2@test.com' },
+            { id: 3, username: 'user3', email: 'user3@test.com' },
+          ],
+        };
+
+        const adminResponse = {
+          count: 3,
+          next: null,
+          previous: null,
+          results: [
+            { id: 1, username: 'admin1', email: 'admin1@test.com' },
+            { id: 3, username: 'admin2', email: 'admin2@test.com' },
+            { id: 5, username: 'admin3', email: 'admin3@test.com' },
+          ],
+        };
+
+        const regularResponse = {
+          count: 3,
+          next: null,
+          previous: null,
+          results: [
+            { id: 2, username: 'regular1', email: 'regular1@test.com' },
+            { id: 4, username: 'regular2', email: 'regular2@test.com' },
+            { id: 6, username: 'regular3', email: 'regular3@test.com' },
+          ],
+        };
+
+        mockGetUsers.mockClear();
+        mockGetUsers.mockResolvedValueOnce(allResponse); // Initial load
+        mockGetUsers.mockResolvedValueOnce(adminResponse); // First filter change (admin)
+        mockGetUsers.mockResolvedValueOnce(regularResponse); // Second filter change (regular)
+        mockGetUsers.mockResolvedValueOnce(allResponse); // Third filter change (back to all)
+
+        const store = createMockStore({ activeFilter: 'all' });
+        render(
+          <Provider store={store}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardUserList />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        // Initial load
+        await waitFor(() => {
+          expect(screen.getByText('user1')).toBeInTheDocument();
+        });
+
+        // Rapid filter changes - each should trigger an API call
+        await act(async () => {
+          store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'admin' });
+        });
+
+        await waitFor(() => {
+          expect(screen.getByText('admin1')).toBeInTheDocument();
+        });
+
+        await act(async () => {
+          store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'regular' });
+        });
+
+        await waitFor(() => {
+          expect(screen.getByText('regular1')).toBeInTheDocument();
+        });
+
+        await act(async () => {
+          store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'all' });
+        });
+
+        await waitFor(() => {
+          expect(screen.getByText('user1')).toBeInTheDocument();
+        });
+
+        // Should have made 4 API calls total: initial + 3 filter changes
+        expect(mockGetUsers).toHaveBeenCalledTimes(4);
+      });
+
+
     });
   });
 
