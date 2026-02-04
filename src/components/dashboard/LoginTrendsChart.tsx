@@ -49,7 +49,7 @@ interface LoginTrendsChartProps {
  * Displays login trends data in various chart formats
  * Shows loading state, error state, and success state
  */
-const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading, chartType, customTitle }) => {
+const LoginTrendsChart: React.FC<LoginTrendsChartProps> = React.memo(({ chartData, loading, chartType, customTitle }) => {
   const { t, i18n } = useTranslation();
 
   // Get the chart title - use customTitle if provided, otherwise use default
@@ -161,6 +161,8 @@ const LoginTrendsChart: React.FC<LoginTrendsChartProps> = ({ chartData, loading,
       </div>
     </ChartContainer>
   );
-};
+});
+
+LoginTrendsChart.displayName = 'LoginTrendsChart';
 
 export default LoginTrendsChart;

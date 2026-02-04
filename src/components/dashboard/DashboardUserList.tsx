@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
@@ -58,84 +58,75 @@ const DashboardUserList: React.FC = () => {
 
   // Ref to prevent multiple concurrent API calls
   const hasFetchedRef = useRef(false);
-  const currentFetchKeyRef = useRef<string>('');
   const previousFilterRef = useRef<string>(activeFilter);
 
   const pageSize = 3; // Match the dashboard page size
 
-  // Fetch users on component mount, page changes, and filter changes
-  useEffect(() => {
-    // Reset page to 1 when filter changes
-    const filterChanged = previousFilterRef.current !== activeFilter;
-    if (filterChanged) {
-      setCurrentPage(1);
-      previousFilterRef.current = activeFilter;
-      // Return early to avoid fetching with old page number
-      return;
-    }
+  // Memoized fetch function to avoid recreation on every render
+  const fetchUsers = useCallback(async (page: number, filter: string) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Create a unique key for this fetch based on dependencies
-    const fetchKey = `${activeFilter}-${currentPage}`;
+      // Determine API parameters based on filter
+      let role: 'admin' | 'regular' | undefined;
+      let me: boolean | undefined;
 
-    // Prevent multiple concurrent fetches for the same parameters
-    if (currentFetchKeyRef.current === fetchKey && hasFetchedRef.current) {
-      return;
-    }
-
-    currentFetchKeyRef.current = fetchKey;
-    hasFetchedRef.current = true;
-
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Determine API parameters based on active filter
-        let role: 'admin' | 'regular' | undefined;
-        let me: boolean | undefined;
-
-        switch (activeFilter) {
-          case 'regular':
-            role = 'regular';
-            break;
-          case 'admin':
-            role = 'admin';
-            break;
-          case 'me':
-            me = true;
-            break;
-          case 'all':
-          default:
-            // No additional parameters for 'all'
-            break;
-        }
-
-        const response: PaginatedResponse = await axiosApiServiceLoadUserList.get(
-          API_ENDPOINTS.GET_USERS,
-          currentPage,
-          pageSize,
-          role,
-          me
-        );
-
-        // Handle malformed responses
-        const userResults = Array.isArray(response.results) ? response.results : [];
-        const userCount = typeof response.count === 'number' ? response.count : 0;
-
-        setUsers(userResults);
-        setTotalCount(userCount);
-        setTotalPages(Math.ceil(userCount / pageSize));
-        setHasNext(response.next !== null);
-        setHasPrevious(response.previous !== null);
-      } catch (err) {
-        setError(t('dashboard.user_list.error_loading'));
-      } finally {
-        setLoading(false);
+      switch (filter) {
+        case 'regular':
+          role = 'regular';
+          break;
+        case 'admin':
+          role = 'admin';
+          break;
+        case 'me':
+          me = true;
+          break;
+        case 'all':
+        default:
+          // No additional parameters for 'all'
+          break;
       }
-    };
 
-    fetchUsers();
-  }, [currentPage, activeFilter, t]);
+      const response: PaginatedResponse = await axiosApiServiceLoadUserList.get(
+        API_ENDPOINTS.GET_USERS,
+        page,
+        pageSize,
+        role,
+        me
+      );
+
+      // Handle malformed responses
+      const userResults = Array.isArray(response.results) ? response.results : [];
+      const userCount = typeof response.count === 'number' ? response.count : 0;
+
+      setUsers(userResults);
+      setTotalCount(userCount);
+      setTotalPages(Math.ceil(userCount / pageSize));
+      setHasNext(response.next !== null);
+      setHasPrevious(response.previous !== null);
+    } catch (err) {
+      setError(t('dashboard.user_list.error_loading'));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  // Single effect to handle all data fetching scenarios
+  useEffect(() => {
+    const filterChanged = previousFilterRef.current !== activeFilter;
+
+    if (filterChanged) {
+      // Filter changed - reset page and fetch with new filter
+      previousFilterRef.current = activeFilter;
+      setCurrentPage(1);
+      fetchUsers(1, activeFilter);
+    } else if (currentPage !== 1 || !hasFetchedRef.current) {
+      // Either page changed (and filter stayed same) or initial load
+      hasFetchedRef.current = true;
+      fetchUsers(currentPage, activeFilter);
+    }
+  }, [currentPage, activeFilter, fetchUsers]);
 
   // Handle user selection
   const handleUserToggle = (userId: number) => {

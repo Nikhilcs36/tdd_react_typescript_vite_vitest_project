@@ -25,7 +25,7 @@ interface UserDashboardCardProps {
  * Displays user login statistics in a card format
  * Shows loading state, error state, and success state
  */
-const UserDashboardCard: React.FC<UserDashboardCardProps> = ({ userStats, loading }) => {
+const UserDashboardCard: React.FC<UserDashboardCardProps> = React.memo(({ userStats, loading }) => {
   const { t } = useTranslation();
 
   // Format the last login date for display
@@ -106,6 +106,8 @@ const UserDashboardCard: React.FC<UserDashboardCardProps> = ({ userStats, loadin
       </StatsContainer>
     </Card>
   );
-};
+});
+
+UserDashboardCard.displayName = 'UserDashboardCard';
 
 export default UserDashboardCard;
