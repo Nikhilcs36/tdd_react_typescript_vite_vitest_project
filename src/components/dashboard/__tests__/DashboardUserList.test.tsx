@@ -410,6 +410,87 @@ describe('DashboardUserList', () => {
       const checkboxes = screen.getAllByRole('checkbox');
       expect(checkboxes[0]).toBeChecked(); // Should remain selected
     });
+
+    it('resets page to 1 when filter changes', async () => {
+      // Setup initial response with pagination
+      const initialResponse = {
+        count: 6,
+        next: 'http://test.com?page=2',
+        previous: null,
+        results: mockUsers,
+      };
+
+      // Setup page 2 response
+      const page2Response = {
+        count: 6,
+        next: null,
+        previous: 'http://test.com?page=1',
+        results: [
+          { id: 4, username: 'user4', email: 'user4@test.com' },
+          { id: 5, username: 'user5', email: 'user5@test.com' },
+          { id: 6, username: 'user6', email: 'user6@test.com' },
+        ],
+      };
+
+      // Setup regular users response
+      const regularUsersResponse = {
+        count: 3,
+        next: null,
+        previous: null,
+        results: [
+          { id: 7, username: 'regular1', email: 'regular1@test.com' },
+          { id: 8, username: 'regular2', email: 'regular2@test.com' },
+          { id: 9, username: 'regular3', email: 'regular3@test.com' },
+        ],
+      };
+
+      // Clear default mock and set up mocks in sequence
+      mockGetUsers.mockClear();
+      mockGetUsers.mockResolvedValueOnce(initialResponse);
+      mockGetUsers.mockResolvedValueOnce(page2Response);
+      mockGetUsers.mockResolvedValueOnce(regularUsersResponse);
+
+      const store = createMockStore({ activeFilter: 'all' });
+      render(
+        <Provider store={store}>
+          <I18nextProvider i18n={i18n}>
+            <DashboardUserList />
+          </I18nextProvider>
+        </Provider>
+      );
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('user1')).toBeInTheDocument();
+        expect(screen.getByTestId('next-button')).toBeInTheDocument();
+      });
+
+      // Navigate to page 2
+      const nextButton = screen.getByTestId('next-button');
+      await act(async () => {
+        fireEvent.click(nextButton);
+      });
+
+      // Wait for page 2 to load
+      await waitFor(() => {
+        expect(screen.getByText('user4')).toBeInTheDocument();
+        expect(screen.getByText('Page 2 of 2 (6 users)')).toBeInTheDocument();
+      });
+
+      // Now change filter to 'regular' - this should reset page to 1
+      await act(async () => {
+        store.dispatch({ type: 'dashboard/setActiveFilter', payload: 'regular' });
+      });
+
+      // Verify API was called with page=1 for the new filter and component updated
+      await waitFor(() => {
+        expect(mockGetUsers).toHaveBeenCalledTimes(3);
+        expect(mockGetUsers).toHaveBeenLastCalledWith('/api/user/users/', 1, 3, 'regular', undefined);
+        expect(screen.getByText('regular1')).toBeInTheDocument();
+        // Since regular users has only 1 page, pagination controls are not shown
+        expect(screen.queryByText('Page 1 of 1 (3 users)')).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('Accessibility Features', () => {
