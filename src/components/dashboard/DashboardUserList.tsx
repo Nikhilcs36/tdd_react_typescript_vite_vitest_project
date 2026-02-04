@@ -59,11 +59,21 @@ const DashboardUserList: React.FC = () => {
   // Ref to prevent multiple concurrent API calls
   const hasFetchedRef = useRef(false);
   const currentFetchKeyRef = useRef<string>('');
+  const previousFilterRef = useRef<string>(activeFilter);
 
   const pageSize = 3; // Match the dashboard page size
 
   // Fetch users on component mount, page changes, and filter changes
   useEffect(() => {
+    // Reset page to 1 when filter changes
+    const filterChanged = previousFilterRef.current !== activeFilter;
+    if (filterChanged) {
+      setCurrentPage(1);
+      previousFilterRef.current = activeFilter;
+      // Return early to avoid fetching with old page number
+      return;
+    }
+
     // Create a unique key for this fetch based on dependencies
     const fetchKey = `${activeFilter}-${currentPage}`;
 
