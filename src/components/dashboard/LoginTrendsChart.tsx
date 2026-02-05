@@ -30,7 +30,7 @@ ChartJS.register(
 );
 
 // Styled components
-const ChartContainer = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
+const ChartContainer = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 min-h-[400px]`;
 const ChartHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
 const ChartTitle = tw.h3`text-lg font-semibold dark:text-dark-text`;
 const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;

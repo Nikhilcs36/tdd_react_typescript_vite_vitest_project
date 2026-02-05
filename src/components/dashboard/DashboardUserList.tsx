@@ -20,8 +20,9 @@ interface PaginatedResponse {
   results: User[];
 }
 
-const UserListContainer = tw.div`bg-white dark:bg-dark-secondary rounded-lg shadow-lg p-6 mb-8`;
-const UserListHeader = tw.h3`text-lg font-semibold mb-4 dark:text-dark-text`;
+// Ensure consistent height across all states to prevent jumping
+const UserListContainer = tw.div`bg-white dark:bg-dark-secondary rounded-lg shadow-lg p-6 mb-8 h-[420px] overflow-y-auto`;
+const UserListHeader = tw.h3`text-lg font-semibold mb-6 dark:text-dark-text`;
 const UserItem = tw.div`flex items-center space-x-3 p-3 border-b border-gray-200 dark:border-dark-accent last:border-b-0`;
 const UserCheckbox = tw.input`w-4 h-4 text-blue-600 rounded focus:ring-blue-500`;
 const UserInfo = tw.div`flex-1`;
@@ -29,8 +30,8 @@ const UserName = tw.div`font-medium text-gray-900 dark:text-dark-text`;
 const UserEmail = tw.div`text-sm text-gray-500 dark:text-gray-400`;
 const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin`;
 const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400 py-4`;
-const EmptyMessage = tw.div`text-center text-gray-500 dark:text-gray-400 py-8`;
-const PaginationContainer = tw.div`flex justify-between items-center mt-6`;
+const EmptyMessage = tw.div`text-center text-gray-500 dark:text-dark-text py-8`;
+const PaginationContainer = tw.div`flex justify-between items-center mt-4`;
 const PaginationButton = tw.button`w-20 px-4 py-2 bg-blue-600 text-white flex justify-center items-center rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed`;
 
 /**
@@ -150,63 +151,48 @@ const DashboardUserList: React.FC = () => {
     }
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <UserListContainer>
-        <UserListHeader>{t('dashboard.user_list.title')}</UserListHeader>
-        <div className="flex justify-center py-8">
-          <LoadingSpinner data-testid="spinner" />
-        </div>
-      </UserListContainer>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <UserListContainer>
-        <UserListHeader>{t('dashboard.user_list.title')}</UserListHeader>
-        <ErrorMessage>{error}</ErrorMessage>
-      </UserListContainer>
-    );
-  }
-
-  // Empty state
-  if (users.length === 0) {
-    return (
-      <UserListContainer>
-        <UserListHeader>{t('dashboard.user_list.title')}</UserListHeader>
-        <EmptyMessage>{t('dashboard.user_list.empty')}</EmptyMessage>
-      </UserListContainer>
-    );
-  }
-
   return (
-    <UserListContainer>
+    <UserListContainer data-testid="dashboard-user-list-container">
       <UserListHeader>{t('dashboard.user_list.title')}</UserListHeader>
-
-      <div className="space-y-2">
-        {users.map((user) => (
-          <UserItem key={user.id}>
-            <UserCheckbox
-              type="checkbox"
-              checked={selectedUserIds.includes(user.id)}
-              onChange={() => handleUserToggle(user.id)}
-              value={`user-${user.id}`}
-              data-testid={`user-checkbox-${user.id}`}
-            />
-            <UserInfo>
-              <UserName>{user.username}</UserName>
-              <UserEmail>{user.email}</UserEmail>
-            </UserInfo>
-          </UserItem>
-        ))}
+      
+      {/* Fixed height container for all states to prevent jumping */}
+      <div className="h-[250px] overflow-y-auto mb-4">
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <LoadingSpinner data-testid="spinner" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-full">
+            <ErrorMessage>{error}</ErrorMessage>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <EmptyMessage>{t('dashboard.user_list.empty')}</EmptyMessage>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {users.map((user) => (
+              <UserItem key={user.id}>
+                <UserCheckbox
+                  type="checkbox"
+                  checked={selectedUserIds.includes(user.id)}
+                  onChange={() => handleUserToggle(user.id)}
+                  value={`user-${user.id}`}
+                  data-testid={`user-checkbox-${user.id}`}
+                />
+                <UserInfo>
+                  <UserName>{user.username}</UserName>
+                  <UserEmail>{user.email}</UserEmail>
+                </UserInfo>
+              </UserItem>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
       {(hasNext || hasPrevious) && (
-        <PaginationContainer>
+        <PaginationContainer data-testid="pagination-container">
           <PaginationButton
             onClick={handlePreviousPage}
             disabled={!hasPrevious}

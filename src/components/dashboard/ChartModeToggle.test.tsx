@@ -31,7 +31,7 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
     currentDropdownUsers: [
       { id: 1, username: 'user1', email: 'user1@test.com' },
       { id: 2, username: 'user2', email: 'user2@test.com' }
-    ], // Default to multiple users so group button shows
+    ],
     chartMode: 'individual',
     startDate: null,
     endDate: null,
@@ -85,7 +85,6 @@ describe('ChartModeToggle', () => {
     const individualButton = screen.getByText('dashboard.chart_mode.individual');
     const groupButton = screen.getByText('dashboard.chart_mode.group');
 
-    // Individual should be active (styled differently)
     expect(individualButton).toBeInTheDocument();
     expect(groupButton).toBeInTheDocument();
   });
@@ -132,7 +131,7 @@ describe('ChartModeToggle', () => {
 
     await waitFor(() => {
       const state = store.getState().dashboard;
-      expect(state.chartMode).toBe('individual'); // Should remain the same
+      expect(state.chartMode).toBe('individual');
     });
   });
 
@@ -146,17 +145,14 @@ describe('ChartModeToggle', () => {
     expect(groupButton.closest('button')).toBeDisabled();
   });
 
-  it('hides entire toggle when only one user is available', () => {
+  it('renders placeholder when only one user is available', () => {
     renderWithProviders(<ChartModeToggle />, {
-      currentDropdownUsers: [{ id: 1, username: 'user1' }] // Only one user
+      currentDropdownUsers: [{ id: 1, username: 'user1' }]
     });
 
-    // Entire component should not render
-    const individualButton = screen.queryByText('dashboard.chart_mode.individual');
-    const groupButton = screen.queryByText('dashboard.chart_mode.group');
-
-    expect(individualButton).not.toBeInTheDocument();
-    expect(groupButton).not.toBeInTheDocument();
+    const placeholder = screen.getByTestId('chart-mode-placeholder');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveClass('h-12');
   });
 
   it('shows group button when multiple users are available', () => {
@@ -164,7 +160,7 @@ describe('ChartModeToggle', () => {
       currentDropdownUsers: [
         { id: 1, username: 'user1' },
         { id: 2, username: 'user2' }
-      ] // Multiple users
+      ]
     });
 
     const individualButton = screen.getByText('dashboard.chart_mode.individual');
@@ -177,7 +173,7 @@ describe('ChartModeToggle', () => {
   it('switches to individual mode when group becomes unavailable', async () => {
     const { store } = renderWithProviders(<ChartModeToggle />, {
       chartMode: 'grouped',
-      currentDropdownUsers: [{ id: 1, username: 'user1' }] // Only one user
+      currentDropdownUsers: [{ id: 1, username: 'user1' }]
     });
 
     await waitFor(() => {
