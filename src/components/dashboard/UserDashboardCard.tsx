@@ -4,7 +4,7 @@ import tw from 'twin.macro';
 import { UserStats } from '../../types/loginTracking';
 
 // Styled components
-const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
+const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 min-h-[280px]`;
 const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
 const CardTitle = tw.h3`text-lg font-semibold dark:text-dark-text`;
 const StatsContainer = tw.div`mt-4 grid grid-cols-2 gap-4`;

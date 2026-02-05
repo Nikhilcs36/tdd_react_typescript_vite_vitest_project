@@ -4,7 +4,7 @@ import tw from 'twin.macro';
 import { LoginActivityItem } from '../../types/loginTracking';
 
 // Styled components
-const TableContainer = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 mb-6`;
+const TableContainer = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 mb-6 min-h-[400px]`;
 const TableHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
 const TableTitle = tw.h3`text-lg font-semibold dark:text-dark-text`;
 const Table = tw.table`w-full mt-4`;

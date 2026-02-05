@@ -39,9 +39,9 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
     }
   }, [chartMode, currentDropdownUsers.length, dispatch]);
 
-  // Hide entire toggle when only one or no users are available
+  // Show placeholder when only one or no users are available to maintain consistent height
   if (currentDropdownUsers.length <= 1) {
-    return null;
+    return <div data-testid="chart-mode-placeholder" className="h-12" />;
   }
 
   const handleModeChange = (mode: 'individual' | 'grouped') => {

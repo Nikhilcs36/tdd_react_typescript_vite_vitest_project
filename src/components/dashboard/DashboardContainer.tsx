@@ -392,27 +392,39 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           </ChartGrid>
 
           {/* Admin Dashboard Section (if applicable) */}
-          {isAdmin() && adminDashboard && (
+          {isAdmin() && (
             <>
               <SectionTitle>{t('dashboard.admin_overview')}</SectionTitle>
               {/* Admin-specific components would go here */}
-              <div className="p-6 mb-8 bg-white rounded-lg shadow-lg dark:bg-dark-secondary">
-                <h3 className="mb-4 text-lg font-semibold dark:text-dark-text">
-                  {getAdminStatsTitle()}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {t('dashboard.total_users', { count: adminDashboard.total_users })}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {t('dashboard.active_users', { count: adminDashboard.active_users })}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {t('dashboard.total_logins', {
-                    count: adminDashboard.total_logins,
-                    successful: adminDashboard.total_successful_logins,
-                    failed: adminDashboard.total_failed_logins
-                  })}
-                </p>
+              <div className="p-6 mb-8 bg-white rounded-lg shadow-lg dark:bg-dark-secondary min-h-[200px]">
+                {adminDashboardLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <div className="w-8 h-8 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                  </div>
+                ) : adminDashboard ? (
+                  <>
+                    <h3 className="mb-4 text-lg font-semibold dark:text-dark-text">
+                      {getAdminStatsTitle()}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {t('dashboard.total_users', { count: adminDashboard.total_users })}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {t('dashboard.active_users', { count: adminDashboard.active_users })}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {t('dashboard.total_logins', {
+                        count: adminDashboard.total_logins,
+                        successful: adminDashboard.total_successful_logins,
+                        failed: adminDashboard.total_failed_logins
+                      })}
+                    </p>
+                  </>
+                ) : (
+                  <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                    {t('dashboard.error_loading_data')}
+                  </div>
+                )}
               </div>
             </>
           )}
