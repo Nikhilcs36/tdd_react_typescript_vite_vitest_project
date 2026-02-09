@@ -60,6 +60,7 @@ const DashboardUserList: React.FC = () => {
   // Ref to prevent multiple concurrent API calls
   const hasFetchedRef = useRef(false);
   const previousFilterRef = useRef<string>(activeFilter);
+  const previousPageRef = useRef<number>(1);
 
   const pageSize = 3; // Match the dashboard page size
 
@@ -116,14 +117,20 @@ const DashboardUserList: React.FC = () => {
   // Single effect to handle all data fetching scenarios
   useEffect(() => {
     const filterChanged = previousFilterRef.current !== activeFilter;
+    const pageChanged = previousPageRef.current !== currentPage;
 
     if (filterChanged) {
       // Filter changed - reset page and fetch with new filter
       previousFilterRef.current = activeFilter;
+      previousPageRef.current = 1; // Page will be reset to 1
       setCurrentPage(1);
       fetchUsers(1, activeFilter);
-    } else if (currentPage !== 1 || !hasFetchedRef.current) {
-      // Either page changed (and filter stayed same) or initial load
+      return;
+    }
+
+    if (pageChanged || !hasFetchedRef.current) {
+      // Page changed (and filter stayed same) or initial load
+      previousPageRef.current = currentPage;
       hasFetchedRef.current = true;
       fetchUsers(currentPage, activeFilter);
     }
@@ -147,7 +154,7 @@ const DashboardUserList: React.FC = () => {
 
   const handlePreviousPage = () => {
     if (hasPrevious) {
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage(prev => Math.max(1, prev - 1));
     }
   };
 

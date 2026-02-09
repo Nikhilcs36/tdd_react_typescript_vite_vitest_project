@@ -830,6 +830,101 @@ describe('DashboardUserList', () => {
         expect(mockGetUsers).toHaveBeenNthCalledWith(3, '/api/user/users/', 1, 3, 'regular', undefined); // Filter change - page reset to 1
       });
 
+      it('reproduces "Page 0 of 2 (5 users)" bug when navigating from page 2 back to page 1', async () => {
+        // This test reproduces the bug described by the user:
+        // 1. Filter "all users" with 5 total users (2 pages: page 1 has 3 users, page 2 has 2 users)
+        // 2. Navigate to page 2
+        // 3. Click "Previous" button to go back to page 1
+        // 4. Should show page 1 data, not page 2 data
+        // 5. Click "Previous" button again - should not show "Page 0 of 2 (5 users)"
+        
+        const allUsersPage1Response = {
+          count: 5,
+          next: 'http://test.com?page=2',
+          previous: null,
+          results: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'user2', email: 'user2@test.com' },
+            { id: 3, username: 'user3', email: 'user3@test.com' },
+          ],
+        };
+
+        const allUsersPage2Response = {
+          count: 5,
+          next: null,
+          previous: 'http://test.com?page=1',
+          results: [
+            { id: 4, username: 'user4', email: 'user4@test.com' },
+            { id: 5, username: 'user5', email: 'user5@test.com' },
+          ],
+        };
+
+        // Simulate API returning page 1 data when user clicks "Previous" button
+        const allUsersPage1SecondCallResponse = {
+          count: 5,
+          next: 'http://test.com?page=2',
+          previous: null,
+          results: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'user2', email: 'user2@test.com' },
+            { id: 3, username: 'user3', email: 'user3@test.com' },
+          ],
+        };
+
+        mockGetUsers.mockClear();
+        mockGetUsers.mockResolvedValueOnce(allUsersPage1Response); // Initial load (page 1)
+        mockGetUsers.mockResolvedValueOnce(allUsersPage2Response); // Navigate to page 2
+        mockGetUsers.mockResolvedValueOnce(allUsersPage1SecondCallResponse); // Click "Previous" button
+
+        const store = createMockStore({ activeFilter: 'all' });
+        render(
+          <Provider store={store}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardUserList />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        // Initial load (page 1)
+        await waitFor(() => {
+          expect(screen.getByText('user1')).toBeInTheDocument();
+          expect(screen.getByText('Page 1 of 2 (5 users)')).toBeInTheDocument();
+          expect(screen.getByTestId('next-button')).toBeInTheDocument();
+        });
+
+        // Navigate to page 2
+        const nextButton = screen.getByTestId('next-button');
+        await act(async () => {
+          fireEvent.click(nextButton);
+        });
+
+        // Wait for page 2 to load
+        await waitFor(() => {
+          expect(screen.getByText('user4')).toBeInTheDocument();
+          expect(screen.getByText('Page 2 of 2 (5 users)')).toBeInTheDocument();
+          expect(screen.getByTestId('prev-button')).toBeInTheDocument();
+        });
+
+        // Click "Previous" button to go back to page 1
+        const prevButton = screen.getByTestId('prev-button');
+        await act(async () => {
+          fireEvent.click(prevButton);
+        });
+
+        // Should show page 1 data again
+        await waitFor(() => {
+          expect(screen.getByText('user1')).toBeInTheDocument(); // Page 1 user
+          expect(screen.queryByText('user4')).not.toBeInTheDocument(); // Page 2 user should not be visible
+          expect(screen.getByText('Page 1 of 2 (5 users)')).toBeInTheDocument(); // Should show "Page 1 of 2", not "Page 0 of 2"
+        });
+
+        // Verify API was called 3 times: initial page 1, page 2, then back to page 1
+        expect(mockGetUsers).toHaveBeenCalledTimes(3);
+        expect(mockGetUsers).toHaveBeenNthCalledWith(1, '/api/user/users/', 1, 3, undefined, undefined);
+        expect(mockGetUsers).toHaveBeenNthCalledWith(2, '/api/user/users/', 2, 3, undefined, undefined);
+        expect(mockGetUsers).toHaveBeenNthCalledWith(3, '/api/user/users/', 1, 3, undefined, undefined);
+      });
+
       it('prevents duplicate API calls during rapid filter changes', async () => {
         // Test that rapid filter changes don't cause multiple concurrent API calls
         const allResponse = {
