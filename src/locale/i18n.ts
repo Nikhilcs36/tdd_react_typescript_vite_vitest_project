@@ -66,6 +66,7 @@ i18n.use(initReactI18next).init({
             password_required: "Password is required.",
             no_active_account:
               "No active account found with the given credentials.",
+            email_not_verified: "Please verify your email before logging in.",
             generic: "An unexpected error occurred.",
           },
         },
@@ -182,6 +183,22 @@ i18n.use(initReactI18next).init({
           user_not_found: "User not found",
           unauthorized_access: "Unauthorized access to dashboard data"
         },
+        emailVerification: {
+          title: "Email Verification",
+          verifying: "Verifying your email...",
+          success: {
+            title: "Email Verified!",
+            message: "Your email has been successfully verified.",
+            loginButton: "Go to Login",
+          },
+          errors: {
+            expired: "Verification link has expired. Please request a new one.",
+            invalid: "Invalid verification token.",
+          },
+          resend: {
+            button: "Resend Verification Email",
+          },
+        },
       },
     },
     ml: {
@@ -242,6 +259,7 @@ i18n.use(initReactI18next).init({
             password_required: "പാസ്‌വേഡ് ആവശ്യമാണ്.",
             no_active_account:
               "നൽകിയിട്ടുള്ള ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് സജീവമായ അക്കൗണ്ട് കണ്ടെത്താനായില്ല",
+            email_not_verified: "ലോഗിൻ ചെയ്യുന്നതിന് മുമ്പ് ദയവായി നിങ്ങളുടെ ഇമെയിൽ പരിശോധിക്കുക.",
             generic: "ഒരു അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു.",
           },
         },
@@ -353,6 +371,22 @@ i18n.use(initReactI18next).init({
           user_not_found: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
           unauthorized_access: "ഡാഷ്ബോർഡ് ഡാറ്റയിലേക്ക് അനധികൃത ആക്സസ്"
         },
+        emailVerification: {
+          title: "ഇമെയിൽ വെരിഫിക്കേഷൻ",
+          verifying: "നിങ്ങളുടെ ഇമെയിൽ പരിശോധിക്കുന്നു...",
+          success: {
+            title: "ഇമെയിൽ വെരിഫൈഡ്!",
+            message: "നിങ്ങളുടെ ഇമെയിൽ വിജയകരമായി വെരിഫൈ ചെയ്യപ്പെട്ടു.",
+            loginButton: "ലോഗിനിലേക്ക് പോകുക",
+          },
+          errors: {
+            expired: "വെരിഫിക്കേഷൻ ലിങ്കിന്റെ കാലാവധി കഴിഞ്ഞു. ദയവായി പുതിയത് അഭ്യർത്ഥിക്കുക.",
+            invalid: "അസാധുവായ വെരിഫിക്കേഷൻ ടോക്കൺ.",
+          },
+          resend: {
+            button: "വെരിഫിക്കേഷൻ ഇമെയിൽ വീണ്ടും അയക്കുക",
+          },
+        },
       },
     },
     ar: {
@@ -413,6 +447,7 @@ i18n.use(initReactI18next).init({
             password_required: "يرجى إدخال كلمة المرور.",
             no_active_account:
               "لم يتم العثور على حساب نشط ببيانات الاعتماد المقدمة",
+            email_not_verified: "يرجى التحقق من بريدك الإلكتروني قبل تسجيل الدخول.",
             generic: "حدث خطأ غير متوقع.",
           },
         },
@@ -522,6 +557,22 @@ i18n.use(initReactI18next).init({
           },
           user_not_found: "لم يتم العثور على المستخدم",
           unauthorized_access: "وصول غير مصرح به لبيانات لوحة التحكم"
+        },
+        emailVerification: {
+          title: "التحقق من البريد الإلكتروني",
+          verifying: "جاري التحقق من بريدك الإلكتروني...",
+          success: {
+            title: "تم التحقق من البريد الإلكتروني!",
+            message: "تم التحقق من بريدك الإلكتروني بنجاح.",
+            loginButton: "الذهاب إلى تسجيل الدخول",
+          },
+          errors: {
+            expired: "انتهت صلاحية رابط التحقق. يرجى طلب رابط جديد.",
+            invalid: "رمز التحقق غير صالح.",
+          },
+          resend: {
+            button: "إعادة إرسال بريد التحقق",
+          },
         },
       },
     },

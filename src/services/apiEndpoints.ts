@@ -27,4 +27,8 @@ export const API_ENDPOINTS = {
   USER_STATS_BY_ID: (userId: number) => `/api/user/${userId}/dashboard/stats/`,
   LOGIN_ACTIVITY_BY_ID: (userId: number) => `/api/user/${userId}/dashboard/login-activity/`,
   ADMIN_USER_STATS: "/api/admin/dashboard/users/stats/",
+
+  // Email Verification Endpoints
+  VERIFY_EMAIL: (token: string) => `/api/user/verify-email/${token}/`,
+  RESEND_VERIFICATION: "/api/user/resend-verification/",
 };
