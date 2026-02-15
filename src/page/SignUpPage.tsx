@@ -5,6 +5,7 @@ import { SignUpRequestBody, validateSignUp } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import i18n from "../locale/i18n";
+import { useNavigate } from "react-router-dom";
 
 const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100 dark:bg-dark-primary`;
 
@@ -49,6 +50,7 @@ interface SignUpState {
 
 interface SignUpPageProps extends WithTranslation {
   apiService: ApiService<SignUpRequestBody>;
+  navigate?: (path: string) => void;
 }
 
 interface SignUpResponse {
@@ -60,6 +62,7 @@ interface SignUpResponse {
 
 class SignUpPage extends Component<SignUpPageProps, SignUpState> {
   private validationTimeout: number | null = null;
+  private redirectTimeout: number | null = null;
 
   state: SignUpState = {
     username: "",
@@ -80,6 +83,9 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
   componentWillUnmount() {
     if (this.validationTimeout) {
       clearTimeout(this.validationTimeout);
+    }
+    if (this.redirectTimeout) {
+      clearTimeout(this.redirectTimeout);
     }
   }
 
@@ -170,6 +176,13 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
             body
           );
           this.setState({ successMessage: true });
+          
+          // Redirect to login page after 5 seconds
+          if (this.props.navigate) {
+            this.redirectTimeout = window.setTimeout(() => {
+              this.props.navigate!("/login");
+            }, 5000);
+          }
     } catch (error: any) {
       const apiError = error as { response?: { data?: { validationErrors?: Record<string, string> } } };
       const validationErrors = apiError.response?.data?.validationErrors || {};
@@ -261,4 +274,21 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
   }
 }
 
-export default withTranslation()(SignUpPage);
+// Wrapper component to inject navigate prop
+const SignUpPageWrapper: React.FC<Omit<SignUpPageProps, "navigate">> = (props) => {
+  let navigate: ((path: string) => void) | undefined;
+  
+  try {
+    navigate = useNavigate();
+  } catch (e) {
+    // useNavigate fails in tests without Router context
+    // In that case, navigate remains undefined
+    navigate = undefined;
+  }
+  
+  return <SignUpPage {...props} navigate={navigate} />;
+};
+
+// Export both the class component (for tests) and the wrapper (for app)
+export { SignUpPage };
+export default withTranslation()(SignUpPageWrapper);

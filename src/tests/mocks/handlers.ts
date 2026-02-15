@@ -115,7 +115,7 @@ export const handlers = [
     );
   }),
 
-// Mock API for userlist (msw) - Authorization aware ----(3)
+  // Mock API for userlist (msw) - Authorization aware ----(3)
   http.get(API_ENDPOINTS.GET_USERS, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 1;
@@ -892,6 +892,49 @@ export const handlers = [
             ]
           }
         }
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for email verification ----(17)
+  http.post("/api/user/verify-email/:token", async ({ request, params }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const { token } = params;
+
+    if (!token || token === "invalid-token") {
+      return HttpResponse.json(
+        { error: "Invalid verification token." },
+        { status: 400 }
+      );
+    }
+
+    if (token === "expired-token") {
+      return HttpResponse.json(
+        { error: "Verification token has expired. Please request a new one." },
+        { status: 400 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        message: "Email verified successfully. You can now log in.",
+        languageReceived: acceptLanguage,
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for resend verification email ----(18)
+  http.post("/api/user/resend-verification", async ({ request }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const body = (await request.json()) as { email?: string };
+
+    // Security: Always return success message even if email doesn't exist
+    return HttpResponse.json(
+      {
+        message: "Verification email sent.",
+        languageReceived: acceptLanguage,
       },
       { status: 200 }
     );

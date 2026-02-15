@@ -625,3 +625,77 @@ export const fetchApiServiceDeleteUser: ApiDeleteService = {
     return response.json() as Promise<R>;
   },
 };
+
+// Email verification request body type
+export interface EmailVerificationRequestBody {
+  email: string;
+}
+
+// Axios implementation for email verification
+export const axiosApiServiceVerifyEmail: ApiService = {
+  post: async <T>(url: string) => {
+    const response = await axios.post<T>(
+      url,
+      {},
+      {
+        headers: {
+          "Accept-Language": i18n.language,
+        },
+      }
+    );
+    return response.data;
+  },
+};
+
+// Fetch implementation for email verification (for MSW testing)
+export const fetchApiServiceVerifyEmail: ApiService = {
+  post: async <T>(url: string) => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Accept-Language": i18n.language,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
+    }
+    return response.json() as T;
+  },
+};
+
+// Axios implementation for resend verification email
+export const axiosApiServiceResendVerification: ApiService<EmailVerificationRequestBody> = {
+  post: async <T>(url: string, body?: EmailVerificationRequestBody) => {
+    const response = await axios.post<T>(url, body, {
+      headers: {
+        "Accept-Language": i18n.language,
+      },
+    });
+    return response.data;
+  },
+};
+
+// Fetch implementation for resend verification email (for MSW testing)
+export const fetchApiServiceResendVerification: ApiService<EmailVerificationRequestBody> = {
+  post: async <T>(url: string, body?: EmailVerificationRequestBody) => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": i18n.language,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
+    }
+    return response.json() as T;
+  },
+};
