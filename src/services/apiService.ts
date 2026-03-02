@@ -631,12 +631,23 @@ export interface EmailVerificationRequestBody {
   email: string;
 }
 
+// Email verification request body type
+export interface VerifyEmailRequestBody {
+  email: string;
+  token: string;
+}
+
+// Resend verification request body type
+export interface ResendVerificationRequestBody {
+  email: string;
+}
+
 // Axios implementation for email verification
-export const axiosApiServiceVerifyEmail: ApiService = {
-  post: async <T>(url: string) => {
+export const axiosApiServiceVerifyEmail: ApiService<VerifyEmailRequestBody> = {
+  post: async <T>(url: string, body?: VerifyEmailRequestBody) => {
     const response = await axios.post<T>(
       url,
-      {},
+      body,
       {
         headers: {
           "Accept-Language": i18n.language,
@@ -648,13 +659,15 @@ export const axiosApiServiceVerifyEmail: ApiService = {
 };
 
 // Fetch implementation for email verification (for MSW testing)
-export const fetchApiServiceVerifyEmail: ApiService = {
-  post: async <T>(url: string) => {
+export const fetchApiServiceVerifyEmail: ApiService<VerifyEmailRequestBody> = {
+  post: async <T>(url: string, body?: VerifyEmailRequestBody) => {
     const response = await fetch(url, {
       method: "POST",
       headers: {
+        "Content-Type": "application/json",
         "Accept-Language": i18n.language,
       },
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       const errorData = await response.json();
