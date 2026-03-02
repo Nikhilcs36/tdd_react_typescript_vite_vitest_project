@@ -37,9 +37,16 @@ describe("Email Verification i18n", () => {
         expectedSuccessTitle: "Email Verified!",
         expectedSuccessMessage: "Your email has been successfully verified.",
         expectedLoginButton: "Go to Login",
-        expectedErrorExpired: "Verification link has expired. Please request a new one.",
+        expectedErrorExpired: "Link expired. Request a new one.",
         expectedErrorInvalid: "Invalid verification token.",
         expectedResendButton: "Resend Verification Email",
+        expectedResendSuccess: "Verification email sent successfully.",
+        expectedResendError: "Failed to send verification email. Please try again.",
+        expectedResendEmailPlaceholder: "Enter your email address",
+        expectedResendSending: "Sending...",
+        expectedAlreadyVerified: "Email is already verified.",
+        expectedBackToLogin: "Back to Login",
+        expectedInvalidLink: "Invalid verification link. Please check the link and try again.",
       },
       {
         lang: "ml",
@@ -48,9 +55,16 @@ describe("Email Verification i18n", () => {
         expectedSuccessTitle: "ഇമെയിൽ വെരിഫൈഡ്!",
         expectedSuccessMessage: "നിങ്ങളുടെ ഇമെയിൽ വിജയകരമായി വെരിഫൈ ചെയ്യപ്പെട്ടു.",
         expectedLoginButton: "ലോഗിനിലേക്ക് പോകുക",
-        expectedErrorExpired: "വെരിഫിക്കേഷൻ ലിങ്കിന്റെ കാലാവധി കഴിഞ്ഞു. ദയവായി പുതിയത് അഭ്യർത്ഥിക്കുക.",
+        expectedErrorExpired: "ലിങ്കിന്റെ കാലാവധി കഴിഞ്ഞു. പുതിയത് അഭ്യർത്ഥിക്കുക.",
         expectedErrorInvalid: "അസാധുവായ വെരിഫിക്കേഷൻ ടോക്കൺ.",
         expectedResendButton: "വെരിഫിക്കേഷൻ ഇമെയിൽ വീണ്ടും അയക്കുക",
+        expectedResendSuccess: "വെരിഫിക്കേഷൻ ഇമെയിൽ വിജയകരമായി അയച്ചു.",
+        expectedResendError: "വെരിഫിക്കേഷൻ ഇമെയിൽ അയക്കുന്നതിൽ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
+        expectedResendEmailPlaceholder: "നിങ്ങളുടെ ഇമെയിൽ വിലാസം നൽകുക",
+        expectedResendSending: "അയയ്ക്കുന്നു...",
+        expectedAlreadyVerified: "ഇമെയിൽ ഇതിനകം വെരിഫൈ ചെയ്തിട്ടുണ്ട്.",
+        expectedBackToLogin: "ലോഗിനിലേക്ക് മടങ്ങുക",
+        expectedInvalidLink: "അസാധുവായ വെരിഫിക്കേഷൻ ലിങ്ക്. ദയവായി ലിങ്ക് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
       },
       {
         lang: "ar",
@@ -59,9 +73,16 @@ describe("Email Verification i18n", () => {
         expectedSuccessTitle: "تم التحقق من البريد الإلكتروني!",
         expectedSuccessMessage: "تم التحقق من بريدك الإلكتروني بنجاح.",
         expectedLoginButton: "الذهاب إلى تسجيل الدخول",
-        expectedErrorExpired: "انتهت صلاحية رابط التحقق. يرجى طلب رابط جديد.",
+        expectedErrorExpired: "انتهت صلاحية الرابط. يرجى طلب رابط جديد.",
         expectedErrorInvalid: "رمز التحقق غير صالح.",
         expectedResendButton: "إعادة إرسال بريد التحقق",
+        expectedResendSuccess: "تم إرسال بريد التحقق بنجاح.",
+        expectedResendError: "فشل إرسال بريد التحقق. يرجى المحاولة مرة أخرى.",
+        expectedResendEmailPlaceholder: "أدخل عنوان بريدك الإلكتروني",
+        expectedResendSending: "جاري الإرسال...",
+        expectedAlreadyVerified: "تم التحقق من البريد الإلكتروني مسبقاً.",
+        expectedBackToLogin: "العودة إلى تسجيل الدخول",
+        expectedInvalidLink: "رابط التحقق غير صالح. يرجى التحقق من الرابط والمحاولة مرة أخرى.",
       },
     ])(
       "displays email verification translations correctly in $lang",
@@ -75,6 +96,13 @@ describe("Email Verification i18n", () => {
         expectedErrorExpired,
         expectedErrorInvalid,
         expectedResendButton,
+        expectedResendSuccess,
+        expectedResendError,
+        expectedResendEmailPlaceholder,
+        expectedResendSending,
+        expectedAlreadyVerified,
+        expectedBackToLogin,
+        expectedInvalidLink,
       }) => {
         await i18n.changeLanguage(lang);
 
@@ -86,6 +114,13 @@ describe("Email Verification i18n", () => {
         expect(i18n.t("emailVerification.errors.expired")).toBe(expectedErrorExpired);
         expect(i18n.t("emailVerification.errors.invalid")).toBe(expectedErrorInvalid);
         expect(i18n.t("emailVerification.resend.button")).toBe(expectedResendButton);
+        expect(i18n.t("emailVerification.resend.success")).toBe(expectedResendSuccess);
+        expect(i18n.t("emailVerification.resend.error")).toBe(expectedResendError);
+        expect(i18n.t("emailVerification.resend.emailPlaceholder")).toBe(expectedResendEmailPlaceholder);
+        expect(i18n.t("emailVerification.resend.sending")).toBe(expectedResendSending);
+        expect(i18n.t("emailVerification.alreadyVerified")).toBe(expectedAlreadyVerified);
+        expect(i18n.t("emailVerification.backToLogin")).toBe(expectedBackToLogin);
+        expect(i18n.t("emailVerification.invalidLink")).toBe(expectedInvalidLink);
       }
     );
   });

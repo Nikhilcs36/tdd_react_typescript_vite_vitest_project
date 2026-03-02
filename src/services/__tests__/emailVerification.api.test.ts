@@ -37,7 +37,7 @@ describe("Email Verification API Services", () => {
   });
 
   describe("axiosApiServiceVerifyEmail", () => {
-    it("should verify email with valid token successfully", async () => {
+    it("should verify email with valid token and email successfully", async () => {
       const mockResponse = {
         data: {
           message: "Email verified successfully. You can now log in.",
@@ -45,15 +45,45 @@ describe("Email Verification API Services", () => {
       };
       mockedAxios.post.mockResolvedValue(mockResponse);
 
+      const email = "test@example.com";
       const token = "valid-verification-token";
       const result = await axiosApiServiceVerifyEmail.post(
-        API_ENDPOINTS.VERIFY_EMAIL(token)
+        API_ENDPOINTS.VERIFY_EMAIL,
+        { email, token }
       );
 
       expect(result).toEqual(mockResponse.data);
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        `/api/user/verify-email/${token}/`,
-        {},
+        `/api/user/verify-email/`,
+        { email, token },
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "Accept-Language": "en",
+          }),
+        })
+      );
+    });
+
+    it("should handle already verified email", async () => {
+      const mockResponse = {
+        data: {
+          message: "Email is already verified.",
+          already_verified: true,
+        },
+      };
+      mockedAxios.post.mockResolvedValue(mockResponse);
+
+      const email = "test@example.com";
+      const token = "valid-verification-token";
+      const result = await axiosApiServiceVerifyEmail.post(
+        API_ENDPOINTS.VERIFY_EMAIL,
+        { email, token }
+      );
+
+      expect(result).toEqual(mockResponse.data);
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        `/api/user/verify-email/`,
+        { email, token },
         expect.objectContaining({
           headers: expect.objectContaining({
             "Accept-Language": "en",
@@ -73,10 +103,11 @@ describe("Email Verification API Services", () => {
       };
       mockedAxios.post.mockRejectedValue(mockError);
 
+      const email = "test@example.com";
       const token = "invalid-token";
 
       await expect(
-        axiosApiServiceVerifyEmail.post(API_ENDPOINTS.VERIFY_EMAIL(token))
+        axiosApiServiceVerifyEmail.post(API_ENDPOINTS.VERIFY_EMAIL, { email, token })
       ).rejects.toEqual(expect.objectContaining(mockError));
     });
 
@@ -86,21 +117,23 @@ describe("Email Verification API Services", () => {
           status: 400,
           data: {
             error: "Verification token has expired. Please request a new one.",
+            expired: true,
           },
         },
       };
       mockedAxios.post.mockRejectedValue(mockError);
 
+      const email = "test@example.com";
       const token = "expired-token";
 
       await expect(
-        axiosApiServiceVerifyEmail.post(API_ENDPOINTS.VERIFY_EMAIL(token))
+        axiosApiServiceVerifyEmail.post(API_ENDPOINTS.VERIFY_EMAIL, { email, token })
       ).rejects.toEqual(expect.objectContaining(mockError));
     });
   });
 
   describe("fetchApiServiceVerifyEmail", () => {
-    it("should verify email with valid token successfully", async () => {
+    it("should verify email with valid token and email successfully", async () => {
       const mockResponse = {
         message: "Email verified successfully. You can now log in.",
       };
@@ -109,14 +142,16 @@ describe("Email Verification API Services", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
+      const email = "test@example.com";
       const token = "valid-verification-token";
       const result = await fetchApiServiceVerifyEmail.post(
-        API_ENDPOINTS.VERIFY_EMAIL(token)
+        API_ENDPOINTS.VERIFY_EMAIL,
+        { email, token }
       );
 
       expect(result).toEqual(mockResponse);
       expect(global.fetch).toHaveBeenCalledWith(
-        `/api/user/verify-email/${token}/`,
+        `/api/user/verify-email/`,
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
@@ -136,16 +171,18 @@ describe("Email Verification API Services", () => {
         json: () => Promise.resolve(mockError),
       });
 
+      const email = "test@example.com";
       const token = "invalid-token";
 
       await expect(
-        fetchApiServiceVerifyEmail.post(API_ENDPOINTS.VERIFY_EMAIL(token))
+        fetchApiServiceVerifyEmail.post(API_ENDPOINTS.VERIFY_EMAIL, { email, token })
       ).rejects.toThrow();
     });
 
     it("should throw error when token has expired", async () => {
       const mockError = {
         error: "Verification token has expired. Please request a new one.",
+        expired: true,
       };
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
@@ -153,10 +190,11 @@ describe("Email Verification API Services", () => {
         json: () => Promise.resolve(mockError),
       });
 
+      const email = "test@example.com";
       const token = "expired-token";
 
       await expect(
-        fetchApiServiceVerifyEmail.post(API_ENDPOINTS.VERIFY_EMAIL(token))
+        fetchApiServiceVerifyEmail.post(API_ENDPOINTS.VERIFY_EMAIL, { email, token })
       ).rejects.toThrow();
     });
   });
@@ -165,7 +203,7 @@ describe("Email Verification API Services", () => {
     it("should resend verification email successfully", async () => {
       const mockResponse = {
         data: {
-          message: "Verification email sent.",
+          message: "Verification email sent successfully.",
         },
       };
       mockedAxios.post.mockResolvedValue(mockResponse);
@@ -213,7 +251,7 @@ describe("Email Verification API Services", () => {
   describe("fetchApiServiceResendVerification", () => {
     it("should resend verification email successfully", async () => {
       const mockResponse = {
-        message: "Verification email sent.",
+        message: "Verification email sent successfully.",
       };
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
