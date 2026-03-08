@@ -1,0 +1,28 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tdd-react-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      # Use named volume for node_modules to prevent overwriting
+      - node_modules:/app/node_modules
+    environment:
+      # Set Node environment
+      - NODE_ENV=development
+    networks:
+      - tdd-network
+
+volumes:
+  node_modules:
+
+networks:
+  tdd-network:
+    # external: true means this network is created externally (not by this compose file)
+    # This allows frontend and backend containers to share the same network
+    # The network must be created first with: docker network create tdd-network
+    external: true
