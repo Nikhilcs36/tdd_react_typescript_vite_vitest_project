@@ -167,9 +167,11 @@ describe('UserSelectorDropdown', () => {
         </Provider>
       );
 
+      // Wait for the dropdown to be populated AND the default selection to be set
       await waitFor(() => {
-        const select = screen.getByRole('combobox');
+        const select = screen.getByRole('combobox') as HTMLSelectElement;
         expect(select).toBeInTheDocument();
+        expect(select.value).toBe('1'); // Wait for default selection
       });
 
       const select = screen.getByRole('combobox');
@@ -178,8 +180,11 @@ describe('UserSelectorDropdown', () => {
         fireEvent.change(select, { target: { value: '2' } });
       });
 
-      const state = store.getState().dashboard;
-      expect(state.selectedDashboardUserId).toBe(2);
+      // Use waitFor to ensure state update has propagated
+      await waitFor(() => {
+        const state = store.getState().dashboard;
+        expect(state.selectedDashboardUserId).toBe(2);
+      });
     });
 
     it('maintains selection when valid user is chosen', async () => {
