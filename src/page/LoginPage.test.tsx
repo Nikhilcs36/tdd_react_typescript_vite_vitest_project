@@ -12,7 +12,7 @@ import {
 import { defaultService } from "../services/defaultService";
 import "../locale/i18n";
 import i18n from "../locale/i18n";
-import { Form } from "./LoginPage";
+import { Form } from "./LoginPage.styles";
 import { MemoryRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "../store";

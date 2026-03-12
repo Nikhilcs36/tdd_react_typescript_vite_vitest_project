@@ -27,7 +27,7 @@ const GlobalErrorDisplay: React.FC = () => {
   }
 
   // Check if this is an authorization error (401/403)
-  const isAuthError = (error as any).response?.status === 401 || (error as any).response?.status === 403 ||
+  const isAuthError = error.response?.status === 401 || error.response?.status === 403 ||
                      error.translationKey === 'errors.401.token_invalid_or_expired' ||
                      error.translationKey === 'userlist.accessDeniedMessage';
 

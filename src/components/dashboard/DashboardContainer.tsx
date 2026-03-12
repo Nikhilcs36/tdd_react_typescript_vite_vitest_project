@@ -60,7 +60,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const [chartsLoading, setChartsLoading] = useState(true);
   const [adminDashboardLoading, setAdminDashboardLoading] = useState(true);
 
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   // Refs to prevent multiple concurrent API calls
   const dashboardDataFetchedRef = useRef<string>('');
@@ -115,7 +115,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
         const response = await getUserStats(targetUserId, startDate, endDate);
         setUserStats(response);
-      } catch (err) {
+      } catch (_err: unknown) {
         setError(t('dashboard.error_loading_data'));
         setUserStats(null);
       } finally {
@@ -138,7 +138,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
         const response = await getLoginActivity(1, 15, targetUserId, startDate, endDate);
         setLoginActivity(response);
-      } catch (err) {
+      } catch (_err: unknown) {
         setLoginActivity(null);
       } finally {
         setLoginActivityLoading(false);
@@ -179,7 +179,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         if (distributionResponse.status === 'fulfilled') {
           setLoginDistribution(distributionResponse.value);
         }
-      } catch (err) {
+      } catch (_err: unknown) {
         setLoginTrends(null);
         setLoginComparison(null);
         setLoginDistribution(null);
@@ -221,7 +221,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         if (adminDashboardResponse.status === 'fulfilled') {
           setAdminDashboard(adminDashboardResponse.value);
         }
-      } catch (err) {
+      } catch (_err: unknown) {
         setAdminDashboard(null);
       } finally {
         setAdminDashboardLoading(false);
@@ -247,9 +247,11 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
       if (userId && isAdmin()) {
         try {
           // Use the specific user endpoint instead of filtering the user list
-          const response: any = await axiosApiServiceLoadUserList.get(
-            API_ENDPOINTS.GET_USER_BY_ID(userId)
-          );
+          const response = await axiosApiServiceLoadUserList.get<{
+            id: number;
+            username: string;
+            email: string;
+          }>(API_ENDPOINTS.GET_USER_BY_ID(userId));
 
           if (response && response.id) {
             setSelectedUserInfo({
@@ -258,8 +260,8 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
               email: response.email
             });
           }
-        } catch (error) {
-          console.warn('Failed to fetch selected user info:', error);
+        } catch (_error: unknown) {
+          console.warn('Failed to fetch selected user info:', _error);
           setSelectedUserInfo(null);
         }
       } else {

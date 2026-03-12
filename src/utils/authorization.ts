@@ -34,7 +34,7 @@ export const useUserAuthorization = () => {
    */
   const canAccessUserData = useCallback((userId: number): boolean => {
     return isAdmin() || isCurrentUser(userId);
-  }, [authState.user?.is_staff, authState.user?.is_superuser, authState.user?.id]);
+  }, [isAdmin, isCurrentUser]);
 
   /**
    * Get the current user's role information

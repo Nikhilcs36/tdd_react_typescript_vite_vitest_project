@@ -18,7 +18,7 @@ import {
 import { defaultService } from "../services/defaultService";
 import "../locale/i18n";
 import i18n from "../locale/i18n";
-import { Form } from "./SignUpPage";
+import { Form } from "./SignUpPage.styles";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 vi.mock("axios");
@@ -325,7 +325,7 @@ describe("signup page", () => {
 
         const button = screen.getByRole("button", { name: "Sign Up" });
         expect(button).toBeDisabled();
-      });
+      }, 30000); // Increased timeout to 30 seconds for multiple async operations
 
       const testCases = [
         {

@@ -21,6 +21,7 @@ import { AppDispatch, RootState } from "../store";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { AuthState } from "../store/authSlice";
+import { CaughtError } from "../types/apiError";
 
 const PageContainer = tw.div`p-4 max-w-2xl mx-auto dark:bg-dark-primary`;
 const SpinnerContainer = tw.div`text-center py-8`;
@@ -136,9 +137,13 @@ class UserPage extends Component<UserPageProps, UserPageState> {
           image: user.image || "",
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if the error message is one of our known error keys
-      const errorMessage = error.response?.data?.detail || error.message;
+      const caughtError = error as CaughtError;
+      const errorData = caughtError.response?.data;
+      const errorMessage = (errorData && typeof errorData === 'object' && 'detail' in errorData) 
+        ? (errorData as { detail: string }).detail 
+        : (error instanceof Error ? error.message : 'Unknown error');
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
@@ -257,16 +262,25 @@ class UserPage extends Component<UserPageProps, UserPageState> {
           })
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle validation errors from the server
-      if (error.response?.data?.validationErrors) {
+      const caughtError = error as CaughtError;
+      const errorData = caughtError.response?.data;
+      
+      if (errorData && typeof errorData === 'object' && 'validationErrors' in errorData) {
+        const validationErrors = (errorData as { validationErrors: Record<string, string> }).validationErrors;
         this.setState({
-          validationErrors: error.response.data.validationErrors,
+          validationErrors,
           isSubmitting: false,
         });
       } else {
         // Check if the error message is one of our known error keys
-        const errorMessage = error.response?.data?.detail || error.message;
+        let errorMessage = 'Unknown error';
+        if (errorData && typeof errorData === 'object' && 'detail' in errorData) {
+          errorMessage = (errorData as { detail: string }).detail;
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
         dispatch(updateUserFailure(errorMessage));
         this.setState({
           isSubmitting: false,
@@ -316,8 +330,12 @@ class UserPage extends Component<UserPageProps, UserPageState> {
           }, 3000);
         }
       );
-    } catch (apiError: any) {
-      const errorMessage = apiError.response?.data?.detail || apiError.message;
+    } catch (apiError: unknown) {
+      const caughtError = apiError as CaughtError;
+      const errorData = caughtError.response?.data;
+      const errorMessage = (errorData && typeof errorData === 'object' && 'detail' in errorData) 
+        ? (errorData as { detail: string }).detail 
+        : (apiError instanceof Error ? apiError.message : 'Unknown error');
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };

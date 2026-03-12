@@ -928,7 +928,9 @@ export const handlers = [
   // Mock API for resend verification email ----(18)
   http.post("/api/user/resend-verification", async ({ request }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
-    const body = (await request.json()) as { email?: string };
+    
+    // Parse request body but don't use it (security: always return success)
+    await request.json(); // Parse but don't assign to variable
 
     // Security: Always return success message even if email doesn't exist
     return HttpResponse.json(

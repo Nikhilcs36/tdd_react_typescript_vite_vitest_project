@@ -42,7 +42,7 @@ export const axiosApiServiceLoginTracking: ApiGetService = {
   get: async <T>(url: string, page?: number, size?: number): Promise<T> => {
     try {
       const headers = buildHeaders();
-      const params: Record<string, any> = {};
+      const params: Record<string, string | number> = {};
 
       if (page !== undefined) params.page = page;
       if (size !== undefined) params.size = size;

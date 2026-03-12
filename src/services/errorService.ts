@@ -2,6 +2,7 @@
 import i18n from "../locale/i18n";
 import { handleDjangoErrors } from "../utils/djangoErrorHandler";
 import { logError } from "./loggingService";
+import { CaughtError, StandardizedError, GlobalErrorType } from "../types/apiError";
 
 /**
  * Common backend error types that should be displayed to users
@@ -56,19 +57,20 @@ export const ERROR_MAPPINGS: Record<number | string, BackendError> = {
  * Some errors (like 401, 403, 500) should be shown, others might be handled differently
  * Also handles rendering errors by checking if it's a JavaScript Error object
  */
-export const shouldDisplayErrorToUser = (error: any): boolean => {
+export const shouldDisplayErrorToUser = (error: CaughtError | unknown): boolean => {
   // Handle rendering errors (JavaScript Error objects)
   if (error instanceof Error) {
     return true;
   }
 
   // Handle HTTP errors
-  if (!error.response) {
+  const caughtError = error as CaughtError;
+  if (!caughtError.response) {
     // Network errors should be shown to users
     return true;
   }
 
-  const status = error.response.status;
+  const status = caughtError.response.status;
   return status === 401 || status === 403 || status === 500 || status === 0;
 };
 
@@ -79,38 +81,44 @@ export const shouldDisplayErrorToUser = (error: any): boolean => {
  * @returns Standardized error object ready for display or re-throwing
  */
 export const handleApiError = (
-  error: any,
+  error: CaughtError | unknown,
   context?: { endpoint?: string; operation?: string }
-): any => {
+): StandardizedError => {
   // Log all errors for debugging and monitoring purposes
   logError(error);
 
+  const caughtError = error as CaughtError;
+  
   // Handle simple error objects (like authentication errors)
-  if (error.message && !error.response) {
+  if (caughtError.message && !caughtError.response) {
     // Check if this is a network error (has request property)
-    if (error.request) {
+    if (caughtError.request) {
       return handleNetworkError(context);
     }
     // For simple authentication errors, preserve the original error structure
     // This ensures compatibility with existing tests that expect simple errors
-    return error;
+    return caughtError as StandardizedError;
   }
 
   // Handle network errors (no response)
-  if (!error.response) {
+  if (!caughtError.response) {
     return handleNetworkError(context);
   }
 
-  const status = error.response.status;
+  const status = caughtError.response.status;
+  if (status === undefined) {
+    // If status is undefined, treat as unknown error
+    return handleFallbackError(caughtError.response.data, context);
+  }
+  
   const errorMapping = ERROR_MAPPINGS[status];
-
   if (errorMapping) {
-    return handleKnownError(status, error.response.data, errorMapping, context);
+    return handleKnownError(status, caughtError.response.data, errorMapping, context);
   }
 
   // Handle Django validation errors (400 status)
-  if (status === 400 && error.response.data) {
-    const standardizedError = handleDjangoErrors(error.response.data);
+  if (status === 400 && caughtError.response.data) {
+    const standardizedError = handleDjangoErrors(caughtError.response.data as Record<string, string | string[]>);
     const firstError =
       standardizedError.nonFieldErrors[0] ||
       Object.values(standardizedError.fieldErrors)[0] ||
@@ -126,7 +134,7 @@ export const handleApiError = (
   }
 
   // Fallback for unknown errors
-  return handleFallbackError(error.response.data, context);
+  return handleFallbackError(caughtError.response.data, context);
 };
 
 /**
@@ -134,10 +142,10 @@ export const handleApiError = (
  */
 const handleKnownError = (
   status: number,
-  errorData: any,
+  errorData: unknown,
   errorMapping: BackendError,
   context?: { endpoint?: string; operation?: string }
-): any => {
+): StandardizedError => {
   const userFriendlyMessage = i18n.t(errorMapping.translationKey, {
     defaultValue: errorMapping.userFriendlyMessage,
   });
@@ -145,14 +153,15 @@ const handleKnownError = (
   // For Django-specific errors (401, 403), preserve the original error structure
   if ((status === 401 || status === 403) && errorData) {
     // Handle Django error format for authentication/authorization errors
-    const hasDjangoErrorStructure = Object.keys(errorData).some(
+    const errorDataObj = errorData as Record<string, unknown>;
+    const hasDjangoErrorStructure = Object.keys(errorDataObj).some(
       (key) =>
-        Array.isArray(errorData[key]) || typeof errorData[key] === "string"
+        Array.isArray(errorDataObj[key]) || typeof errorDataObj[key] === "string"
     );
 
     if (hasDjangoErrorStructure) {
       // Process Django errors using the existing djangoErrorHandler
-      const standardizedError = handleDjangoErrors(errorData);
+      const standardizedError = handleDjangoErrors(errorData as Record<string, string | string[]>);
 
       if (standardizedError.hasErrors) {
         return buildErrorResponse({
@@ -181,9 +190,9 @@ const handleKnownError = (
  * Handles fallback errors (unknown error types)
  */
 const handleFallbackError = (
-  errorData: any,
+  errorData: unknown,
   context?: { endpoint?: string; operation?: string }
-): any => {
+): StandardizedError => {
   const fallbackError = ERROR_MAPPINGS[500];
   const userFriendlyMessage = i18n.t(fallbackError.translationKey, {
     defaultValue: fallbackError.userFriendlyMessage,
@@ -204,7 +213,7 @@ const handleFallbackError = (
 const handleNetworkError = (context?: {
   endpoint?: string;
   operation?: string;
-}): any => {
+}): StandardizedError => {
   const networkError = ERROR_MAPPINGS[0];
   const userFriendlyMessage = i18n.t(networkError.translationKey, {
     defaultValue: networkError.userFriendlyMessage,
@@ -226,19 +235,23 @@ export const buildErrorResponse = (options: {
   status: number;
   message: string;
   translationKey?: string;
-  translationParams?: Record<string, any>;
+  translationParams?: Record<string, unknown>;
   validationErrors?: Record<string, string>;
   nonFieldErrors?: string[];
-  originalError?: any;
+  originalError?: unknown;
   context?: { endpoint?: string; operation?: string };
-}): any => {
-  const responseData: any = {
+}): StandardizedError => {
+  const responseData: GlobalErrorType = {
     message: options.message,
-    translationKey: options.translationKey,
-    translationParams: options.translationParams,
   };
 
   // Add optional fields if provided
+  if (options.translationKey) {
+    responseData.translationKey = options.translationKey;
+  }
+  if (options.translationParams) {
+    responseData.translationParams = options.translationParams;
+  }
   if (options.validationErrors) {
     responseData.validationErrors = options.validationErrors;
   }
@@ -264,7 +277,7 @@ export const buildErrorResponse = (options: {
  * Extracts error details for logging and debugging purposes
  */
 export const getErrorDetails = (
-  error: any
+  error: CaughtError
 ): {
   status: number | null;
   message: string;
@@ -274,7 +287,7 @@ export const getErrorDetails = (
   return {
     status: error.response?.status || null,
     message: error.message || "Unknown error",
-    url: error.response?.config?.url || error.response?.url || null,
+    url: error.response?.url || null,
     timestamp: new Date().toISOString(),
   };
 };

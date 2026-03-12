@@ -13,8 +13,8 @@ vi.mock('react-i18next', () => ({
 
 // Mock Chart.js components with options capture
 let capturedLineOptions: any;
-let capturedBarOptions: any;
-let capturedPieOptions: any;
+let _capturedBarOptions: any;
+let _capturedPieOptions: any;
 
 vi.mock('react-chartjs-2', () => ({
   Line: (props: any) => {
@@ -22,11 +22,11 @@ vi.mock('react-chartjs-2', () => ({
     return <div data-testid="line-chart" />;
   },
   Bar: (props: any) => {
-    capturedBarOptions = props.options;
+    _capturedBarOptions = props.options;
     return <div data-testid="bar-chart" />;
   },
   Pie: (props: any) => {
-    capturedPieOptions = props.options;
+    _capturedPieOptions = props.options;
     return <div data-testid="pie-chart" />;
   },
 }));

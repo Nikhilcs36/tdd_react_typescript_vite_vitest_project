@@ -1,13 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { handleApiError } from '../services/errorService';
+import { GlobalErrorType } from '../types/apiError';
 
 // Defines the shape of the global error state.
 interface GlobalErrorState {
-  error: {
-    message: string;
-    translationKey?: string;
-    translationParams?: Record<string, any>;
-  } | null;
+  error: GlobalErrorType | null;
 }
 
 // The initial state for the global error slice, starting with no error.
@@ -30,10 +27,10 @@ const globalErrorSlice = createSlice({
      * @param state The current state.
      * @param action The action containing the error payload.
      */
-    setGlobalError: (state, action: PayloadAction<any>) => {
+    setGlobalError: (state, action: PayloadAction<unknown>) => {
       const standardizedError = handleApiError(action.payload);
       // The error stored should be the `data` part of the standardized response
-      state.error = standardizedError.response ? standardizedError.response.data : standardizedError;
+      state.error = standardizedError.response ? standardizedError.response.data as GlobalErrorType : standardizedError as GlobalErrorType;
     },
     /**
      * Clears the global error state. This is typically dispatched when the user

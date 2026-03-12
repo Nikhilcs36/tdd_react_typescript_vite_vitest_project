@@ -6,9 +6,9 @@ import { DjangoPaginationProps } from "../types/djangoPagination";
 
 // Mock the withTranslation HOC and provide proper t function
 vi.mock("react-i18next", () => ({
-  withTranslation: () => (Component: React.ComponentType) => {
+  withTranslation: () => (Component: React.ComponentType<{ t: (key: string, options?: { current?: number; total?: number; count?: number }) => string }>) => {
     // Add the t function to the component props
-    return (props: any) => <Component {...props} t={(key: string, options?: any) => {
+    return (props: React.ComponentProps<typeof Component>) => <Component {...props} t={(key: string, options?: { current?: number; total?: number; count?: number }) => {
       if (key === "userlist.pageInfo") {
         return `Page ${options?.current} of ${options?.total} (${options?.count} users)`;
       }
@@ -23,7 +23,7 @@ vi.mock("react-i18next", () => ({
 vi.mock("twin.macro", () => ({
   default: (template: TemplateStringsArray) => {
     const className = template[0];
-    return (props: any) => {
+    return (props: React.ComponentProps<'button' | 'span' | 'div'>) => {
       const Component = className.includes("button") ? "button" :
                        className.includes("span") ? "span" : "div";
       return React.createElement(Component, {

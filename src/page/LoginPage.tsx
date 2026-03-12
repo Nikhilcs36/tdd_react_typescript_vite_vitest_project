@@ -1,5 +1,4 @@
 import { Component } from "react";
-import tw, { styled } from "twin.macro";
 import { ApiService } from "../services/apiService";
 import { LoginRequestBody, validateLogin } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
@@ -8,29 +7,17 @@ import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/actions";
-
-const FormWrapper = tw.div`min-h-[80vh] flex items-center justify-center bg-gray-100 dark:bg-dark-primary`;
-
-export const Form = styled.form.attrs((props: { lang?: string }) => ({
-  lang: props.lang || "en",
-}))<{ lang?: string }>`
-  ${tw`w-full p-4 bg-white rounded-lg shadow-md dark:bg-dark-secondary`}
-  ${({ lang }) =>
-    lang === "ml" ? tw`max-w-xl` : lang === "ar" ? tw`max-w-md` : tw`max-w-sm`}
-`;
-
-const Title = tw.h2`text-xl font-bold mb-3 dark:text-dark-text`;
-const Label = tw.label`block text-gray-700 dark:text-dark-text font-medium mb-1`;
-const Input = tw.input`w-full px-3 py-0.5 border border-gray-300 dark:border-dark-accent rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-dark-primary dark:text-dark-text`;
-const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
-  tw`px-4 py-2 mt-2 text-white transition-all bg-blue-500 rounded hover:bg-blue-600`,
-  disabled && tw`bg-gray-400 cursor-not-allowed hover:bg-gray-400`,
-]);
-
-const ErrorWrapper = tw.div`relative mb-6 min-h-[20px]`;
-const ErrorMessage = tw.div`absolute top-full left-0 mt-1 text-red-700 text-sm min-h-[20px] leading-tight`;
-
-const ApiErrorMessage = tw.div`mb-4 p-3 text-red-700 bg-red-100 rounded text-center`;
+import {
+  FormWrapper,
+  Form,
+  Title,
+  Label,
+  Input,
+  Button,
+  ErrorWrapper,
+  ErrorMessage,
+  ApiErrorMessage
+} from "./LoginPage.styles";
 
 interface LoginResponse {
   id: number;
@@ -239,10 +226,8 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
   }
 }
 
-// Create a functional wrapper component to use hooks
-const LoginPageWrapper: React.FC<
-  Omit<LoginPageProps, "dispatch" | "navigate">
-> = (props) => {
+// Create a functional wrapper component to use hooks - Named for Fast Refresh
+function LoginPageWrapper(props: Omit<LoginPageProps, "dispatch" | "navigate">) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   // Pass dispatch and navigate as props to the class component
@@ -250,4 +235,5 @@ const LoginPageWrapper: React.FC<
 };
 
 // Apply withTranslation to the wrapper component
-export default withTranslation()(LoginPageWrapper);
+const TranslatedLoginPage = withTranslation()(LoginPageWrapper);
+export default TranslatedLoginPage;

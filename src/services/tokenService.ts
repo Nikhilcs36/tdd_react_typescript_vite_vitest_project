@@ -32,7 +32,7 @@ export const refreshAccessToken = async (): Promise<boolean> => {
       return true;
     }
     return false;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 };
@@ -56,7 +56,7 @@ axios.interceptors.response.use(
           }`;
           return axios(originalRequest);
         }
-      } catch (refreshError) {
+      } catch (_refreshError) {
         // Handle refresh error
       }
     }

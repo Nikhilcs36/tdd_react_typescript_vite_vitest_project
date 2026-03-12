@@ -139,7 +139,7 @@ const UserSelectorDropdown: React.FC<UserSelectorDropdownProps> = ({
           dispatch(setSelectedDashboardUser(null));
         }
 
-      } catch (err) {
+      } catch (_err) {
         setError(t('dashboard.user_selector.error_loading'));
         setUsers([]);
         // Don't dispatch setCurrentDropdownUsers on error to prevent cascading re-fetches
@@ -152,7 +152,7 @@ const UserSelectorDropdown: React.FC<UserSelectorDropdownProps> = ({
     };
 
     fetchUsers();
-  }, [selectedUserIds, activeFilter, dispatch, t]);
+  }, [selectedUserIds, activeFilter, selectedDashboardUserId, dispatch, t]);
 
   // Handle user selection change
   const handleUserChange = (event: React.ChangeEvent<HTMLSelectElement>) => {

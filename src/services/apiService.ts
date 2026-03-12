@@ -21,11 +21,11 @@ axios.interceptors.response.use(
   }
 );
 
-export interface ApiService<T = Record<string, any>> {
+export interface ApiService<T = Record<string, unknown>> {
   post: <R>(url: string, body?: T) => Promise<R>;
 }
 
-export interface ApiPutService<T = Record<string, any>> {
+export interface ApiPutService<T = Record<string, unknown>> {
   put: <R>(url: string, body?: Partial<T>) => Promise<R>;
 }
 
@@ -43,7 +43,7 @@ export interface ApiDeleteService {
 
 // Axios implementation signup (Django compatible)
 export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
-  post: async <T>(url: string, body?: Record<string, any>) => {
+  post: async <T>(url: string, body?: Record<string, unknown>) => {
     const response = await axios.post<T>(url, body, {
       headers: {
         "Accept-Language": i18n.language, // Attach the current language header
@@ -55,7 +55,7 @@ export const axiosApiServiceSignUp: ApiService<SignUpRequestBody> = {
 
 // Fetch implementation signup (for MSW testing) - Django compatible
 export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
-  post: async <T>(url: string, body?: Record<string, any>) => {
+  post: async <T>(url: string, body?: Record<string, unknown>) => {
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -151,7 +151,7 @@ export const axiosApiServiceLoadUserList: ApiGetService = {
     };
 
     // Build query parameters
-    const params: Record<string, any> = {};
+    const params: Record<string, string | number | boolean> = {};
     if (page !== undefined) params.page = page;
     if (size !== undefined) params.size = size;
     if (role) params.role = role;

@@ -65,7 +65,7 @@ export interface LoginTrackingError {
       translationKey?: string;
       validationErrors?: Record<string, string>;
       nonFieldErrors?: string[];
-      originalError?: any;
+      originalError?: unknown;
       context?: { endpoint?: string; operation?: string };
     };
   };
@@ -75,30 +75,35 @@ export interface LoginTrackingError {
 export type ApiResponse<T> = T | LoginTrackingError;
 
 // Type guards for error checking
-export const isLoginTrackingError = (response: any): response is LoginTrackingError => {
-  return response && response.response && typeof response.response.status === 'number';
+export const isLoginTrackingError = (response: unknown): response is LoginTrackingError => {
+  const r = response as LoginTrackingError;
+  return r && r.response && typeof r.response.status === 'number';
 };
 
-export const isUserStats = (response: any): response is UserStats => {
-  return response && typeof response.total_logins === 'number';
+export const isUserStats = (response: unknown): response is UserStats => {
+  const r = response as UserStats;
+  return r && typeof r.total_logins === 'number';
 };
 
-export const isLoginActivityResponse = (response: any): response is LoginActivityResponse => {
-  return response && typeof response.count === 'number' && Array.isArray(response.results);
+export const isLoginActivityResponse = (response: unknown): response is LoginActivityResponse => {
+  const r = response as LoginActivityResponse;
+  return r && typeof r.count === 'number' && Array.isArray(r.results);
 };
 
-export const isAdminDashboardData = (response: any): response is AdminDashboardData => {
-  return response && typeof response.total_users === 'number';
+export const isAdminDashboardData = (response: unknown): response is AdminDashboardData => {
+  const r = response as AdminDashboardData;
+  return r && typeof r.total_users === 'number';
 };
 
-export const isChartData = (response: any): response is ChartData => {
-  return response && Array.isArray(response.labels) && Array.isArray(response.datasets);
+export const isChartData = (response: unknown): response is ChartData => {
+  const r = response as ChartData;
+  return r && Array.isArray(r.labels) && Array.isArray(r.datasets);
 };
 
-export const isAdminUserStatsResponse = (response: any): response is AdminUserStatsResponse => {
+export const isAdminUserStatsResponse = (response: unknown): response is AdminUserStatsResponse => {
   if (!response || typeof response !== 'object' || Array.isArray(response)) {
     return false;
   }
-  const values = Object.values(response);
+  const values = Object.values(response as AdminUserStatsResponse);
   return values.length > 0 && values.every(isUserStats);
 };
