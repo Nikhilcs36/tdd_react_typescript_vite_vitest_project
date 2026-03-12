@@ -4,9 +4,9 @@ import { vi } from "vitest";
 // It doesn't import or reference any other modules to avoid circular dependencies
 
 export default function createSecureLSMock(mockData: {
-  setCalls: { key: string; value: any }[];
+  setCalls: { key: string; value: unknown }[];
   removeCalls: string[];
-  getReturnValue: any;
+  getReturnValue: unknown;
 }) {
   return {
     default: vi.fn().mockImplementation(() => ({

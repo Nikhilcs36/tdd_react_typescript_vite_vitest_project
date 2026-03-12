@@ -107,7 +107,7 @@ const DashboardUserList: React.FC = () => {
       setTotalPages(Math.ceil(userCount / pageSize));
       setHasNext(response.next !== null);
       setHasPrevious(response.previous !== null);
-    } catch (err) {
+    } catch (_err) {
       setError(t('dashboard.user_list.error_loading'));
     } finally {
       setLoading(false);

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   isAdminUserStatsResponse,
   AdminUserStatsResponse,
-  UserStats
 } from './loginTracking';
 
 describe('Type Guards', () => {

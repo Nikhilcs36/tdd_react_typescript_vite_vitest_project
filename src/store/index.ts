@@ -15,8 +15,21 @@ const loadState = () => {
   }
 };
 
+// Auth state interface for persistence
+interface PersistedAuthState {
+  isAuthenticated: boolean;
+  user: { id: number; username: string } | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  showLogoutMessage: boolean;
+}
+
+interface RootStateForPersistence {
+  auth: PersistedAuthState;
+}
+
 // Function to save state to SecureLS
-const saveState = (state: any) => {
+const saveState = (state: RootStateForPersistence) => {
   try {
     // Store auth state including both tokens and showLogoutMessage
     const stateToSave = {

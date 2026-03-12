@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { handleApiError } from '../errorService';
-import i18n from '../../locale/i18n';
 
 describe('handleApiError - Centralized API Error Handler', () => {
   it('should handle network errors (status 0)', () => {
@@ -11,8 +10,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(networkError);
     
-    expect(result.response.status).toBe(0);
-    expect(result.response.data.message).toBe('Network connection failed. Please check your internet connection.');
+    expect(result.response!.status).toBe(0);
+    expect(result.response!.data.message).toBe('Network connection failed. Please check your internet connection.');
   });
 
   it('should handle 401 Unauthorized errors', () => {
@@ -25,8 +24,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(error401);
     
-    expect(result.response.status).toBe(401);
-    expect(result.response.data.message).toBe('Your session has expired. Please log in again.');
+    expect(result.response!.status).toBe(401);
+    expect(result.response!.data.message).toBe('Your session has expired. Please log in again.');
   });
 
   it('should handle 403 Forbidden errors', () => {
@@ -39,8 +38,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(error403);
     
-    expect(result.response.status).toBe(403);
-    expect(result.response.data.message).toBe("You don't have permission to perform this action.");
+    expect(result.response!.status).toBe(403);
+    expect(result.response!.data.message).toBe("You don't have permission to perform this action.");
   });
 
   it('should handle 500 Internal Server errors', () => {
@@ -53,8 +52,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(error500);
     
-    expect(result.response.status).toBe(500);
-    expect(result.response.data.message).toBe('Something went wrong on our end. Please try again later.');
+    expect(result.response!.status).toBe(500);
+    expect(result.response!.data.message).toBe('Something went wrong on our end. Please try again later.');
   });
 
   it('should handle Django 400 validation errors with field-specific errors', () => {
@@ -70,8 +69,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(djangoValidationError);
     
-    expect(result.response.status).toBe(400);
-    expect(result.response.data.validationErrors).toEqual({
+    expect(result.response!.status).toBe(400);
+    expect(result.response!.data.validationErrors).toEqual({
       username: 'Username already exists',
       email: 'E-mail in use'
     });
@@ -89,8 +88,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(djangoNonFieldError);
     
-    expect(result.response.status).toBe(400);
-    expect(result.response.data.nonFieldErrors).toEqual(['Invalid credentials']);
+    expect(result.response!.status).toBe(400);
+    expect(result.response!.data.nonFieldErrors).toEqual(['Invalid credentials']);
   });
 
   it('should handle raw Django 400 validation errors', () => {
@@ -106,11 +105,11 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(rawDjangoError);
     
-    expect(result.response.status).toBe(400);
-    expect(result.response.data.validationErrors).toEqual({
+    expect(result.response!.status).toBe(400);
+    expect(result.response!.data.validationErrors).toEqual({
       username: 'Username already exists'
     });
-    expect(result.response.data.nonFieldErrors).toEqual(['Invalid credentials']);
+    expect(result.response!.data.nonFieldErrors).toEqual(['Invalid credentials']);
   });
 
   it('should handle unknown error types with fallback', () => {
@@ -123,8 +122,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(unknownError);
     
-    expect(result.response.status).toBe(500);
-    expect(result.response.data.message).toBe('Something went wrong on our end. Please try again later.');
+    expect(result.response!.status).toBe(500);
+    expect(result.response!.data.message).toBe('Something went wrong on our end. Please try again later.');
   });
 
   it('should include context information when provided', () => {
@@ -138,8 +137,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
     const context = { endpoint: '/api/login', operation: 'login' };
     const result = handleApiError(error500, context);
     
-    expect(result.response.status).toBe(500);
-    expect(result.response.data.context).toEqual(context);
+    expect(result.response!.status).toBe(500);
+    expect(result.response!.data.context).toEqual(context);
   });
 
   it('should preserve original error data', () => {
@@ -152,8 +151,8 @@ describe('handleApiError - Centralized API Error Handler', () => {
 
     const result = handleApiError(error500);
     
-    expect(result.response.status).toBe(500);
-    expect(result.response.data.originalError).toEqual({
+    expect(result.response!.status).toBe(500);
+    expect(result.response!.data.originalError).toEqual({
       message: 'Internal server error',
       customField: 'customValue'
     });

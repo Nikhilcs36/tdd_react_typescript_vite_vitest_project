@@ -31,7 +31,7 @@ export const useLogout = (apiService: ApiService) => {
         const refreshEvent = new CustomEvent("userListRefresh");
         window.dispatchEvent(refreshEvent);
       }, 0);
-    } catch (error) {}
+    } catch (_error) {}
   };
 
   return { logout };

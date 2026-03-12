@@ -3,13 +3,14 @@ import tw from 'twin.macro';
 import ErrorBoundaryDisplay from './ErrorBoundaryDisplay';
 import { shouldDisplayErrorToUser, getErrorDetails } from '../services/errorService';
 import { logError } from '../services/loggingService';
+import { CaughtError } from '../types/apiError';
 
 // Styled components for retry button
 const RetryButton = tw.button`bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded mt-3 transition-colors`;
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error: any;
+  error: CaughtError | null;
   errorDetails: {
     status: number | null;
     message: string;
@@ -21,7 +22,7 @@ interface ErrorBoundaryState {
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  onError?: (error: any, errorInfo: React.ErrorInfo) => void;
+  onError?: (error: CaughtError, errorInfo: React.ErrorInfo) => void;
   resetOnRetry?: boolean;
 }
 
@@ -39,7 +40,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     };
   }
 
-  static getDerivedStateFromError(error: any): Partial<ErrorBoundaryState> {
+  static getDerivedStateFromError(error: CaughtError): Partial<ErrorBoundaryState> {
     // Update state so the next render will show the fallback UI
     return {
       hasError: true,
@@ -47,7 +48,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     };
   }
 
-  componentDidCatch(error: any, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: CaughtError, errorInfo: React.ErrorInfo) {
     // Extract error details for logging
     const errorDetails = getErrorDetails(error);
     
@@ -96,6 +97,21 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       // Use custom fallback if provided, otherwise use default ErrorDisplay
       if (this.props.fallback) {
         return this.props.fallback;
+      }
+
+      // Handle null error case
+      if (!this.state.error) {
+        return (
+          <div>
+            <ErrorBoundaryDisplay
+              error={new Error('Unknown error occurred')}
+              title="Application Error"
+            />
+            <RetryButton onClick={this.handleRetry}>
+              Try Again
+            </RetryButton>
+          </div>
+        );
       }
 
       return (

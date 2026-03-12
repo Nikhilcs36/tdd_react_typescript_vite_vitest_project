@@ -36,7 +36,7 @@ const AccountActivationPage: React.FC<AccountActivationPageProps> = ({
           API_ENDPOINTS.ACTIVATE_ACCOUNT(token)
         );
         setResult("success");
-      } catch (error) {
+      } catch (_error) {
         setResult("fail");
       } finally {
         setLoading(false);

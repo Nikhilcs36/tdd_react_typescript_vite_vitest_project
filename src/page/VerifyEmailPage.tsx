@@ -3,6 +3,14 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { ApiService, VerifyEmailRequestBody, EmailVerificationRequestBody } from '../services/apiService';
 import { useTranslation } from 'react-i18next';
+import { CaughtError } from '../types/apiError';
+
+interface VerifyEmailErrorResponse {
+  expired?: boolean;
+  already_verified?: boolean;
+  error?: string;
+  [key: string]: string | string[] | boolean | undefined;
+}
 
 interface VerifyEmailPageProps {
   apiService: ApiService<VerifyEmailRequestBody>;
@@ -32,6 +40,93 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ apiService, resendApi
     backToLogin: '',
   });
   const hasCalledApi = useRef(false);
+
+  const verifyEmail = useCallback(async (email: string, token: string) => {
+    try {
+      const response = await apiService.post<{ message?: string; already_verified?: boolean }>('/api/user/verify-email/', { email, token });
+      // Check if backend returns already_verified flag (returns 200 OK with already_verified: true)
+      if (response?.already_verified) {
+        setVerificationStatus('alreadyVerified');
+      } else {
+        setVerificationStatus('success');
+      }
+    } catch (error: unknown) {
+      setVerificationStatus('error');
+      const caughtError = error as CaughtError;
+      const response = caughtError.response;
+      const data = response?.data as VerifyEmailErrorResponse | undefined;
+      const status = response?.status;
+      
+      if (status === 400) {
+        // Handle 400 Bad Request errors
+        let errorText = '';
+        
+        // Check for expired token flag
+        if (data?.expired) {
+          // Expired token - store translation key
+          setErrorMessageKey('emailVerification.errors.expired');
+          setShowResendForm(true);
+          return;
+        }
+        
+        // Check for already verified flag (defensive programming for edge cases)
+        if (data?.already_verified) {
+          // Already verified - store translation key
+          setErrorMessageKey('emailVerification.alreadyVerified');
+          return;
+        }
+        
+        // Check for error message in 'error' field
+        if (data?.error) {
+          errorText = data.error.toLowerCase();
+        }
+        // Check for validation errors (e.g., {"email": ["This field is required."]})
+        else if (data && typeof data === 'object') {
+          // Extract first validation error
+          const firstKey = Object.keys(data)[0];
+          if (firstKey && Array.isArray(data[firstKey]) && data[firstKey].length > 0) {
+            errorText = (data[firstKey][0] as string).toLowerCase();
+          } else if (firstKey && typeof data[firstKey] === 'string') {
+            errorText = (data[firstKey] as string).toLowerCase();
+          }
+        }
+        
+        // Match error message patterns
+        if (errorText.includes('expired')) {
+          // Expired token detected by message content
+          setErrorMessageKey('emailVerification.errors.expired');
+          setShowResendForm(true);
+        } else if (errorText.includes('already verified')) {
+          // Already verified detected by message content (defensive)
+          setErrorMessageKey('emailVerification.alreadyVerified');
+        } else if (errorText.includes('invalid verification token') || errorText.includes('invalid token')) {
+          // Invalid token
+          setErrorMessageKey('emailVerification.errors.invalid');
+        } else if (data?.error) {
+          // Show backend error message directly (no translation key)
+          setErrorMessageKey(null);
+          setErrorMessage(data.error);
+        } else if (errorText) {
+          // Show validation error (no translation key)
+          setErrorMessageKey(null);
+          setErrorMessage(errorText);
+        } else {
+          // Fallback (no translation key)
+          setErrorMessageKey(null);
+          setErrorMessage('Email verification failed.');
+        }
+      } else {
+        // Non-400 errors
+        if (data?.error) {
+          setErrorMessageKey(null);
+          setErrorMessage(data.error);
+        } else {
+          setErrorMessageKey(null);
+          setErrorMessage('Email verification failed.');
+        }
+      }
+    }
+  }, [apiService, setVerificationStatus, setErrorMessageKey, setShowResendForm, setErrorMessage]);
 
   // Update all translations when language changes
   useEffect(() => {
@@ -93,93 +188,7 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ apiService, resendApi
     hasCalledApi.current = true;
     setEmail(emailParam);
     verifyEmail(emailParam, tokenParam);
-  }, [searchParams, dispatch, t]);
-
-  const verifyEmail = async (email: string, token: string) => {
-    try {
-      const response = await apiService.post<{ message?: string; already_verified?: boolean }>('/api/user/verify-email/', { email, token });
-      // Check if backend returns already_verified flag (returns 200 OK with already_verified: true)
-      if (response?.already_verified) {
-        setVerificationStatus('alreadyVerified');
-      } else {
-        setVerificationStatus('success');
-      }
-    } catch (error: any) {
-      setVerificationStatus('error');
-      const response = error.response;
-      const data = response?.data;
-      const status = response?.status;
-      
-      if (status === 400) {
-        // Handle 400 Bad Request errors
-        let errorText = '';
-        
-        // Check for expired token flag
-        if (data?.expired) {
-          // Expired token - store translation key
-          setErrorMessageKey('emailVerification.errors.expired');
-          setShowResendForm(true);
-          return;
-        }
-        
-        // Check for already verified flag (defensive programming for edge cases)
-        if (data?.already_verified) {
-          // Already verified - store translation key
-          setErrorMessageKey('emailVerification.alreadyVerified');
-          return;
-        }
-        
-        // Check for error message in 'error' field
-        if (data?.error) {
-          errorText = data.error.toLowerCase();
-        }
-        // Check for validation errors (e.g., {"email": ["This field is required."]})
-        else if (typeof data === 'object' && data !== null) {
-          // Extract first validation error
-          const firstKey = Object.keys(data)[0];
-          if (Array.isArray(data[firstKey]) && data[firstKey].length > 0) {
-            errorText = data[firstKey][0].toLowerCase();
-          } else if (typeof data[firstKey] === 'string') {
-            errorText = data[firstKey].toLowerCase();
-          }
-        }
-        
-        // Match error message patterns
-        if (errorText.includes('expired')) {
-          // Expired token detected by message content
-          setErrorMessageKey('emailVerification.errors.expired');
-          setShowResendForm(true);
-        } else if (errorText.includes('already verified')) {
-          // Already verified detected by message content (defensive)
-          setErrorMessageKey('emailVerification.alreadyVerified');
-        } else if (errorText.includes('invalid verification token') || errorText.includes('invalid token')) {
-          // Invalid token
-          setErrorMessageKey('emailVerification.errors.invalid');
-        } else if (data?.error) {
-          // Show backend error message directly (no translation key)
-          setErrorMessageKey(null);
-          setErrorMessage(data.error);
-        } else if (errorText) {
-          // Show validation error (no translation key)
-          setErrorMessageKey(null);
-          setErrorMessage(errorText);
-        } else {
-          // Fallback (no translation key)
-          setErrorMessageKey(null);
-          setErrorMessage('Email verification failed.');
-        }
-      } else {
-        // Non-400 errors
-        if (data?.error) {
-          setErrorMessageKey(null);
-          setErrorMessage(data.error);
-        } else {
-          setErrorMessageKey(null);
-          setErrorMessage('Email verification failed.');
-        }
-      }
-    }
-  };
+  }, [searchParams, dispatch, t, verifyEmail]);
 
   const handleResendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,10 +207,11 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ apiService, resendApi
         setResendStatus('success');
         setResendMessageKey('emailVerification.resend.success');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setResendStatus('error');
-      const response = error.response;
-      const data = response?.data;
+      const caughtError = error as CaughtError;
+      const response = caughtError.response;
+      const data = response?.data as VerifyEmailErrorResponse | undefined;
       
       // Check for "already verified" error from backend (defensive)
       if (data?.error?.toLowerCase().includes('already verified')) {

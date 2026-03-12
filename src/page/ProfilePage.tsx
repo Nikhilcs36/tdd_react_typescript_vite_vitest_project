@@ -27,6 +27,8 @@ import { AppDispatch, RootState } from "../store";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { AuthState } from "../store/authSlice";
+import { CaughtError } from "../types/apiError";
+import { Location } from "react-router-dom";
 
 const PageContainer = tw.div`p-4 max-w-2xl mx-auto dark:bg-dark-primary`;
 const SpinnerContainer = tw.div`text-center py-8`;
@@ -66,7 +68,7 @@ interface ProfilePageProps extends WithTranslation {
   };
   dispatch: AppDispatch;
   navigate: (path: string) => void;
-  location?: any; // Add location prop to access navigation state
+  location?: Location; // Add location prop to access navigation state
 }
 
 interface User {
@@ -131,7 +133,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     
     // Check if navigation state contains showEditForm: true and automatically enter edit mode
     // This allows direct navigation to edit form from UserPage
-    const locationState = (this.props as any).location?.state;
+    const locationState = this.props.location?.state as { showEditForm?: boolean } | undefined;
     if (locationState && locationState.showEditForm === true) {
       this.setState({ 
         isEditing: true,
@@ -166,9 +168,13 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           image: user.image || "",
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if the error message is one of our known error keys
-      const errorMessage = error.response?.data?.detail || error.message;
+      const caughtError = error as CaughtError;
+      const errorData = caughtError.response?.data;
+      const errorMessage = (errorData && typeof errorData === 'object' && 'detail' in errorData) 
+        ? (errorData as { detail: string }).detail 
+        : (error instanceof Error ? error.message : 'Unknown error');
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
@@ -376,21 +382,30 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           },
         })
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle validation errors from the server
-      if (error.response?.data?.validationErrors) {
+      const caughtError = error as CaughtError;
+      const errorData = caughtError.response?.data;
+      
+      if (errorData && typeof errorData === 'object' && 'validationErrors' in errorData) {
+        const validationErrors = (errorData as { validationErrors: Record<string, string> }).validationErrors;
         this.setState({
-          validationErrors: error.response.data.validationErrors,
+          validationErrors,
         });
       } else {
         // Check if the error message is one of our known error keys
-        let errorMessage = error.response?.data?.detail || error.message;
-        if (
-          error.response?.data?.image &&
-          Array.isArray(error.response.data.image) &&
-          error.response.data.image.length > 0
-        ) {
-          errorMessage = error.response.data.image[0];
+        let errorMessage = 'Unknown error';
+        if (errorData && typeof errorData === 'object') {
+          if ('detail' in errorData) {
+            errorMessage = (errorData as { detail: string }).detail;
+          } else if ('image' in errorData && Array.isArray((errorData as { image: unknown[] }).image)) {
+            const imageErrors = (errorData as { image: string[] }).image;
+            if (imageErrors.length > 0) {
+              errorMessage = imageErrors[0];
+            }
+          }
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
         }
         dispatch(updateUserFailure(errorMessage));
       }
@@ -462,8 +477,12 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           }, 3000);
         }
       );
-    } catch (apiError: any) {
-      const errorMessage = apiError.response?.data?.detail || apiError.message;
+    } catch (apiError: unknown) {
+      const caughtError = apiError as CaughtError;
+      const errorData = caughtError.response?.data;
+      const errorMessage = (errorData && typeof errorData === 'object' && 'detail' in errorData) 
+        ? (errorData as { detail: string }).detail 
+        : (apiError instanceof Error ? apiError.message : 'Unknown error');
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };

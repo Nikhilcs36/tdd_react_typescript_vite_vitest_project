@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -11,6 +11,9 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
   const defaultState: DashboardState = {
     activeFilter: 'all',
     selectedUserIds: [],
+    selectedDashboardUserId: null,
+    currentDropdownUsers: [],
+    chartMode: 'individual',
     startDate: null,
     endDate: null,
     isLoading: false,
