@@ -34,11 +34,13 @@ const userSlice = createSlice({
     clearUserError: (state) => {
       state.error = null;
     },
+    // Resets the user state to initial state
+    resetUserState: () => initialState,
   },
 });
 
 // Export the action creator
-export const { updateUserStart, updateUserSuccess, updateUserFailure, clearUserError } = userSlice.actions;
+export const { updateUserStart, updateUserSuccess, updateUserFailure, clearUserError, resetUserState } = userSlice.actions;
 
 // Export the reducer
 export default userSlice.reducer;
