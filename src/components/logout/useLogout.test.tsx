@@ -148,4 +148,35 @@ describe("useLogout Hook", () => {
 
     setTimeoutSpy.mockRestore();
   });
+
+  it("should reset all slice states on logout", async () => {
+    // Set up some state in the slices before logout
+    store.dispatch({
+      type: 'dashboard/setSelectedUserIds',
+      payload: [1, 2, 3]
+    });
+    store.dispatch({
+      type: 'user/updateUserSuccess',
+      payload: { user: { id: 1, username: 'test', email: 'test@test.com' } }
+    });
+    store.dispatch({
+      type: 'globalError/setGlobalError',
+      payload: { message: 'Test error' }
+    });
+
+    const { result } = renderHook(() => useLogout(mockApiService), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.logout();
+    });
+
+    // Verify that all states are reset
+    const state = store.getState();
+    expect(state.dashboard.selectedUserIds).toEqual([]);
+    expect(state.dashboard.activeFilter).toBe('all');
+    expect(state.user.user).toBeNull();
+    expect(state.globalError.error).toBeNull();
+  });
 });

@@ -2,6 +2,9 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { showLogoutMessage } from "../../store/authSlice";
 import { logoutSuccess } from "../../store/actions";
+import { resetDashboardState } from "../../store/dashboardSlice";
+import { resetUserState } from "../../store/userSlice";
+import { clearGlobalError } from "../../store/globalErrorSlice";
 import { ApiService } from "../../services/apiService";
 import { API_ENDPOINTS } from "../../services/apiEndpoints";
 
@@ -22,6 +25,9 @@ export const useLogout = (apiService: ApiService) => {
     try {
       await apiService.post(API_ENDPOINTS.LOGOUT);
       dispatch(logoutSuccess());
+      dispatch(resetDashboardState());
+      dispatch(resetUserState());
+      dispatch(clearGlobalError());
       dispatch(showLogoutMessage());
       navigate("/");
 
