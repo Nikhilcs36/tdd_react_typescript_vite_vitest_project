@@ -1154,10 +1154,83 @@ describe("Navbar persistence with localStorage", () => {
     const refreshedState = newStore.getState().auth;
     expect(refreshedState).toEqual({
       isAuthenticated: true,
-      user: { id: 5, username: "persistedUser" },
+      user: { id: 5, username: "persistedUser", is_staff: false, is_superuser: false },
       accessToken: "mock-jwt-access-token",
       refreshToken: "mock-jwt-refresh-token",
       showLogoutMessage: false,
     });
+  });
+
+  it("maintains admin dashboard access after page refresh", async () => {
+    // Initial admin login
+    const adminUser = {
+      id: 10,
+      username: "adminUser",
+      access: "mock-admin-access-token",
+      refresh: "mock-admin-refresh-token",
+      is_staff: true,
+      is_superuser: true,
+    };
+
+    // Render the app with the Redux provider
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/"]}>
+          <AppContent />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Dispatch admin login action
+    await act(async () => {
+      store.dispatch(loginSuccess(adminUser));
+    });
+
+    // Verify admin navbar elements are present
+    const usersLink = screen.getByTestId("users-link");
+    expect(usersLink).toBeInTheDocument();
+    expect(usersLink).toHaveAttribute("href", "/users");
+
+    // Navigate to dashboard
+    const dashboardLink = screen.getByTestId("dashboard-link");
+    await userEvent.click(dashboardLink);
+
+    // Verify we're on dashboard (mocked component)
+    await waitFor(() => {
+      expect(screen.getByTestId("dashboard-container")).toBeInTheDocument();
+    });
+
+    // Simulate page refresh by creating a new store that loads from localStorage
+    const refreshedStore = createStore();
+
+    // Clean up the first render
+    cleanup();
+
+    // Re-render app with "refreshed" store
+    render(
+      <Provider store={refreshedStore}>
+        <MemoryRouter initialEntries={["/dashboard"]}>
+          <AppContent />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Verify admin navbar elements persist after refresh
+    await waitFor(() => {
+      const refreshedUsersLink = screen.getByTestId("users-link");
+      expect(refreshedUsersLink).toBeInTheDocument();
+      expect(refreshedUsersLink).toHaveAttribute("href", "/users");
+    });
+
+    // Verify dashboard is still accessible
+    await waitFor(() => {
+      expect(screen.getByTestId("dashboard-container")).toBeInTheDocument();
+    });
+
+    // Verify admin state persisted
+    const refreshedAuthState = refreshedStore.getState().auth;
+    expect(refreshedAuthState.isAuthenticated).toBe(true);
+    expect(refreshedAuthState.user?.is_staff).toBe(true);
+    expect(refreshedAuthState.user?.is_superuser).toBe(true);
   });
 });

@@ -20,6 +20,8 @@ describe("Store with SecureLS", () => {
     const testUser = {
       id: 1,
       username: "testuser",
+      is_staff: false,
+      is_superuser: false,
       access: "mock-access-token",
       refresh: "mock-refresh-token",
     };
@@ -33,7 +35,7 @@ describe("Store with SecureLS", () => {
     expect(lastCall.key).toBe("authState");
     expect(lastCall.value).toMatchObject({
       isAuthenticated: true,
-      user: { id: 1, username: "testuser" },
+      user: { id: 1, username: "testuser", is_staff: false, is_superuser: false },
       accessToken: "mock-access-token",
       refreshToken: "mock-refresh-token",
     });
@@ -43,7 +45,7 @@ describe("Store with SecureLS", () => {
     // Setup mock return value for SecureLS.get
     mockSecureLS.getReturnValue = {
       isAuthenticated: true,
-      user: { id: 5, username: "persistedUser" },
+      user: { id: 5, username: "persistedUser", is_staff: false, is_superuser: false },
       accessToken: "mock-persisted-access-token",
       refreshToken: "mock-persisted-refresh-token",
     };
@@ -54,7 +56,7 @@ describe("Store with SecureLS", () => {
     // Check if auth state was loaded correctly
     const loadedAuthState = store.getState().auth;
     expect(loadedAuthState.isAuthenticated).toBe(true);
-    expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser" });
+    expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser", is_staff: false, is_superuser: false });
     expect(loadedAuthState.accessToken).toEqual("mock-persisted-access-token");
     expect(loadedAuthState.refreshToken).toEqual(
       "mock-persisted-refresh-token"
@@ -68,5 +70,66 @@ describe("Store with SecureLS", () => {
 
     // Verify SecureLS.remove was called
     expect(mockSecureLS.removeCalls).toContain("authState");
+  });
+
+  it("should persist admin user fields (is_staff and is_superuser)", () => {
+    const store = createStore();
+    const adminUser = {
+      id: 2,
+      username: "adminuser",
+      is_staff: true,
+      is_superuser: false,
+      access: "admin-access-token",
+      refresh: "admin-refresh-token",
+    };
+
+    // Dispatch login action for admin user
+    store.dispatch(loginSuccess(adminUser));
+
+    // Verify SecureLS.set was called with complete user data including admin fields
+    expect(mockSecureLS.setCalls.length).toBeGreaterThan(0);
+    const lastCall = mockSecureLS.setCalls[mockSecureLS.setCalls.length - 1];
+    expect(lastCall.key).toBe("authState");
+    expect(lastCall.value).toMatchObject({
+      isAuthenticated: true,
+      user: {
+        id: 2,
+        username: "adminuser",
+        is_staff: true,
+        is_superuser: false
+      },
+      accessToken: "admin-access-token",
+      refreshToken: "admin-refresh-token",
+    });
+  });
+
+  it("should load admin user fields from SecureLS on store creation", () => {
+    // Setup mock return value for SecureLS.get with admin user
+    mockSecureLS.getReturnValue = {
+      isAuthenticated: true,
+      user: {
+        id: 3,
+        username: "loadedAdmin",
+        is_staff: false,
+        is_superuser: true
+      },
+      accessToken: "loaded-admin-access",
+      refreshToken: "loaded-admin-refresh",
+    };
+
+    // Create store which should load from SecureLS
+    const store = createStore();
+
+    // Check if auth state was loaded correctly including admin fields
+    const loadedAuthState = store.getState().auth;
+    expect(loadedAuthState.isAuthenticated).toBe(true);
+    expect(loadedAuthState.user).toEqual({
+      id: 3,
+      username: "loadedAdmin",
+      is_staff: false,
+      is_superuser: true
+    });
+    expect(loadedAuthState.accessToken).toEqual("loaded-admin-access");
+    expect(loadedAuthState.refreshToken).toEqual("loaded-admin-refresh");
   });
 });

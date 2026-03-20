@@ -18,7 +18,7 @@ const loadState = () => {
 // Auth state interface for persistence
 interface PersistedAuthState {
   isAuthenticated: boolean;
-  user: { id: number; username: string } | null;
+  user: { id: number; username: string; is_staff: boolean; is_superuser: boolean } | null;
   accessToken: string | null;
   refreshToken: string | null;
   showLogoutMessage: boolean;
@@ -35,7 +35,12 @@ const saveState = (state: RootStateForPersistence) => {
     const stateToSave = {
       isAuthenticated: state.auth.isAuthenticated,
       user: state.auth.user
-        ? { id: state.auth.user.id, username: state.auth.user.username }
+        ? {
+            id: state.auth.user.id,
+            username: state.auth.user.username,
+            is_staff: state.auth.user.is_staff,
+            is_superuser: state.auth.user.is_superuser
+          }
         : null,
       accessToken: state.auth.accessToken,
       refreshToken: state.auth.refreshToken,
