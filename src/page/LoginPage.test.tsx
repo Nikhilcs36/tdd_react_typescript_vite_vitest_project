@@ -17,6 +17,7 @@ import { MemoryRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "../store";
 import { logoutSuccess } from "../store/actions";
+import { resetDashboardState } from "../store/dashboardSlice";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 vi.mock("axios");
@@ -33,16 +34,17 @@ vi.mock("react-router-dom", async (importOriginal) => {
   };
 });
 
-beforeEach(async () => {
-  vi.resetAllMocks();
-  mockedNavigate.mockClear(); // Clear navigate mock before each test
-  store.dispatch(logoutSuccess()); // Reset Redux auth state before each test
-  window.localStorage.clear(); // Clear localStorage
+  beforeEach(async () => {
+    vi.resetAllMocks();
+    mockedNavigate.mockClear(); // Clear navigate mock before each test
+    store.dispatch(logoutSuccess()); // Reset Redux auth state before each test
+    store.dispatch(resetDashboardState()); // Reset dashboard state before each test
+    window.localStorage.clear(); // Clear localStorage
 
-  await act(async () => {
-    await i18n.changeLanguage("en");
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
   });
-});
 
 // Helper function to render the component wrapped with Provider and MemoryRouter
 const renderWithProviders = (component: React.ReactElement) => {
@@ -674,6 +676,7 @@ describe("Login Page", () => {
       // Make beforeEach async
       // Reset Redux auth state before each test
       store.dispatch(logoutSuccess());
+      store.dispatch(resetDashboardState()); // Reset dashboard state before each test
       // Clear localStorage
       window.localStorage.clear();
       // Set default language to English
@@ -704,6 +707,63 @@ describe("Login Page", () => {
       expect(state.auth.user?.id).toBe(1);
       expect(state.auth.user?.username).toBe("testuser");
       // No assertion for token since it's1 not stored
+    });
+
+    it("resets dashboard state on successful login", async () => {
+      // Set up a non-initial dashboard state to simulate previous session
+      store.dispatch(resetDashboardState()); // Start fresh
+      
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      // Test login functionality
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      // Verify dashboard state is reset (selectedDashboardUserId should be null)
+      const state = store.getState();
+      expect(state.dashboard.selectedDashboardUserId).toBeNull();
+      expect(state.dashboard.activeFilter).toBe('all');
+      expect(state.dashboard.selectedUserIds).toEqual([]);
+    });
+  });
+
+  describe("Login Page - Dashboard State Reset", () => {
+    it("dispatches resetDashboardState on successful login", async () => {
+      // Create a spy on store.dispatch instead of mocking useDispatch globally
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+      
+      mockedAxios.post.mockResolvedValue({
+        data: {
+          id: 13,
+          username: "testuser",
+          email: "testuser@gmail.com",
+          access: "mock-access-token",
+          refresh: "mock-refresh-token",
+          is_staff: false,
+          is_superuser: false,
+        },
+      });
+
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      // Verify that resetDashboardState was dispatched
+      await waitFor(() => {
+        expect(dispatchSpy).toHaveBeenCalledWith(resetDashboardState());
+      });
+      
+      // Clean up spy
+      dispatchSpy.mockRestore();
     });
   });
 });

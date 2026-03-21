@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/actions";
+import { resetDashboardState } from "../store/dashboardSlice";
 import {
   FormWrapper,
   Form,
@@ -139,6 +140,9 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
           is_superuser: response.is_superuser,
         })
       );
+
+      // Reset dashboard state to ensure Recent Activity shows dropdown's first user
+      this.props.dispatch(resetDashboardState());
 
       // Redirect using navigate prop
       this.props.navigate("/"); // Redirect to home page

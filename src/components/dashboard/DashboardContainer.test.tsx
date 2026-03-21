@@ -961,6 +961,108 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
     });
   });
+
+  describe('Race Condition Fix - Admin Login Flow', () => {
+    it('should not fetch user stats for admin when no user is selected', async () => {
+      // Simulate admin login scenario where selectedDashboardUserId is null
+      renderWithProviders(<DashboardContainer />, {
+        selectedDashboardUserId: null, // No user selected yet
+      });
+
+      // Wait for component to mount and initial effects to run
+      await waitFor(() => {
+        // getUserStats should NOT be called when selectedDashboardUserId is null for admin
+        expect(getUserStats).not.toHaveBeenCalled();
+        
+        // User stats should be null and loading should be false
+        // We can check this by verifying the mocked component shows "No Stats"
+        expect(screen.getByTestId('user-dashboard-card')).toHaveTextContent('No Stats');
+      });
+    });
+
+    it('should not fetch login activity for admin when no user is selected', async () => {
+      // Simulate admin login scenario where selectedDashboardUserId is null
+      renderWithProviders(<DashboardContainer />, {
+        selectedDashboardUserId: null, // No user selected yet
+      });
+
+      // Wait for component to mount and initial effects to run
+      await waitFor(() => {
+        // getLoginActivity should NOT be called when selectedDashboardUserId is null for admin
+        expect(getLoginActivity).not.toHaveBeenCalled();
+        
+        // Login activity table should show 0 items (empty array)
+        expect(screen.getByTestId('login-activity-table')).toHaveTextContent('0 items');
+      });
+    });
+
+    it('should fetch user stats for admin when user is selected', async () => {
+      // Simulate UserSelectorDropdown setting the first user
+      renderWithProviders(<DashboardContainer />, {
+        selectedDashboardUserId: 2, // User selected by dropdown
+      });
+
+      // Wait for component to fetch data
+      await waitFor(() => {
+        // getUserStats should be called with the selected user ID
+        expect(getUserStats).toHaveBeenCalledWith(2, undefined, undefined);
+        
+        // User stats should be loaded
+        expect(screen.getByTestId('user-dashboard-card')).toHaveTextContent('User Stats Loaded');
+      });
+    });
+
+    it('should fetch login activity for admin when user is selected', async () => {
+      // Simulate UserSelectorDropdown setting the first user
+      renderWithProviders(<DashboardContainer />, {
+        selectedDashboardUserId: 2, // User selected by dropdown
+      });
+
+      // Wait for component to fetch data
+      await waitFor(() => {
+        // getLoginActivity should be called with the selected user ID
+        expect(getLoginActivity).toHaveBeenCalledWith(1, 15, 2, undefined, undefined);
+        
+        // Login activity table should show items
+        expect(screen.getByTestId('login-activity-table')).toHaveTextContent('3 items');
+      });
+    });
+
+    it('should refetch data when user selection changes', async () => {
+      // First render with user 2 selected
+      const { rerender } = renderWithProviders(<DashboardContainer />, {
+        selectedDashboardUserId: 2,
+      });
+
+      await waitFor(() => {
+        expect(getUserStats).toHaveBeenCalledWith(2, undefined, undefined);
+        expect(getLoginActivity).toHaveBeenCalledWith(1, 15, 2, undefined, undefined);
+      });
+
+      // Clear mocks to track new calls
+      vi.clearAllMocks();
+
+      // Re-render with different user selected
+      rerender(
+        <Provider store={createMockStore({
+          selectedDashboardUserId: 3, // Changed user selection
+        })}>
+          <I18nextProvider i18n={i18n}>
+            <DashboardContainer />
+          </I18nextProvider>
+        </Provider>
+      );
+
+      await waitFor(() => {
+        // Should refetch with new user ID
+        expect(getUserStats).toHaveBeenCalledWith(3, undefined, undefined);
+        expect(getLoginActivity).toHaveBeenCalledWith(1, 15, 3, undefined, undefined);
+      });
+    });
+
+    // Note: Non-admin user behavior is tested in other test files
+    // The key race condition fix is for admin users when selectedDashboardUserId is null
   });
-  });
+});
+});
 });

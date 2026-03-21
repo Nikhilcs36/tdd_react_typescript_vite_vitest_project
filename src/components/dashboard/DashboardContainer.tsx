@@ -105,6 +105,13 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         return;
       }
 
+      // Don't fetch if we're an admin and don't have a selected user yet
+      if (isAdmin() && !dashboardState.selectedDashboardUserId) {
+        setUserStats(null);
+        setUserStatsLoading(false);
+        return;
+      }
+
       setUserStatsLoading(true);
       setError(null);
 
@@ -129,6 +136,13 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   // Fetch login activity - triggered by user selection and date range changes
   useEffect(() => {
     const fetchLoginActivity = async () => {
+      // Don't fetch if we're an admin and don't have a selected user yet
+      if (isAdmin() && !dashboardState.selectedDashboardUserId) {
+        setLoginActivity(null);
+        setLoginActivityLoading(false);
+        return;
+      }
+
       setLoginActivityLoading(true);
 
       try {
