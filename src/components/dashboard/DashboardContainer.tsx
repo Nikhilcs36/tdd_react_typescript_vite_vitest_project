@@ -17,6 +17,7 @@ import DateRangePicker from './DateRangePicker';
 import UserSelectorDropdown from './UserSelectorDropdown';
 import ChartModeToggle from './ChartModeToggle';
 
+
 // Styled components
 const PageContainer = tw.div`min-h-screen bg-gray-50 dark:bg-dark-primary py-8`;
 const ContentWrapper = tw.div`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8`;
@@ -162,7 +163,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     fetchLoginActivity();
   }, [currentUserId, userId, isAdmin, dashboardState.selectedDashboardUserId, dashboardState.startDate, dashboardState.endDate]);
 
-  // Fetch charts - triggered by chart mode, user selection, and date range changes
+  // Fetch charts - triggered by chart mode, user selection, and global date range changes
   useEffect(() => {
     const fetchCharts = async () => {
       setChartsLoading(true);

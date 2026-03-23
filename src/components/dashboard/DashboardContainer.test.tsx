@@ -15,6 +15,7 @@ const createMockStore = (dashboardState: Partial<DashboardState> = {}, authState
   const defaultDashboardState: DashboardState = {
     activeFilter: 'all',
     selectedUserIds: [],
+    datePreset: '30days',
     startDate: null,
     endDate: null,
     isLoading: false,
@@ -1062,6 +1063,23 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
     // Note: Non-admin user behavior is tested in other test files
     // The key race condition fix is for admin users when selectedDashboardUserId is null
+  });
+
+  describe('Chart Date Filtering', () => {
+    it('should use global dates for chart data fetching', async () => {
+      renderWithProviders(<DashboardContainer userId={1} />, {
+        startDate: '2023-01-01',
+        endDate: '2023-01-31',
+        selectedDashboardUserId: 1,
+      });
+
+      // Wait for the chart data to be fetched
+      await waitFor(() => {
+        expect(getLoginTrends).toHaveBeenCalledWith([1], '2023-01-01', '2023-01-31');
+        expect(getLoginComparison).toHaveBeenCalledWith([1], '2023-01-01', '2023-01-31');
+        expect(getLoginDistribution).toHaveBeenCalledWith([1], '2023-01-01', '2023-01-31');
+      });
+    });
   });
 });
 });

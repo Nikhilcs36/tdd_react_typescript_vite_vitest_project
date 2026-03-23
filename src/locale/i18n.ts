@@ -160,9 +160,18 @@ i18n.use(initReactI18next).init({
             me: "Me"
           },
           dateRange: {
+            title: "Date Filter",
+            last30Days: "Last 30 Days",
+            last7Days: "Last 7 Days",
+            last1Day: "Last 1 Day",
+            custom: "Custom Range",
             startDate: "Start Date",
             endDate: "End Date",
-            clear: "Clear Dates"
+            clear: "Clear Dates",
+            showingLast30Days: "Showing data for the last 30 days",
+            showingLast7Days: "Showing data for the last 7 days",
+            showingLast1Day: "Showing data for the last 1 day",
+            showingCustomRange: "Showing data for custom date range"
           },
           user_list: {
             title: "Users",
@@ -179,6 +188,17 @@ i18n.use(initReactI18next).init({
             label: "Chart Mode",
             individual: "Individual",
             group: "Group"
+          },
+          chartDateFilter: {
+            title: "Chart Date Filter",
+            last30Days: "Last 30 Days",
+            last7Days: "Last 7 Days",
+            last1Day: "Last 1 Day",
+            custom: "Custom Range",
+            showingLast30Days: "Showing data for the last 30 days",
+            showingLast7Days: "Showing data for the last 7 days",
+            showingLast1Day: "Showing data for the last 1 day",
+            showingCustomRange: "Showing data for custom date range"
           },
           user_not_found: "User not found",
           unauthorized_access: "Unauthorized access to dashboard data"
@@ -361,9 +381,18 @@ i18n.use(initReactI18next).init({
             me: "ഞാൻ"
           },
           dateRange: {
+            title: "തീയതി ഫിൽട്ടർ",
+            last30Days: "കഴിഞ്ഞ 30 ദിവസം",
+            last7Days: "കഴിഞ്ഞ 7 ദിവസം",
+            last1Day: "കഴിഞ്ഞ 1 ദിവസം",
+            custom: "ഇഷ്ടാനുസൃത പരിധി",
             startDate: "ആരംഭ തീയതി",
             endDate: "അവസാന തീയതി",
-            clear: "തീയതികൾ മായ്ക്കുക"
+            clear: "തീയതികൾ മായ്ക്കുക",
+            showingLast30Days: "കഴിഞ്ഞ 30 ദിവസത്തെ ഡാറ്റ കാണിക്കുന്നു",
+            showingLast7Days: "കഴിഞ്ഞ 7 ദിവസത്തെ ഡാറ്റ കാണിക്കുന്നു",
+            showingLast1Day: "കഴിഞ്ഞ 1 ദിവസത്തെ ഡാറ്റ കാണിക്കുന്നു",
+            showingCustomRange: "ഇഷ്ടാനുസൃത തീയതി പരിധിയിലെ ഡാറ്റ കാണിക്കുന്നു"
           },
           user_selector: {
             label: "ഉപയോക്താവിനെ തിരഞ്ഞെടുക്കുക",
@@ -556,9 +585,18 @@ i18n.use(initReactI18next).init({
             me: "أنا"
           },
           dateRange: {
+            title: "مرشح التاريخ",
+            last30Days: "آخر 30 يوم",
+            last7Days: "آخر 7 أيام",
+            last1Day: "آخر يوم",
+            custom: "نطاق مخصص",
             startDate: "تاريخ البداية",
             endDate: "تاريخ النهاية",
-            clear: "مسح التواريخ"
+            clear: "مسح التواريخ",
+            showingLast30Days: "عرض البيانات لآخر 30 يوم",
+            showingLast7Days: "عرض البيانات لآخر 7 أيام",
+            showingLast1Day: "عرض البيانات لآخر يوم",
+            showingCustomRange: "عرض البيانات لنطاق تاريخ مخصص"
           },
           user_selector: {
             label: "اختر المستخدم",

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -14,6 +14,7 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
     selectedDashboardUserId: null,
     currentDropdownUsers: [],
     chartMode: 'individual',
+    datePreset: '30days',
     startDate: null,
     endDate: null,
     isLoading: false,
@@ -33,13 +34,14 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
 
 const renderWithProviders = (component: React.ReactElement, initialState = {}) => {
   const store = createMockStore(initialState);
-  return render(
+  const renderResult = render(
     <Provider store={store}>
       <I18nextProvider i18n={i18n}>
         {component}
       </I18nextProvider>
     </Provider>
   );
+  return { ...renderResult, store };
 };
 
 describe('DateRangePicker', () => {
@@ -186,6 +188,102 @@ describe('DateRangePicker', () => {
       // and assume the labels are properly associated (verified by manual inspection)
       expect(startInput).toHaveAttribute('id');
       expect(endInput).toHaveAttribute('id');
+    });
+  });
+
+  describe('Preset Functionality', () => {
+    it('renders preset buttons for 30 days, 7 days, 1 day, and custom', () => {
+      renderWithProviders(<DateRangePicker />);
+
+      expect(screen.getByTestId('preset-30days')).toBeInTheDocument();
+      expect(screen.getByTestId('preset-7days')).toBeInTheDocument();
+      expect(screen.getByTestId('preset-1day')).toBeInTheDocument();
+      expect(screen.getByTestId('preset-custom')).toBeInTheDocument();
+    });
+
+    it('shows 30 days preset as active by default', () => {
+      renderWithProviders(<DateRangePicker />);
+
+      const thirtyDaysButton = screen.getByTestId('preset-30days');
+      expect(thirtyDaysButton).toHaveAttribute('data-active', 'true');
+    });
+
+    it('changes active preset when clicking different buttons', () => {
+      const { store } = renderWithProviders(<DateRangePicker />);
+
+      const sevenDaysButton = screen.getByTestId('preset-7days');
+      fireEvent.click(sevenDaysButton);
+
+      expect(store.getState().dashboard.datePreset).toBe('7days');
+    });
+
+    it('shows date inputs when custom preset is selected', () => {
+      renderWithProviders(<DateRangePicker />);
+
+      const customButton = screen.getByTestId('preset-custom');
+      fireEvent.click(customButton);
+
+      expect(screen.getByTestId('start-date-input')).toBeInTheDocument();
+      expect(screen.getByTestId('end-date-input')).toBeInTheDocument();
+    });
+
+    it('hides date inputs when switching from custom to preset', () => {
+      renderWithProviders(<DateRangePicker />);
+
+      // Select custom first
+      const customButton = screen.getByTestId('preset-custom');
+      fireEvent.click(customButton);
+
+      // Then select 30 days
+      const thirtyDaysButton = screen.getByTestId('preset-30days');
+      fireEvent.click(thirtyDaysButton);
+
+      // Date inputs should still be visible (they're always visible now)
+      expect(screen.getByTestId('start-date-input')).toBeInTheDocument();
+      expect(screen.getByTestId('end-date-input')).toBeInTheDocument();
+    });
+
+    it('updates date range when custom dates are changed', () => {
+      const { store } = renderWithProviders(<DateRangePicker />);
+
+      // Select custom
+      const customButton = screen.getByTestId('preset-custom');
+      fireEvent.click(customButton);
+
+      // Change start date
+      const startDateInput = screen.getByTestId('start-date-input');
+      fireEvent.change(startDateInput, { target: { value: '2023-01-01' } });
+
+      // Change end date
+      const endDateInput = screen.getByTestId('end-date-input');
+      fireEvent.change(endDateInput, { target: { value: '2023-01-31' } });
+
+      expect(store.getState().dashboard.startDate).toBe('2023-01-01');
+      expect(store.getState().dashboard.endDate).toBe('2023-01-31');
+    });
+
+    it('disables preset buttons when disabled prop is true', () => {
+      renderWithProviders(<DateRangePicker disabled={true} />);
+
+      const buttons = screen.getAllByTestId(/^preset-/);
+      buttons.forEach(button => {
+        expect(button).toBeDisabled();
+      });
+    });
+
+    it('shows current date range description', () => {
+      renderWithProviders(<DateRangePicker />);
+
+      expect(screen.getByText('Showing data for the last 30 days')).toBeInTheDocument();
+    });
+
+    it('updates description when preset changes', () => {
+      renderWithProviders(<DateRangePicker />);
+
+      const sevenDaysButton = screen.getByTestId('preset-7days');
+      fireEvent.click(sevenDaysButton);
+
+      expect(screen.getByText('Showing data for the last 7 days')).toBeInTheDocument();
     });
   });
 
