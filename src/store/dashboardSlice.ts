@@ -7,12 +7,15 @@ export interface DashboardUser {
   email: string;
 }
 
+export type DatePreset = '1day' | '7days' | '30days' | 'custom';
+
 export interface DashboardState {
   activeFilter: DashboardFilterMode;
   selectedUserIds: number[];
   selectedDashboardUserId: number | null;
   currentDropdownUsers: DashboardUser[];
   chartMode: 'individual' | 'grouped';
+  datePreset: DatePreset;
   startDate: string | null;
   endDate: string | null;
   isLoading: boolean;
@@ -25,6 +28,7 @@ const initialState: DashboardState = {
   selectedDashboardUserId: null,
   currentDropdownUsers: [],
   chartMode: 'individual' as const,
+  datePreset: '30days' as const,
   startDate: null,
   endDate: null,
   isLoading: false,
@@ -72,6 +76,10 @@ const dashboardSlice = createSlice({
       state.endDate = action.payload.endDate;
       state.error = null;
     },
+    setDatePreset: (state, action: PayloadAction<DatePreset>) => {
+      state.datePreset = action.payload;
+      state.error = null;
+    },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
@@ -98,6 +106,7 @@ export const {
   setCurrentDropdownUsers,
   setChartMode,
   setDateRange,
+  setDatePreset,
   setLoading,
   setError,
   resetDashboardState,
