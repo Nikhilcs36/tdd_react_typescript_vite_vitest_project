@@ -69,10 +69,11 @@ describe('DateRangePicker', () => {
       expect(endInput).toHaveAttribute('type', 'date');
     });
 
-    it('does not render clear button when no dates are set', () => {
+    it('renders clear button when dates are calculated for preset', () => {
       renderWithProviders(<DateRangePicker />);
 
-      expect(screen.queryByTestId('clear-dates-button')).not.toBeInTheDocument();
+      // With default 30days preset, dates should be calculated, so clear button should render
+      expect(screen.getByTestId('clear-dates-button')).toBeInTheDocument();
     });
 
     it('renders clear button when dates are set', () => {
@@ -97,8 +98,12 @@ describe('DateRangePicker', () => {
       expect(endInput).toHaveValue('2023-12-31');
     });
 
-    it('displays empty values when dates are null', () => {
-      renderWithProviders(<DateRangePicker />, { startDate: null, endDate: null });
+    it('displays empty values when dates are null and preset is custom', () => {
+      renderWithProviders(<DateRangePicker />, { 
+        datePreset: 'custom',
+        startDate: null, 
+        endDate: null 
+      });
 
       const startInput = screen.getByTestId('start-date-input');
       const endInput = screen.getByTestId('end-date-input');
@@ -284,6 +289,131 @@ describe('DateRangePicker', () => {
       fireEvent.click(sevenDaysButton);
 
       expect(screen.getByText('Showing data for the last 7 days')).toBeInTheDocument();
+    });
+
+    // NEW TESTS FOR THE FIXES
+    it('calculates date range for 30 days preset on initial render when dates are null', () => {
+      const { store } = renderWithProviders(<DateRangePicker />, {
+        datePreset: '30days',
+        startDate: null,
+        endDate: null
+      });
+
+      // After initial render, dates should be calculated for 30 days preset
+      const state = store.getState().dashboard;
+      expect(state.startDate).not.toBeNull();
+      expect(state.endDate).not.toBeNull();
+      expect(state.datePreset).toBe('30days');
+    });
+
+    it('calculates date range for 7 days preset on initial render when dates are null', () => {
+      const { store } = renderWithProviders(<DateRangePicker />, {
+        datePreset: '7days',
+        startDate: null,
+        endDate: null
+      });
+
+      // After initial render, dates should be calculated for 7 days preset
+      const state = store.getState().dashboard;
+      expect(state.startDate).not.toBeNull();
+      expect(state.endDate).not.toBeNull();
+      expect(state.datePreset).toBe('7days');
+    });
+
+    it('calculates date range for 1 day preset on initial render when dates are null', () => {
+      const { store } = renderWithProviders(<DateRangePicker />, {
+        datePreset: '1day',
+        startDate: null,
+        endDate: null
+      });
+
+      // After initial render, dates should be calculated for 1 day preset
+      const state = store.getState().dashboard;
+      expect(state.startDate).not.toBeNull();
+      expect(state.endDate).not.toBeNull();
+      expect(state.datePreset).toBe('1day');
+    });
+
+    it('does not calculate dates for custom preset on initial render', () => {
+      const { store } = renderWithProviders(<DateRangePicker />, {
+        datePreset: 'custom',
+        startDate: null,
+        endDate: null
+      });
+
+      // For custom preset, dates should remain null
+      const state = store.getState().dashboard;
+      expect(state.startDate).toBeNull();
+      expect(state.endDate).toBeNull();
+      expect(state.datePreset).toBe('custom');
+    });
+
+    it('switches to custom preset when dates are manually changed while on a preset', () => {
+      const { store } = renderWithProviders(<DateRangePicker />, {
+        datePreset: '7days',
+        startDate: '2023-01-01', // Already calculated date
+        endDate: '2023-01-07'    // Already calculated date
+      });
+
+      // Change start date manually
+      const startDateInput = screen.getByTestId('start-date-input');
+      fireEvent.change(startDateInput, { target: { value: '2023-01-02' } });
+
+      // Should switch to custom preset
+      expect(store.getState().dashboard.datePreset).toBe('custom');
+      expect(store.getState().dashboard.startDate).toBe('2023-01-02');
+    });
+
+    it('switches to custom preset when end date is manually changed while on a preset', () => {
+      const { store } = renderWithProviders(<DateRangePicker />, {
+        datePreset: '30days',
+        startDate: '2023-01-01', // Already calculated date
+        endDate: '2023-01-30'    // Already calculated date
+      });
+
+      // Change end date manually
+      const endDateInput = screen.getByTestId('end-date-input');
+      fireEvent.change(endDateInput, { target: { value: '2023-01-31' } });
+
+      // Should switch to custom preset
+      expect(store.getState().dashboard.datePreset).toBe('custom');
+      expect(store.getState().dashboard.endDate).toBe('2023-01-31');
+    });
+
+    it('does not switch to custom preset when already on custom preset', () => {
+      const { store } = renderWithProviders(<DateRangePicker />, {
+        datePreset: 'custom',
+        startDate: '2023-01-01',
+        endDate: '2023-01-31'
+      });
+
+      // Change start date
+      const startDateInput = screen.getByTestId('start-date-input');
+      fireEvent.change(startDateInput, { target: { value: '2023-01-02' } });
+
+      // Should remain on custom preset
+      expect(store.getState().dashboard.datePreset).toBe('custom');
+      expect(store.getState().dashboard.startDate).toBe('2023-01-02');
+    });
+
+    it('preserves custom dates when switching from preset to custom via manual change', () => {
+      const { store } = renderWithProviders(<DateRangePicker />, {
+        datePreset: '7days',
+        startDate: '2023-01-01', // Calculated for 7 days
+        endDate: '2023-01-07'    // Calculated for 7 days
+      });
+
+      // Manually change both dates
+      const startDateInput = screen.getByTestId('start-date-input');
+      const endDateInput = screen.getByTestId('end-date-input');
+      
+      fireEvent.change(startDateInput, { target: { value: '2023-02-01' } });
+      fireEvent.change(endDateInput, { target: { value: '2023-02-28' } });
+
+      // Should switch to custom and preserve the manually entered dates
+      expect(store.getState().dashboard.datePreset).toBe('custom');
+      expect(store.getState().dashboard.startDate).toBe('2023-02-01');
+      expect(store.getState().dashboard.endDate).toBe('2023-02-28');
     });
   });
 
