@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
@@ -43,6 +43,17 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ disabled = false }) =
   const startDate = useSelector((state: RootState) => state.dashboard.startDate);
   const endDate = useSelector((state: RootState) => state.dashboard.endDate);
 
+  // Calculate initial dates for presets when dates are null
+  useEffect(() => {
+    if (disabled) return;
+    
+    // Only calculate dates for non-custom presets when BOTH dates are null
+    if (datePreset !== 'custom' && startDate === null && endDate === null) {
+      const dateRange = getDateRangeFromPreset(datePreset);
+      dispatch(setDateRange(dateRange));
+    }
+  }, [datePreset, startDate, endDate, disabled, dispatch]);
+
   const handlePresetChange = (preset: DatePreset) => {
     if (disabled) return;
 
@@ -56,11 +67,23 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ disabled = false }) =
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = e.target.value || null;
+    
+    // If we're not already on custom preset, switch to it when manually changing dates
+    if (datePreset !== 'custom') {
+      dispatch(setDatePreset('custom'));
+    }
+    
     dispatch(setDateRange({ startDate: newStartDate, endDate }));
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEndDate = e.target.value || null;
+    
+    // If we're not already on custom preset, switch to it when manually changing dates
+    if (datePreset !== 'custom') {
+      dispatch(setDatePreset('custom'));
+    }
+    
     dispatch(setDateRange({ startDate, endDate: newEndDate }));
   };
 
