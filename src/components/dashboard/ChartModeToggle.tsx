@@ -7,9 +7,12 @@ import tw from 'twin.macro';
 
 interface ChartModeToggleProps {
   disabled?: boolean;
+  dateRangeLabel?: string;
 }
 
-const ToggleContainer = tw.div`flex items-center space-x-2 mb-4`;
+const ToggleContainer = tw.div`flex items-center justify-between mb-4`;
+const ToggleButtonsContainer = tw.div`flex items-center space-x-2`;
+const DateRangeLabel = tw.span`text-sm text-gray-500 dark:text-gray-400 ml-8`;
 const ToggleButton = tw.button`
   px-4 py-2 rounded-lg font-medium transition-all duration-200
   disabled:opacity-50 disabled:cursor-not-allowed
@@ -23,6 +26,7 @@ const ToggleButton = tw.button`
  */
 const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
   disabled = false,
+  dateRangeLabel,
 }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -41,7 +45,15 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
 
   // Show placeholder when only one or no users are available to maintain consistent height
   if (currentDropdownUsers.length <= 1) {
-    return <div data-testid="chart-mode-placeholder" className="h-12" />;
+    return (
+      <div data-testid="chart-mode-placeholder" className="flex items-center justify-end h-12">
+        {dateRangeLabel && (
+          <DateRangeLabel data-testid="date-range-label">
+            {dateRangeLabel}
+          </DateRangeLabel>
+        )}
+      </div>
+    );
   }
 
   const handleModeChange = (mode: 'individual' | 'grouped') => {
@@ -62,27 +74,35 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
 
   return (
     <ToggleContainer>
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        {t('dashboard.chart_mode.label')}:
-      </span>
+      <ToggleButtonsContainer>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('dashboard.chart_mode.label')}:
+        </span>
 
-      <ToggleButton
-        className={getButtonClasses(chartMode === 'individual')}
-        onClick={() => handleModeChange('individual')}
-        disabled={disabled}
-        data-testid="chart-mode-individual"
-      >
-        {t('dashboard.chart_mode.individual')}
-      </ToggleButton>
+        <ToggleButton
+          className={getButtonClasses(chartMode === 'individual')}
+          onClick={() => handleModeChange('individual')}
+          disabled={disabled}
+          data-testid="chart-mode-individual"
+        >
+          {t('dashboard.chart_mode.individual')}
+        </ToggleButton>
 
-      <ToggleButton
-        className={getButtonClasses(chartMode === 'grouped')}
-        onClick={() => handleModeChange('grouped')}
-        disabled={disabled}
-        data-testid="chart-mode-group"
-      >
-        {t('dashboard.chart_mode.group')}
-      </ToggleButton>
+        <ToggleButton
+          className={getButtonClasses(chartMode === 'grouped')}
+          onClick={() => handleModeChange('grouped')}
+          disabled={disabled}
+          data-testid="chart-mode-group"
+        >
+          {t('dashboard.chart_mode.group')}
+        </ToggleButton>
+      </ToggleButtonsContainer>
+
+      {dateRangeLabel && (
+        <DateRangeLabel data-testid="date-range-label">
+          {dateRangeLabel}
+        </DateRangeLabel>
+      )}
     </ToggleContainer>
   );
 };

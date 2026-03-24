@@ -49,3 +49,62 @@ export const getDateRangeFromPreset = (preset: '1day' | '7days' | '30days'): { s
       throw new Error(`Unknown preset: ${preset}`);
   }
 };
+
+/**
+ * Calculate number of days between two dates
+ * @param startDate Start date in YYYY-MM-DD format
+ * @param endDate End date in YYYY-MM-DD format
+ * @returns Number of days between dates
+ */
+export const getDaysBetweenDates = (startDate: string, endDate: string): number => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Calculate difference in milliseconds
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  // Convert to days
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays;
+};
+
+/**
+ * Get date range label based on preset and dates
+ * @param datePreset The date preset (30days, 7days, 1day, custom)
+ * @param startDate Start date string or null
+ * @param endDate End date string or null
+ * @returns Formatted date range label (e.g., "30 days", "15 days")
+ */
+export const getDateRangeLabel = (
+  datePreset: '30days' | '7days' | '1day' | 'custom',
+  startDate: string | null,
+  endDate: string | null
+): string => {
+  // Handle preset cases
+  if (datePreset === '30days') {
+    return '30 days';
+  }
+  if (datePreset === '7days') {
+    return '7 days';
+  }
+  if (datePreset === '1day') {
+    return '1 day';
+  }
+  
+  // Handle custom preset
+  if (datePreset === 'custom') {
+    // If dates are null or empty, use 30 days as fallback
+    if (!startDate || !endDate || startDate === '' || endDate === '') {
+      return '30 days';
+    }
+    
+    // Calculate days between dates and add 1 to include both start and end dates
+    const days = getDaysBetweenDates(startDate, endDate) + 1;
+    
+    // Return formatted label
+    return `${days} ${days === 1 ? 'day' : 'days'}`;
+  }
+  
+  // Fallback (should not happen)
+  return '30 days';
+};
