@@ -69,16 +69,57 @@ describe('DateRangePicker', () => {
       expect(endInput).toHaveAttribute('type', 'date');
     });
 
-    it('renders clear button when dates are calculated for preset', () => {
+    it('does NOT render clear button when dates are calculated for preset (30 days)', () => {
       renderWithProviders(<DateRangePicker />);
 
-      // With default 30days preset, dates should be calculated, so clear button should render
+      // With default 30days preset, dates should be calculated, but clear button should NOT render
+      expect(screen.queryByTestId('clear-dates-button')).not.toBeInTheDocument();
+    });
+
+    it('renders clear button when dates are set in custom mode', () => {
+      renderWithProviders(<DateRangePicker />, { 
+        datePreset: 'custom',
+        startDate: '2023-01-01' 
+      });
+
       expect(screen.getByTestId('clear-dates-button')).toBeInTheDocument();
     });
 
-    it('renders clear button when dates are set', () => {
-      renderWithProviders(<DateRangePicker />, { startDate: '2023-01-01' });
+    it('does NOT render clear button for 7 days preset', () => {
+      renderWithProviders(<DateRangePicker />, {
+        datePreset: '7days',
+        startDate: '2023-01-01',
+        endDate: '2023-01-07'
+      });
 
+      expect(screen.queryByTestId('clear-dates-button')).not.toBeInTheDocument();
+    });
+
+    it('does NOT render clear button for 1 day preset', () => {
+      renderWithProviders(<DateRangePicker />, {
+        datePreset: '1day',
+        startDate: '2023-01-01',
+        endDate: '2023-01-01'
+      });
+
+      expect(screen.queryByTestId('clear-dates-button')).not.toBeInTheDocument();
+    });
+
+    it('renders clear button when switching from preset to custom mode', () => {
+      renderWithProviders(<DateRangePicker />, {
+        datePreset: '30days',
+        startDate: '2023-01-01',
+        endDate: '2023-01-30'
+      });
+
+      // Initially should NOT show clear button for 30 days preset
+      expect(screen.queryByTestId('clear-dates-button')).not.toBeInTheDocument();
+
+      // Switch to custom preset
+      const customButton = screen.getByTestId('preset-custom');
+      fireEvent.click(customButton);
+
+      // Now should show clear button in custom mode
       expect(screen.getByTestId('clear-dates-button')).toBeInTheDocument();
     });
   });
@@ -145,7 +186,10 @@ describe('DateRangePicker', () => {
 
   describe('Disabled State', () => {
     it('disables all inputs and buttons when disabled prop is true', () => {
-      renderWithProviders(<DateRangePicker disabled={true} />, { startDate: '2023-01-01' });
+      renderWithProviders(<DateRangePicker disabled={true} />, { 
+        datePreset: 'custom',
+        startDate: '2023-01-01' 
+      });
 
       const startInput = screen.getByTestId('start-date-input');
       const endInput = screen.getByTestId('end-date-input');
@@ -157,7 +201,10 @@ describe('DateRangePicker', () => {
     });
 
     it('applies disabled styling when disabled prop is true', () => {
-      renderWithProviders(<DateRangePicker disabled={true} />, { startDate: '2023-01-01' });
+      renderWithProviders(<DateRangePicker disabled={true} />, { 
+        datePreset: 'custom',
+        startDate: '2023-01-01' 
+      });
 
       const startInput = screen.getByTestId('start-date-input');
       expect(startInput).toBeDisabled();
@@ -165,7 +212,10 @@ describe('DateRangePicker', () => {
     });
 
     it('inputs remain enabled when disabled prop is false', () => {
-      renderWithProviders(<DateRangePicker disabled={false} />, { startDate: '2023-01-01' });
+      renderWithProviders(<DateRangePicker disabled={false} />, { 
+        datePreset: 'custom',
+        startDate: '2023-01-01' 
+      });
 
       const startInput = screen.getByTestId('start-date-input');
       const endInput = screen.getByTestId('end-date-input');

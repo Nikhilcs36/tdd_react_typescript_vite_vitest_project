@@ -97,6 +97,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ disabled = false }) =
   };
 
   const hasDates = startDate || endDate;
+  const shouldShowClearButton = hasDates && datePreset === 'custom';
 
   return (
     <FilterContainer data-testid="date-range-picker">
@@ -150,7 +151,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ disabled = false }) =
           />
         </div>
 
-        {hasDates && (
+        {shouldShowClearButton && (
           <ClearButton
             onClick={handleClearDates}
             disabled={disabled}
