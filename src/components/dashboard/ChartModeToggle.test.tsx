@@ -33,6 +33,7 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
       { id: 2, username: 'user2', email: 'user2@test.com' }
     ],
     chartMode: 'individual',
+    datePreset: '30days',
     startDate: null,
     endDate: null,
     isLoading: false,
@@ -180,5 +181,27 @@ describe('ChartModeToggle', () => {
       const state = store.getState().dashboard;
       expect(state.chartMode).toBe('individual');
     });
+  });
+
+  it('displays date range label when provided', () => {
+    const dateRangeLabel = "30 days";
+    renderWithProviders(<ChartModeToggle dateRangeLabel={dateRangeLabel} />);
+
+    expect(screen.getByText(dateRangeLabel)).toBeInTheDocument();
+  });
+
+  it('does not display date range label when not provided', () => {
+    renderWithProviders(<ChartModeToggle />);
+
+    expect(screen.queryByText('30 days')).not.toBeInTheDocument();
+  });
+
+  it('displays date range label in placeholder mode', () => {
+    const dateRangeLabel = "7 days";
+    renderWithProviders(<ChartModeToggle dateRangeLabel={dateRangeLabel} />, {
+      currentDropdownUsers: [{ id: 1, username: 'user1' }]
+    });
+
+    expect(screen.getByText(dateRangeLabel)).toBeInTheDocument();
   });
 });

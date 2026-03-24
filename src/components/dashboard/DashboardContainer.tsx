@@ -8,6 +8,7 @@ import { getUserStats, getLoginActivity, getLoginTrends, getLoginComparison, get
 import { axiosApiServiceLoadUserList } from '../../services/apiService';
 import { API_ENDPOINTS } from '../../services/apiEndpoints';
 import { useUserAuthorization } from '../../utils/authorization';
+import { getDateRangeLabel } from '../../utils/dateUtils';
 import UserDashboardCard from './UserDashboardCard';
 import LoginActivityTable from './LoginActivityTable';
 import LoginTrendsChart from './LoginTrendsChart';
@@ -289,6 +290,13 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
   // Note: selectedGroupUsers fetching was removed as it's no longer needed
 
+  // Calculate date range label
+  const dateRangeLabel = getDateRangeLabel(
+    dashboardState.datePreset,
+    dashboardState.startDate,
+    dashboardState.endDate
+  );
+
   // Generate custom chart titles based on chart mode and user selection
   const getChartTitle = (baseKey: string) => {
     if (dashboardState.chartMode === 'individual') {
@@ -386,7 +394,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
           {/* Charts Section */}
           <SectionTitle>{t('dashboard.visualizations')}</SectionTitle>
-          <ChartModeToggle disabled={false} />
+          <ChartModeToggle disabled={false} dateRangeLabel={dateRangeLabel} />
           <ChartGrid data-testid="dashboard-chart-grid">
             <LoginTrendsChart
               chartData={loginTrends}
