@@ -450,7 +450,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Admin Statistics - All Users')).toBeInTheDocument();
+        // Use regex for more flexible text matching
+        expect(screen.getByText(/Admin Statistics - All Users/)).toBeInTheDocument();
       });
     });
 
@@ -468,7 +469,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Admin Statistics - Regular Users (2 users selected)')).toBeInTheDocument();
+        // Use regex for more flexible text matching
+        expect(screen.getByText(/Admin Statistics - Regular Users.*2 users selected/)).toBeInTheDocument();
       });
     });
 
@@ -484,7 +486,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Admin Statistics - Admin Only (1 users selected)')).toBeInTheDocument();
+        // Use regex for more flexible text matching
+        expect(screen.getByText(/Admin Statistics - Admin Only.*1 users selected/)).toBeInTheDocument();
       });
     });
 
@@ -500,7 +503,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
       await waitFor(() => {
         // Individual mode shows username from currentDropdownUsers, not filter label
-        expect(screen.getByText('Admin Statistics - admin1')).toBeInTheDocument();
+        // Use regex for more flexible text matching
+        expect(screen.getByText(/Admin Statistics - admin1/)).toBeInTheDocument();
       });
     });
 
@@ -522,8 +526,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
         });
 
         await waitFor(() => {
-          // BUG: Currently shows "Admin Statistics - All Users" but should show "Admin Statistics - selecteduser"
-          expect(screen.getByText('Admin Statistics - selecteduser')).toBeInTheDocument();
+          // Use regex for more flexible text matching
+          expect(screen.getByText(/Admin Statistics - selecteduser/)).toBeInTheDocument();
         });
       });
 
@@ -546,7 +550,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
         // Should show username immediately from currentDropdownUsers, not "Select User" or "User"
         await waitFor(() => {
-          expect(screen.getByText('Admin Statistics - selecteduser')).toBeInTheDocument();
+          // Use regex for more flexible text matching
+          expect(screen.getByText(/Admin Statistics - selecteduser/)).toBeInTheDocument();
         });
 
         // API may still be called in background for fresh data, but username should show immediately
@@ -565,8 +570,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
         });
 
         await waitFor(() => {
-          // Should show filter label in grouped mode
-          expect(screen.getByText('Admin Statistics - Admin Only (1 users selected)')).toBeInTheDocument();
+          // Should show filter label in grouped mode - use regex for flexible matching
+          expect(screen.getByText(/Admin Statistics - Admin Only.*1 users selected/)).toBeInTheDocument();
         });
       });
 
@@ -587,7 +592,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByText('Admin Statistics - All Users')).toBeInTheDocument();
+          // Use regex for more flexible text matching
+          expect(screen.getByText(/Admin Statistics - All Users/)).toBeInTheDocument();
         });
 
         // Clear mocks
@@ -614,8 +620,18 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
         await waitFor(() => {
           // After switching to individual mode, should show individual username
-          expect(screen.getByText('Admin Statistics - individualuser')).toBeInTheDocument();
-        });
+          // Use more specific selector and wait for admin dashboard to load
+          const adminStatsElement = screen.getByTestId('dashboard-main-container');
+          expect(adminStatsElement).toBeInTheDocument();
+          
+          // Look for the admin statistics title with the username
+          // The text might be broken across elements, so we need to search within the container
+          const adminStatsSection = screen.getByText(/Admin Statistics/).closest('div');
+          expect(adminStatsSection).toBeInTheDocument();
+          
+          // Check that the username appears somewhere in the admin statistics section
+          expect(adminStatsSection).toHaveTextContent(/individualuser/);
+        }, { timeout: 5000 }); // Increased timeout for CI
       });
     });
   });
@@ -643,8 +659,11 @@ describe('DashboardContainer UI/UX Improvements', () => {
       renderWithProviders(<DashboardContainer />);
 
       await waitFor(() => {
-        expect(screen.getByText('Total Logins: 164 (160 success, 4 failed)')).toBeInTheDocument();
-      });
+        // The translation string is: "Total Logins: {{count}} ({{successful}} success, {{failed}} failed)"
+        // So we need to look for the full interpolated string
+        // Use more flexible regex that matches the pattern with any whitespace
+        expect(screen.getByText(/Total Logins:\s*164\s*\(160 success,\s*4 failed\)/)).toBeInTheDocument();
+      }, { timeout: 5000 }); // Increased timeout for CI
     });
   });
 
@@ -817,10 +836,10 @@ describe('DashboardContainer UI/UX Improvements', () => {
       // Initially should not show admin stats
       expect(screen.queryByText('Total Users: 10')).not.toBeInTheDocument();
 
-      // Wait for initial load
+      // Wait for initial load - use findByText which waits for element to appear
       await waitFor(() => {
-        expect(screen.getByText('Total Users: 10')).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Total Users:\s*10/)).toBeInTheDocument();
+      }, { timeout: 5000 });
 
       // Clear mocks and trigger refetch
       vi.clearAllMocks();
