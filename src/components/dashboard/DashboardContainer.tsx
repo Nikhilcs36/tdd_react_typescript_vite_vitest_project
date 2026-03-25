@@ -215,6 +215,20 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     }
 
     const fetchAdminDashboard = async () => {
+      // Don't fetch if we're in individual mode and don't have a selected user yet
+      if (dashboardState.chartMode === 'individual' && !dashboardState.selectedDashboardUserId) {
+        setAdminDashboard(null);
+        setAdminDashboardLoading(false);
+        return;
+      }
+
+      // Don't fetch if we're in group mode and don't have any users in dropdown
+      if (dashboardState.chartMode === 'grouped' && dashboardState.currentDropdownUsers.length === 0) {
+        setAdminDashboard(null);
+        setAdminDashboardLoading(false);
+        return;
+      }
+
       setAdminDashboardLoading(true);
 
       try {
@@ -261,8 +275,21 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
     const fetchSelectedUserInfo = async () => {
       if (userId && isAdmin()) {
+        // FIRST: Check if user exists in currentDropdownUsers and set immediately
+        const userFromDropdown = dashboardState.currentDropdownUsers.find(
+          user => user.id === userId
+        );
+        
+        if (userFromDropdown) {
+          setSelectedUserInfo({
+            id: userFromDropdown.id,
+            username: userFromDropdown.username,
+            email: userFromDropdown.email
+          });
+        }
+
         try {
-          // Use the specific user endpoint instead of filtering the user list
+          // SECOND: Fetch fresh data from API (optional, for completeness)
           const response = await axiosApiServiceLoadUserList.get<{
             id: number;
             username: string;
@@ -278,7 +305,10 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           }
         } catch (_error: unknown) {
           console.warn('Failed to fetch selected user info:', _error);
-          setSelectedUserInfo(null);
+          // Don't clear selectedUserInfo if we already have it from dropdown
+          if (!userFromDropdown) {
+            setSelectedUserInfo(null);
+          }
         }
       } else {
         setSelectedUserInfo(null);
@@ -286,7 +316,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     };
 
     fetchSelectedUserInfo();
-  }, [dashboardState.selectedDashboardUserId, isAdmin]);
+  }, [dashboardState.selectedDashboardUserId, dashboardState.currentDropdownUsers, isAdmin]);
 
   // Note: selectedGroupUsers fetching was removed as it's no longer needed
 
@@ -301,11 +331,24 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const getChartTitle = (baseKey: string) => {
     if (dashboardState.chartMode === 'individual') {
       // Individual mode: Show selected username only
+      
+      // FIRST: Try to get username from currentDropdownUsers (immediate, no API call needed)
+      const selectedUserFromDropdown = dashboardState.currentDropdownUsers.find(
+        user => user.id === dashboardState.selectedDashboardUserId
+      );
+      
+      if (selectedUserFromDropdown && isAdmin()) {
+        return `${t(baseKey)} - ${selectedUserFromDropdown.username}`;
+      }
+      
+      // SECOND: Try selectedUserInfo from API (if already loaded)
       if (selectedUserInfo && isAdmin()) {
         return `${t(baseKey)} - ${selectedUserInfo.username}`;
-      } else if (dashboardState.selectedDashboardUserId && isAdmin()) {
-        // Fallback if user info not loaded yet
-        return `${t(baseKey)} - ${t('dashboard.user_selector.label').toLowerCase()}`;
+      }
+      
+      // THIRD: Fallback (better than "Select User")
+      if (dashboardState.selectedDashboardUserId && isAdmin()) {
+        return `${t(baseKey)} - ${t('dashboard.user')}`; // Shows "User" instead of "Select User"
       }
     } else {
       // Group mode: Show filter type with user count if users are selected
@@ -330,21 +373,46 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
   // Generate custom admin statistics title based on filter and user selection
   const getAdminStatsTitle = () => {
-    const filterLabels = {
-      all: t('dashboard.filters.allUsers'),
-      admin: t('dashboard.filters.adminOnly'),
-      regular: t('dashboard.filters.regularUsers'),
-      me: t('dashboard.filters.me'),
-    };
-    const filterLabel = filterLabels[dashboardState.activeFilter] || t('dashboard.filters.allUsers');
+    if (dashboardState.chartMode === 'individual') {
+      // Individual mode: Show selected username only
+      
+      // FIRST: Try to get username from currentDropdownUsers (immediate, no API call needed)
+      const selectedUserFromDropdown = dashboardState.currentDropdownUsers.find(
+        user => user.id === dashboardState.selectedDashboardUserId
+      );
+      
+      if (selectedUserFromDropdown && isAdmin()) {
+        return `${t('dashboard.admin_statistics')} - ${selectedUserFromDropdown.username}`;
+      }
+      
+      // SECOND: Try selectedUserInfo from API (if already loaded)
+      if (selectedUserInfo && isAdmin()) {
+        return `${t('dashboard.admin_statistics')} - ${selectedUserInfo.username}`;
+      }
+      
+      // THIRD: Fallback (better than "Select User")
+      if (dashboardState.selectedDashboardUserId && isAdmin()) {
+        return `${t('dashboard.admin_statistics')} - ${t('dashboard.user')}`; // Shows "User" instead of "Select User"
+      }
+    } else {
+      // Group mode: Show filter type with user count if users are selected
+      const filterLabels = {
+        all: t('dashboard.filters.allUsers'),
+        admin: t('dashboard.filters.adminOnly'),
+        regular: t('dashboard.filters.regularUsers'),
+        me: t('dashboard.filters.me'),
+      };
+      const filterLabel = filterLabels[dashboardState.activeFilter] || t('dashboard.filters.allUsers');
 
-    // Add user count if any users are selected
-    if (dashboardState.selectedUserIds.length > 0) {
-      const selectedCount = dashboardState.selectedUserIds.length;
-      return `${t('dashboard.admin_statistics')} - ${filterLabel} (${selectedCount} users selected)`;
+      // Add user count if any users are selected
+      if (dashboardState.selectedUserIds.length > 0) {
+        const selectedCount = dashboardState.selectedUserIds.length;
+        return `${t('dashboard.admin_statistics')} - ${filterLabel} (${selectedCount} users selected)`;
+      }
+
+      return `${t('dashboard.admin_statistics')} - ${filterLabel}`;
     }
-
-    return `${t('dashboard.admin_statistics')} - ${filterLabel}`;
+    return t('dashboard.admin_statistics');
   };
 
   return (
