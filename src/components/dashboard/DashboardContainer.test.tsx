@@ -437,9 +437,11 @@ describe('DashboardContainer UI/UX Improvements', () => {
   });
 
   describe('Admin Statistics Title Generation', () => {
-    it('should show admin statistics title with filter name when no users selected', async () => {
+    it('should show admin statistics title with filter name when no users selected in group mode', async () => {
       renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Group mode shows filter labels
         activeFilter: 'all',
+        selectedDashboardUserId: null, // No selected user for individual mode
         selectedUserIds: [], // No users selected
         currentDropdownUsers: [
           { id: 1, username: 'user1', email: 'user1@test.com' },
@@ -452,9 +454,11 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
     });
 
-    it('should show admin statistics title with filter name and user count when users selected', async () => {
+    it('should show admin statistics title with filter name and user count when users selected in group mode', async () => {
       renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Group mode shows filter labels
         activeFilter: 'regular',
+        selectedDashboardUserId: null, // No selected user for individual mode
         selectedUserIds: [1, 2], // 2 users selected
         currentDropdownUsers: [
           { id: 1, username: 'user1', email: 'user1@test.com' },
@@ -468,9 +472,11 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
     });
 
-    it('should show admin statistics title with admin filter when admin users selected', async () => {
+    it('should show admin statistics title with admin filter when admin users selected in group mode', async () => {
       renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Group mode shows filter labels
         activeFilter: 'admin',
+        selectedDashboardUserId: null, // No selected user for individual mode
         selectedUserIds: [1], // 1 admin selected
         currentDropdownUsers: [
           { id: 1, username: 'admin1', email: 'admin1@test.com' },
@@ -479,6 +485,137 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Admin Statistics - Admin Only (1 users selected)')).toBeInTheDocument();
+      });
+    });
+
+    it('should show individual username in admin statistics title when in individual mode', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        chartMode: 'individual', // Individual mode shows username
+        activeFilter: 'admin',
+        selectedUserIds: [1], // 1 admin selected
+        currentDropdownUsers: [
+          { id: 1, username: 'admin1', email: 'admin1@test.com' },
+        ],
+      });
+
+      await waitFor(() => {
+        // Individual mode shows username from currentDropdownUsers, not filter label
+        expect(screen.getByText('Admin Statistics - admin1')).toBeInTheDocument();
+      });
+    });
+
+    // BUG FIX TESTS: Admin statistics title should respect chart mode
+    describe('Chart Mode Integration', () => {
+      it('should show individual username in admin statistics title when in individual chart mode', async () => {
+        const mockUserInfo = { id: 2, username: 'selecteduser', email: 'selected@test.com' };
+        vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue(mockUserInfo);
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'individual',
+          selectedDashboardUserId: 2,
+          activeFilter: 'all',
+          currentDropdownUsers: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'selecteduser', email: 'selected@test.com' },
+            { id: 3, username: 'user3', email: 'user3@test.com' },
+          ],
+        });
+
+        await waitFor(() => {
+          // BUG: Currently shows "Admin Statistics - All Users" but should show "Admin Statistics - selecteduser"
+          expect(screen.getByText('Admin Statistics - selecteduser')).toBeInTheDocument();
+        });
+      });
+
+      it('should show username from currentDropdownUsers immediately without waiting for API call', async () => {
+        // Mock the API call to never resolve (simulate slow API)
+        vi.mocked(axiosApiServiceLoadUserList.get).mockImplementation(() => 
+          new Promise(() => {}) // Never resolves to simulate slow API
+        );
+
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'individual',
+          selectedDashboardUserId: 2,
+          activeFilter: 'all',
+          currentDropdownUsers: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'selecteduser', email: 'selected@test.com' }, // Username available here
+            { id: 3, username: 'user3', email: 'user3@test.com' },
+          ],
+        });
+
+        // Should show username immediately from currentDropdownUsers, not "Select User" or "User"
+        await waitFor(() => {
+          expect(screen.getByText('Admin Statistics - selecteduser')).toBeInTheDocument();
+        });
+
+        // API may still be called in background for fresh data, but username should show immediately
+        // The key is that we don't wait for the API to show the username
+      });
+
+      it('should show filter label in admin statistics title when in grouped chart mode', async () => {
+        renderWithProviders(<DashboardContainer />, {
+          chartMode: 'grouped',
+          activeFilter: 'admin',
+          selectedUserIds: [1],
+          currentDropdownUsers: [
+            { id: 1, username: 'admin1', email: 'admin1@test.com' },
+            { id: 2, username: 'admin2', email: 'admin2@test.com' },
+          ],
+        });
+
+        await waitFor(() => {
+          // Should show filter label in grouped mode
+          expect(screen.getByText('Admin Statistics - Admin Only (1 users selected)')).toBeInTheDocument();
+        });
+      });
+
+      it('should show individual username without filter label when switching from group to individual mode', async () => {
+        const mockUserInfo = { id: 3, username: 'individualuser', email: 'individual@test.com' };
+        vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue(mockUserInfo);
+
+        // First render in group mode
+        const { rerender } = renderWithProviders(<DashboardContainer />, {
+          chartMode: 'grouped',
+          activeFilter: 'all',
+          selectedDashboardUserId: 3,
+          currentDropdownUsers: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'user2', email: 'user2@test.com' },
+            { id: 3, username: 'individualuser', email: 'individual@test.com' },
+          ],
+        });
+
+        await waitFor(() => {
+          expect(screen.getByText('Admin Statistics - All Users')).toBeInTheDocument();
+        });
+
+        // Clear mocks
+        vi.clearAllMocks();
+        vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue(mockUserInfo);
+
+        // Switch to individual mode
+        rerender(
+          <Provider store={createMockStore({
+            chartMode: 'individual',
+            activeFilter: 'all',
+            selectedDashboardUserId: 3,
+            currentDropdownUsers: [
+              { id: 1, username: 'user1', email: 'user1@test.com' },
+              { id: 2, username: 'user2', email: 'user2@test.com' },
+              { id: 3, username: 'individualuser', email: 'individual@test.com' },
+            ],
+          })}>
+            <I18nextProvider i18n={i18n}>
+              <DashboardContainer />
+            </I18nextProvider>
+          </Provider>
+        );
+
+        await waitFor(() => {
+          // After switching to individual mode, should show individual username
+          expect(screen.getByText('Admin Statistics - individualuser')).toBeInTheDocument();
+        });
       });
     });
   });
@@ -512,16 +649,21 @@ describe('DashboardContainer UI/UX Improvements', () => {
   });
 
   describe('Admin Statistics Reactivity', () => {
-    it('should refetch admin dashboard when filters change', async () => {
+    it('should refetch admin dashboard when filters change in group mode', async () => {
       const { rerender } = renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Group mode allows fetching without selected user
         activeFilter: 'all',
         startDate: null,
         endDate: null,
         selectedDashboardUserId: null, // No selected user
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+        ],
       });
 
       await waitFor(() => {
-        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+        expect(getAdminDashboard).toHaveBeenCalledWith([1, 2], undefined, undefined, undefined);
       });
 
       // Clear mocks to check next call
@@ -530,10 +672,15 @@ describe('DashboardContainer UI/UX Improvements', () => {
       // Re-render with filter changes
       rerender(
         <Provider store={createMockStore({
+          chartMode: 'grouped', // Group mode allows fetching without selected user
           activeFilter: 'admin',
           startDate: '2025-01-01',
           endDate: '2025-12-31',
           selectedDashboardUserId: null, // No selected user
+          currentDropdownUsers: [
+            { id: 1, username: 'user1', email: 'user1@test.com' },
+            { id: 2, username: 'user2', email: 'user2@test.com' },
+          ],
         })}>
           <I18nextProvider i18n={i18n}>
             <DashboardContainer />
@@ -543,30 +690,40 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
       await waitFor(() => {
         // Should refetch with new parameters (admin maps to admin_only)
-        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, '2025-01-01', '2025-12-31', 'admin_only');
+        expect(getAdminDashboard).toHaveBeenCalledWith([1, 2], '2025-01-01', '2025-12-31', 'admin_only');
       });
     });
 
-    it('should pass date range parameters to admin dashboard', async () => {
+    it('should pass date range parameters to admin dashboard in group mode', async () => {
       renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Group mode allows fetching without selected user
         startDate: '2025-06-01',
         endDate: '2025-06-30',
         selectedDashboardUserId: null, // No selected user
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+        ],
       });
 
       await waitFor(() => {
-        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, '2025-06-01', '2025-06-30', undefined);
+        expect(getAdminDashboard).toHaveBeenCalledWith([1, 2], '2025-06-01', '2025-06-30', undefined);
       });
     });
 
-    it('should pass user filter parameters to admin dashboard', async () => {
+    it('should pass user filter parameters to admin dashboard in group mode', async () => {
       renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Group mode allows fetching without selected user
         activeFilter: 'regular',
         selectedDashboardUserId: null, // No selected user
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+        ],
       });
 
       await waitFor(() => {
-        expect(getAdminDashboard).toHaveBeenCalledWith(undefined, undefined, undefined, 'regular_users');
+        expect(getAdminDashboard).toHaveBeenCalledWith([1, 2], undefined, undefined, 'regular_users');
       });
     });
 
