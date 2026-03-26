@@ -17,17 +17,33 @@ const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transpar
 const EmptyState = tw.div`text-center text-gray-500 dark:text-gray-400 py-8`;
 const StatusBadge = tw.span`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`;
 
+const LoadMoreContainer = tw.div`flex flex-col items-center mt-4 space-y-2`;
+const LoadMoreButton = tw.button`px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors`;
+const AllLoadedMessage = tw.div`text-sm text-gray-500 dark:text-gray-400`;
+
 interface LoginActivityTableProps {
   loginActivity: LoginActivityItem[];
   loading: boolean;
+  hasNext?: boolean;
+  onLoadMore?: () => void;
+  loadMoreLoading?: boolean;
+  totalCount?: number;
 }
 
 /**
  * LoginActivityTable Component
  * Displays login activity history in a tabular format
  * Shows loading state, empty state, and success state
+ * Supports Load More functionality for pagination
  */
-const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({ loginActivity, loading }) => {
+const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({
+  loginActivity,
+  loading,
+  hasNext,
+  onLoadMore,
+  loadMoreLoading = false,
+  totalCount
+}) => {
   const { t } = useTranslation();
 
   // Format the timestamp for display
@@ -120,6 +136,24 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({ logi
           </TableBody>
         </Table>
       </div>
+
+      {/* Load More functionality */}
+      <LoadMoreContainer>
+        {hasNext && onLoadMore && (
+          <LoadMoreButton
+            onClick={onLoadMore}
+            disabled={loadMoreLoading}
+            data-testid="load-more-button"
+          >
+            {loadMoreLoading ? t('dashboard.loading') : t('dashboard.load_more')}
+          </LoadMoreButton>
+        )}
+        {!hasNext && loginActivity.length > 0 && (
+          <AllLoadedMessage data-testid="all-loaded-message">
+            {t('dashboard.all_records_loaded')}
+          </AllLoadedMessage>
+        )}
+      </LoadMoreContainer>
     </TableContainer>
   );
 });

@@ -291,7 +291,7 @@ describe('loginTrackingService', () => {
       const result = await getLoginActivity(1, 10, undefined, '2025-12-01', '2025-12-31');
       expect(result).toEqual(mockResponse);
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/user/dashboard/login-activity/?start_date=2025-12-01&end_date=2025-12-31'),
+        expect.stringContaining('/api/user/dashboard/login-activity/?size=10&start_date=2025-12-01&end_date=2025-12-31'),
         expect.any(Object)
       );
     });
@@ -376,7 +376,7 @@ describe('loginTrackingService', () => {
       const result = await getLoginActivity(1, 10, undefined, '2025-12-01');
       expect(result).toEqual(mockResponse);
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/user/dashboard/login-activity/?start_date=2025-12-01'),
+        expect.stringContaining('/api/user/dashboard/login-activity/?size=10&start_date=2025-12-01'),
         expect.any(Object)
       );
     });
@@ -404,7 +404,7 @@ describe('loginTrackingService', () => {
       const result = await getLoginActivity(1, 10, undefined, undefined, '2025-11-30');
       expect(result).toEqual(mockResponse);
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/user/dashboard/login-activity/?end_date=2025-11-30'),
+        expect.stringContaining('/api/user/dashboard/login-activity/?size=10&end_date=2025-11-30'),
         expect.any(Object)
       );
     });
@@ -541,6 +541,8 @@ describe('loginTrackingService', () => {
         total_users: 150,
         active_users: 125,
         total_logins: 2540,
+        total_successful_logins: 2400,
+        total_failed_logins: 140,
         login_activity: [
           {
             id: 123,
@@ -572,6 +574,8 @@ describe('loginTrackingService', () => {
         total_users: 2,
         active_users: 2,
         total_logins: 45,
+        total_successful_logins: 40,
+        total_failed_logins: 5,
         login_activity: [],
         user_growth: {}
       };
@@ -594,6 +598,8 @@ describe('loginTrackingService', () => {
         total_users: 3,
         active_users: 3,
         total_logins: 67,
+        total_successful_logins: 60,
+        total_failed_logins: 7,
         login_activity: [],
         user_growth: {}
       };
@@ -616,6 +622,8 @@ describe('loginTrackingService', () => {
         total_users: 5,
         active_users: 5,
         total_logins: 120,
+        total_successful_logins: 110,
+        total_failed_logins: 10,
         login_activity: [],
         user_growth: {}
       };
@@ -638,6 +646,8 @@ describe('loginTrackingService', () => {
         total_users: 1,
         active_users: 1,
         total_logins: 23,
+        total_successful_logins: 20,
+        total_failed_logins: 3,
         login_activity: [],
         user_growth: {}
       };
@@ -663,6 +673,8 @@ describe('loginTrackingService', () => {
         total_users: 4,
         active_users: 4,
         total_logins: 89,
+        total_successful_logins: 80,
+        total_failed_logins: 9,
         login_activity: [],
         user_growth: {}
       };
@@ -685,6 +697,8 @@ describe('loginTrackingService', () => {
         total_users: 6,
         active_users: 6,
         total_logins: 134,
+        total_successful_logins: 120,
+        total_failed_logins: 14,
         login_activity: [],
         user_growth: {}
       };

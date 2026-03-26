@@ -59,6 +59,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   // Granular loading states instead of global loading
   const [userStatsLoading, setUserStatsLoading] = useState(true);
   const [loginActivityLoading, setLoginActivityLoading] = useState(true);
+  const [loginActivityLoadMoreLoading, setLoginActivityLoadMoreLoading] = useState(false);
   const [chartsLoading, setChartsLoading] = useState(true);
   const [adminDashboardLoading, setAdminDashboardLoading] = useState(true);
 
@@ -152,7 +153,8 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         const startDate = dashboardState.startDate || undefined;
         const endDate = dashboardState.endDate || undefined;
 
-        const response = await getLoginActivity(1, 15, targetUserId, startDate, endDate);
+        // Use maximum page size (100) to get as many records as possible initially
+        const response = await getLoginActivity(1, 100, targetUserId, startDate, endDate);
         setLoginActivity(response);
       } catch (_err: unknown) {
         setLoginActivity(null);
@@ -163,6 +165,37 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
     fetchLoginActivity();
   }, [currentUserId, userId, isAdmin, dashboardState.selectedDashboardUserId, dashboardState.startDate, dashboardState.endDate]);
+
+  // Load more login activity records
+  const loadMoreLoginActivity = async () => {
+    if (!loginActivity || loginActivityLoadMoreLoading) {
+      return;
+    }
+
+    setLoginActivityLoadMoreLoading(true);
+
+    try {
+      const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : userId;
+      const startDate = dashboardState.startDate || undefined;
+      const endDate = dashboardState.endDate || undefined;
+
+      // Calculate next page number based on current results length and page size (100)
+      const nextPage = Math.floor(loginActivity.results.length / 100) + 1;
+
+      const response = await getLoginActivity(nextPage, 100, targetUserId, startDate, endDate);
+
+      // Append new results to existing ones and update the response
+      setLoginActivity({
+        ...response,
+        results: [...loginActivity.results, ...response.results]
+      });
+    } catch (_err: unknown) {
+      // Keep existing data on error - don't show error to user for load more failures
+      console.warn('Failed to load more login activity:', _err);
+    } finally {
+      setLoginActivityLoadMoreLoading(false);
+    }
+  };
 
   // Fetch charts - triggered by chart mode, user selection, and global date range changes
   useEffect(() => {
@@ -458,6 +491,10 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           <LoginActivityTable
             loginActivity={loginActivity?.results || []}
             loading={loginActivityLoading}
+            hasNext={loginActivity ? loginActivity.results.length < loginActivity.count : false}
+            onLoadMore={loadMoreLoginActivity}
+            loadMoreLoading={loginActivityLoadMoreLoading}
+            totalCount={loginActivity?.count}
           />
 
           {/* Charts Section */}
