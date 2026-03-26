@@ -1198,7 +1198,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
       // Wait for component to fetch data
       await waitFor(() => {
         // getLoginActivity should be called with the selected user ID
-        expect(getLoginActivity).toHaveBeenCalledWith(1, 15, 2, undefined, undefined);
+        expect(getLoginActivity).toHaveBeenCalledWith(1, 100, 2, undefined, undefined);
         
         // Login activity table should show items
         expect(screen.getByTestId('login-activity-table')).toHaveTextContent('3 items');
@@ -1213,7 +1213,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
       await waitFor(() => {
         expect(getUserStats).toHaveBeenCalledWith(2, undefined, undefined);
-        expect(getLoginActivity).toHaveBeenCalledWith(1, 15, 2, undefined, undefined);
+        expect(getLoginActivity).toHaveBeenCalledWith(1, 100, 2, undefined, undefined);
       });
 
       // Clear mocks to track new calls
@@ -1233,7 +1233,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
       await waitFor(() => {
         // Should refetch with new user ID
         expect(getUserStats).toHaveBeenCalledWith(3, undefined, undefined);
-        expect(getLoginActivity).toHaveBeenCalledWith(1, 15, 3, undefined, undefined);
+        expect(getLoginActivity).toHaveBeenCalledWith(1, 100, 3, undefined, undefined);
       });
     });
 

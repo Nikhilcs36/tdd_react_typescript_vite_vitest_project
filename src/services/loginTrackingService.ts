@@ -119,13 +119,13 @@ export const loginTrackingService = {
   },
 
   // Login Activity with pagination - supports both current user and specific user by ID, with optional date filtering
-  getLoginActivity: async (page: number = 1, size: number = 10, userId?: number, startDate?: string, endDate?: string): Promise<LoginActivityResponse> => {
+  getLoginActivity: async (page: number = 1, size: number = 100, userId?: number, startDate?: string, endDate?: string): Promise<LoginActivityResponse> => {
     const endpoint = userId ? API_ENDPOINTS.LOGIN_ACTIVITY_BY_ID(userId) : API_ENDPOINTS.LOGIN_ACTIVITY;
     let url = endpoint;
 
     const params = new URLSearchParams();
     if (page !== 1) params.append('page', page.toString());
-    if (size !== 10) params.append('size', size.toString());
+    if (size !== 100) params.append('size', size.toString());
     if (startDate) {
       params.append('start_date', startDate);
     }

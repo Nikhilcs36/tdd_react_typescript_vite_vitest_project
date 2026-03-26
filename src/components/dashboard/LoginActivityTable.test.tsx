@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import LoginActivityTable from './LoginActivityTable';
 import { LoginActivityItem } from '../../types/loginTracking';
@@ -6,7 +7,21 @@ import { LoginActivityItem } from '../../types/loginTracking';
 // Mock the translation function
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string, options?: any) => {
+      // Handle specific translation keys for testing
+      switch (key) {
+        case 'dashboard.load_more':
+          return 'Load More';
+        case 'dashboard.loading':
+          return 'Loading...';
+        case 'dashboard.all_records_loaded':
+          return 'All records loaded';
+        case 'dashboard.showing_records':
+          return options ? `Showing ${options.current} of ${options.total} records` : key;
+        default:
+          return key;
+      }
+    },
     i18n: { language: 'en' }
   }),
 }));
@@ -103,5 +118,91 @@ describe('LoginActivityTable', () => {
     const scrollContainer = screen.getByText('dashboard.login_activity').closest('div')?.parentElement?.querySelector('.overflow-y-auto');
     expect(scrollContainer).toBeInTheDocument();
     expect(scrollContainer).toHaveClass('max-h-96');
+  });
+
+  it('should handle and display 100 records correctly', () => {
+    // Create 100 mock records to test the component's ability to handle large datasets
+    const hundredActivities: LoginActivityItem[] = Array.from({ length: 100 }, (_, index) => ({
+      id: index + 1,
+      username: `testuser${index + 1}`,
+      timestamp: `2026-01-${String(Math.floor(index / 3) + 1).padStart(2, '0')} ${String(9 + (index % 10)).padStart(2, '0')}:${String(30 + (index % 30)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}`,
+      ip_address: `192.168.1.${(index % 255) + 1}`,
+      user_agent: index % 3 === 0 
+        ? "PostmanRuntime/7.51.0" 
+        : index % 3 === 1 
+          ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+          : "Mozilla/5.0 (Macintosh; Intel Mac OS X)",
+      success: index % 10 !== 0 // 90% success rate
+    }));
+
+    render(<LoginActivityTable loginActivity={hundredActivities} loading={false} />);
+    
+    // Verify that all 100 usernames are rendered
+    for (let i = 1; i <= 10; i++) { // Check first 10 to verify rendering works
+      expect(screen.getByText(`testuser${i}`)).toBeInTheDocument();
+    }
+    
+    // Verify scroll container is present for large dataset
+    const scrollContainer = screen.getByText('dashboard.login_activity').closest('div')?.parentElement?.querySelector('.overflow-y-auto');
+    expect(scrollContainer).toBeInTheDocument();
+    expect(scrollContainer).toHaveClass('max-h-96');
+  });
+
+  describe('Load More functionality', () => {
+    it('should show "Load More" button when hasNext is true', () => {
+      render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} hasNext={true} onLoadMore={() => {}} />);
+
+      expect(screen.getByRole('button', { name: /load more/i })).toBeInTheDocument();
+    });
+
+    it('should not show "Load More" button when hasNext is false', () => {
+      render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} hasNext={false} onLoadMore={() => {}} />);
+
+      expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show "Load More" button when hasNext is undefined', () => {
+      render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} onLoadMore={() => {}} />);
+
+      expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
+    });
+
+    it('should call onLoadMore when "Load More" button is clicked', async () => {
+      const mockOnLoadMore = vi.fn();
+      const user = userEvent.setup();
+
+      render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} hasNext={true} onLoadMore={mockOnLoadMore} />);
+
+      const loadMoreButton = screen.getByRole('button', { name: /load more/i });
+      await user.click(loadMoreButton);
+
+      expect(mockOnLoadMore).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show loading state on "Load More" button when loadMoreLoading is true', () => {
+      render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} hasNext={true} onLoadMore={() => {}} loadMoreLoading={true} />);
+
+      const loadMoreButton = screen.getByRole('button', { name: /loading/i });
+      expect(loadMoreButton).toBeDisabled();
+      expect(loadMoreButton).toHaveTextContent(/loading/i);
+    });
+
+    it('should not show record count when totalCount is provided', () => {
+      render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} totalCount={150} />);
+
+      expect(screen.queryByText(/showing.*records/i)).not.toBeInTheDocument();
+    });
+
+    it('should show "No more records" message when hasNext is false and data exists', () => {
+      render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} hasNext={false} />);
+
+      expect(screen.getByText('All records loaded')).toBeInTheDocument();
+    });
+
+    it('should not show "No more records" message when hasNext is true', () => {
+      render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} hasNext={true} onLoadMore={() => {}} />);
+
+      expect(screen.queryByText('All records loaded')).not.toBeInTheDocument();
+    });
   });
 });

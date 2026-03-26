@@ -513,7 +513,7 @@ export const handlers = [
   http.get(API_ENDPOINTS.LOGIN_ACTIVITY, async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page")) || 1;
-    const size = Number(url.searchParams.get("size")) || 10;
+    const size = Number(url.searchParams.get("size")) || 100;
     const authHeader = request.headers.get("Authorization");
 
     // Check authentication
@@ -524,32 +524,19 @@ export const handlers = [
       );
     }
 
-    const allActivities = [
-      {
-        id: 66,
-        username: "admin",
-        timestamp: "2026-01-03 09:36:18",
-        ip_address: "172.18.0.1",
-        user_agent: "PostmanRuntime/7.51.0",
-        success: true
-      },
-      {
-        id: 65,
-        username: "admin",
-        timestamp: "2026-01-03 09:35:14",
-        ip_address: "172.18.0.1",
-        user_agent: "PostmanRuntime/7.51.0",
-        success: true
-      },
-      {
-        id: 64,
-        username: "admin",
-        timestamp: "2026-01-03 09:27:24",
-        ip_address: "172.18.0.1",
-        user_agent: "PostmanRuntime/7.51.0",
-        success: true
-      }
-    ];
+    // Generate 100 login activity records for testing Load More functionality
+    const allActivities = Array.from({ length: 100 }, (_, index) => ({
+      id: 100 - index, // Start from 100 down to 1
+      username: "admin",
+      timestamp: `2026-01-${String(Math.floor(index / 3) + 1).padStart(2, '0')} ${String(9 + (index % 10)).padStart(2, '0')}:${String(30 + (index % 30)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}`,
+      ip_address: `172.18.0.${(index % 255) + 1}`,
+      user_agent: index % 3 === 0 
+        ? "PostmanRuntime/7.51.0" 
+        : index % 3 === 1 
+          ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+          : "Mozilla/5.0 (Macintosh; Intel Mac OS X)",
+      success: index % 10 !== 0 // 90% success rate
+    }));
 
     const startIndex = (page - 1) * size;
     const endIndex = startIndex + size;
