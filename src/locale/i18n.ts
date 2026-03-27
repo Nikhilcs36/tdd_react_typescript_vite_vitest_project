@@ -64,6 +64,7 @@ i18n.use(initReactI18next).init({
             email_required: "Email is required.",
             email_invalid: "Enter a valid email address.",
             password_required: "Password is required.",
+            password_incorrect: "Password is incorrect.",
             no_active_account:
               "No active account found with the given credentials.",
             email_not_verified: "Please verify your email before logging in.",
@@ -288,6 +289,7 @@ i18n.use(initReactI18next).init({
             email_required: "ഇമെയിൽ ആവശ്യമാണ്.",
             email_invalid: "സാധുവായ ഇമെയിൽ വിലാസം നൽകുക.",
             password_required: "പാസ്‌വേഡ് ആവശ്യമാണ്.",
+            password_incorrect: "പാസ്‌വേഡ് തെറ്റാണ്.",
             no_active_account:
               "നൽകിയിട്ടുള്ള ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് സജീവമായ അക്കൗണ്ട് കണ്ടെത്താനായില്ല",
             email_not_verified: "ലോഗിൻ ചെയ്യുന്നതിന് മുമ്പ് ദയവായി നിങ്ങളുടെ ഇമെയിൽ പരിശോധിക്കുക.",
@@ -496,6 +498,7 @@ i18n.use(initReactI18next).init({
             email_required: "يرجى إدخال البريد الإلكتروني.",
             email_invalid: "يرجى إدخال بريد إلكتروني صحيح.",
             password_required: "يرجى إدخال كلمة المرور.",
+            password_incorrect: "كلمة المرور غير صحيحة.",
             no_active_account:
               "لم يتم العثور على حساب نشط ببيانات الاعتماد المقدمة",
             email_not_verified: "يرجى التحقق من بريدك الإلكتروني قبل تسجيل الدخول.",
