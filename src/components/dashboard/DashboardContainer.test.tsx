@@ -855,7 +855,12 @@ describe('DashboardContainer UI/UX Improvements', () => {
       // Clear mocks and setup new mock for refetch
       vi.clearAllMocks();
       
-      // Mock the refetch with a delay to simulate loading state
+      // Re-mock all necessary functions after clearing
+      vi.mocked(getUserStats).mockResolvedValue(mockUserStats);
+      vi.mocked(getLoginActivity).mockResolvedValue(mockLoginActivity);
+      vi.mocked(getLoginTrends).mockResolvedValue(mockChartData);
+      vi.mocked(getLoginComparison).mockResolvedValue(mockChartData);
+      vi.mocked(getLoginDistribution).mockResolvedValue(mockChartData);
       vi.mocked(getAdminDashboard).mockImplementationOnce(() =>
         new Promise(resolve => setTimeout(() => resolve({
           total_users: 10,
@@ -867,6 +872,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
           user_growth: {}
         }), 200))
       );
+      vi.mocked(getAdminCharts).mockResolvedValue(mockChartData);
+      vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue({ id: 1, username: 'testuser', email: 'test@example.com' });
 
       // Re-render with different filter
       rerender(
