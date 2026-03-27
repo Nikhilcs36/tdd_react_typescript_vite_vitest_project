@@ -18,6 +18,8 @@ vi.mock('react-i18next', () => ({
           return 'All records loaded';
         case 'dashboard.showing_records':
           return options ? `Showing ${options.current} of ${options.total} records` : key;
+        case 'dashboard.row_number':
+          return '#';
         default:
           return key;
       }
@@ -53,6 +55,37 @@ describe('LoginActivityTable', () => {
     expect(screen.getByText('testuser2')).toBeInTheDocument();
     expect(screen.getByText('192.168.1.100')).toBeInTheDocument();
     expect(screen.getByText('192.168.1.101')).toBeInTheDocument();
+  });
+
+  it('should display row number column (#) in table header', () => {
+    render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} />);
+    
+    expect(screen.getByText('#')).toBeInTheDocument();
+  });
+
+  it('should display row numbers (1, 2, 3, ...) for each row', () => {
+    render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} />);
+    
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('should display correct row numbers for large datasets', () => {
+    const manyActivities: LoginActivityItem[] = Array.from({ length: 10 }, (_, index) => ({
+      id: index + 1,
+      username: `testuser${index + 1}`,
+      timestamp: `2025-12-${String(index + 1).padStart(2, '0')} 14:30:25`,
+      ip_address: `192.168.1.${100 + index}`,
+      user_agent: `Mozilla/5.0 UserAgent${index}`,
+      success: index % 2 === 0
+    }));
+
+    render(<LoginActivityTable loginActivity={manyActivities} loading={false} />);
+    
+    // Check first, middle, and last row numbers
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getByText('10')).toBeInTheDocument();
   });
 
   it('should display loading state when loading is true', () => {
