@@ -27,6 +27,7 @@ interface LoginActivityTableProps {
   hasNext?: boolean;
   onLoadMore?: () => void;
   loadMoreLoading?: boolean;
+  totalCount?: number;
 }
 
 /**
@@ -104,6 +105,7 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({
         <Table>
           <TableHead>
             <tr>
+              <TableHeaderCell>{t('dashboard.row_number', '#')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.username')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.timestamp')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.ip_address')}</TableHeaderCell>
@@ -112,8 +114,9 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({
             </tr>
           </TableHead>
           <TableBody>
-            {loginActivity.map((activity) => (
+            {loginActivity.map((activity, index) => (
               <TableRow key={activity.id}>
+                <TableCell className="text-right">{index + 1}</TableCell>
                 <TableCell>{activity.username}</TableCell>
                 <TableCell>{formatTimestamp(activity.timestamp)}</TableCell>
                 <TableCell>{activity.ip_address}</TableCell>

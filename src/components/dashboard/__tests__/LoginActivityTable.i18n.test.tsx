@@ -34,6 +34,7 @@ describe('LoginActivityTable i18n Integration', () => {
     {
       lang: "en",
       expectedTitle: "Login Activity",
+      expectedRowNumber: "#",
       expectedUsername: "Username",
       expectedTimestamp: "Timestamp",
       expectedIpAddress: "IP Address",
@@ -46,6 +47,7 @@ describe('LoginActivityTable i18n Integration', () => {
     {
       lang: "ml",
       expectedTitle: "ലോഗിൻ പ്രവർത്തനം",
+      expectedRowNumber: "#",
       expectedUsername: "ഉപയോക്തൃനാമം",
       expectedTimestamp: "സമയമുദ്ര",
       expectedIpAddress: "ഐപി വിലാസം",
@@ -58,6 +60,7 @@ describe('LoginActivityTable i18n Integration', () => {
     {
       lang: "ar",
       expectedTitle: "نشاط تسجيل الدخول",
+      expectedRowNumber: "#",
       expectedUsername: "اسم المستخدم",
       expectedTimestamp: "الطابع الزمني",
       expectedIpAddress: "عنوان IP",
@@ -70,6 +73,7 @@ describe('LoginActivityTable i18n Integration', () => {
   ])("displays table headers correctly in $lang", async ({ 
     lang, 
     expectedTitle, 
+    expectedRowNumber,
     expectedUsername, 
     expectedTimestamp, 
     expectedIpAddress, 
@@ -88,6 +92,7 @@ describe('LoginActivityTable i18n Integration', () => {
     );
 
     expect(screen.getByText(expectedTitle)).toBeInTheDocument();
+    expect(screen.getByText(expectedRowNumber)).toBeInTheDocument();
     expect(screen.getByText(expectedUsername)).toBeInTheDocument();
     expect(screen.getByText(expectedTimestamp)).toBeInTheDocument();
     expect(screen.getByText(expectedIpAddress)).toBeInTheDocument();
