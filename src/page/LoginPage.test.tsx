@@ -517,6 +517,54 @@ describe("Login Page", () => {
         });
       }
     );
+
+    const passwordIncorrectTranslationTestCases = [
+      {
+        lang: "en",
+        expectedMessage: "Password is incorrect.",
+      },
+      {
+        lang: "ml",
+        expectedMessage: "പാസ്‌വേഡ് തെറ്റാണ്.",
+      },
+      {
+        lang: "ar",
+        expectedMessage: "كلمة المرور غير صحيحة.",
+      },
+    ];
+
+    it.each(passwordIncorrectTranslationTestCases)(
+      "displays translated error message for 'password_incorrect' in $lang",
+      async ({ lang, expectedMessage }) => {
+        await act(async () => {
+          await i18n.changeLanguage(lang);
+        });
+
+        mockedAxios.post.mockRejectedValue({
+          response: {
+            status: 400,
+            data: {
+              nonFieldErrors: ["password_incorrect"],
+            },
+          },
+        });
+
+        renderWithProviders(
+          <LoginPageWrapper apiService={axiosApiServiceLogin} />
+        );
+
+        await fillAndSubmitLoginForm({
+          email: "user@example.com",
+          password: "wrongpassword",
+        });
+
+        await waitFor(() => {
+          expect(screen.getByTestId("api-error")).toHaveTextContent(
+            expectedMessage
+          );
+        });
+      }
+    );
   });
 
   describe("i18n Integration", () => {
