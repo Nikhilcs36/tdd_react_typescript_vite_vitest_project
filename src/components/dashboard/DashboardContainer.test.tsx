@@ -599,6 +599,16 @@ describe('DashboardContainer UI/UX Improvements', () => {
         // Clear mocks
         vi.clearAllMocks();
         vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue(mockUserInfo);
+        // Re-mock getAdminDashboard to ensure it returns data
+        vi.mocked(getAdminDashboard).mockResolvedValue({
+          total_users: 10,
+          active_users: 8,
+          total_logins: 100,
+          total_successful_logins: 80,
+          total_failed_logins: 20,
+          login_activity: [],
+          user_growth: {}
+        });
 
         // Switch to individual mode
         rerender(
