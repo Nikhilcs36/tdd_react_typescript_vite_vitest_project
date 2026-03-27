@@ -3,7 +3,7 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '../../../locale/i18n';
 import LoginActivityTable from '../LoginActivityTable';
 import { LoginActivityItem } from '../../../types/loginTracking';
-import { describe, beforeEach, it, expect } from 'vitest';
+import { describe, beforeEach, it, expect, vi } from 'vitest';
 
 // Mock data for testing
 const mockLoginActivity: LoginActivityItem[] = [
@@ -184,5 +184,97 @@ describe('LoginActivityTable i18n Integration', () => {
     expect(screen.getByText(expectedTitle)).toBeInTheDocument();
     // And should have the loading spinner
     expect(screen.getByTestId("activity-table-loading")).toBeInTheDocument();
+  });
+
+  // Test for load more button text in different languages
+  it.each([
+    {
+      lang: "en",
+      expectedLoadMore: "Load More",
+      expectedAllRecordsLoaded: "All records loaded"
+    },
+    {
+      lang: "ml",
+      expectedLoadMore: "കൂടുതൽ ലോഡ് ചെയ്യുക",
+      expectedAllRecordsLoaded: "എല്ലാ റെക്കോർഡുകളും ലോഡ് ചെയ്തു"
+    },
+    {
+      lang: "ar",
+      expectedLoadMore: "تحميل المزيد",
+      expectedAllRecordsLoaded: "تم تحميل جميع السجلات"
+    }
+  ])("displays load more functionality correctly in $lang", async ({ lang, expectedLoadMore, expectedAllRecordsLoaded }) => {
+    await i18n.changeLanguage(lang);
+    
+    // Test 1: Load More button when hasNext is true
+    const mockLoadMore = vi.fn();
+    const { rerender } = render(
+      <I18nextProvider i18n={i18n}>
+        <LoginActivityTable 
+          loginActivity={mockLoginActivity}
+          loading={false}
+          hasNext={true}
+          onLoadMore={mockLoadMore}
+        />
+      </I18nextProvider>
+    );
+
+    // Should show Load More button
+    const loadMoreButton = screen.getByTestId("load-more-button");
+    expect(loadMoreButton).toBeInTheDocument();
+    expect(loadMoreButton).toHaveTextContent(expectedLoadMore);
+
+    // Test 2: All records loaded message when hasNext is false
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <LoginActivityTable 
+          loginActivity={mockLoginActivity}
+          loading={false}
+          hasNext={false}
+        />
+      </I18nextProvider>
+    );
+
+    // Should show "All records loaded" message
+    const allLoadedMessage = screen.getByTestId("all-loaded-message");
+    expect(allLoadedMessage).toBeInTheDocument();
+    expect(allLoadedMessage).toHaveTextContent(expectedAllRecordsLoaded);
+  });
+
+  // Test for loading state on load more button
+  it.each([
+    {
+      lang: "en",
+      expectedLoading: "Loading..."
+    },
+    {
+      lang: "ml",
+      expectedLoading: "ലോഡ് ചെയ്യുന്നു..."
+    },
+    {
+      lang: "ar",
+      expectedLoading: "جاري التحميل..."
+    }
+  ])("displays loading state on load more button correctly in $lang", async ({ lang, expectedLoading }) => {
+    await i18n.changeLanguage(lang);
+    
+    const mockLoadMore = vi.fn();
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LoginActivityTable 
+          loginActivity={mockLoginActivity}
+          loading={false}
+          hasNext={true}
+          onLoadMore={mockLoadMore}
+          loadMoreLoading={true}
+        />
+      </I18nextProvider>
+    );
+
+    // Should show loading text on the button when loadMoreLoading is true
+    const loadMoreButton = screen.getByTestId("load-more-button");
+    expect(loadMoreButton).toBeInTheDocument();
+    expect(loadMoreButton).toHaveTextContent(expectedLoading);
+    expect(loadMoreButton).toBeDisabled();
   });
 });

@@ -27,7 +27,6 @@ interface LoginActivityTableProps {
   hasNext?: boolean;
   onLoadMore?: () => void;
   loadMoreLoading?: boolean;
-  totalCount?: number;
 }
 
 /**
@@ -41,8 +40,7 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({
   loading,
   hasNext,
   onLoadMore,
-  loadMoreLoading = false,
-  totalCount
+  loadMoreLoading = false
 }) => {
   const { t } = useTranslation();
 

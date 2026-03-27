@@ -137,4 +137,5 @@ describe('Dashboard Components i18n Integration', () => {
     const translatedTitle = i18n.t('dashboard.title');
     expect(translatedTitle).toBe(expectedTitle);
   });
+
 });
