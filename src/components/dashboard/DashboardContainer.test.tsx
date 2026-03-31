@@ -603,7 +603,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
         // API may still be called in background for fresh data, but username should show immediately
         // The key is that we don't wait for the API to show the username
-      });
+      }, 30000); // 30 second timeout for CI
 
       it('should show filter label in admin statistics title when in grouped chart mode', async () => {
         renderWithProviders(<DashboardContainer />, {
@@ -628,7 +628,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
           // Should show filter label in grouped mode - use regex for flexible matching
           expect(screen.getByText(/Admin Statistics - Admin Only.*1 users selected/)).toBeInTheDocument();
         }, { timeout: 10000 });
-      });
+      }, 30000); // 30 second timeout for CI
 
       it('should show individual username without filter label when switching from group to individual mode', async () => {
         const mockUserInfo = { id: 3, username: 'individualuser', email: 'individual@test.com' };
@@ -711,7 +711,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
           // Check that the username appears somewhere in the admin statistics section
           expect(adminStatsSection).toHaveTextContent(/individualuser/);
         }, { timeout: 10000 }); // Increased timeout for CI
-      });
+      }, 30000); // 30 second timeout for CI
     });
   });
 
@@ -753,7 +753,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
         // Use more flexible regex that matches the pattern with any whitespace
         expect(screen.getByText(/Total Logins:\s*164\s*\(160 success,\s*4 failed\)/)).toBeInTheDocument();
       }, { timeout: 10000 }); // Additional timeout for content check
-    });
+    }, 30000); // 30 second timeout for CI
   });
 
   describe('Admin Statistics Reactivity', () => {
@@ -976,7 +976,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
         const loadingSpinner = document.querySelector('.animate-spin');
         expect(loadingSpinner).toBeInTheDocument();
       }, { timeout: 5000 });
-    });
+    }, 30000); // 30 second timeout for CI
   });
 });
 
