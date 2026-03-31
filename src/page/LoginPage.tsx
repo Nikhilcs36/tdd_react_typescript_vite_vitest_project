@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/actions";
 import { resetDashboardState } from "../store/dashboardSlice";
+import { startTokenRefreshTimer } from "../services/tokenService";
 import {
   FormWrapper,
   Form,
@@ -140,6 +141,9 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
           is_superuser: response.is_superuser,
         })
       );
+
+      // Start proactive token refresh timer
+      startTokenRefreshTimer();
 
       // Reset dashboard state to ensure Recent Activity shows dropdown's first user
       this.props.dispatch(resetDashboardState());
