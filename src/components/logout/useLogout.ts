@@ -7,6 +7,7 @@ import { resetUserState } from "../../store/userSlice";
 import { clearGlobalError } from "../../store/globalErrorSlice";
 import { ApiService } from "../../services/apiService";
 import { API_ENDPOINTS } from "../../services/apiEndpoints";
+import { stopTokenRefreshTimer } from "../../services/tokenService";
 
 export const useLogout = (apiService: ApiService) => {
   const dispatch = useDispatch();
@@ -23,6 +24,9 @@ export const useLogout = (apiService: ApiService) => {
    */
   const logout = async (): Promise<void> => {
     try {
+      // Stop the token refresh timer before logout
+      stopTokenRefreshTimer();
+
       await apiService.post(API_ENDPOINTS.LOGOUT);
       dispatch(logoutSuccess());
       dispatch(resetDashboardState());

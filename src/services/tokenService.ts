@@ -37,6 +37,45 @@ export const refreshAccessToken = async (): Promise<boolean> => {
   }
 };
 
+// Global variable to store the refresh timer
+let refreshTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Starts a proactive token refresh timer that refreshes tokens every 4 minutes
+ * to prevent expiration (since backend OTP expires in 5 minutes)
+ */
+export const startTokenRefreshTimer = (): void => {
+  // Clear any existing timer
+  stopTokenRefreshTimer();
+
+  const refreshToken = store.getState().auth.refreshToken;
+
+  // Only start timer if we have a refresh token
+  if (!refreshToken) {
+    return;
+  }
+
+  // Set timer to refresh every 4 minutes (240,000 milliseconds)
+  refreshTimer = setInterval(async () => {
+    try {
+      await refreshAccessToken();
+    } catch (_error) {
+      // Timer continues running even if refresh fails
+      // Errors are handled by the centralized error system
+    }
+  }, 4 * 60 * 1000); // 4 minutes
+};
+
+/**
+ * Stops the proactive token refresh timer
+ */
+export const stopTokenRefreshTimer = (): void => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+};
+
 // Create axios interceptor to handle token expiration
 axios.interceptors.response.use(
   (response) => response,

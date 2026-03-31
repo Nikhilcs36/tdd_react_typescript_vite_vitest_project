@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { refreshAccessToken } from "./tokenService";
+import { refreshAccessToken, startTokenRefreshTimer, stopTokenRefreshTimer } from "./tokenService";
 import store from "../store";
 import axios from "axios";
-import { loginSuccess } from "../store/actions";
+import { loginSuccess, logoutSuccess } from "../store/actions";
 
 vi.mock("axios");
 const mockedAxios = axios as any;
@@ -312,6 +312,170 @@ describe("tokenService", () => {
 
       // No refresh should be attempted for server errors
       expect(mockedAxios.post).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Proactive Token Refresh Timer", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    describe("startTokenRefreshTimer", () => {
+      it("should start a timer that refreshes tokens every 4 minutes", async () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            access: "refreshed-access-token",
+            refresh: "refreshed-refresh-token",
+          },
+        });
+
+        startTokenRefreshTimer();
+
+        // Fast-forward 4 minutes
+        vi.advanceTimersByTime(4 * 60 * 1000);
+
+        // Refresh should have been called
+        expect(mockedAxios.post).toHaveBeenCalledWith(
+          "/api/user/token/refresh/",
+          { refresh: "mock-refresh-token" }
+        );
+      });
+
+      it("should not start timer if no refresh token available", () => {
+        store.dispatch(
+          loginSuccess({
+            id: 1,
+            username: "testuser",
+            access: "mock-access-token",
+            refresh: "",
+            is_staff: false,
+            is_superuser: false,
+          })
+        );
+
+        startTokenRefreshTimer();
+
+        // Fast-forward 4 minutes - no refresh should be called
+        vi.advanceTimersByTime(4 * 60 * 1000);
+
+        expect(mockedAxios.post).not.toHaveBeenCalled();
+      });
+
+      it("should handle refresh failures gracefully during timer execution", async () => {
+        mockedAxios.post.mockRejectedValueOnce(new Error("Refresh failed"));
+
+        startTokenRefreshTimer();
+
+        // Fast-forward 4 minutes
+        vi.advanceTimersByTime(4 * 60 * 1000);
+
+        // Refresh should have been attempted
+        expect(mockedAxios.post).toHaveBeenCalledWith(
+          "/api/user/token/refresh/",
+          { refresh: "mock-refresh-token" }
+        );
+
+        // Timer should continue running despite failure
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe("stopTokenRefreshTimer", () => {
+      it("should handle stopping timer when no timer is active", () => {
+        // Stop without starting - should not throw
+        expect(() => stopTokenRefreshTimer()).not.toThrow();
+      });
+
+      it("should allow restarting timer after stopping", () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            access: "refreshed-access-token",
+            refresh: "refreshed-refresh-token",
+          },
+        });
+
+        // Start timer
+        startTokenRefreshTimer();
+
+        // Fast-forward 4 minutes
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+
+        // Stop timer
+        stopTokenRefreshTimer();
+
+        // Fast-forward another 4 minutes - should not call refresh again
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+
+        // Restart timer
+        startTokenRefreshTimer();
+
+        // Fast-forward another 4 minutes - should call refresh again
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe("Timer Lifecycle", () => {
+      it("should stop timer on logout", () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            access: "refreshed-access-token",
+            refresh: "refreshed-refresh-token",
+          },
+        });
+
+        startTokenRefreshTimer();
+
+        // Fast-forward 4 minutes
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+
+        // Simulate logout
+        store.dispatch(logoutSuccess());
+        stopTokenRefreshTimer();
+
+        // Fast-forward another 4 minutes - should not call refresh
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+      });
+
+      it("should restart timer after login", () => {
+        mockedAxios.post.mockResolvedValue({
+          data: {
+            access: "refreshed-access-token",
+            refresh: "refreshed-refresh-token",
+          },
+        });
+
+        // Start initial timer
+        startTokenRefreshTimer();
+
+        // Fast-forward 4 minutes
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+
+        // Stop timer (simulate logout)
+        stopTokenRefreshTimer();
+
+        // Fast-forward another 4 minutes - should not call refresh
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+
+        // Start new timer (simulate new login)
+        startTokenRefreshTimer();
+
+        // Fast-forward another 4 minutes - should call refresh again
+        vi.advanceTimersByTime(4 * 60 * 1000);
+        expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+      });
     });
   });
 });
