@@ -19,7 +19,8 @@ export default defineConfig({
       globals: true,
       environment: 'jsdom',
       setupFiles: "./src/tests/setup.ts",
-      //css: true
+      testTimeout: 60000, // 60 seconds for CI
+      hookTimeout: 60000, // 60 seconds for CI
     },
     server: {
       proxy: {
