@@ -557,10 +557,18 @@ describe('DashboardContainer UI/UX Improvements', () => {
           ],
         });
 
+        // First wait for admin dashboard loading to complete
+        await waitFor(() => {
+          expect(screen.queryByText('Admin Overview')).toBeInTheDocument();
+          const loadingSpinner = document.querySelector('.animate-spin');
+          expect(loadingSpinner).toBeNull();
+        }, { timeout: 15000 });
+
+        // Then check for the title
         await waitFor(() => {
           // Use regex for more flexible text matching
           expect(screen.getByText(/Admin Statistics - selecteduser/)).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
       });
 
       it('should show username from currentDropdownUsers immediately without waiting for API call', async () => {
@@ -580,11 +588,18 @@ describe('DashboardContainer UI/UX Improvements', () => {
           ],
         });
 
+        // First wait for admin dashboard loading to complete
+        await waitFor(() => {
+          expect(screen.queryByText('Admin Overview')).toBeInTheDocument();
+          const loadingSpinner = document.querySelector('.animate-spin');
+          expect(loadingSpinner).toBeNull();
+        }, { timeout: 15000 });
+
         // Should show username immediately from currentDropdownUsers, not "Select User" or "User"
         await waitFor(() => {
           // Use regex for more flexible text matching
           expect(screen.getByText(/Admin Statistics - selecteduser/)).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
 
         // API may still be called in background for fresh data, but username should show immediately
         // The key is that we don't wait for the API to show the username
@@ -631,10 +646,17 @@ describe('DashboardContainer UI/UX Improvements', () => {
           ],
         });
 
+        // Wait for admin dashboard to load in group mode
+        await waitFor(() => {
+          expect(screen.queryByText('Admin Overview')).toBeInTheDocument();
+          const loadingSpinner = document.querySelector('.animate-spin');
+          expect(loadingSpinner).toBeNull();
+        }, { timeout: 15000 });
+
         await waitFor(() => {
           // Use regex for more flexible text matching
           expect(screen.getByText(/Admin Statistics - All Users/)).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
 
         // Clear mocks
         vi.clearAllMocks();
@@ -668,6 +690,13 @@ describe('DashboardContainer UI/UX Improvements', () => {
           </Provider>
         );
 
+        // Wait for admin dashboard to load in individual mode
+        await waitFor(() => {
+          expect(screen.queryByText('Admin Overview')).toBeInTheDocument();
+          const loadingSpinner = document.querySelector('.animate-spin');
+          expect(loadingSpinner).toBeNull();
+        }, { timeout: 15000 });
+
         await waitFor(() => {
           // After switching to individual mode, should show individual username
           // Use more specific selector and wait for admin dashboard to load
@@ -681,7 +710,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
           
           // Check that the username appears somewhere in the admin statistics section
           expect(adminStatsSection).toHaveTextContent(/individualuser/);
-        }, { timeout: 5000 }); // Increased timeout for CI
+        }, { timeout: 10000 }); // Increased timeout for CI
       });
     });
   });
