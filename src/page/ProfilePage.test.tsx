@@ -96,6 +96,8 @@ describe("ProfilePage", () => {
             username: "authedUser",
             access: "test-access-token",
             refresh: "test-refresh-token",
+            is_staff: false,
+            is_superuser: false,
           })
         );
       });
@@ -1034,5 +1036,41 @@ describe("ProfilePage", () => {
         expect(screen.getByTestId("error-message")).toHaveTextContent(expected);
       });
     });
+  });
+
+  describe("Internationalization profile error loading", () => {
+    const errorTranslations = [
+      {
+        lang: "en",
+        expected: "Error loading profile data",
+      },
+      {
+        lang: "ml",
+        expected: "പ്രൊഫൈൽ ലോഡ് ചെയ്യുന്നതിൽ പിശക്",
+      },
+      {
+        lang: "ar",
+        expected: "خطأ في تحميل بيانات الملف الشخصي",
+      },
+    ];
+
+    it.each(errorTranslations)(
+      "displays error loading profile message in $lang",
+      async ({ lang, expected }) => {
+        const mockError = vi.fn().mockRejectedValueOnce({
+          message: undefined,
+        });
+
+        await setup({
+          language: lang,
+          mockGet: mockError,
+        });
+
+        // Verify error message displays with correct translation
+        await waitFor(() => {
+          expect(screen.getByTestId("error-message")).toHaveTextContent(expected);
+        });
+      }
+    );
   });
 });
