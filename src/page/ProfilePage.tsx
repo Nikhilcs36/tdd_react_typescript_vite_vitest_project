@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import tw from "twin.macro";
 import {
   ApiGetService,
   ApiPutService,
@@ -29,33 +28,39 @@ import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { AuthState } from "../store/authSlice";
 import { CaughtError } from "../types/apiError";
 import { Location } from "react-router-dom";
-
-const PageContainer = tw.div`p-4 max-w-2xl mx-auto dark:bg-dark-primary`;
-const SpinnerContainer = tw.div`text-center py-8`;
-const Spinner = tw.div`w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
-const ErrorAlert = tw.div`bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 text-center mx-auto max-w-md w-full`;
-const SuccessAlert = tw.div`bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4 text-center mx-auto max-w-md w-full`;
-const ProfileCardContainer = tw.div`bg-white rounded-lg shadow-md p-6 dark:bg-dark-secondary`;
-const ProfileImage = tw.img`w-32 h-32 rounded-full mx-auto mb-4`;
-const ProfileName = tw.h2`text-2xl font-bold text-center mb-2 dark:text-dark-text`;
-const ProfileEmail = tw.p`text-gray-600 text-center dark:text-dark-text`;
-const EditButton = tw.button`mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full`;
-const CancelButton = tw.button`mt-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded w-full`;
-const SaveButton = tw.button`mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full disabled:bg-green-300 disabled:cursor-not-allowed`;
-const FormContainer = tw.form`mt-4 space-y-4`;
-const FormGroup = tw.div`flex flex-col`;
-const Label = tw.label`mb-1 text-sm font-medium text-gray-700 dark:text-dark-text`;
-const Input = tw.input`p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-dark-accent dark:bg-dark-primary dark:text-dark-text`;
-const ErrorMessage = tw.div`text-red-600 text-sm mt-1`;
-const ButtonContainer = tw.div`flex flex-col mt-4`;
-const DeleteButton = tw.button`mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full`;
-const ConfirmDeleteContainer = tw.div`fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full`;
-const ConfirmDeleteDialog = tw.div`relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white`;
-const ConfirmDeleteTitle = tw.h3`text-lg font-bold mb-4`;
-const ConfirmDeleteMessage = tw.p`mb-4`;
-const ConfirmDeleteButtons = tw.div`flex justify-end`;
-const ConfirmDeleteCancelButton = tw.button`bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2`;
-const ConfirmDeleteConfirmButton = tw.button`bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded`;
+import {
+  PageContainer,
+  ContentWrapper,
+  PageHeader,
+  Title,
+  Subtitle,
+  ButtonGroup,
+  ProfileCard,
+  ProfileImage,
+  ProfileName,
+  ProfileEmail,
+  EditButton,
+  CancelButton,
+  SaveButton,
+  DeleteButton,
+  FormContainer,
+  FormGroup,
+  Label,
+  Input,
+  ErrorMessage,
+  ButtonContainer,
+  ErrorAlert,
+  SuccessAlert,
+  SpinnerContainer,
+  Spinner,
+  ConfirmDeleteContainer,
+  ConfirmDeleteDialog,
+  ConfirmDeleteTitle,
+  ConfirmDeleteMessage,
+  ConfirmDeleteButtons,
+  ConfirmDeleteCancelButton,
+  ConfirmDeleteConfirmButton,
+} from "./ProfilePage.styles";
 
 interface ProfilePageProps extends WithTranslation {
   ApiGetService: ApiGetService;
@@ -174,7 +179,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       const errorData = caughtError.response?.data;
       const errorMessage = (errorData && typeof errorData === 'object' && 'detail' in errorData) 
         ? (errorData as { detail: string }).detail 
-        : (error instanceof Error ? error.message : 'Unknown error');
+        : (error instanceof Error ? error.message : "error_loading");
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
@@ -628,7 +633,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     if (!user) return null;
 
     return (
-      <ProfileCardContainer>
+      <ProfileCard>
         <ProfileImage
           src={user.image || defaultProfileImage}
           alt={user.username}
@@ -637,19 +642,21 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         <ProfileName data-testid="username">{user.username}</ProfileName>
         <ProfileEmail data-testid="email">{user.email}</ProfileEmail>
 
-        <EditButton
-          onClick={this.toggleEditMode}
-          data-testid="edit-profile-button"
-        >
-          {t("profile.editProfile")}
-        </EditButton>
+        <ButtonGroup>
+          <EditButton
+            onClick={this.toggleEditMode}
+            data-testid="edit-profile-button"
+          >
+            {t("profile.edit")}
+          </EditButton>
 
-        <DeleteButton
-          onClick={this.openDeleteConfirmation}
-          data-testid="delete-profile-button"
-        >
-          {t("profile.deleteProfile")}
-        </DeleteButton>
+          <DeleteButton
+            onClick={this.openDeleteConfirmation}
+            data-testid="delete-profile-button"
+          >
+            {t("profile.delete")}
+          </DeleteButton>
+        </ButtonGroup>
 
         {showDeleteConfirmation && (
           <ConfirmDeleteContainer data-testid="delete-confirmation-dialog">
@@ -677,7 +684,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
             </ConfirmDeleteDialog>
           </ConfirmDeleteContainer>
         )}
-      </ProfileCardContainer>
+      </ProfileCard>
     );
   }
 
@@ -688,17 +695,21 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
 
     if (isLoading) {
       return (
-        <SpinnerContainer>
-          <Spinner data-testid="spinner" />
-        </SpinnerContainer>
+        <ProfileCard>
+          <SpinnerContainer>
+            <Spinner data-testid="spinner" />
+          </SpinnerContainer>
+        </ProfileCard>
       );
     }
 
     if (error && !isEditing) {
       return (
-        <ErrorAlert data-testid="error-message">
-          {t(`profile.errors.${error}`)}
-        </ErrorAlert>
+        <ProfileCard>
+          <ErrorAlert data-testid="error-message">
+            {t(`profile.errors.${error}`)}
+          </ErrorAlert>
+        </ProfileCard>
       );
     }
 
@@ -715,9 +726,16 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   }
 
   render() {
+    const { t } = this.props;
     return (
       <PageContainer data-testid="profile-page">
-        {this.renderContent()}
+        <ContentWrapper>
+          <PageHeader>
+            <Title>{t("profile.title", "My Profile")}</Title>
+            <Subtitle>{t("profile.subtitle", "View and manage your account settings")}</Subtitle>
+          </PageHeader>
+          {this.renderContent()}
+        </ContentWrapper>
       </PageContainer>
     );
   }

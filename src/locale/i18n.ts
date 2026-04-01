@@ -76,6 +76,8 @@ i18n.use(initReactI18next).init({
           logout_Success: "You have been logged out successfully",
         },
         profile: {
+          title: "My Profile",
+          subtitle: "View and manage account settings",
           username: "Username",
           email: "E-mail",
           imageUrl: "Profile Image Path",
@@ -84,21 +86,22 @@ i18n.use(initReactI18next).init({
           saveChanges: "Save Changes",
           cancel: "Cancel",
           editProfile: "Edit Profile",
+          edit: "Edit",
+          deleteProfile: "Delete Profile",
+          delete: "Delete",
           successMessage: "Profile updated successfully",
+          deleteConfirmationTitle: "Delete Confirmation",
+          deleteConfirmationMessage: "Are you sure you want to delete your profile?",
+          deleteSuccess: "Account deleted successfully",
+          removeProfileImage: "Remove Profile Image",
           errors: {
             userNotFound: "User not found",
+            error_loading: "Error loading profile data",
             "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
               "Invalid image format. Only JPG, JPEG, and PNG are allowed.",
             "Image size cannot exceed 2097152 bytes.":
               "Image size cannot exceed 2MB.",
           },
-          deleteProfile: "Delete Profile",
-          deleteConfirmationTitle: "Delete Confirmation",
-          deleteConfirmationMessage:
-            "Are you sure you want to delete your profile?",
-          delete: "Delete",
-          deleteSuccess: "Account deleted successfully",
-          removeProfileImage: "Remove Profile Image",
         },
         fileInput: {
           chooseFile: "Choose file",
@@ -301,6 +304,8 @@ i18n.use(initReactI18next).init({
           logout_Success: "നിങ്ങൾ വിജയകരമായി ലോഗ് ഔട്ട് ചെയ്തു",
         },
         profile: {
+          title: "എന്റെ പ്രൊഫൈൽ",
+          subtitle: "അക്കൗണ്ട് ക്രമീകരണങ്ങൾ കാണുകയും മാനേജ് ചെയ്യുക",
           username: "ഉപയോക്തൃനാമം",
           email: "ഇമെയിൽ",
           imageUrl: "പ്രൊഫൈൽ ചിത്രത്തിന്റെ പാത്ത്",
@@ -309,21 +314,23 @@ i18n.use(initReactI18next).init({
           saveChanges: "മാറ്റങ്ങൾ സംരക്ഷിക്കുക",
           cancel: "റദ്ദാക്കുക",
           editProfile: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക",
+          edit: "എഡിറ്റ്",
+          deleteProfile: "പ്രൊഫൈൽ നീക്കം ചെയ്യുക",
+          delete: "നീക്കം",
           successMessage: "പ്രൊഫൈൽ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു",
+          deleteConfirmationTitle: "നീക്കം ചെയ്യൽ സ്ഥിരീകരണം",
+          deleteConfirmationMessage:
+            "നിങ്ങളുടെ പ്രൊഫൈൽ ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ?",
+          deleteSuccess: "അക്കൗണ്ട് വിജയകരമായി നീക്കം ചെയ്തു",
+          removeProfileImage: "പ്രൊഫൈൽ ചിത്രം നീക്കം ചെയ്യുക",
           errors: {
             userNotFound: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
+            error_loading: "പ്രൊഫൈൽ ലോഡ് ചെയ്യുന്നതിൽ പിശക്",
             "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
               "അസാധുവായ ചിത്ര ഫോർമാറ്റ്. JPG, JPEG, PNG എന്നിവ മാത്രം അനുവദനീയമാണ്.",
             "Image size cannot exceed 2097152 bytes.":
               "ചിത്രത്തിന്റെ വലുപ്പം 2MB കവിയാൻ പാടില്ല.",
           },
-          deleteProfile: "പ്രൊഫൈൽ നീക്കം ചെയ്യുക",
-          deleteConfirmationTitle: "നീക്കം ചെയ്യൽ സ്ഥിരീകരണം",
-          deleteConfirmationMessage:
-            "നിങ്ങളുടെ പ്രൊഫൈൽ ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ?",
-          delete: "നീക്കം ചെയ്യുക",
-          deleteSuccess: "അക്കൗണ്ട് വിജയകരമായി നീക്കം ചെയ്തു",
-          removeProfileImage: "പ്രൊഫൈൽ ചിത്രം നീക്കം ചെയ്യുക",
         },
         fileInput: {
           chooseFile: "ഫയൽ തിരഞ്ഞെടുക്കുക",
@@ -510,6 +517,8 @@ i18n.use(initReactI18next).init({
           logout_Success: "لقد تم تسجيل خروجك بنجاح",
         },
         profile: {
+          title: "ملفي",
+          subtitle: "عرض وإدارة إعدادات الحساب",
           username: "اسم المستخدم",
           email: "البريد الإلكتروني",
           imageUrl: "مسار صورة الملف الشخصي",
@@ -518,20 +527,22 @@ i18n.use(initReactI18next).init({
           saveChanges: "حفظ",
           cancel: "إلغاء",
           editProfile: "تعديل الملف الشخصي",
+          edit: "تعديل",
+          deleteProfile: "حذف الملف الشخصي",
+          delete: "حذف",
           successMessage: "تم تحديث الملف الشخصي بنجاح",
+          deleteConfirmationTitle: "تأكيد الحذف",
+          deleteConfirmationMessage: "هل أنت متأكد أنك تريد حذف ملفك الشخصي؟",
+          deleteSuccess: "تم حذف الحساب بنجاح",
+          removeProfileImage: "إزالة صورة الملف الشخصي",
           errors: {
             userNotFound: "لم يتم العثور على المستخدم",
+            error_loading: "خطأ في تحميل بيانات الملف الشخصي",
             "Invalid image format. Only JPG, JPEG, and PNG are allowed.":
               "تنسيق الصورة غير صالح. يُسمح فقط بصيغ JPG وJPEG وPNG.",
             "Image size cannot exceed 2097152 bytes.":
               "لا يمكن أن يتجاوز حجم الصورة 2 ميجابايت.",
           },
-          deleteProfile: "حذف الملف الشخصي",
-          deleteConfirmationTitle: "تأكيد الحذف",
-          deleteConfirmationMessage: "هل أنت متأكد أنك تريد حذف ملفك الشخصي؟",
-          delete: "حذف",
-          deleteSuccess: "تم حذف الحساب بنجاح",
-          removeProfileImage: "إزالة صورة الملف الشخصي",
         },
         fileInput: {
           chooseFile: "اختر ملف",
