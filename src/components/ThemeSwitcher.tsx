@@ -1,51 +1,11 @@
 import React from "react";
-import tw from "twin.macro";
 import { useTranslation } from "react-i18next";
-// Define styled components
-const SwitcherContainer = tw.div`
-  w-12
-  h-6
-  rounded-full
-  p-1
-  flex
-  items-center
-  cursor-pointer
-  transition-colors
-  duration-300
-  relative
-`;
-
-const IconContainer = tw.div`
-  w-5
-  h-5
-  rounded-full
-  bg-white
-  dark:bg-gray-800
-  shadow-md
-  transform
-  transition-transform
-  duration-300
-  absolute
-  flex
-  items-center
-  justify-center
-`;
-
-const SunIcon = tw.svg`
-  w-4
-  h-4
-  text-yellow-500
-  transition-opacity
-  duration-300
-`;
-
-const MoonIcon = tw.svg`
-  w-4
-  h-4
-  text-gray-400
-  transition-opacity
-  duration-300
-`;
+import {
+  SwitcherContainer,
+  IconContainer,
+  SunIcon,
+  MoonIcon
+} from "./ThemeSwitcher.styles";
 
 interface ThemeSwitcherProps {
   onClick: () => void;
@@ -58,32 +18,17 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const dir = i18n.dir();
-
   const isRTL = dir === "rtl";
-
-  const getTransform = () => {
-    if (theme === "light") {
-      return "translateX(0)";
-    }
-    if (isRTL) {
-      return "translateX(calc(-100% - 4px))";
-    } else {
-      return "translateX(calc(100% + 4px))";
-    }
-  };
+  const isLight = theme === "light";
 
   return (
     <SwitcherContainer
       onClick={onClick}
       data-testid="theme-switcher"
-      className={theme === "light" ? "bg-blue-400" : "bg-gray-700"}
+      $isLight={isLight}
     >
-      <IconContainer
-        style={{
-          transform: getTransform(),
-        }}
-      >
-        {theme === "light" ? (
+      <IconContainer $isLight={isLight} $isRTL={isRTL}>
+        {isLight ? (
           <SunIcon
             xmlns="http://www.w3.org/2000/svg"
             fill="none"

@@ -3,20 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { setChartMode } from '../../store/dashboardSlice';
-import tw from 'twin.macro';
+import {
+  ToggleContainer,
+  ToggleButtonsContainer,
+  ModeLabel,
+  DateRangeLabel,
+  ToggleButton,
+  PlaceholderContainer
+} from './ChartModeToggle.styles';
 
 interface ChartModeToggleProps {
   disabled?: boolean;
   dateRangeLabel?: string;
 }
-
-const ToggleContainer = tw.div`flex items-center justify-between mb-4`;
-const ToggleButtonsContainer = tw.div`flex items-center space-x-2`;
-const DateRangeLabel = tw.span`text-sm text-gray-500 dark:text-gray-400 ml-8`;
-const ToggleButton = tw.button`
-  px-4 py-2 rounded-lg font-medium transition-all duration-200
-  disabled:opacity-50 disabled:cursor-not-allowed
-`;
 
 /**
  * ChartModeToggle Component
@@ -46,13 +45,13 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
   // Show placeholder when only one or no users are available to maintain consistent height
   if (currentDropdownUsers.length <= 1) {
     return (
-      <div data-testid="chart-mode-placeholder" className="flex items-center justify-end h-12">
+      <PlaceholderContainer data-testid="chart-mode-placeholder">
         {dateRangeLabel && (
           <DateRangeLabel data-testid="date-range-label">
             {dateRangeLabel}
           </DateRangeLabel>
         )}
-      </div>
+      </PlaceholderContainer>
     );
   }
 
@@ -62,25 +61,16 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
     }
   };
 
-  const getButtonClasses = (isActive: boolean) => {
-    const baseClasses = 'px-4 py-2 rounded-lg font-medium transition-all duration-200';
-    const activeClasses = isActive
-      ? 'bg-blue-600 text-white shadow-md'
-      : 'bg-gray-200 dark:bg-dark-accent text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-dark-secondary';
-    const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : '';
-
-    return `${baseClasses} ${activeClasses} ${disabledClasses}`;
-  };
-
   return (
     <ToggleContainer>
       <ToggleButtonsContainer>
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <ModeLabel>
           {t('dashboard.chart_mode.label')}:
-        </span>
+        </ModeLabel>
 
         <ToggleButton
-          className={getButtonClasses(chartMode === 'individual')}
+          $isActive={chartMode === 'individual'}
+          $disabled={disabled}
           onClick={() => handleModeChange('individual')}
           disabled={disabled}
           data-testid="chart-mode-individual"
@@ -89,7 +79,8 @@ const ChartModeToggle: React.FC<ChartModeToggleProps> = ({
         </ToggleButton>
 
         <ToggleButton
-          className={getButtonClasses(chartMode === 'grouped')}
+          $isActive={chartMode === 'grouped'}
+          $disabled={disabled}
           onClick={() => handleModeChange('grouped')}
           disabled={disabled}
           data-testid="chart-mode-group"

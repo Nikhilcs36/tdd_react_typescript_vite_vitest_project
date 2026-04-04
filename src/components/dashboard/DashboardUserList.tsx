@@ -5,7 +5,24 @@ import { RootState } from '../../store';
 import { addSelectedUser, removeSelectedUser } from '../../store/dashboardSlice';
 import { axiosApiServiceLoadUserList } from '../../services/apiService';
 import { API_ENDPOINTS } from '../../services/apiEndpoints';
-import tw from 'twin.macro';
+import {
+  UserListContainer,
+  UserListHeader,
+  UserItemContainer,
+  UserCheckbox,
+  UserInfo,
+  UserName,
+  UserEmail,
+  LoadingSpinner,
+  ErrorMessage,
+  EmptyMessage,
+  PaginationContainer,
+  PaginationButton,
+  UsersScrollArea,
+  CenteredContainer,
+  UsersList,
+  PageInfoText
+} from './DashboardUserList.styles';
 
 interface User {
   id: number;
@@ -19,20 +36,6 @@ interface PaginatedResponse {
   previous: string | null;
   results: User[];
 }
-
-// Ensure consistent height across all states to prevent jumping
-const UserListContainer = tw.div`bg-white dark:bg-dark-secondary rounded-lg shadow-lg p-6 mb-8 h-[420px] overflow-y-auto`;
-const UserListHeader = tw.h3`text-lg font-semibold mb-6 dark:text-dark-text`;
-const UserItem = tw.div`flex items-center space-x-3 p-3 border-b border-gray-200 dark:border-dark-accent last:border-b-0`;
-const UserCheckbox = tw.input`w-4 h-4 text-blue-600 rounded focus:ring-blue-500`;
-const UserInfo = tw.div`flex-1`;
-const UserName = tw.div`font-medium text-gray-900 dark:text-dark-text`;
-const UserEmail = tw.div`text-sm text-gray-500 dark:text-gray-400`;
-const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin`;
-const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400 py-4`;
-const EmptyMessage = tw.div`text-center text-gray-500 dark:text-dark-text py-8`;
-const PaginationContainer = tw.div`flex justify-between items-center mt-4`;
-const PaginationButton = tw.button`w-20 px-4 py-2 bg-blue-600 text-white flex justify-center items-center rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed`;
 
 /**
  * DashboardUserList Component
@@ -163,23 +166,23 @@ const DashboardUserList: React.FC = () => {
       <UserListHeader>{t('dashboard.user_list.title')}</UserListHeader>
       
       {/* Fixed height container for all states to prevent jumping */}
-      <div className="h-[250px] overflow-y-auto mb-4">
+      <UsersScrollArea data-testid="users-scroll-area">
         {loading ? (
-          <div className="flex items-center justify-center h-full">
+          <CenteredContainer>
             <LoadingSpinner data-testid="spinner" />
-          </div>
+          </CenteredContainer>
         ) : error ? (
-          <div className="flex items-center justify-center h-full">
+          <CenteredContainer>
             <ErrorMessage>{error}</ErrorMessage>
-          </div>
+          </CenteredContainer>
         ) : users.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
+          <CenteredContainer>
             <EmptyMessage>{t('dashboard.user_list.empty')}</EmptyMessage>
-          </div>
+          </CenteredContainer>
         ) : (
-          <div className="space-y-2">
+          <UsersList>
             {users.map((user) => (
-              <UserItem key={user.id}>
+              <UserItemContainer key={user.id}>
                 <UserCheckbox
                   type="checkbox"
                   checked={selectedUserIds.includes(user.id)}
@@ -191,11 +194,11 @@ const DashboardUserList: React.FC = () => {
                   <UserName>{user.username}</UserName>
                   <UserEmail>{user.email}</UserEmail>
                 </UserInfo>
-              </UserItem>
+              </UserItemContainer>
             ))}
-          </div>
+          </UsersList>
         )}
-      </div>
+      </UsersScrollArea>
 
       {/* Pagination */}
       {(hasNext || hasPrevious) && (
@@ -208,13 +211,13 @@ const DashboardUserList: React.FC = () => {
             {t('userlist.buttonPrevious')}
           </PaginationButton>
 
-          <span className="text-sm text-gray-600 dark:text-gray-400">
+          <PageInfoText>
             {t('userlist.pageInfo', {
               current: currentPage,
               total: totalPages,
               count: totalCount
             })}
-          </span>
+          </PageInfoText>
 
           <PaginationButton
             onClick={handleNextPage}
