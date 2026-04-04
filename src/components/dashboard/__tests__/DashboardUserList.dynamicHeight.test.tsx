@@ -23,6 +23,7 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
     selectedDashboardUserId: null,
     currentDropdownUsers: [],
     chartMode: 'individual',
+    datePreset: '30days',
     startDate: null,
     endDate: null,
     isLoading: false,
@@ -169,8 +170,8 @@ describe('DashboardUserList - Dynamic Height Stability', () => {
       expect(screen.getByText('user1')).toBeInTheDocument();
     });
     
-    const userListContent = document.querySelector('.overflow-y-auto');
-    expect(userListContent).not.toBeNull();
+    const userListContent = screen.getByTestId('users-scroll-area');
+    expect(userListContent).toBeInTheDocument();
     
     // Check if scrollable content fits within visible area
     // We calculate this by comparing clientHeight and scrollHeight

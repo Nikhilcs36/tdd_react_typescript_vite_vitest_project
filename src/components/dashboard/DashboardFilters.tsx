@@ -3,19 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { setActiveFilter } from '../../store/dashboardSlice';
-import tw from 'twin.macro';
+import { FilterContainer, FilterButton } from './DashboardFilters.styles';
 
 export type DashboardFilterMode = 'all' | 'regular' | 'admin' | 'me';
 
 interface DashboardFiltersProps {
   disabled?: boolean;
 }
-
-const FilterContainer = tw.div`flex gap-2 mb-6`;
-const FilterButton = tw.button`
-  px-4 py-2 rounded-lg font-medium transition-all duration-200
-  disabled:opacity-50 disabled:cursor-not-allowed
-`;
 
 /**
  * DashboardFilters Component
@@ -38,23 +32,13 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     }
   };
 
-  const getButtonClasses = (isActive: boolean) => {
-    const baseClasses = 'px-4 py-2 rounded-lg font-medium transition-all duration-200';
-    const activeClasses = isActive
-      ? 'bg-blue-600 text-white shadow-md'
-      : 'bg-gray-200 dark:bg-dark-accent text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-dark-secondary';
-    const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : '';
-
-    return `${baseClasses} ${activeClasses} ${disabledClasses}`;
-  };
-
   return (
     <div data-testid="dashboard-filters">
       <FilterContainer>
         <FilterButton
-          className={getButtonClasses(activeFilter === 'all')}
-          onClick={() => handleFilterClick('all')}
+          isActive={activeFilter === 'all'}
           disabled={disabled}
+          onClick={() => handleFilterClick('all')}
           data-testid="filter-all-users"
           aria-pressed={activeFilter === 'all'}
         >
@@ -62,9 +46,9 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </FilterButton>
 
         <FilterButton
-          className={getButtonClasses(activeFilter === 'regular')}
-          onClick={() => handleFilterClick('regular')}
+          isActive={activeFilter === 'regular'}
           disabled={disabled}
+          onClick={() => handleFilterClick('regular')}
           data-testid="filter-regular-users"
           aria-pressed={activeFilter === 'regular'}
         >
@@ -72,9 +56,9 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </FilterButton>
 
         <FilterButton
-          className={getButtonClasses(activeFilter === 'admin')}
-          onClick={() => handleFilterClick('admin')}
+          isActive={activeFilter === 'admin'}
           disabled={disabled}
+          onClick={() => handleFilterClick('admin')}
           data-testid="filter-admin-only"
           aria-pressed={activeFilter === 'admin'}
         >
@@ -82,9 +66,9 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </FilterButton>
 
         <FilterButton
-          className={getButtonClasses(activeFilter === 'me')}
-          onClick={() => handleFilterClick('me')}
+          isActive={activeFilter === 'me'}
           disabled={disabled}
+          onClick={() => handleFilterClick('me')}
           data-testid="filter-me"
           aria-pressed={activeFilter === 'me'}
         >

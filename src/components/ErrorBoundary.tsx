@@ -1,12 +1,9 @@
 import React from 'react';
-import tw from 'twin.macro';
 import ErrorBoundaryDisplay from './ErrorBoundaryDisplay';
 import { shouldDisplayErrorToUser, getErrorDetails } from '../services/errorService';
 import { logError } from '../services/loggingService';
 import { CaughtError } from '../types/apiError';
-
-// Styled components for retry button
-const RetryButton = tw.button`bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded mt-3 transition-colors`;
+import { ErrorContainer, RetryButton } from './ErrorBoundary.styles';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -102,7 +99,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       // Handle null error case
       if (!this.state.error) {
         return (
-          <div>
+          <ErrorContainer>
             <ErrorBoundaryDisplay
               error={new Error('Unknown error occurred')}
               title="Application Error"
@@ -110,12 +107,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             <RetryButton onClick={this.handleRetry}>
               Try Again
             </RetryButton>
-          </div>
+          </ErrorContainer>
         );
       }
 
       return (
-        <div>
+        <ErrorContainer>
           <ErrorBoundaryDisplay
             error={this.state.error}
             title="Application Error"
@@ -123,7 +120,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
           <RetryButton onClick={this.handleRetry}>
             Try Again
           </RetryButton>
-        </div>
+        </ErrorContainer>
       );
     }
 

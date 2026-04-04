@@ -17,19 +17,25 @@ import DashboardUserList from './DashboardUserList';
 import DateRangePicker from './DateRangePicker';
 import UserSelectorDropdown from './UserSelectorDropdown';
 import ChartModeToggle from './ChartModeToggle';
+import {
+  DashboardContainerWrapper,
+  DashboardGrid,
+  ChartGrid,
+  SectionTitle,
+  AdminOverviewCard,
+  AdminOverviewLoading,
+  AdminOverviewSpinner,
+  AdminOverviewTitle,
+  AdminOverviewStat,
+  AdminOverviewError
+} from './DashboardContainer.styles';
 
-
-// Styled components
+// Page styled components
 const PageContainer = tw.div`min-h-screen bg-gray-50 dark:bg-dark-primary py-8`;
 const ContentWrapper = tw.div`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8`;
 const PageHeader = tw.div`mb-8`;
 const Title = tw.h1`text-3xl font-bold text-gray-900 dark:text-dark-text mb-2`;
 const Subtitle = tw.p`text-gray-600 dark:text-gray-300`;
-
-const DashboardContainerWrapper = tw.div`container mx-auto px-4 py-8`;
-const DashboardGrid = tw.div`grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8`;
-const ChartGrid = tw.div`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8`;
-const SectionTitle = tw.h2`text-2xl font-bold mb-6 dark:text-dark-text`;
 
 
 interface DashboardContainerProps {
@@ -526,36 +532,36 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
             <>
               <SectionTitle>{t('dashboard.admin_overview')}</SectionTitle>
               {/* Admin-specific components would go here */}
-              <div className="p-6 mb-8 bg-white rounded-lg shadow-lg dark:bg-dark-secondary min-h-[200px]">
+              <AdminOverviewCard>
                 {adminDashboardLoading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <div className="w-8 h-8 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-                  </div>
+                  <AdminOverviewLoading>
+                    <AdminOverviewSpinner />
+                  </AdminOverviewLoading>
                 ) : adminDashboard ? (
                   <>
-                    <h3 className="mb-4 text-lg font-semibold dark:text-dark-text">
+                    <AdminOverviewTitle>
                       {getAdminStatsTitle()}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    </AdminOverviewTitle>
+                    <AdminOverviewStat>
                       {t('dashboard.total_users', { count: adminDashboard.total_users })}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    </AdminOverviewStat>
+                    <AdminOverviewStat>
                       {t('dashboard.active_users', { count: adminDashboard.active_users })}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    </AdminOverviewStat>
+                    <AdminOverviewStat>
                       {t('dashboard.total_logins', {
                         count: adminDashboard.total_logins,
                         successful: adminDashboard.total_successful_logins,
                         failed: adminDashboard.total_failed_logins
                       })}
-                    </p>
+                    </AdminOverviewStat>
                   </>
                 ) : (
-                  <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                  <AdminOverviewError>
                     {t('dashboard.error_loading_data')}
-                  </div>
+                  </AdminOverviewError>
                 )}
-              </div>
+              </AdminOverviewCard>
             </>
           )}
         </DashboardContainerWrapper>

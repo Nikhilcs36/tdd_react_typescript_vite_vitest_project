@@ -1,19 +1,20 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import tw from 'twin.macro';
 import { UserStats } from '../../types/loginTracking';
-
-// Styled components
-const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 min-h-[280px]`;
-const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
-const CardTitle = tw.h3`text-lg font-semibold dark:text-dark-text`;
-const StatsContainer = tw.div`mt-4 grid grid-cols-2 gap-4`;
-const StatItem = tw.div`text-center`;
-const StatValue = tw.div`text-2xl font-bold text-blue-600 dark:text-blue-400`;
-const StatLabel = tw.div`text-sm text-gray-600 dark:text-gray-400`;
-const TrendIndicator = tw.span`text-sm font-medium ml-1`;
-const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
-const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400`;
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  StatsContainer,
+  StatItem,
+  StatValue,
+  StatLabel,
+  TrendIndicator,
+  TrendValue,
+  LoadingSpinner,
+  LoadingContainer,
+  ErrorMessage
+} from './UserDashboardCard.styles';
 
 interface UserDashboardCardProps {
   userStats: UserStats | null;
@@ -51,9 +52,9 @@ const UserDashboardCard: React.FC<UserDashboardCardProps> = React.memo(({ userSt
         <CardHeader>
           <CardTitle>{t('dashboard.loading')}</CardTitle>
         </CardHeader>
-        <div className="flex items-center justify-center h-32">
+        <LoadingContainer>
           <LoadingSpinner />
-        </div>
+        </LoadingContainer>
       </Card>
     );
   }
@@ -94,10 +95,10 @@ const UserDashboardCard: React.FC<UserDashboardCardProps> = React.memo(({ userSt
         {/* Login Trend */}
         <StatItem className="col-span-2">
           <div className="flex items-center justify-center">
-            <span className="text-lg font-semibold">
+            <TrendValue>
               {userStats.login_trend > 0 ? '+' : ''}{userStats.login_trend}%
-            </span>
-            <TrendIndicator className={userStats.login_trend >= 0 ? 'text-green-600' : 'text-red-600'}>
+            </TrendValue>
+            <TrendIndicator $isPositive={userStats.login_trend >= 0}>
               {userStats.login_trend >= 0 ? '↗' : '↘'}
             </TrendIndicator>
           </div>
