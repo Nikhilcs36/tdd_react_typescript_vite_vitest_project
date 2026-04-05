@@ -36,9 +36,10 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     <div data-testid="dashboard-filters">
       <FilterContainer>
         <FilterButton
-          isActive={activeFilter === 'all'}
-          disabled={disabled}
+          $isActive={activeFilter === 'all'}
+          $disabled={disabled}
           onClick={() => handleFilterClick('all')}
+          disabled={disabled}
           data-testid="filter-all-users"
           aria-pressed={activeFilter === 'all'}
         >
@@ -46,9 +47,10 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </FilterButton>
 
         <FilterButton
-          isActive={activeFilter === 'regular'}
-          disabled={disabled}
+          $isActive={activeFilter === 'regular'}
+          $disabled={disabled}
           onClick={() => handleFilterClick('regular')}
+          disabled={disabled}
           data-testid="filter-regular-users"
           aria-pressed={activeFilter === 'regular'}
         >
@@ -56,9 +58,10 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </FilterButton>
 
         <FilterButton
-          isActive={activeFilter === 'admin'}
-          disabled={disabled}
+          $isActive={activeFilter === 'admin'}
+          $disabled={disabled}
           onClick={() => handleFilterClick('admin')}
+          disabled={disabled}
           data-testid="filter-admin-only"
           aria-pressed={activeFilter === 'admin'}
         >
@@ -66,9 +69,10 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </FilterButton>
 
         <FilterButton
-          isActive={activeFilter === 'me'}
-          disabled={disabled}
+          $isActive={activeFilter === 'me'}
+          $disabled={disabled}
           onClick={() => handleFilterClick('me')}
+          disabled={disabled}
           data-testid="filter-me"
           aria-pressed={activeFilter === 'me'}
         >
