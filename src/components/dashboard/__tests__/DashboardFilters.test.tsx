@@ -79,6 +79,15 @@ describe('DashboardFilters', () => {
       expect(allButtonClass).toBeTruthy();
     });
 
+    it('should not pass isActive prop to DOM element', () => {
+      renderWithProviders(<DashboardFilters />, { activeFilter: 'all' });
+
+      const allButton = screen.getByTestId('filter-all-users');
+      // The isActive prop should not appear as a DOM attribute (transient prop)
+      expect(allButton).not.toHaveAttribute('isActive');
+      expect(allButton).not.toHaveAttribute('isactive');
+    });
+
     it('applies different styling to active vs inactive filters', () => {
       renderWithProviders(<DashboardFilters />, { activeFilter: 'all' });
 
