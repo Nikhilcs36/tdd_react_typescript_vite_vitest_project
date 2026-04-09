@@ -24,6 +24,7 @@ import LoginPageWrapper from "./page/LoginPage";
 import ErrorBoundary from "./components/ErrorBoundary";
 import UserList from "./components/UserList";
 import { axiosApiServiceLoadUserList } from "./services/apiService";
+import SecureLS from "secure-ls";
 
 // Mock the UserPageWrapper component to prevent state updates in tests
 // Provide realistic content for integration tests that expect specific elements
@@ -71,6 +72,63 @@ describe("App", () => {
   it("renders the App component", () => {
     render(<App />);
     screen.debug();
+  });
+
+  it("shows home page on app startup even with stored tokens", async () => {
+    // This test verifies that stored tokens are NOT auto-restored on app startup
+    // Users must explicitly log in to get authenticated
+    
+    const storedAuthState = {
+      isAuthenticated: true,
+      user: {
+        id: 1,
+        username: "olduser",
+        is_staff: false,
+        is_superuser: false,
+      },
+      accessToken: "old-token",
+      refreshToken: "old-refresh-token",
+      showLogoutMessage: false,
+    };
+
+    // Mock SecureLS to return stored auth state (simulating a previous login)
+    const getSpy = vi.spyOn(SecureLS.prototype, 'get');
+    getSpy.mockReturnValueOnce(storedAuthState);
+
+    // Even though we have stored tokens and try to navigate to dashboard
+    window.history.pushState({}, "", "/dashboard");
+    render(<App />);
+
+    // Should show home page instead of dashboard because tokens are not auto-restored
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
+
+    // Dashboard should not be accessible without explicit login
+    expect(screen.queryByTestId("dashboard-container")).not.toBeInTheDocument();
+
+    // Clean up
+    getSpy.mockRestore();
+  });
+
+  it("requires explicit login to access protected routes", async () => {
+    // Setup: Verify initial unauthenticated state
+    const state = store.getState();
+    expect(state.auth.isAuthenticated).toBe(false);
+
+    // Try to access dashboard
+    window.history.pushState({}, "", "/dashboard");
+    render(<App />);
+
+    // Should redirect to home page
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId("dashboard-container")).not.toBeInTheDocument();
+
+    // Logout link (sign in required) should be visible
+    expect(screen.getByTestId("login-link")).toBeInTheDocument();
   });
 });
 
@@ -199,12 +257,15 @@ describe("Routing", () => {
     expect(page).toBeInTheDocument();
   });
 
-  it("dashboard routes show authentication required message for unauthenticated users", () => {
+  it("dashboard routes redirect unauthenticated users to home page", async () => {
     // Mock unauthenticated state
     mockAuth(false);
     setup("/dashboard", "en"); // Use the routing setup function
-    const authMessage = screen.getByText("Your session has expired. Please log in again.");
-    expect(authMessage).toBeInTheDocument();
+    
+    // Verify we are redirected to home page
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
   });
 
   it.each`
@@ -724,31 +785,6 @@ describe("Authentication navbar visible", () => {
       });
     });
 
-    describe("Dashboard route protection", () => {
-      it("allows admin users to access any user's dashboard via /dashboard/:userId", async () => {
-        // Setup admin user (ID: 1)
-        await act(async () => {
-          mockAuth(true, {
-            id: 1,
-            username: "admin",
-            access: "mock-jwt-access-token",
-            refresh: "mock-jwt-refresh-token",
-            email: "admin@example.com",
-            is_staff: true,
-            is_superuser: true,
-          });
-        });
-
-        setup("/", "en");
-
-        // Navigate to dashboard route
-        window.history.pushState({}, "", "/dashboard/999");
-        render(<App />);
-
-        // Verify dashboard container is rendered (route protection passes)
-        const dashboardContainer = screen.queryByTestId("dashboard-container");
-        expect(dashboardContainer).toBeInTheDocument();
-      });
 
       it("allows regular users to access their own dashboard", async () => {
         // Setup regular user (ID: 5)
@@ -775,7 +811,7 @@ describe("Authentication navbar visible", () => {
         expect(dashboardContainer).toBeInTheDocument();
       });
 
-      it("ProtectedRoute correctly guards dashboard routes requiring authentication", async () => {
+      it("ProtectedRoute correctly redirects unauthenticated users from protected routes", async () => {
         // Test that dashboard routes are protected by checking the ProtectedRoute component behavior
         const TestDashboard = () => <div data-testid="test-dashboard">Test Dashboard</div>;
 
@@ -792,13 +828,16 @@ describe("Authentication navbar visible", () => {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/" element={<div data-testid="home-page">Home Page</div>} />
               </Routes>
             </MemoryRouter>
           </Provider>
         );
 
-        // Should show authentication required message
-        expect(screen.getByText("Your session has expired. Please log in again.")).toBeInTheDocument();
+        // Should redirect to home page instead of showing error message
+        await waitFor(() => {
+          expect(screen.getByTestId("home-page")).toBeInTheDocument();
+        });
         expect(screen.queryByTestId("test-dashboard")).not.toBeInTheDocument();
       });
 
@@ -833,7 +872,23 @@ describe("Authentication navbar visible", () => {
         expect(screen.getByTestId("authorized-dashboard")).toBeInTheDocument();
         expect(screen.queryByText("Your session has expired. Please log in again.")).not.toBeInTheDocument();
       });
-    });
+
+      it("redirects unauthenticated users from dashboard to home page", async () => {
+        // Ensure user is not authenticated
+        await act(async () => {
+          mockAuth(false);
+        });
+
+        setup("/dashboard", "en");
+
+        // Verify we are redirected to home page
+        await waitFor(() => {
+          expect(screen.getByTestId("home-page")).toBeInTheDocument();
+        });
+
+        // Verify dashboard is not accessible
+        expect(screen.queryByTestId("dashboard-container")).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -1049,7 +1104,7 @@ describe("Protected Route", () => {
     expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
   });
 
-  it("shows authentication required message for unauthenticated users", async () => {
+  it("redirects unauthenticated users from admin routes to home page", async () => {
     render(
       <Provider store={store}>
         <MemoryRouter initialEntries={["/users"]}>
@@ -1062,13 +1117,16 @@ describe("Protected Route", () => {
                 </ProtectedRoute>
               }
             />
+            <Route path="/" element={<div data-testid="home-page">Home Page</div>} />
           </Routes>
         </MemoryRouter>
       </Provider>
     );
 
-    // Should show authentication required message
-    expect(screen.getByText("Your session has expired. Please log in again.")).toBeInTheDocument();
+    // Should redirect to home page instead of showing error message
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
     expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
   });
 });
@@ -1088,7 +1146,7 @@ describe("Navbar persistence with localStorage", () => {
     });
   });
 
-  it("maintains navbar login state after page refresh", async () => {
+  it("auth state is NOT restored after page refresh - requires re-login", async () => {
     // Initial login (without token in state)
     const testUser = {
       id: 5,
@@ -1125,8 +1183,16 @@ describe("Navbar persistence with localStorage", () => {
     expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
     expect(screen.queryByTestId("signup-link")).not.toBeInTheDocument();
 
-    // Simulate page refresh by creating a new store that loads from localStorage
+    // Simulate page refresh by creating a new store
+    // With new implementation, auth state is NOT restored
     const newStore = createStore();
+
+    // Verify refreshed store does NOT have auth state
+    const refreshedState = newStore.getState().auth;
+    expect(refreshedState.isAuthenticated).toBe(false);
+    expect(refreshedState.user).toBeNull();
+    expect(refreshedState.accessToken).toBeNull();
+    expect(refreshedState.refreshToken).toBeNull();
 
     // Clean up the first render
     cleanup();
@@ -1141,27 +1207,15 @@ describe("Navbar persistence with localStorage", () => {
     );
 
     // Verify navbar state after refresh
-    await waitFor(() => {
-      const refreshedProfileLink = screen.getByTestId("my-profile-link");
-      expect(refreshedProfileLink).toHaveAttribute("href", "/profile");
-    });
+    // Should show login/signup links instead of profile link
+    expect(screen.getByTestId("login-link")).toBeInTheDocument();
+    expect(screen.getByTestId("signup-link")).toBeInTheDocument();
 
-    // Verify auth links are hidden
-    expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("signup-link")).not.toBeInTheDocument();
-
-    // Verify token in state
-    const refreshedState = newStore.getState().auth;
-    expect(refreshedState).toEqual({
-      isAuthenticated: true,
-      user: { id: 5, username: "persistedUser", is_staff: false, is_superuser: false },
-      accessToken: "mock-jwt-access-token",
-      refreshToken: "mock-jwt-refresh-token",
-      showLogoutMessage: false,
-    });
+    // Profile link should NOT be visible
+    expect(screen.queryByTestId("my-profile-link")).not.toBeInTheDocument();
   });
 
-  it("maintains admin dashboard access after page refresh", async () => {
+  it("requires re-login after page refresh - auth state is not restored", async () => {
     // Initial admin login
     const adminUser = {
       id: 10,
@@ -1200,13 +1254,18 @@ describe("Navbar persistence with localStorage", () => {
       expect(screen.getByTestId("dashboard-container")).toBeInTheDocument();
     });
 
-    // Simulate page refresh by creating a new store that loads from localStorage
+    // Simulate page refresh by creating a new store
+    // With the new implementation, auth state is NOT restored
     const refreshedStore = createStore();
+
+    // Verify refreshed store has NO auth state
+    expect(refreshedStore.getState().auth.isAuthenticated).toBe(false);
+    expect(refreshedStore.getState().auth.user).toBeNull();
 
     // Clean up the first render
     cleanup();
 
-    // Re-render app with "refreshed" store
+    // Re-render app with "refreshed" store - trying to access dashboard
     render(
       <Provider store={refreshedStore}>
         <MemoryRouter initialEntries={["/dashboard"]}>
@@ -1215,22 +1274,19 @@ describe("Navbar persistence with localStorage", () => {
       </Provider>
     );
 
-    // Verify admin navbar elements persist after refresh
+    // After refresh, auth state is not restored
+    // So trying to access protected route should redirect to home
     await waitFor(() => {
-      const refreshedUsersLink = screen.getByTestId("users-link");
-      expect(refreshedUsersLink).toBeInTheDocument();
-      expect(refreshedUsersLink).toHaveAttribute("href", "/users");
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
     });
 
-    // Verify dashboard is still accessible
-    await waitFor(() => {
-      expect(screen.getByTestId("dashboard-container")).toBeInTheDocument();
-    });
+    // Dashboard should NOT be accessible
+    expect(screen.queryByTestId("dashboard-container")).not.toBeInTheDocument();
 
-    // Verify admin state persisted
-    const refreshedAuthState = refreshedStore.getState().auth;
-    expect(refreshedAuthState.isAuthenticated).toBe(true);
-    expect(refreshedAuthState.user?.is_staff).toBe(true);
-    expect(refreshedAuthState.user?.is_superuser).toBe(true);
+    // Admin navbar elements should NOT be present (not authenticated)
+    expect(screen.queryByTestId("users-link")).not.toBeInTheDocument();
+    
+    // Login link should be visible instead
+    expect(screen.getByTestId("login-link")).toBeInTheDocument();
   });
 });

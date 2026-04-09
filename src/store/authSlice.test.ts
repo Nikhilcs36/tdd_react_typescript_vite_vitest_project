@@ -18,7 +18,7 @@ describe("Auth Slice", () => {
   it("should properly clear auth state and SecureLS on logout", async () => {
     // Setup: Create store and login a user
     const store = createStore();
-    const testUser = { id: 1, username: "testuser" };
+    const testUser = { id: 1, username: "testuser", is_staff: false, is_superuser: false };
 
     // Dispatch login action
     store.dispatch(
@@ -57,10 +57,10 @@ describe("Auth Slice", () => {
     expect(newStore.getState().auth.user).toBeNull();
   });
 
-  it("should store and retrieve token correctly with SecureLS", () => {
+  it("should store tokens in SecureLS but NOT auto-load them on store creation", () => {
     // Setup: Create store and login a user with tokens
     const store = createStore();
-    const testUser = { id: 1, username: "testuser" };
+    const testUser = { id: 1, username: "testuser", is_staff: false, is_superuser: false };
     const testAccessToken = "test-access-token";
     const testRefreshToken = "test-refresh-token";
 
@@ -94,6 +94,7 @@ describe("Auth Slice", () => {
     resetSecureLSMock();
 
     // Setup mock return value for SecureLS.get to simulate stored data
+    // (This simulates a previous login being stored)
     mockSecureLS.getReturnValue = {
       isAuthenticated: true,
       user: testUser,
@@ -103,11 +104,12 @@ describe("Auth Slice", () => {
 
     const newStore = createStore();
 
-    // Verify the auth state was loaded correctly from SecureLS
+    // Verify that tokens are NOT auto-loaded on store creation
+    // The app should always start in an unauthenticated state
     const loadedAuthState = newStore.getState().auth;
-    expect(loadedAuthState.isAuthenticated).toBe(true);
-    expect(loadedAuthState.user).toEqual(testUser);
-    expect(loadedAuthState.accessToken).toBe(testAccessToken);
-    expect(loadedAuthState.refreshToken).toBe(testRefreshToken);
+    expect(loadedAuthState.isAuthenticated).toBe(false);
+    expect(loadedAuthState.user).toBeNull();
+    expect(loadedAuthState.accessToken).toBeNull();
+    expect(loadedAuthState.refreshToken).toBeNull();
   });
 });

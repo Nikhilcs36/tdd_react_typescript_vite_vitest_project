@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import i18n from "./locale/i18n";
@@ -93,17 +93,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check authentication requirement
   if (requireAuth && !isAuthenticated) {
-    return (
-      <div className="container px-4 py-8 mx-auto">
-        <div className="py-8 text-center text-red-500 dark:text-red-400">
-          {t("errors.401.token_invalid_or_expired")}
-        </div>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   // Check admin requirement
   if (requireAdmin && (!isAuthenticated || !isAdmin())) {
+    if (!isAuthenticated) {
+      return <Navigate to="/" replace />;
+    }
     return (
       <div className="container px-4 py-8 mx-auto">
         <div className="py-8 text-center text-red-500 dark:text-red-400">
