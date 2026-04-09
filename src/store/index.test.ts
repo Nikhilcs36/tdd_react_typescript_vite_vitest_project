@@ -41,8 +41,8 @@ describe("Store with SecureLS", () => {
     });
   });
 
-  it("should load auth state from SecureLS on store creation", () => {
-    // Setup mock return value for SecureLS.get
+  it("should NOT load auth state from SecureLS on store creation", () => {
+    // Setup mock return value for SecureLS.get (simulating a previous login)
     mockSecureLS.getReturnValue = {
       isAuthenticated: true,
       user: { id: 5, username: "persistedUser", is_staff: false, is_superuser: false },
@@ -50,17 +50,15 @@ describe("Store with SecureLS", () => {
       refreshToken: "mock-persisted-refresh-token",
     };
 
-    // Create store which should load from SecureLS
+    // Create store - should NOT load persisted auth state
     const store = createStore();
 
-    // Check if auth state was loaded correctly
+    // Check that auth state is NOT loaded (always start unauthenticated)
     const loadedAuthState = store.getState().auth;
-    expect(loadedAuthState.isAuthenticated).toBe(true);
-    expect(loadedAuthState.user).toEqual({ id: 5, username: "persistedUser", is_staff: false, is_superuser: false });
-    expect(loadedAuthState.accessToken).toEqual("mock-persisted-access-token");
-    expect(loadedAuthState.refreshToken).toEqual(
-      "mock-persisted-refresh-token"
-    );
+    expect(loadedAuthState.isAuthenticated).toBe(false);
+    expect(loadedAuthState.user).toBeNull();
+    expect(loadedAuthState.accessToken).toBeNull();
+    expect(loadedAuthState.refreshToken).toBeNull();
   });
 
   it("should clear SecureLS on logout", () => {
@@ -103,8 +101,8 @@ describe("Store with SecureLS", () => {
     });
   });
 
-  it("should load admin user fields from SecureLS on store creation", () => {
-    // Setup mock return value for SecureLS.get with admin user
+  it("should NOT load admin user fields from SecureLS on store creation", () => {
+    // Setup mock return value for SecureLS.get with admin user (simulating a previous login)
     mockSecureLS.getReturnValue = {
       isAuthenticated: true,
       user: {
@@ -117,19 +115,14 @@ describe("Store with SecureLS", () => {
       refreshToken: "loaded-admin-refresh",
     };
 
-    // Create store which should load from SecureLS
+    // Create store - should NOT load persisted auth state even for admin users
     const store = createStore();
 
-    // Check if auth state was loaded correctly including admin fields
+    // Check that auth state is NOT loaded
     const loadedAuthState = store.getState().auth;
-    expect(loadedAuthState.isAuthenticated).toBe(true);
-    expect(loadedAuthState.user).toEqual({
-      id: 3,
-      username: "loadedAdmin",
-      is_staff: false,
-      is_superuser: true
-    });
-    expect(loadedAuthState.accessToken).toEqual("loaded-admin-access");
-    expect(loadedAuthState.refreshToken).toEqual("loaded-admin-refresh");
+    expect(loadedAuthState.isAuthenticated).toBe(false);
+    expect(loadedAuthState.user).toBeNull();
+    expect(loadedAuthState.accessToken).toBeNull();
+    expect(loadedAuthState.refreshToken).toBeNull();
   });
 });
