@@ -2,13 +2,8 @@ import { configureStore } from "@reduxjs/toolkit";
 import rootReducer from "./rootReducer";
 import SecureLS from "secure-ls";
 
-// Initialize SecureLS
 const secureLS = new SecureLS({ encodingType: "aes" });
 
-// Auth state is intentionally not restored on app startup.
-// Users must explicitly log in and old tokens are not auto-restored.
-
-// Auth state interface for persistence
 interface PersistedAuthState {
   isAuthenticated: boolean;
   user: { id: number; username: string; is_staff: boolean; is_superuser: boolean } | null;
@@ -21,48 +16,95 @@ interface RootStateForPersistence {
   auth: PersistedAuthState;
 }
 
-// Function to save state to SecureLS
-// When user logs out, remove the auth state from SecureLS completely
-// instead of saving a logged-out payload
+const AUTH_STORAGE_KEY = "authState";
+
+const isPersistedAuthState = (value: unknown): value is PersistedAuthState => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const authValue = value as Partial<PersistedAuthState>;
+  const userValue = authValue.user;
+
+  const isValidUser =
+    userValue === null ||
+    (typeof userValue === "object" &&
+      userValue !== null &&
+      typeof userValue.id === "number" &&
+      typeof userValue.username === "string" &&
+      typeof userValue.is_staff === "boolean" &&
+      typeof userValue.is_superuser === "boolean");
+
+  return (
+    typeof authValue.isAuthenticated === "boolean" &&
+    isValidUser &&
+    (typeof authValue.accessToken === "string" || authValue.accessToken === null) &&
+    (typeof authValue.refreshToken === "string" || authValue.refreshToken === null) &&
+    typeof authValue.showLogoutMessage === "boolean"
+  );
+};
+
+const loadPersistedAuthState = (): Partial<RootStateForPersistence> | undefined => {
+  try {
+    const storedAuthState = sessionStorage.getItem(AUTH_STORAGE_KEY);
+
+    if (!storedAuthState) {
+      return undefined;
+    }
+
+    const parsedState = JSON.parse(storedAuthState) as unknown;
+
+    if (isPersistedAuthState(parsedState)) {
+      return {
+        auth: parsedState,
+      };
+    }
+
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (err) {
+    console.error("Error loading state from sessionStorage:", err);
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+
+  return undefined;
+};
+
 const saveState = (state: RootStateForPersistence) => {
   try {
     if (!state.auth.isAuthenticated) {
-      // User is logged out - remove auth state from SecureLS completely
-      secureLS.remove("authState");
-    } else {
-      // User is authenticated - store auth state
-      const stateToSave = {
-        isAuthenticated: state.auth.isAuthenticated,
-        user: state.auth.user
-          ? {
-              id: state.auth.user.id,
-              username: state.auth.user.username,
-              is_staff: state.auth.user.is_staff,
-              is_superuser: state.auth.user.is_superuser
-            }
-          : null,
-        accessToken: state.auth.accessToken,
-        refreshToken: state.auth.refreshToken,
-        showLogoutMessage: state.auth.showLogoutMessage,
-      };
-      secureLS.set("authState", stateToSave);
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      secureLS.remove(AUTH_STORAGE_KEY);
+      return;
     }
+
+    const stateToSave = {
+      isAuthenticated: state.auth.isAuthenticated,
+      user: state.auth.user
+        ? {
+            id: state.auth.user.id,
+            username: state.auth.user.username,
+            is_staff: state.auth.user.is_staff,
+            is_superuser: state.auth.user.is_superuser,
+          }
+        : null,
+      accessToken: state.auth.accessToken,
+      refreshToken: state.auth.refreshToken,
+      showLogoutMessage: state.auth.showLogoutMessage,
+    };
+
+    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(stateToSave));
+    secureLS.set(AUTH_STORAGE_KEY, stateToSave);
   } catch (err) {
-    console.error("Error saving state to SecureLS:", err);
+    console.error("Error saving state to sessionStorage:", err);
   }
 };
 
-// Create the store without preloading persisted auth state
-// This ensures the app always starts in an unauthenticated state
-// Users must explicitly log in to get authenticated
 export const createStore = () => {
   const store = configureStore({
     reducer: rootReducer,
-    // Do not preload auth state from SecureLS - always start unauthenticated
-    preloadedState: undefined,
+    preloadedState: loadPersistedAuthState(),
   });
 
-  // Subscribe to store changes to save state to SecureLS
   store.subscribe(() => {
     saveState(store.getState());
   });
@@ -70,7 +112,6 @@ export const createStore = () => {
   return store;
 };
 
-// Create the default store
 const store = createStore();
 
 export default store;

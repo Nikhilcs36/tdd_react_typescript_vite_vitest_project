@@ -11,11 +11,11 @@ import { createStore } from "./index";
 
 describe("Auth Slice", () => {
   beforeEach(() => {
-    // Reset mock data between tests
     resetSecureLSMock();
+    sessionStorage.clear();
   });
 
-  it("should properly clear auth state and SecureLS on logout", async () => {
+  it("should properly clear auth state and session storage on logout", async () => {
     // Setup: Create store and login a user
     const store = createStore();
     const testUser = { id: 1, username: "testuser", is_staff: false, is_superuser: false };
@@ -57,14 +57,12 @@ describe("Auth Slice", () => {
     expect(newStore.getState().auth.user).toBeNull();
   });
 
-  it("should store tokens in SecureLS but NOT auto-load them on store creation", () => {
-    // Setup: Create store and login a user with tokens
+  it("should store tokens in SecureLS and restore auth state from session storage on store creation", () => {
     const store = createStore();
     const testUser = { id: 1, username: "testuser", is_staff: false, is_superuser: false };
     const testAccessToken = "test-access-token";
     const testRefreshToken = "test-refresh-token";
 
-    // Dispatch login action with tokens
     store.dispatch(
       loginSuccess({
         ...testUser,
@@ -73,13 +71,11 @@ describe("Auth Slice", () => {
       })
     );
 
-    // Verify user and tokens are stored in Redux state
     expect(store.getState().auth.isAuthenticated).toBe(true);
     expect(store.getState().auth.user).toEqual(testUser);
     expect(store.getState().auth.accessToken).toBe(testAccessToken);
     expect(store.getState().auth.refreshToken).toBe(testRefreshToken);
 
-    // Verify SecureLS.set was called with auth state including tokens
     expect(mockSecureLS.setCalls.length).toBeGreaterThan(0);
     const lastSetCall = mockSecureLS.setCalls[mockSecureLS.setCalls.length - 1];
     expect(lastSetCall.key).toBe("authState");
@@ -88,28 +84,26 @@ describe("Auth Slice", () => {
       user: testUser,
       accessToken: testAccessToken,
       refreshToken: testRefreshToken,
+      showLogoutMessage: false,
     });
 
-    // Create a new store to simulate app restart/refresh
-    resetSecureLSMock();
-
-    // Setup mock return value for SecureLS.get to simulate stored data
-    // (This simulates a previous login being stored)
-    mockSecureLS.getReturnValue = {
+    const storedSessionState = sessionStorage.getItem("authState");
+    expect(storedSessionState).not.toBeNull();
+    expect(JSON.parse(storedSessionState ?? "{}")).toMatchObject({
       isAuthenticated: true,
       user: testUser,
       accessToken: testAccessToken,
       refreshToken: testRefreshToken,
-    };
+      showLogoutMessage: false,
+    });
 
     const newStore = createStore();
 
-    // Verify that tokens are NOT auto-loaded on store creation
-    // The app should always start in an unauthenticated state
     const loadedAuthState = newStore.getState().auth;
-    expect(loadedAuthState.isAuthenticated).toBe(false);
-    expect(loadedAuthState.user).toBeNull();
-    expect(loadedAuthState.accessToken).toBeNull();
-    expect(loadedAuthState.refreshToken).toBeNull();
+    expect(loadedAuthState.isAuthenticated).toBe(true);
+    expect(loadedAuthState.user).toEqual(testUser);
+    expect(loadedAuthState.accessToken).toBe(testAccessToken);
+    expect(loadedAuthState.refreshToken).toBe(testRefreshToken);
+    expect(loadedAuthState.showLogoutMessage).toBe(false);
   });
 });

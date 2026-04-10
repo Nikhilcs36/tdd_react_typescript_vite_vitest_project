@@ -1262,7 +1262,7 @@ describe("Protected Route", () => {
   });
 });
 
-describe("Navbar persistence with localStorage", () => {
+describe("Navbar persistence with sessionStorage", () => {
   beforeEach(async () => {
     // Reset Redux auth state before each test
     await act(async () => {
@@ -1277,13 +1277,19 @@ describe("Navbar persistence with localStorage", () => {
     });
   });
 
-  it("auth state is NOT restored after page refresh - requires re-login", async () => {
+  it("auth state is restored after page refresh within the same session", async () => {
     // Initial login (without token in state)
-    const testUser = {
+    const loginUser = {
       id: 5,
       username: "persistedUser",
       access: "mock-jwt-access-token",
       refresh: "mock-jwt-refresh-token",
+      is_staff: false,
+      is_superuser: false,
+    };
+    const expectedUser = {
+      id: 5,
+      username: "persistedUser",
       is_staff: false,
       is_superuser: false,
     };
@@ -1303,7 +1309,7 @@ describe("Navbar persistence with localStorage", () => {
 
     // Dispatch login action to update Redux state
     await act(async () => {
-      store.dispatch(loginSuccess(testUser));
+      store.dispatch(loginSuccess(loginUser));
     });
 
     // Verify navbar updated - should now show profile link
@@ -1314,16 +1320,15 @@ describe("Navbar persistence with localStorage", () => {
     expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
     expect(screen.queryByTestId("signup-link")).not.toBeInTheDocument();
 
-    // Simulate page refresh by creating a new store
-    // With new implementation, auth state is NOT restored
+    // Simulate page refresh by creating a new store in the same browser session
     const newStore = createStore();
 
-    // Verify refreshed store does NOT have auth state
+    // Verify refreshed store restores auth state from sessionStorage
     const refreshedState = newStore.getState().auth;
-    expect(refreshedState.isAuthenticated).toBe(false);
-    expect(refreshedState.user).toBeNull();
-    expect(refreshedState.accessToken).toBeNull();
-    expect(refreshedState.refreshToken).toBeNull();
+    expect(refreshedState.isAuthenticated).toBe(true);
+    expect(refreshedState.user).toEqual(expectedUser);
+    expect(refreshedState.accessToken).toBe("mock-jwt-access-token");
+    expect(refreshedState.refreshToken).toBe("mock-jwt-refresh-token");
 
     // Clean up the first render
     cleanup();
@@ -1338,17 +1343,14 @@ describe("Navbar persistence with localStorage", () => {
     );
 
     // Verify navbar state after refresh
-    // Should show login/signup links instead of profile link
-    expect(screen.getByTestId("login-link")).toBeInTheDocument();
-    expect(screen.getByTestId("signup-link")).toBeInTheDocument();
-
-    // Profile link should NOT be visible
-    expect(screen.queryByTestId("my-profile-link")).not.toBeInTheDocument();
+    expect(screen.getByTestId("my-profile-link")).toBeInTheDocument();
+    expect(screen.queryByTestId("login-link")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("signup-link")).not.toBeInTheDocument();
   });
 
-  it("requires re-login after page refresh - auth state is not restored", async () => {
+  it("requires re-login after browser close or new session", async () => {
     // Initial admin login
-    const adminUser = {
+    const adminLoginUser = {
       id: 10,
       username: "adminUser",
       access: "mock-admin-access-token",
@@ -1368,7 +1370,7 @@ describe("Navbar persistence with localStorage", () => {
 
     // Dispatch admin login action
     await act(async () => {
-      store.dispatch(loginSuccess(adminUser));
+      store.dispatch(loginSuccess(adminLoginUser));
     });
 
     // Verify admin navbar elements are present
@@ -1385,11 +1387,11 @@ describe("Navbar persistence with localStorage", () => {
       expect(screen.getByTestId("dashboard-container")).toBeInTheDocument();
     });
 
-    // Simulate page refresh by creating a new store
-    // With the new implementation, auth state is NOT restored
+    // Simulate browser close by clearing sessionStorage and creating a new store
+    sessionStorage.clear();
     const refreshedStore = createStore();
 
-    // Verify refreshed store has NO auth state
+    // Verify new session does NOT restore auth state
     expect(refreshedStore.getState().auth.isAuthenticated).toBe(false);
     expect(refreshedStore.getState().auth.user).toBeNull();
 
