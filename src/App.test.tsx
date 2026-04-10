@@ -69,6 +69,24 @@ const mockAuth = (
 };
 
 describe("App", () => {
+  beforeEach(async () => {
+    // Reset Redux auth state before each test
+    store.dispatch(logoutSuccess());
+    // Clear localStorage
+    window.localStorage.clear();
+    // Set default language to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
+  afterEach(() => {
+    // Clean up and reset state after each test
+    store.dispatch(logoutSuccess());
+    window.localStorage.clear();
+    cleanup();
+  });
+
   it("renders the App component", () => {
     render(<App />);
     screen.debug();
@@ -93,7 +111,7 @@ describe("App", () => {
 
     // Mock SecureLS to return stored auth state (simulating a previous login)
     const getSpy = vi.spyOn(SecureLS.prototype, 'get');
-    getSpy.mockReturnValueOnce(storedAuthState);
+    getSpy.mockReturnValue(storedAuthState);
 
     // Even though we have stored tokens and try to navigate to dashboard
     window.history.pushState({}, "", "/dashboard");
@@ -106,6 +124,9 @@ describe("App", () => {
 
     // Dashboard should not be accessible without explicit login
     expect(screen.queryByTestId("dashboard-container")).not.toBeInTheDocument();
+
+    // Verify that SecureLS.get was never called (auth state should not be loaded)
+    expect(getSpy).not.toHaveBeenCalled();
 
     // Clean up
     getSpy.mockRestore();
@@ -127,7 +148,7 @@ describe("App", () => {
 
     expect(screen.queryByTestId("dashboard-container")).not.toBeInTheDocument();
 
-    // Logout link (sign in required) should be visible
+    // Login link (sign in required) should be visible
     expect(screen.getByTestId("login-link")).toBeInTheDocument();
   });
 });
