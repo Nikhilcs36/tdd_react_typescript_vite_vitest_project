@@ -22,24 +22,31 @@ interface RootStateForPersistence {
 }
 
 // Function to save state to SecureLS
+// When user logs out, remove the auth state from SecureLS completely
+// instead of saving a logged-out payload
 const saveState = (state: RootStateForPersistence) => {
   try {
-    // Store auth state including both tokens and showLogoutMessage
-    const stateToSave = {
-      isAuthenticated: state.auth.isAuthenticated,
-      user: state.auth.user
-        ? {
-            id: state.auth.user.id,
-            username: state.auth.user.username,
-            is_staff: state.auth.user.is_staff,
-            is_superuser: state.auth.user.is_superuser
-          }
-        : null,
-      accessToken: state.auth.accessToken,
-      refreshToken: state.auth.refreshToken,
-      showLogoutMessage: state.auth.showLogoutMessage,
-    };
-    secureLS.set("authState", stateToSave);
+    if (!state.auth.isAuthenticated) {
+      // User is logged out - remove auth state from SecureLS completely
+      secureLS.remove("authState");
+    } else {
+      // User is authenticated - store auth state
+      const stateToSave = {
+        isAuthenticated: state.auth.isAuthenticated,
+        user: state.auth.user
+          ? {
+              id: state.auth.user.id,
+              username: state.auth.user.username,
+              is_staff: state.auth.user.is_staff,
+              is_superuser: state.auth.user.is_superuser
+            }
+          : null,
+        accessToken: state.auth.accessToken,
+        refreshToken: state.auth.refreshToken,
+        showLogoutMessage: state.auth.showLogoutMessage,
+      };
+      secureLS.set("authState", stateToSave);
+    }
   } catch (err) {
     console.error("Error saving state to SecureLS:", err);
   }
