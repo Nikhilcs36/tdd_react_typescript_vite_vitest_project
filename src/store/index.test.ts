@@ -9,13 +9,13 @@ vi.mock("secure-ls", () => createSecureLSMock(mockSecureLS));
 import { createStore } from "./index";
 import { loginSuccess, logoutSuccess } from "./actions";
 
-describe("Store with SecureLS", () => {
+describe("Store with auth persistence", () => {
   beforeEach(() => {
-    // Reset mock data between tests
     resetSecureLSMock();
+    sessionStorage.clear();
   });
 
-  it("should use SecureLS to store auth state", () => {
+  it("should store auth state in sessionStorage and SecureLS on login", () => {
     const store = createStore();
     const testUser = {
       id: 1,
@@ -26,10 +26,8 @@ describe("Store with SecureLS", () => {
       refresh: "mock-refresh-token",
     };
 
-    // Dispatch login action
     store.dispatch(loginSuccess(testUser));
 
-    // Verify SecureLS.set was called with correct data
     expect(mockSecureLS.setCalls.length).toBeGreaterThan(0);
     const lastCall = mockSecureLS.setCalls[mockSecureLS.setCalls.length - 1];
     expect(lastCall.key).toBe("authState");
@@ -38,35 +36,88 @@ describe("Store with SecureLS", () => {
       user: { id: 1, username: "testuser", is_staff: false, is_superuser: false },
       accessToken: "mock-access-token",
       refreshToken: "mock-refresh-token",
+      showLogoutMessage: false,
+    });
+
+    const storedSessionState = sessionStorage.getItem("authState");
+    expect(storedSessionState).not.toBeNull();
+    expect(JSON.parse(storedSessionState ?? "{}")).toMatchObject({
+      isAuthenticated: true,
+      user: { id: 1, username: "testuser", is_staff: false, is_superuser: false },
+      accessToken: "mock-access-token",
+      refreshToken: "mock-refresh-token",
+      showLogoutMessage: false,
     });
   });
 
-  it("should NOT load auth state from SecureLS on store creation", () => {
-    // Setup mock return value for SecureLS.get (simulating a previous login)
-    mockSecureLS.getReturnValue = {
+  it("should load auth state from sessionStorage on store creation", () => {
+    sessionStorage.setItem(
+      "authState",
+      JSON.stringify({
+        isAuthenticated: true,
+        user: { id: 5, username: "persistedUser", is_staff: false, is_superuser: false },
+        accessToken: "mock-persisted-access-token",
+        refreshToken: "mock-persisted-refresh-token",
+        showLogoutMessage: false,
+      })
+    );
+
+    const store = createStore();
+
+    const loadedAuthState = store.getState().auth;
+    expect(loadedAuthState).toEqual({
       isAuthenticated: true,
       user: { id: 5, username: "persistedUser", is_staff: false, is_superuser: false },
       accessToken: "mock-persisted-access-token",
       refreshToken: "mock-persisted-refresh-token",
-    };
+      showLogoutMessage: false,
+    });
+  });
 
-    // Create store - should NOT load persisted auth state
+  it("should ignore invalid auth state from sessionStorage on store creation", () => {
+    sessionStorage.setItem(
+      "authState",
+      JSON.stringify({
+        invalid: true,
+      })
+    );
+
     const store = createStore();
 
-    // Check that auth state is NOT loaded (always start unauthenticated)
     const loadedAuthState = store.getState().auth;
     expect(loadedAuthState.isAuthenticated).toBe(false);
     expect(loadedAuthState.user).toBeNull();
     expect(loadedAuthState.accessToken).toBeNull();
     expect(loadedAuthState.refreshToken).toBeNull();
+    expect(loadedAuthState.showLogoutMessage).toBe(false);
+    expect(sessionStorage.getItem("authState")).toBeNull();
   });
 
-  it("should clear SecureLS on logout", () => {
+  it("should ignore persisted SecureLS data when sessionStorage is empty", () => {
+    mockSecureLS.getReturnValue = {
+      isAuthenticated: true,
+      user: { id: 5, username: "persistedUser", is_staff: false, is_superuser: false },
+      accessToken: "mock-persisted-access-token",
+      refreshToken: "mock-persisted-refresh-token",
+      showLogoutMessage: false,
+    };
+
     const store = createStore();
-    // Dispatch logout action
+
+    const loadedAuthState = store.getState().auth;
+    expect(loadedAuthState.isAuthenticated).toBe(false);
+    expect(loadedAuthState.user).toBeNull();
+    expect(loadedAuthState.accessToken).toBeNull();
+    expect(loadedAuthState.refreshToken).toBeNull();
+    expect(loadedAuthState.showLogoutMessage).toBe(false);
+  });
+
+  it("should clear sessionStorage and SecureLS on logout", () => {
+    const store = createStore();
+
     store.dispatch(logoutSuccess());
 
-    // Verify SecureLS.remove was called
+    expect(sessionStorage.getItem("authState")).toBeNull();
     expect(mockSecureLS.removeCalls).toContain("authState");
   });
 
@@ -81,10 +132,8 @@ describe("Store with SecureLS", () => {
       refresh: "admin-refresh-token",
     };
 
-    // Dispatch login action for admin user
     store.dispatch(loginSuccess(adminUser));
 
-    // Verify SecureLS.set was called with complete user data including admin fields
     expect(mockSecureLS.setCalls.length).toBeGreaterThan(0);
     const lastCall = mockSecureLS.setCalls[mockSecureLS.setCalls.length - 1];
     expect(lastCall.key).toBe("authState");
@@ -94,35 +143,26 @@ describe("Store with SecureLS", () => {
         id: 2,
         username: "adminuser",
         is_staff: true,
-        is_superuser: false
+        is_superuser: false,
       },
       accessToken: "admin-access-token",
       refreshToken: "admin-refresh-token",
+      showLogoutMessage: false,
     });
-  });
 
-  it("should NOT load admin user fields from SecureLS on store creation", () => {
-    // Setup mock return value for SecureLS.get with admin user (simulating a previous login)
-    mockSecureLS.getReturnValue = {
+    const storedSessionState = sessionStorage.getItem("authState");
+    expect(storedSessionState).not.toBeNull();
+    expect(JSON.parse(storedSessionState ?? "{}")).toMatchObject({
       isAuthenticated: true,
       user: {
-        id: 3,
-        username: "loadedAdmin",
-        is_staff: false,
-        is_superuser: true
+        id: 2,
+        username: "adminuser",
+        is_staff: true,
+        is_superuser: false,
       },
-      accessToken: "loaded-admin-access",
-      refreshToken: "loaded-admin-refresh",
-    };
-
-    // Create store - should NOT load persisted auth state even for admin users
-    const store = createStore();
-
-    // Check that auth state is NOT loaded
-    const loadedAuthState = store.getState().auth;
-    expect(loadedAuthState.isAuthenticated).toBe(false);
-    expect(loadedAuthState.user).toBeNull();
-    expect(loadedAuthState.accessToken).toBeNull();
-    expect(loadedAuthState.refreshToken).toBeNull();
+      accessToken: "admin-access-token",
+      refreshToken: "admin-refresh-token",
+      showLogoutMessage: false,
+    });
   });
 });
