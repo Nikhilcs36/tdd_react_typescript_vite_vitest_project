@@ -93,10 +93,12 @@ export const fetchApiServiceLoginTracking: ApiGetService = {
     } catch (error) {
       throw handleApiError(error, { endpoint: url, operation: 'get' });
     }
-  },
-};
-
-// Specific service functions for each endpoint
+    },
+  };
+  
+  const loginTrackingApi: ApiGetService = ((import.meta as any)?.env?.VITEST) ? fetchApiServiceLoginTracking : axiosApiServiceLoginTracking;
+  
+  // Specific service functions for each endpoint
 export const loginTrackingService = {
   // User Statistics - supports both current user and specific user by ID, with optional date filtering
   getUserStats: async (userId?: number, startDate?: string, endDate?: string): Promise<UserStats> => {
@@ -114,8 +116,8 @@ export const loginTrackingService = {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-
-    return fetchApiServiceLoginTracking.get<UserStats>(url);
+    
+    return loginTrackingApi.get<UserStats>(url);
   },
 
   // Login Activity with pagination - supports both current user and specific user by ID, with optional date filtering
@@ -136,8 +138,8 @@ export const loginTrackingService = {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-
-    return fetchApiServiceLoginTracking.get<LoginActivityResponse>(url);
+ 
+    return loginTrackingApi.get<LoginActivityResponse>(url);
   },
 
   // Chart Data Endpoints - support user filtering and date range filtering
@@ -158,8 +160,8 @@ export const loginTrackingService = {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-
-    const response = await fetchApiServiceLoginTracking.get<{ login_trends: ChartData }>(url);
+ 
+    const response = await loginTrackingApi.get<{ login_trends: ChartData }>(url);
     return response.login_trends;
   },
 
@@ -180,8 +182,8 @@ export const loginTrackingService = {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-
-    const response = await fetchApiServiceLoginTracking.get<{ login_comparison: ChartData }>(url);
+ 
+    const response = await loginTrackingApi.get<{ login_comparison: ChartData }>(url);
     return response.login_comparison;
   },
 
@@ -202,8 +204,8 @@ export const loginTrackingService = {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-
-    const response = await fetchApiServiceLoginTracking.get<{ login_distribution: { success_ratio: ChartData; user_agents: ChartData } }>(url);
+ 
+    const response = await loginTrackingApi.get<{ login_distribution: { success_ratio: ChartData; user_agents: ChartData } }>(url);
     // Return the success_ratio chart as the primary chart data for distribution
     return response.login_distribution.success_ratio;
   },
@@ -234,12 +236,12 @@ export const loginTrackingService = {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-
-    return fetchApiServiceLoginTracking.get<AdminDashboardData>(url);
+ 
+    return loginTrackingApi.get<AdminDashboardData>(url);
   },
 
   getAdminCharts: async (): Promise<ChartData> => {
-    const response = await fetchApiServiceLoginTracking.get<{ admin_charts: ChartData }>(API_ENDPOINTS.ADMIN_CHARTS);
+    const response = await loginTrackingApi.get<{ admin_charts: ChartData }>(API_ENDPOINTS.ADMIN_CHARTS);
     return response.admin_charts;
   },
 
@@ -258,8 +260,8 @@ export const loginTrackingService = {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-
-    return fetchApiServiceLoginTracking.get<AdminUserStatsResponse>(url);
+ 
+    return loginTrackingApi.get<AdminUserStatsResponse>(url);
   },
 };
 
