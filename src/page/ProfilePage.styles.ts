@@ -1,4 +1,5 @@
 import tw from "twin.macro";
+import { Spinner as CommonSpinner } from "../components/common/Loading";
 
 export const PageContainer = tw.div`min-h-screen bg-gray-50 dark:bg-dark-primary py-8 px-4 sm:px-6`;
 export const ContentWrapper = tw.div`max-w-2xl mx-auto w-full`;
@@ -22,7 +23,7 @@ export const ButtonContainer = tw.div`flex flex-col sm:flex-row sm:justify-end g
 export const ErrorAlert = tw.div`bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 text-center`;
 export const SuccessAlert = tw.div`bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4 text-center`;
 export const SpinnerContainer = tw.div`text-center py-8`;
-export const Spinner = tw.div`w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
+export const Spinner = tw(CommonSpinner)`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
 export const ConfirmDeleteContainer = tw.div`fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full`;
 export const ConfirmDeleteDialog = tw.div`relative top-20 mx-auto p-5 border w-full sm:w-96 shadow-lg rounded-md bg-white dark:bg-dark-secondary`;
 export const ConfirmDeleteTitle = tw.h3`text-lg font-bold mb-4 dark:text-dark-text`;

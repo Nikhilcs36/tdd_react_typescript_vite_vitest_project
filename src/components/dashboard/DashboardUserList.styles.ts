@@ -7,7 +7,6 @@ export const UserCheckbox = tw.input`w-4 h-4 text-blue-600 rounded focus:ring-bl
 export const UserInfo = tw.div`flex-1`;
 export const UserName = tw.div`font-medium text-gray-900 dark:text-dark-text`;
 export const UserEmail = tw.div`text-sm text-gray-500 dark:text-gray-400`;
-export const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin`;
 export const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400 py-4`;
 export const EmptyMessage = tw.div`text-center text-gray-500 dark:text-dark-text py-8`;
 export const PaginationContainer = tw.div`flex justify-between items-center mt-4`;

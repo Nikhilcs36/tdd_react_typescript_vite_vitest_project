@@ -52,7 +52,6 @@ import {
   ErrorAlert,
   SuccessAlert,
   SpinnerContainer,
-  Spinner,
   ConfirmDeleteContainer,
   ConfirmDeleteDialog,
   ConfirmDeleteTitle,
@@ -61,6 +60,7 @@ import {
   ConfirmDeleteCancelButton,
   ConfirmDeleteConfirmButton,
 } from "./ProfilePage.styles";
+import { Spinner as CommonSpinner } from "../components/common/Loading";
 
 interface ProfilePageProps extends WithTranslation {
   ApiGetService: ApiGetService;
@@ -697,7 +697,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       return (
         <ProfileCard>
           <SpinnerContainer>
-            <Spinner data-testid="spinner" />
+            <CommonSpinner data-testid="spinner" size="sm" centered />
           </SpinnerContainer>
         </ProfileCard>
       );

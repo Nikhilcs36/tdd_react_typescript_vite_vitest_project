@@ -1,6 +1,7 @@
 import { Component } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import tw from "twin.macro";
+import { Spinner as CommonSpinner } from "../components/common/Loading";
 import {
   ApiGetService,
   ApiPutService,
@@ -25,7 +26,6 @@ import { CaughtError } from "../types/apiError";
 
 const PageContainer = tw.div`p-4 max-w-2xl mx-auto dark:bg-dark-primary`;
 const SpinnerContainer = tw.div`text-center py-8`;
-const Spinner = tw.div`w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
 const ErrorAlert = tw.div`bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 text-center mx-auto max-w-md w-full`;
 const SuccessAlert = tw.div`bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4 text-center mx-auto max-w-md w-full`;
 const ProfileCardContainer = tw.div`bg-white rounded-lg shadow-md p-6 dark:bg-dark-secondary`;
@@ -407,8 +407,8 @@ class UserPage extends Component<UserPageProps, UserPageState> {
 
     if (isLoading) {
       return (
-        <SpinnerContainer>
-          <Spinner data-testid="spinner" />
+          <SpinnerContainer>
+          <CommonSpinner data-testid="spinner" />
         </SpinnerContainer>
       );
     }

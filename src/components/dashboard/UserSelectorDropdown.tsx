@@ -6,6 +6,7 @@ import { setSelectedDashboardUser, setCurrentDropdownUsers } from '../../store/d
 import { axiosApiServiceLoadUserList } from '../../services/apiService';
 import { API_ENDPOINTS } from '../../services/apiEndpoints';
 import tw from 'twin.macro';
+import { Spinner as CommonSpinner } from '../../components/common/Loading';
 
 interface User {
   id: number;
@@ -32,7 +33,7 @@ const DropdownSelect = tw.select`
   disabled:bg-gray-100 disabled:cursor-not-allowed
   dark:bg-dark-secondary dark:border-dark-accent dark:text-dark-text
 `;
-const LoadingSpinner = tw.div`w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin inline-block ml-2`;
+const LoadingSpinner = tw(CommonSpinner)`w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin inline-block ml-2`;
 const ErrorMessage = tw.div`text-sm text-red-600 dark:text-red-400 mt-1`;
 const EmptyMessage = tw.div`text-sm text-gray-500 dark:text-gray-400 mt-1`;
 
