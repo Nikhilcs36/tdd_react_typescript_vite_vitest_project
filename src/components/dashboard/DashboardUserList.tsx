@@ -13,7 +13,6 @@ import {
   UserInfo,
   UserName,
   UserEmail,
-  LoadingSpinner,
   ErrorMessage,
   EmptyMessage,
   PaginationContainer,
@@ -23,6 +22,7 @@ import {
   UsersList,
   PageInfoText
 } from './DashboardUserList.styles';
+import { Spinner as CommonSpinner } from '../common/Loading';
 
 interface User {
   id: number;
@@ -168,9 +168,9 @@ const DashboardUserList: React.FC = () => {
       {/* Fixed height container for all states to prevent jumping */}
       <UsersScrollArea data-testid="users-scroll-area">
         {loading ? (
-          <CenteredContainer>
-            <LoadingSpinner data-testid="spinner" />
-          </CenteredContainer>
+            <CenteredContainer>
+              <CommonSpinner data-testid="spinner" />
+            </CenteredContainer>
         ) : error ? (
           <CenteredContainer>
             <ErrorMessage>{error}</ErrorMessage>

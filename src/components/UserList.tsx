@@ -11,13 +11,12 @@ import { useUserAuthorization } from "../utils/authorization";
 import {
   Card,
   UserContainer,
-  LoadingContainer,
-  Spinner,
   EmptyState,
   EmptyIcon,
   EmptyTitle,
   EmptyMessage
 } from "./UserList.styles";
+import { Spinner as CommonSpinner } from "./common/Loading";
 
 export interface User {
   id: number;
@@ -198,9 +197,9 @@ class UserList extends Component<UserListPageProps, UserListState> {
       <Card>
         <UserContainer>
           {this.state.showSpinner ? (
-            <LoadingContainer>
-              <Spinner data-testid="spinner" />
-            </LoadingContainer>
+            <div className="flex items-center justify-center h-full py-12 col-span-full">
+              <CommonSpinner data-testid="spinner" centered />
+            </div>
           ) : this.state.page.results && this.state.page.results.length > 0 ? (
             this.state.page.results.map((user, index) => (
               <div key={user.id || `user-${index}`}>

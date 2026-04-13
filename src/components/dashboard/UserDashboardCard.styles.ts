@@ -1,4 +1,5 @@
 import tw, { styled } from "twin.macro";
+import { Spinner as CommonSpinner } from "../../components/common/Loading";
 
 export const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 min-h-[280px]`;
 export const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
@@ -17,6 +18,6 @@ export const TrendValue = styled.span`
   ${tw`text-lg font-semibold`}
 `;
 
-export const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
+export const LoadingSpinner = tw(CommonSpinner)`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
 export const LoadingContainer = tw.div`flex items-center justify-center h-32`;
 export const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400`;

@@ -1,4 +1,5 @@
 import tw, { styled } from "twin.macro";
+import { Spinner as CommonSpinner } from "../../components/common/Loading";
 
 export const TableContainer = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 mb-6 min-h-[400px]`;
 export const TableHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
@@ -18,7 +19,7 @@ export const StatusBadge = styled.span<{ $isSuccess: boolean }>`
   }
 `;
 
-export const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
+export const LoadingSpinner = tw(CommonSpinner)`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
 export const EmptyState = tw.div`text-center text-gray-500 dark:text-gray-400 py-8`;
 
 export const LoadMoreContainer = tw.div`flex flex-col items-center mt-4 space-y-2`;

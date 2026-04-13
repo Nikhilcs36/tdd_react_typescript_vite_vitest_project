@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import tw from 'twin.macro';
+import { Spinner as CommonSpinner } from '../common/Loading';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -33,7 +34,7 @@ ChartJS.register(
 const ChartContainer = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 min-h-[400px]`;
 const ChartHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
 const ChartTitle = tw.h3`text-lg font-semibold dark:text-dark-text`;
-const LoadingSpinner = tw.div`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
+const LoadingSpinner = tw(CommonSpinner)`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto`;
 const ErrorMessage = tw.div`text-center text-red-500 dark:text-red-400`;
 const EmptyState = tw.div`text-center text-gray-500 dark:text-gray-400 py-8`;
 

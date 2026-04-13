@@ -3,6 +3,8 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { ApiService, VerifyEmailRequestBody, EmailVerificationRequestBody } from '../services/apiService';
 import { useTranslation } from 'react-i18next';
+import tw from 'twin.macro';
+import { Spinner as CommonSpinner } from '../components/common/Loading';
 import { CaughtError } from '../types/apiError';
 
 interface VerifyEmailErrorResponse {
@@ -19,6 +21,9 @@ interface VerifyEmailPageProps {
 
 const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ apiService, resendApiService }) => {
   const [searchParams] = useSearchParams();
+
+  const SmallSpinner = tw(CommonSpinner)`w-5 h-5 border-b-2 border-blue-600 rounded-full animate-spin`;
+  const SmallWhiteSpinner = tw(CommonSpinner)`w-4 h-4 border-b-2 border-white rounded-full animate-spin`;
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error' | 'alreadyVerified'>('loading');
@@ -237,7 +242,7 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ apiService, resendApi
           <div className="mt-2">
             {verificationStatus === 'loading' && (
               <div className="flex items-center justify-center space-x-2">
-                <div className="w-5 h-5 border-b-2 border-blue-600 rounded-full animate-spin"></div>
+                <SmallSpinner aria-hidden="true" />
                 <span className="text-gray-600 dark:text-gray-300">{translations.verifying}</span>
               </div>
             )}
@@ -314,7 +319,7 @@ const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ apiService, resendApi
                     >
                       {resendStatus === 'loading' ? (
                         <span className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-b-2 border-white rounded-full animate-spin"></div>
+                           <SmallWhiteSpinner aria-hidden="true" />
                           <span>{translations.sending}</span>
                         </span>
                       ) : (
