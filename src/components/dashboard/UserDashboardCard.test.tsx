@@ -13,6 +13,9 @@ vi.mock('react-i18next', () => ({
       if (key === 'dashboard.user_total_logins') {
         return `Total Logins: ${options?.count}`;
       }
+      if (key === 'dashboard.user_total_logins_label') {
+        return 'Total Logins';
+      }
       return key;
     },
     i18n: { language: 'en' }
@@ -32,7 +35,7 @@ describe('UserDashboardCard', () => {
     render(<UserDashboardCard userStats={mockUserStats} loading={false} />);
 
     expect(screen.getByText('42')).toBeInTheDocument();
-    expect(screen.getByText('Total Logins: 42')).toBeInTheDocument();
+    expect(screen.getByText('Total Logins')).toBeInTheDocument();
     expect(screen.getByText('dashboard.last_login')).toBeInTheDocument();
     expect(screen.getByText('dashboard.login_trend')).toBeInTheDocument();
   });
@@ -79,8 +82,8 @@ describe('UserDashboardCard', () => {
   it('should display total logins without breakdown format for user statistics', () => {
     render(<UserDashboardCard userStats={mockUserStats} loading={false} />);
 
-    // Should show "Total Logins: 42" not "Total Logins: 42 ({{successful}} success, {{failed}} failed)"
-    expect(screen.getByText('Total Logins: 42')).toBeInTheDocument();
+    // Should show label "Total Logins" and the value separately, not the breakdown format
+    expect(screen.getByText('Total Logins')).toBeInTheDocument();
     expect(screen.queryByText(/\{\{successful\}\}/)).not.toBeInTheDocument();
     expect(screen.queryByText(/\{\{failed\}\}/)).not.toBeInTheDocument();
   });

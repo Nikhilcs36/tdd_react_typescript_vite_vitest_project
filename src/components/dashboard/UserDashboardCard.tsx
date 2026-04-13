@@ -83,7 +83,7 @@ const UserDashboardCard: React.FC<UserDashboardCardProps> = React.memo(({ userSt
         {/* Total Logins */}
         <StatItem>
           <StatValue>{userStats.total_logins}</StatValue>
-          <StatLabel>{t('dashboard.user_total_logins', { count: userStats.total_logins })}</StatLabel>
+          <StatLabel>{t('dashboard.user_total_logins_label')}</StatLabel>
         </StatItem>
 
         {/* Last Login */}
