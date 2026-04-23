@@ -6,6 +6,8 @@
 // User Statistics Response Interface
 export interface UserStats {
   total_logins: number;
+  total_successful_logins: number;
+  total_failed_logins: number;
   last_login: string;
   weekly_data: Record<string, number>;
   monthly_data: Record<string, number>;

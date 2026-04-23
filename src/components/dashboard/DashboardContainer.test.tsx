@@ -291,6 +291,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
   describe('Integration Tests', () => {
     const mockUserStats = {
       total_logins: 10,
+      total_successful_logins: 8,
+      total_failed_logins: 2,
       last_login: '2023-01-01',
       weekly_data: {},
       monthly_data: {},
