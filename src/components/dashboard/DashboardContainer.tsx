@@ -489,6 +489,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
             <UserDashboardCard
               userStats={userStats}
               loading={userStatsLoading}
+              showBreakdown={!isAdmin()}
             />
           </DashboardGrid>
 

@@ -19,6 +19,7 @@ import {
 interface UserDashboardCardProps {
   userStats: UserStats | null;
   loading: boolean;
+  showBreakdown?: boolean;
 }
 
 /**
@@ -26,7 +27,7 @@ interface UserDashboardCardProps {
  * Displays user login statistics in a card format
  * Shows loading state, error state, and success state
  */
-const UserDashboardCard: React.FC<UserDashboardCardProps> = React.memo(({ userStats, loading }) => {
+const UserDashboardCard: React.FC<UserDashboardCardProps> = React.memo(({ userStats, loading, showBreakdown }) => {
   const { t } = useTranslation();
 
   // Format the last login date for display
@@ -82,7 +83,15 @@ const UserDashboardCard: React.FC<UserDashboardCardProps> = React.memo(({ userSt
       <StatsContainer>
         {/* Total Logins */}
         <StatItem>
-          <StatValue>{userStats.total_logins}</StatValue>
+          <StatValue>
+            {showBreakdown
+              ? t('dashboard.user_total_logins_value', {
+                  count: userStats.total_logins,
+                  successful: userStats.total_successful_logins,
+                  failed: userStats.total_failed_logins,
+                })
+              : userStats.total_logins}
+          </StatValue>
           <StatLabel>{t('dashboard.user_total_logins_label')}</StatLabel>
         </StatItem>
 

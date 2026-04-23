@@ -7,8 +7,13 @@ import { UserStats } from '../../types/loginTracking';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: any) => {
+      const successful = options?.successful !== undefined ? options.successful : '{{successful}}';
+      const failed = options?.failed !== undefined ? options.failed : '{{failed}}';
       if (key === 'dashboard.total_logins') {
-        return `Total Logins: ${options?.count} (${options?.successful || '{{successful}}'} success, ${options?.failed || '{{failed}}'} failed)`;
+        return `Total Logins: ${options?.count} (${successful} success, ${failed} failed)`;
+      }
+      if (key === 'dashboard.user_total_logins_value') {
+        return `${options?.count} (${successful} success, ${failed} failed)`;
       }
       if (key === 'dashboard.user_total_logins') {
         return `Total Logins: ${options?.count}`;
@@ -25,6 +30,8 @@ vi.mock('react-i18next', () => ({
 describe('UserDashboardCard', () => {
   const mockUserStats: UserStats = {
     total_logins: 42,
+    total_successful_logins: 40,
+    total_failed_logins: 2,
     last_login: "2025-12-13 14:30:25",
     weekly_data: {"2025-12-07": 5, "2025-12-08": 3, "2025-12-09": 7},
     monthly_data: {"2025-11": 15, "2025-12": 27},
@@ -86,5 +93,28 @@ describe('UserDashboardCard', () => {
     expect(screen.getByText('Total Logins')).toBeInTheDocument();
     expect(screen.queryByText(/\{\{successful\}\}/)).not.toBeInTheDocument();
     expect(screen.queryByText(/\{\{failed\}\}/)).not.toBeInTheDocument();
+  });
+
+  it('should show breakdown for regular user when showBreakdown is true', () => {
+    render(<UserDashboardCard userStats={mockUserStats} loading={false} showBreakdown />);
+
+    expect(screen.getByText('42 (40 success, 2 failed)')).toBeInTheDocument();
+    expect(screen.getByText('Total Logins')).toBeInTheDocument();
+  });
+
+  it('should show plain count for admin when showBreakdown is false', () => {
+    render(<UserDashboardCard userStats={mockUserStats} loading={false} showBreakdown={false} />);
+
+    expect(screen.getByText('42')).toBeInTheDocument();
+    expect(screen.getByText('Total Logins')).toBeInTheDocument();
+    expect(screen.queryByText('40 success')).not.toBeInTheDocument();
+    expect(screen.queryByText('2 failed')).not.toBeInTheDocument();
+  });
+
+  it('should show plain count by default when showBreakdown is not provided', () => {
+    render(<UserDashboardCard userStats={mockUserStats} loading={false} />);
+
+    expect(screen.getByText('42')).toBeInTheDocument();
+    expect(screen.queryByText('40 success')).not.toBeInTheDocument();
   });
 });
