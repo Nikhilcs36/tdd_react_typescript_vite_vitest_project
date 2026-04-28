@@ -162,20 +162,11 @@ describe("signup page", () => {
       expect(successMessage).toHaveStyleRule("border-radius", "0.25rem"); // Tailwind rounded (default)
     });
 
-    describe("Dynamic Form styled component based on language", () => {
-      const testCases = [
-        { lang: "ml", expected: "36rem", label: "max-w-xl" },
-        { lang: "ar", expected: "28rem", label: "max-w-md" },
-        { lang: "en", expected: "24rem", label: "max-w-sm" },
-      ];
-
-      it.each(testCases)(
-        "should have $label ($expected) when lang is $lang",
-        ({ lang, expected }) => {
-          const { container } = render(<Form lang={lang} />);
-          expect(container.firstChild).toHaveStyleRule("max-width", expected);
-        }
-      );
+    describe("Form responsive width", () => {
+      it("should have max-w-lg (32rem) for consistent responsive width", () => {
+        const { container } = render(<Form />);
+        expect(container.firstChild).toHaveStyleRule("max-width", "32rem");
+      });
     });
   });
 
@@ -509,7 +500,7 @@ describe("signup page", () => {
   });
 });
 
-describe("i18n Integration for SignUpPage and LanguageSwitcher", () => {
+describe("i18n Integration for SignUpPage", () => {
   beforeEach(() => {
     // Reset language to default ('en') before each test.
     act(() => {

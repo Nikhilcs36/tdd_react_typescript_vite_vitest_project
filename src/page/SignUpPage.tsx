@@ -3,7 +3,6 @@ import { ApiService } from "../services/apiService";
 import { SignUpRequestBody, validateSignUp } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
-import i18n from "../locale/i18n";
 import { useNavigate } from "react-router-dom";
 import {
   FormWrapper,
@@ -183,7 +182,7 @@ class SignUpPage extends Component<SignUpPageProps, SignUpState> {
 
     return (
       <FormWrapper data-testid="signup-page">
-        <Form lang={i18n.language} autoComplete="off" onSubmit={this.submit}>
+        <Form autoComplete="off" onSubmit={this.submit}>
           <Title>{t("signup.title")}</Title>{" "}
           {/* title are mention in i18./n.ts */}
           {/* Username Field */}

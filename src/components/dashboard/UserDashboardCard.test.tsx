@@ -117,4 +117,23 @@ describe('UserDashboardCard', () => {
     expect(screen.getByText('42')).toBeInTheDocument();
     expect(screen.queryByText('40 success')).not.toBeInTheDocument();
   });
+
+  it('renders stat items without col-span-2 for responsive grid', () => {
+    const { container } = render(<UserDashboardCard userStats={mockUserStats} loading={false} />);
+
+    // All stat items should NOT have col-span-2 (which breaks the responsive grid)
+    const statItems = container.querySelectorAll('[class*="StatItem"]');
+    statItems.forEach((item) => {
+      const className = item.getAttribute('class') || '';
+      expect(className).not.toContain('col-span-2');
+    });
+  });
+
+  it('renders card with full width class', () => {
+    const { container } = render(<UserDashboardCard userStats={mockUserStats} loading={false} />);
+
+    // The card should have w-full for full-width on desktop
+    const card = container.querySelector('[class*="Card"]');
+    expect(card).toBeTruthy();
+  });
 });

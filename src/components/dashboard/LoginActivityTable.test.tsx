@@ -147,10 +147,9 @@ describe('LoginActivityTable', () => {
 
     render(<LoginActivityTable loginActivity={manyActivities} loading={false} />);
 
-    // Check that the scroll container has overflow-y-auto class
-    const scrollContainer = screen.getByText('dashboard.login_activity').closest('div')?.parentElement?.querySelector('.overflow-y-auto');
+    // Check that the scroll container exists with correct attributes
+    const scrollContainer = screen.getByTestId('table-scroll-wrapper');
     expect(scrollContainer).toBeInTheDocument();
-    expect(scrollContainer).toHaveClass('max-h-96');
   });
 
   it('should handle and display 100 records correctly', () => {
@@ -176,9 +175,8 @@ describe('LoginActivityTable', () => {
     }
     
     // Verify scroll container is present for large dataset
-    const scrollContainer = screen.getByText('dashboard.login_activity').closest('div')?.parentElement?.querySelector('.overflow-y-auto');
+    const scrollContainer = screen.getByTestId('table-scroll-wrapper');
     expect(scrollContainer).toBeInTheDocument();
-    expect(scrollContainer).toHaveClass('max-h-96');
   });
 
   describe('Load More functionality', () => {

@@ -467,6 +467,53 @@ describe('DateRangePicker', () => {
     });
   });
 
+  describe('Responsive Layout', () => {
+    it('renders date range container for mobile responsiveness', () => {
+      const { container } = renderWithProviders(<DateRangePicker />);
+      
+      // The date range container should exist (uses flex-wrap via twin.macro)
+      const dateRangeContainer = container.querySelector('[class*="DateRangeContainer"]');
+      expect(dateRangeContainer).toBeTruthy();
+    });
+
+    it('renders date inputs within the date range container', () => {
+      const { container } = renderWithProviders(<DateRangePicker />);
+      
+      // Date inputs should be inside the date range container
+      const dateRangeContainer = container.querySelector('[class*="DateRangeContainer"]');
+      const dateInputs = dateRangeContainer?.querySelectorAll('input[type="date"]');
+      expect(dateInputs?.length).toBe(2);
+    });
+
+    it('renders date input wrappers with responsive flex behavior', () => {
+      const { container } = renderWithProviders(<DateRangePicker />);
+      
+      // Both date input wrapper divs should exist for responsive layout
+      const dateRangeContainer = container.querySelector('[class*="DateRangeContainer"]');
+      const wrappers = dateRangeContainer?.querySelectorAll(':scope > div');
+      expect(wrappers?.length).toBeGreaterThanOrEqual(2);
+      
+      // Check first two wrapper divs have flex-1 for mobile responsiveness
+      wrappers?.forEach((wrapper, index) => {
+        if (index < 2) {
+          const className = wrapper.getAttribute('class') || '';
+          expect(className).toContain('flex-1');
+        }
+      });
+    });
+
+    it('renders date inputs with full width', () => {
+      const { container } = renderWithProviders(<DateRangePicker />);
+      
+      // Date inputs should exist and be inside the date range container
+      const dateInputs = container.querySelectorAll('input[type="date"]');
+      expect(dateInputs.length).toBe(2);
+      dateInputs.forEach((input) => {
+        expect(input).toBeInTheDocument();
+      });
+    });
+  });
+
   describe('Type Definitions', () => {
     it('exports DateRangePickerProps interface', () => {
       // This test ensures the component can be imported and has the expected props

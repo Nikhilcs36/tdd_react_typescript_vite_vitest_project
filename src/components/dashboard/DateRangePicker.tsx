@@ -17,8 +17,8 @@ const ButtonGroup = tw.div`flex flex-wrap gap-2 mb-3`;
 const PresetButton = tw.button`px-4 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`;
 const ActiveButton = tw(PresetButton)`bg-blue-500 text-white hover:bg-blue-600`;
 const InactiveButton = tw(PresetButton)`bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-dark-accent dark:text-dark-text dark:hover:bg-gray-600`;
-const DateRangeContainer = tw.div`flex gap-4 items-center`;
-const DateInput = tw.input`px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-dark-primary dark:border-dark-accent dark:text-dark-text`;
+const DateRangeContainer = tw.div`flex flex-wrap gap-4 items-start`;
+const DateInput = tw.input`w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-dark-primary dark:border-dark-accent dark:text-dark-text`;
 const Label = tw.label`text-sm font-medium text-gray-700 dark:text-gray-300`;
 const ClearButton = tw.button`px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-dark-accent dark:hover:bg-dark-secondary`;
 const Description = tw.p`text-sm text-gray-600 dark:text-gray-400 mt-2`;
@@ -125,7 +125,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ disabled = false }) =
       </ButtonGroup>
 
       <DateRangeContainer>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col flex-1 min-w-0 gap-1 sm:flex-none">
           <Label htmlFor="start-date">{t('dashboard.dateRange.startDate')}</Label>
           <DateInput
             id="start-date"
@@ -138,7 +138,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ disabled = false }) =
           />
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col flex-1 min-w-0 gap-1 sm:flex-none">
           <Label htmlFor="end-date">{t('dashboard.dateRange.endDate')}</Label>
           <DateInput
             id="end-date"

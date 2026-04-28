@@ -121,18 +121,10 @@ describe("Login Page", () => {
       });
     });
 
-    describe("Form Width", () => {
-      const cases = [
-        { lang: "ml", expected: "36rem" },
-        { lang: "ar", expected: "28rem" },
-        { lang: "en", expected: "24rem" },
-      ];
-
-      // This test renders the styled component directly, not the LoginPageWrapper
-      // It doesn't need the Provider or Router
-      it.each(cases)("sets $expected for $lang", ({ lang, expected }) => {
-        const { container } = render(<Form lang={lang} />);
-        expect(container.firstChild).toHaveStyleRule("max-width", expected);
+    describe("Form responsive width", () => {
+      it("should have max-w-lg (32rem) for consistent responsive width", () => {
+        const { container } = render(<Form />);
+        expect(container.firstChild).toHaveStyleRule("max-width", "32rem");
       });
     });
   });

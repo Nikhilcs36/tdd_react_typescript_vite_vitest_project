@@ -2,7 +2,6 @@ import { Component } from "react";
 import { ApiService } from "../services/apiService";
 import { LoginRequestBody, validateLogin } from "../utils/validationRules";
 import { withTranslation, WithTranslation } from "react-i18next";
-import i18n from "../locale/i18n";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { useDispatch } from "react-redux";
@@ -180,7 +179,6 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     return (
       <FormWrapper data-testid="login-page">
         <Form
-          lang={i18n.language}
           onSubmit={this.handleSubmit}
           autoComplete="off"
         >
