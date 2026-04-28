@@ -19,11 +19,11 @@ interface VerifyEmailPageProps {
   resendApiService: ApiService<EmailVerificationRequestBody>;
 }
 
+const SmallSpinner = tw(CommonSpinner)`w-5 h-5 border-b-2 border-blue-600 rounded-full animate-spin`;
+const SmallWhiteSpinner = tw(CommonSpinner)`w-4 h-4 border-b-2 border-white rounded-full animate-spin`;
+
 const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ apiService, resendApiService }) => {
   const [searchParams] = useSearchParams();
-
-  const SmallSpinner = tw(CommonSpinner)`w-5 h-5 border-b-2 border-blue-600 rounded-full animate-spin`;
-  const SmallWhiteSpinner = tw(CommonSpinner)`w-4 h-4 border-b-2 border-white rounded-full animate-spin`;
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error' | 'alreadyVerified'>('loading');

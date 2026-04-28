@@ -5,6 +5,7 @@ import {
   TableContainer,
   TableHeader,
   TableTitle,
+  TableWrapper,
   Table,
   TableHead,
   TableHeaderCell,
@@ -99,26 +100,26 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({
       <TableHeader>
         <TableTitle>{t('dashboard.login_activity')}</TableTitle>
       </TableHeader>
-      <div className="overflow-y-auto max-h-96">
+      <TableWrapper data-testid="table-scroll-wrapper">
         <Table>
           <TableHead>
             <tr>
               <TableHeaderCell>{t('dashboard.row_number', '#')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.username')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.timestamp')}</TableHeaderCell>
-              <TableHeaderCell>{t('dashboard.ip_address')}</TableHeaderCell>
-              <TableHeaderCell>{t('dashboard.user_agent')}</TableHeaderCell>
+              <TableHeaderCell className="hidden md:table-cell">{t('dashboard.ip_address')}</TableHeaderCell>
+              <TableHeaderCell className="hidden md:table-cell">{t('dashboard.user_agent')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.status')}</TableHeaderCell>
             </tr>
           </TableHead>
           <TableBody>
             {loginActivity.map((activity, index) => (
               <TableRow key={activity.id}>
-                <TableCell className="text-right">{index + 1}</TableCell>
+                <TableCell>{index + 1}</TableCell>
                 <TableCell>{activity.username}</TableCell>
                 <TableCell>{formatTimestamp(activity.timestamp)}</TableCell>
-                <TableCell>{activity.ip_address}</TableCell>
-                <TableCell title={activity.user_agent}>
+                <TableCell className="hidden md:table-cell">{activity.ip_address}</TableCell>
+                <TableCell title={activity.user_agent} className="hidden md:table-cell">
                   {truncateUserAgent(activity.user_agent)}
                 </TableCell>
                 <TableCell>
@@ -130,7 +131,7 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({
             ))}
           </TableBody>
         </Table>
-      </div>
+      </TableWrapper>
 
       {/* Load More functionality */}
       <LoadMoreContainer>

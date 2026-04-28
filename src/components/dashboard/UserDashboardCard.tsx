@@ -102,7 +102,7 @@ const UserDashboardCard: React.FC<UserDashboardCardProps> = React.memo(({ userSt
         </StatItem>
 
         {/* Login Trend */}
-        <StatItem className="col-span-2">
+        <StatItem>
           <div className="flex items-center justify-center">
             <TrendValue>
               {userStats.login_trend > 0 ? '+' : ''}{userStats.login_trend}%

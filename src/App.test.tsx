@@ -549,8 +549,8 @@ describe("Navbar styling and layout", () => {
     // Spacing and padding
     expect(navbar).toHaveStyleRule("padding-top", "1rem"); // py-4
     expect(navbar).toHaveStyleRule("padding-bottom", "1rem");
-    expect(navbar).toHaveStyleRule("padding-left", "1.5rem"); // px-6
-    expect(navbar).toHaveStyleRule("padding-right", "1.5rem");
+    expect(navbar).toHaveStyleRule("padding-left", "1rem"); // px-4
+    expect(navbar).toHaveStyleRule("padding-right", "1rem");
 
     // Flex layout
     expect(navbar).toHaveStyleRule("display", "flex");

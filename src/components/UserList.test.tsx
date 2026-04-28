@@ -353,7 +353,7 @@ describe("User List", () => {
     expect(user4Image.src).toContain(defaultProfileImage);
   });
 
-  describe("i18n Integration for Userlist and LanguageSwitcher", () => {
+  describe("i18n Integration for Userlist", () => {
     beforeEach(() => {
       // Reset language to default ('en') before each test.
       act(() => {

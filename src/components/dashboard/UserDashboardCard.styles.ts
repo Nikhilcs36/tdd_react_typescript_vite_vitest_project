@@ -1,13 +1,13 @@
 import tw, { styled } from "twin.macro";
 import { Spinner as CommonSpinner } from "../../components/common/Loading";
 
-export const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 min-h-[280px]`;
+export const Card = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4`;
 export const CardHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
 export const CardTitle = tw.h3`text-lg font-semibold dark:text-dark-text`;
-export const StatsContainer = tw.div`mt-4 grid grid-cols-2 gap-4`;
+export const StatsContainer = tw.div`mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4`;
 export const StatItem = tw.div`text-center`;
-export const StatValue = tw.div`text-2xl font-bold text-blue-600 dark:text-blue-400`;
-export const StatLabel = tw.div`text-sm text-gray-600 dark:text-gray-400`;
+export const StatValue = tw.div`text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400`;
+export const StatLabel = tw.div`text-xs sm:text-sm text-gray-600 dark:text-gray-400`;
 
 export const TrendIndicator = styled.span<{ $isPositive: boolean }>`
   ${tw`ml-1 text-sm font-medium`}

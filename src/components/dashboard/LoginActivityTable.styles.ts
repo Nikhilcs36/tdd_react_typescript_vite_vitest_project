@@ -1,15 +1,16 @@
 import tw, { styled } from "twin.macro";
 import { Spinner as CommonSpinner } from "../../components/common/Loading";
 
-export const TableContainer = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 mb-6 min-h-[400px]`;
+export const TableContainer = tw.div`bg-white dark:bg-dark-secondary shadow-lg rounded-lg p-4 mb-4`;
 export const TableHeader = tw.div`text-center border-b pb-2 dark:border-dark-accent`;
 export const TableTitle = tw.h3`text-lg font-semibold dark:text-dark-text`;
+export const TableWrapper = tw.div`overflow-x-auto overflow-y-auto max-h-96`;
 export const Table = tw.table`w-full mt-4`;
 export const TableHead = tw.thead`bg-gray-50 dark:bg-gray-800`;
-export const TableHeaderCell = tw.th`px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300`;
+export const TableHeaderCell = tw.th`px-4 py-2 text-start text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap`;
 export const TableBody = tw.tbody`divide-y divide-gray-200 dark:divide-gray-700`;
 export const TableRow = tw.tr`hover:bg-gray-50 dark:hover:bg-gray-800`;
-export const TableCell = tw.td`px-4 py-2 text-sm text-gray-700 dark:text-gray-300`;
+export const TableCell = tw.td`px-4 py-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap`;
 
 export const StatusBadge = styled.span<{ $isSuccess: boolean }>`
   ${tw`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`}

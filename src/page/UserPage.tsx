@@ -24,10 +24,7 @@ import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { AuthState } from "../store/authSlice";
 import { CaughtError } from "../types/apiError";
 
-const PageContainer = tw.div`p-4 max-w-2xl mx-auto dark:bg-dark-primary`;
-const SpinnerContainer = tw.div`text-center py-8`;
-const ErrorAlert = tw.div`bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 text-center mx-auto max-w-md w-full`;
-const SuccessAlert = tw.div`bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4 text-center mx-auto max-w-md w-full`;
+import { PageContainer, SpinnerContainer, ErrorAlert, SuccessAlert } from "../components/common/Layout";
 const ProfileCardContainer = tw.div`bg-white rounded-lg shadow-md p-6 dark:bg-dark-secondary`;
 const ProfileImage = tw.img`w-32 h-32 rounded-full mx-auto mb-4`;
 const ProfileName = tw.h2`text-2xl font-bold text-center mb-2 dark:text-dark-text`;
@@ -437,7 +434,9 @@ class UserPage extends Component<UserPageProps, UserPageState> {
   render() {
     return (
       <PageContainer data-testid="user-page">
-        {this.renderContent()}
+        <div className="max-w-2xl mx-auto">
+          {this.renderContent()}
+        </div>
       </PageContainer>
     );
   }
