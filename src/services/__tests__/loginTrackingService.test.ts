@@ -46,6 +46,8 @@ describe('loginTrackingService', () => {
     it('should fetch current user stats successfully', async () => {
       const mockResponse: UserStats = {
         total_logins: 42,
+        total_successful_logins: 40,
+        total_failed_logins: 2,
         last_login: "2025-12-13 14:30:25",
         weekly_data: {"2025-12-07": 5, "2025-12-08": 3, "2025-12-09": 7},
         monthly_data: {"2025-11": 15, "2025-12": 27},
@@ -68,6 +70,8 @@ describe('loginTrackingService', () => {
     it('should fetch specific user stats when userId provided', async () => {
       const mockResponse: UserStats = {
         total_logins: 25,
+        total_successful_logins: 23,
+        total_failed_logins: 2,
         last_login: "2025-12-12 10:15:30",
         weekly_data: {"2025-12-06": 2, "2025-12-07": 4},
         monthly_data: {"2025-11": 10, "2025-12": 15},
@@ -90,6 +94,8 @@ describe('loginTrackingService', () => {
     it('should include date parameters when provided', async () => {
       const mockResponse: UserStats = {
         total_logins: 15,
+        total_successful_logins: 14,
+        total_failed_logins: 1,
         last_login: "2025-12-10 09:15:30",
         weekly_data: {"2025-12-07": 3, "2025-12-08": 2},
         monthly_data: {"2025-12": 15},
@@ -112,6 +118,8 @@ describe('loginTrackingService', () => {
     it('should include date parameters for specific user', async () => {
       const mockResponse: UserStats = {
         total_logins: 10,
+        total_successful_logins: 9,
+        total_failed_logins: 1,
         last_login: "2025-12-15 14:20:45",
         weekly_data: {"2025-12-14": 1, "2025-12-15": 2},
         monthly_data: {"2025-12": 10},
@@ -134,6 +142,8 @@ describe('loginTrackingService', () => {
     it('should include only start_date when end_date is not provided', async () => {
       const mockResponse: UserStats = {
         total_logins: 20,
+        total_successful_logins: 19,
+        total_failed_logins: 1,
         last_login: "2025-12-05 11:30:15",
         weekly_data: {"2025-12-01": 4, "2025-12-02": 3},
         monthly_data: {"2025-11": 8, "2025-12": 12},
@@ -156,6 +166,8 @@ describe('loginTrackingService', () => {
     it('should include only end_date when start_date is not provided', async () => {
       const mockResponse: UserStats = {
         total_logins: 18,
+        total_successful_logins: 17,
+        total_failed_logins: 1,
         last_login: "2025-11-30 16:45:20",
         weekly_data: {"2025-11-24": 2, "2025-11-25": 1},
         monthly_data: {"2025-11": 18},
@@ -539,7 +551,6 @@ describe('loginTrackingService', () => {
     it('should fetch admin dashboard data successfully', async () => {
       const mockResponse: AdminDashboardData = {
         total_users: 150,
-        active_users: 125,
         total_logins: 2540,
         total_successful_logins: 2400,
         total_failed_logins: 140,
@@ -572,7 +583,6 @@ describe('loginTrackingService', () => {
     it('should include user_ids parameters when provided', async () => {
       const mockResponse: AdminDashboardData = {
         total_users: 2,
-        active_users: 2,
         total_logins: 45,
         total_successful_logins: 40,
         total_failed_logins: 5,
@@ -596,7 +606,6 @@ describe('loginTrackingService', () => {
     it('should include date range parameters when provided', async () => {
       const mockResponse: AdminDashboardData = {
         total_users: 3,
-        active_users: 3,
         total_logins: 67,
         total_successful_logins: 60,
         total_failed_logins: 7,
@@ -620,7 +629,6 @@ describe('loginTrackingService', () => {
     it('should include filter parameter when provided', async () => {
       const mockResponse: AdminDashboardData = {
         total_users: 5,
-        active_users: 5,
         total_logins: 120,
         total_successful_logins: 110,
         total_failed_logins: 10,
@@ -644,7 +652,6 @@ describe('loginTrackingService', () => {
     it('should combine all parameters correctly', async () => {
       const mockResponse: AdminDashboardData = {
         total_users: 1,
-        active_users: 1,
         total_logins: 23,
         total_successful_logins: 20,
         total_failed_logins: 3,
@@ -671,7 +678,6 @@ describe('loginTrackingService', () => {
     it('should include only start_date when end_date is not provided', async () => {
       const mockResponse: AdminDashboardData = {
         total_users: 4,
-        active_users: 4,
         total_logins: 89,
         total_successful_logins: 80,
         total_failed_logins: 9,
@@ -695,7 +701,6 @@ describe('loginTrackingService', () => {
     it('should include only end_date when start_date is not provided', async () => {
       const mockResponse: AdminDashboardData = {
         total_users: 6,
-        active_users: 6,
         total_logins: 134,
         total_successful_logins: 120,
         total_failed_logins: 14,
@@ -769,6 +774,8 @@ describe('loginTrackingService', () => {
       const mockResponse: AdminUserStatsResponse = {
         "1": {
           total_logins: 42,
+          total_successful_logins: 40,
+          total_failed_logins: 2,
           last_login: "2025-12-13 14:30:25",
           weekly_data: {"2025-12-07": 5, "2025-12-08": 3},
           monthly_data: {"2025-11": 15, "2025-12": 27},
@@ -776,6 +783,8 @@ describe('loginTrackingService', () => {
         },
         "2": {
           total_logins: 25,
+          total_successful_logins: 23,
+          total_failed_logins: 2,
           last_login: "2025-12-12 10:15:30",
           weekly_data: {"2025-12-06": 2, "2025-12-07": 4},
           monthly_data: {"2025-11": 10, "2025-12": 15},
@@ -800,6 +809,8 @@ describe('loginTrackingService', () => {
       const mockResponse: AdminUserStatsResponse = {
         "1": {
           total_logins: 42,
+          total_successful_logins: 40,
+          total_failed_logins: 2,
           last_login: "2025-12-13 14:30:25",
           weekly_data: {},
           monthly_data: {},
@@ -823,6 +834,8 @@ describe('loginTrackingService', () => {
       const mockResponse: AdminUserStatsResponse = {
         "1": {
           total_logins: 42,
+          total_successful_logins: 40,
+          total_failed_logins: 2,
           last_login: "2025-12-13 14:30:25",
           weekly_data: {},
           monthly_data: {},
@@ -846,6 +859,8 @@ describe('loginTrackingService', () => {
       const mockResponse: AdminUserStatsResponse = {
         "1": {
           total_logins: 42,
+          total_successful_logins: 40,
+          total_failed_logins: 2,
           last_login: "2025-12-13 14:30:25",
           weekly_data: {},
           monthly_data: {},
@@ -869,6 +884,8 @@ describe('loginTrackingService', () => {
       const mockResponse: AdminUserStatsResponse = {
         "1": {
           total_logins: 42,
+          total_successful_logins: 40,
+          total_failed_logins: 2,
           last_login: "2025-12-13 14:30:25",
           weekly_data: {},
           monthly_data: {},

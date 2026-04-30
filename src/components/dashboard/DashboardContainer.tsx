@@ -547,9 +547,6 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
                       {t('dashboard.total_users', { count: adminDashboard.total_users })}
                     </AdminOverviewStat>
                     <AdminOverviewStat>
-                      {t('dashboard.active_users', { count: adminDashboard.active_users })}
-                    </AdminOverviewStat>
-                    <AdminOverviewStat>
                       {t('dashboard.total_logins', {
                         count: adminDashboard.total_logins,
                         successful: adminDashboard.total_successful_logins,
