@@ -328,7 +328,6 @@ describe('DashboardContainer UI/UX Improvements', () => {
     vi.mocked(getLoginDistribution).mockResolvedValue(mockChartData);
     vi.mocked(getAdminDashboard).mockResolvedValue({
       total_users: 10,
-      active_users: 8,
       total_logins: 100,
       total_successful_logins: 80,
       total_failed_logins: 20,
@@ -604,7 +603,6 @@ describe('DashboardContainer UI/UX Improvements', () => {
         // Re-mock getAdminDashboard to ensure it returns data
         vi.mocked(getAdminDashboard).mockResolvedValue({
           total_users: 10,
-          active_users: 8,
           total_logins: 100,
           total_successful_logins: 80,
           total_failed_logins: 20,
@@ -652,7 +650,6 @@ describe('DashboardContainer UI/UX Improvements', () => {
     it('should display total logins with successful and failed breakdown', async () => {
       const mockAdminDashboard = {
         total_users: 10,
-        active_users: 8,
         total_logins: 164,
         total_successful_logins: 160,
         total_failed_logins: 4,
@@ -849,7 +846,6 @@ describe('DashboardContainer UI/UX Improvements', () => {
       // Resolve the promise to complete the initial load
       resolvePromise!({
         total_users: 10,
-        active_users: 8,
         total_logins: 100,
         total_successful_logins: 80,
         total_failed_logins: 20,
@@ -864,7 +860,6 @@ describe('DashboardContainer UI/UX Improvements', () => {
       const refetchPromise = new Promise(resolve => {
         setTimeout(() => resolve({
           total_users: 10,
-          active_users: 8,
           total_logins: 100,
           total_successful_logins: 80,
           total_failed_logins: 20,

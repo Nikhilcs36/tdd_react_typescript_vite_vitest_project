@@ -33,7 +33,6 @@ export interface LoginActivityResponse {
 // Admin Dashboard Data Interface
 export interface AdminDashboardData {
   total_users: number;
-  active_users: number;
   total_logins: number;
   total_successful_logins: number;
   total_failed_logins: number;

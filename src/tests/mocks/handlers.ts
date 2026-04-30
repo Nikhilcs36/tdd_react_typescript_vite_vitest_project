@@ -804,7 +804,6 @@ export const handlers = [
     return HttpResponse.json(
       {
         total_users: 6,
-        active_users: 6,
         total_logins: 66,
         total_successful_logins: 64,
         total_failed_logins: 2,
