@@ -9,6 +9,7 @@ import UserPageWrapper from "./page/UserPage";
 import ProfilePageWrapper from "./page/ProfilePage";
 import AccountActivationPage from "./page/accountActivationPage";
 import VerifyEmailPage from "./page/VerifyEmailPage";
+import ResetPasswordPage from "./page/ResetPasswordPage";
 import UserListPage from "./page/UserListPage";
 import DashboardContainer from "./components/dashboard/DashboardContainer";
 import {
@@ -21,6 +22,7 @@ import {
   axiosApiServiceLogout,
   axiosApiServiceVerifyEmail,
   axiosApiServiceResendVerification,
+  axiosApiServiceResetPassword,
   ApiService,
 } from "./services/apiService";
 import tw from "twin.macro";
@@ -319,6 +321,12 @@ export const AppContent = ({
                   apiService={axiosApiServiceVerifyEmail} 
                   resendApiService={axiosApiServiceResendVerification} 
                 />
+              }
+            />
+            <Route
+              path="/reset-password/:token"
+              element={
+                <ResetPasswordPage apiService={axiosApiServiceResetPassword} />
               }
             />
             <Route

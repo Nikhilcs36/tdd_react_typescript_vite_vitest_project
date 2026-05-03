@@ -15,4 +15,5 @@ export const Button = styled.button<{ disabled?: boolean }>(({ disabled }) => [
 export const ErrorWrapper = tw.div`mb-4`;
 export const ErrorMessage = tw.div`mt-1 text-red-700 text-sm`;
 export const ApiErrorMessage = tw.div`mb-4 p-3 text-red-700 bg-red-100 rounded text-center`;
-export const ForgotPasswordLink = tw.a`text-blue-500 hover:text-blue-700 text-sm text-center block mt-2`;
+export const SuccessMessage = tw.div`mb-4 p-3 text-green-700 bg-green-100 rounded text-center`;
+export const LinkWrapper = tw.div`mt-4 text-center`;

@@ -16,6 +16,15 @@ export type UserUpdateRequestBody = {
   image?: string | null;
 };
 
+export type ForgotPasswordRequestBody = {
+  email: string;
+};
+
+export type ResetPasswordRequestBody = {
+  password: string;
+  passwordRepeat: string;
+};
+
 export const validateSignUp = (
   body: SignUpRequestBody
 ): Record<string, string> => {
@@ -103,5 +112,41 @@ export const validateUserUpdate = (
   // Image URL validation removed - now accepts any format
   // The image field is optional, so we only need to validate if it's provided
   
+  return errors;
+};
+
+export const validateForgotPassword = (
+  values: ForgotPasswordRequestBody
+): Record<string, string> => {
+  const errors: Record<string, string> = {};
+
+  if (!values.email) {
+    errors.email = "email_required";
+  } else if (!/\S+@\S+\.\S+/.test(values.email)) {
+    errors.email = "email_invalid";
+  }
+
+  return errors;
+};
+
+export const validateResetPassword = (
+  values: ResetPasswordRequestBody
+): Record<string, string> => {
+  const errors: Record<string, string> = {};
+
+  if (!values.password) {
+    errors.password = "password_required";
+  } else if (values.password.length < 6) {
+    errors.password = "password_too_short";
+  } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(values.password)) {
+    errors.password = "password_requirements";
+  }
+
+  if (!values.passwordRepeat) {
+    errors.passwordRepeat = "password_repeat_null";
+  } else if (values.passwordRepeat !== values.password) {
+    errors.passwordRepeat = "password_mismatch";
+  }
+
   return errors;
 };

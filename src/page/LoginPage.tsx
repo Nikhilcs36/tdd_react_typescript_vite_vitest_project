@@ -17,7 +17,8 @@ import {
   Button,
   ErrorWrapper,
   ErrorMessage,
-  ApiErrorMessage
+  ApiErrorMessage,
+  ForgotPasswordLink,
 } from "./LoginPage.styles";
 
 interface LoginResponse {
@@ -46,6 +47,10 @@ interface LoginState {
     email: boolean;
     password: boolean;
   };
+  showForgotPassword: boolean;
+  forgotPasswordSubmitting: boolean;
+  forgotPasswordSuccess: boolean;
+  forgotPasswordApiError: string;
 }
 
 // Add dispatch and navigate to props interface
@@ -56,6 +61,14 @@ interface LoginPageProps extends WithTranslation {
 }
 
 class LoginPage extends Component<LoginPageProps, LoginState> {
+  private redirectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  componentWillUnmount() {
+    if (this.redirectTimer) {
+      clearTimeout(this.redirectTimer);
+    }
+  }
+
   state: LoginState = {
     email: "",
     password: "",
@@ -66,6 +79,10 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       email: false,
       password: false,
     },
+    showForgotPassword: false,
+    forgotPasswordSubmitting: false,
+    forgotPasswordSuccess: false,
+    forgotPasswordApiError: "",
   };
 
   validateFields = () => {
@@ -96,9 +113,12 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
               [id]: true,
             },
             apiErrorMessage: "", // Clear API error on input change
+            showForgotPassword: false, // Reset forgot password mode when editing
+            forgotPasswordSuccess: false,
+            forgotPasswordApiError: "",
           } as Pick<
             LoginState,
-            "email" | "password" | "touched" | "apiErrorMessage"
+            "email" | "password" | "touched" | "apiErrorMessage" | "showForgotPassword" | "forgotPasswordSuccess" | "forgotPasswordApiError"
           >),
         this.validateFields
       );
@@ -153,7 +173,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       const apiError = error as { response?: { data?: ErrorResponse } };
       if (apiError.response?.data) {
         const { validationErrors, apiErrorMessage, nonFieldErrors } = apiError.response.data;
-        
+
         // Handle Django nonFieldErrors format (standardized by errorService)
         if (nonFieldErrors && nonFieldErrors.length > 0) {
           this.setState({ apiErrorMessage: `login.errors.${nonFieldErrors[0]}` });
@@ -172,60 +192,178 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     }
   };
 
+  handleForgotPasswordClick = () => {
+    this.setState({
+      showForgotPassword: true,
+      forgotPasswordSuccess: false,
+      forgotPasswordApiError: "",
+      forgotPasswordSubmitting: false,
+    });
+  };
+
+  handleBackToLogin = () => {
+    this.setState({
+      showForgotPassword: false,
+      forgotPasswordSuccess: false,
+      forgotPasswordApiError: "",
+      forgotPasswordSubmitting: false,
+      email: "",
+      password: "",
+      apiErrorMessage: "",
+      validationErrors: {},
+      touched: { email: false, password: false },
+    });
+  };
+
+  handleSendResetLink = async () => {
+    this.setState({ forgotPasswordSubmitting: true, forgotPasswordApiError: "" });
+
+    try {
+      await this.props.apiService.post(API_ENDPOINTS.PASSWORD_RESET, {
+        email: this.state.email,
+      } as LoginRequestBody);
+      this.setState({ forgotPasswordSuccess: true });
+
+      // After 3 seconds, reset state to show the login form
+      this.redirectTimer = setTimeout(() => {
+        this.setState({
+          showForgotPassword: false,
+          forgotPasswordSuccess: false,
+          forgotPasswordApiError: "",
+          email: "",
+          password: "",
+          apiErrorMessage: "",
+          validationErrors: {},
+          touched: { email: false, password: false },
+        });
+      }, 3000);
+    } catch (error) {
+      const apiError = error as { response?: { data?: ErrorResponse } };
+      if (apiError.response?.data) {
+        const { apiErrorMessage, nonFieldErrors } = apiError.response.data;
+        if (nonFieldErrors && nonFieldErrors.length > 0) {
+          this.setState({ forgotPasswordApiError: `forgotPassword.errors.${nonFieldErrors[0]}` });
+        } else if (apiErrorMessage) {
+          this.setState({ forgotPasswordApiError: apiErrorMessage });
+        } else {
+          this.setState({ forgotPasswordApiError: "login.errors.generic" });
+        }
+      } else {
+        this.setState({ forgotPasswordApiError: "login.errors.generic" });
+      }
+    } finally {
+      this.setState({ forgotPasswordSubmitting: false });
+    }
+  };
+
   render() {
-    const { validationErrors, apiErrorMessage } = this.state;
+    const {
+      validationErrors,
+      apiErrorMessage,
+      showForgotPassword,
+      forgotPasswordSubmitting,
+      forgotPasswordSuccess,
+      forgotPasswordApiError,
+      email,
+    } = this.state;
     const { t } = this.props;
 
     return (
       <FormWrapper data-testid="login-page">
-        <Form
-          onSubmit={this.handleSubmit}
-          autoComplete="off"
-        >
-          <Title>{t("login.title")}</Title>
+        <Form onSubmit={showForgotPassword ? (e) => { e.preventDefault(); this.handleSendResetLink(); } : this.handleSubmit} autoComplete="off">
+          <Title>{showForgotPassword ? t("forgotPassword.title") : t("login.title")}</Title>
 
-          {/* API Error Message (e.g., "Invalid credentials") */}
-          {apiErrorMessage && (
+          {/* API Error Message */}
+          {showForgotPassword && forgotPasswordApiError && (
+            <ApiErrorMessage data-testid="forgot-password-api-error">
+              {t(forgotPasswordApiError)}
+            </ApiErrorMessage>
+          )}
+          {!showForgotPassword && apiErrorMessage && (
             <ApiErrorMessage data-testid="api-error">
               {t(apiErrorMessage)}
             </ApiErrorMessage>
           )}
 
-          {/* Email Field */}
+          {/* Success message */}
+          {showForgotPassword && forgotPasswordSuccess && (
+            <ApiErrorMessage as="div" data-testid="forgot-password-success">
+              {t("forgotPassword.success")}
+            </ApiErrorMessage>
+          )}
+
+          {/* Email Field - shown in both modes */}
           <ErrorWrapper>
             <Label htmlFor="email">{t("login.email")}</Label>
             <Input
               id="email"
               type="email"
+              value={this.state.email}
               onChange={this.handleChange}
               autoComplete="off"
               data-testid="email"
             />
-            {validationErrors.email && (
+            {validationErrors.email && !showForgotPassword && (
               <ErrorMessage data-testid="email-error">
                 {t(`login.errors.${validationErrors.email}`)}
               </ErrorMessage>
             )}
           </ErrorWrapper>
 
-          {/* Password Field */}
-          <ErrorWrapper>
-            <Label htmlFor="password">{t("login.password")}</Label>
-            <Input
-              id="password"
-              type="password"
-              onChange={this.handleChange}
-              data-testid="password"
-            />
-            {validationErrors.password && (
-              <ErrorMessage data-testid="password-error">
-                {t(`login.errors.${validationErrors.password}`)}
-              </ErrorMessage>
-            )}
-          </ErrorWrapper>
+          {/* Password Field - only shown in login mode */}
+          {!showForgotPassword && (
+            <ErrorWrapper>
+              <Label htmlFor="password">{t("login.password")}</Label>
+              <Input
+                id="password"
+                type="password"
+                onChange={this.handleChange}
+                data-testid="password"
+              />
+              {validationErrors.password && (
+                <ErrorMessage data-testid="password-error">
+                  {t(`login.errors.${validationErrors.password}`)}
+                </ErrorMessage>
+              )}
+            </ErrorWrapper>
+          )}
 
-          {/* Submit Button */}
-          <Button disabled={this.isDisabled}>{t("login.submit")}</Button>
+          {/* Submit Button or Send Reset Link */}
+          {!showForgotPassword && (
+            <Button disabled={this.isDisabled}>{t("login.submit")}</Button>
+          )}
+
+          {showForgotPassword && !forgotPasswordSuccess && (
+            <Button disabled={!email || forgotPasswordSubmitting}>
+              {t("forgotPassword.submit")}
+            </Button>
+          )}
+
+          {/* Forgot Password Link - shown after login failure */}
+          {!showForgotPassword && apiErrorMessage && (
+            <ForgotPasswordLink
+              href="#"
+              onClick={(e: React.MouseEvent) => {
+                e.preventDefault();
+                this.handleForgotPasswordClick();
+              }}
+            >
+              {t("login.forgotPassword")}
+            </ForgotPasswordLink>
+          )}
+
+          {/* Back to Login link - shown in forgot password mode */}
+          {showForgotPassword && !forgotPasswordSuccess && (
+            <ForgotPasswordLink
+              href="#"
+              onClick={(e: React.MouseEvent) => {
+                e.preventDefault();
+                this.handleBackToLogin();
+              }}
+            >
+              {t("forgotPassword.backToLogin")}
+            </ForgotPasswordLink>
+          )}
         </Form>
       </FormWrapper>
     );
