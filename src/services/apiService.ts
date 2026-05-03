@@ -76,6 +76,50 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
   },
 };
 
+// Password Reset API request body types
+export interface ForgotPasswordRequestBody {
+  email: string;
+}
+
+export interface ResetPasswordRequestBody {
+  password: string;
+  passwordRepeat: string;
+}
+
+// Axios implementation for reset password
+export const axiosApiServiceResetPassword: ApiService<ResetPasswordRequestBody> = {
+  post: async <T>(url: string, body?: ResetPasswordRequestBody) => {
+    const response = await axios.post<T>(url, body, {
+      headers: {
+        "Accept-Language": i18n.language,
+      },
+    });
+    return response.data;
+  },
+};
+
+// Fetch implementation for reset password (for MSW testing)
+export const fetchApiServiceResetPassword: ApiService<ResetPasswordRequestBody> = {
+  post: async <T>(url: string, body?: ResetPasswordRequestBody) => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": i18n.language,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw handleApiError({
+        response: { status: response.status, data: errorData },
+      });
+    }
+    return response.json() as T;
+  },
+};
+
 // Axios implementation for account activation
 export const axiosApiServiceActivation: ApiService = {
   post: async <T>(url: string) => {

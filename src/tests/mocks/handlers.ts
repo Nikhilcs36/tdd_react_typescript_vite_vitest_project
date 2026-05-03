@@ -927,4 +927,88 @@ export const handlers = [
       { status: 200 }
     );
   }),
+
+  // Mock API for password reset request (forgot password) ----(19)
+  http.post("/api/user/password-reset/", async ({ request }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    const body = (await request.json()) as { email?: string };
+
+    if (!body.email) {
+      return HttpResponse.json(
+        { email: ["Enter a valid email address."] },
+        { status: 400 }
+      );
+    }
+
+    // Simulate unverified email
+    if (body.email === "unverified@example.com") {
+      return HttpResponse.json(
+        { error: "Please verify your email before resetting password." },
+        { status: 400 }
+      );
+    }
+
+    // Success case
+    return HttpResponse.json(
+      {
+        message: "Password reset email sent successfully.",
+        languageReceived: acceptLanguage,
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for reset password ----(20)
+  http.post("/api/user/reset-password/:token/", async ({ request, params }) => {
+    const { token } = params;
+    const body = (await request.json()) as { password?: string; passwordRepeat?: string };
+
+    // Invalid token
+    if (token === "invalid-token") {
+      return HttpResponse.json(
+        { error: "Invalid password reset token." },
+        { status: 400 }
+      );
+    }
+
+    // Expired/used token
+    if (token === "expired-token") {
+      return HttpResponse.json(
+        { error: "Invalid or expired password reset token." },
+        { status: 400 }
+      );
+    }
+
+    // Missing password
+    if (!body.password) {
+      return HttpResponse.json(
+        { password: ["password_required"] },
+        { status: 400 }
+      );
+    }
+
+    // Missing passwordRepeat
+    if (!body.passwordRepeat) {
+      return HttpResponse.json(
+        { passwordRepeat: ["password_repeat_null"] },
+        { status: 400 }
+      );
+    }
+
+    // Password mismatch
+    if (body.password !== body.passwordRepeat) {
+      return HttpResponse.json(
+        { passwordRepeat: ["password_mismatch"] },
+        { status: 400 }
+      );
+    }
+
+    // Success case
+    return HttpResponse.json(
+      {
+        message: "Password reset successful. You can now login with your new password.",
+      },
+      { status: 200 }
+    );
+  }),
 ];

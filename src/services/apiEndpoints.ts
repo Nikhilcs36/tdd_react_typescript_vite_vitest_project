@@ -31,4 +31,8 @@ export const API_ENDPOINTS = {
   // Email Verification Endpoints
   VERIFY_EMAIL: "/api/user/verify-email/",
   RESEND_VERIFICATION: "/api/user/resend-verification/",
+
+  // Password Reset Endpoints
+  PASSWORD_RESET: "/api/user/password-reset/",
+  RESET_PASSWORD: (token: string) => `/api/user/reset-password/${token}/`,
 };

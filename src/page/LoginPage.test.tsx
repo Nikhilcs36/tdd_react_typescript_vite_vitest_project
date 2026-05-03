@@ -77,6 +77,13 @@ describe("Login Page", () => {
       renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
       expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
     });
+
+    it("does not show forgot password link initially", () => {
+      renderWithProviders(<LoginPageWrapper apiService={defaultService} />);
+      expect(
+        screen.queryByText("Forgot Password?")
+      ).not.toBeInTheDocument();
+    });
   });
 
   describe("Styling", () => {
@@ -769,6 +776,205 @@ describe("Login Page", () => {
       expect(state.dashboard.activeFilter).toBe('all');
       expect(state.dashboard.selectedUserIds).toEqual([]);
     });
+  });
+
+  describe("Forgot Password - Inline Flow", () => {
+    it("shows forgot password link after login failure", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "wrongpassword",
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(
+            "No active account found with the given credentials."
+          )
+        ).toBeInTheDocument();
+      });
+
+      expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+    });
+
+    it("clicking forgot password shows inline reset form with send button", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "wrongpassword",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByText("Forgot Password?"));
+
+      // Password and login button should be hidden
+      expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Login" })
+      ).not.toBeInTheDocument();
+
+      // Email should still be shown, and send reset link button should appear
+      expect(screen.getByLabelText("E-mail")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Send Reset Link" })
+      ).toBeInTheDocument();
+      // Back button should appear
+      expect(screen.getByText("Back to Login")).toBeInTheDocument();
+    });
+
+    it("back button returns to login form and clears email field", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "wrongpassword",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByText("Forgot Password?"));
+
+      // Verify email field has the typed value
+      const emailInput = screen.getByLabelText("E-mail") as HTMLInputElement;
+      expect(emailInput.value).toBe("user@example.com");
+
+      // Click back
+      await userEvent.click(screen.getByText("Back to Login"));
+
+      // Login form should be visible again
+      expect(screen.getByLabelText("Password")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Login" })
+      ).toBeInTheDocument();
+
+      // Email field should be cleared
+      expect(emailInput.value).toBe("");
+    });
+
+    it("sends password reset request when send reset link is clicked", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      // First call (login) - reject to trigger forgot password link
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["no_active_account"] },
+        },
+      });
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "wrongpassword",
+      });
+
+      // Wait for the forgot password link to appear
+      await waitFor(() => {
+        expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+      });
+
+      // Click forgot password to show inline reset form
+      await userEvent.click(screen.getByText("Forgot Password?"));
+
+      // Now set up the mock for the password reset API call (second call)
+      mockedAxios.post.mockResolvedValueOnce({
+        data: { message: "Password reset email sent successfully." },
+      });
+
+      // Click send reset link
+      await userEvent.click(
+        screen.getByRole("button", { name: "Send Reset Link" })
+      );
+
+      await waitFor(() => {
+        expect(mockedAxios.post).toHaveBeenCalledWith(
+          API_ENDPOINTS.PASSWORD_RESET,
+          { email: "user@example.com" },
+          expect.objectContaining({
+            headers: { "Accept-Language": "en" },
+          })
+        );
+      });
+
+      // Success message should appear
+      await waitFor(() => {
+        expect(
+          screen.getByText("Check your email for password reset instructions.")
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("shows login form with email, password, and login button after forgot password success", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      // Trigger login failure to show forgot password link
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "wrongpassword",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+      });
+
+      // Click forgot password
+      await userEvent.click(screen.getByText("Forgot Password?"));
+
+      // Verify forgot password form is shown (no password field, no login button)
+      expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Login" })
+      ).not.toBeInTheDocument();
+
+      // Click send reset link
+      await userEvent.click(
+        screen.getByRole("button", { name: "Send Reset Link" })
+      );
+
+      // Wait for success message (appears immediately after API success)
+      await waitFor(() => {
+        expect(
+          screen.getByText("Check your email for password reset instructions.")
+        ).toBeInTheDocument();
+      });
+
+      // After 3 second timeout, the login form should reappear
+      // Wait for login form elements to be visible again
+      await waitFor(
+        () => {
+          // Email input should still be visible
+          expect(screen.getByLabelText("E-mail")).toBeInTheDocument();
+          // Password field should be back
+          expect(screen.getByLabelText("Password")).toBeInTheDocument();
+          // Login button should be back
+          expect(
+            screen.getByRole("button", { name: "Login" })
+          ).toBeInTheDocument();
+        },
+        { timeout: 8000, interval: 100 }
+      );
+
+      // Success message should be gone
+      expect(
+        screen.queryByText("Check your email for password reset instructions.")
+      ).not.toBeInTheDocument();
+    }, 15000);
   });
 
   describe("Login Page - Dashboard State Reset", () => {
