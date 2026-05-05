@@ -44,6 +44,7 @@ networks:
 | `docker compose down` | Stop container |
 | `docker compose up --build` | Rebuild after package.json changes |
 | `docker compose run --rm frontend npm run test -- --run` | Run tests |
+| `docker compose run --rm frontend npm run lint` | Run linter |
 
 ---
 

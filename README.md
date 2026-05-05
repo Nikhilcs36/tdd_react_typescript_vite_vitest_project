@@ -245,6 +245,7 @@ docker-compose up --build
 | `docker compose down` | Stop container |
 | `docker compose up --build` | Rebuild after package.json changes |
 | `docker compose run --rm frontend npm run test -- --run` | Run tests in container |
+| `docker compose run --rm frontend npm run lint` | Run linter in container |
 
 ### Alternative: Local Development Setup
 
@@ -279,7 +280,6 @@ npm run dev
 | `npm run dev` | Start Vite development server with HMR |
 | `npm run build` | TypeScript check and production build |
 | `npm run test` | Run Vitest test suite |
-| `npm run test:ui` | Run tests with Vitest UI interface |
 | `npm run lint` | ESLint code analysis |
 | `npm run preview` | Preview production build locally |
 
@@ -459,15 +459,6 @@ The project uses **Vitest** with **React Testing Library** for comprehensive tes
 ```bash
 # Run all tests
 npm run test
-
-# Run tests with coverage
-npm run test -- --coverage
-
-# Run tests in watch mode
-npm run test -- --watch
-
-# Run tests with UI interface
-npm run test:ui
 ```
 
 ### Testing Tools
@@ -492,14 +483,6 @@ npm run test:ui
 | `docker-compose.yml` | Docker Compose with shared network |
 | `.gitignore` | Git ignore rules |
 | `.dockerignore` | Docker build context exclusions |
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `VITE_API_URL` | Backend API base URL | `http://localhost:8000/api` |
-
-The Vite dev server is configured with a proxy for `/api` and `/media` paths to the backend, so during development no environment variable is needed.
 
 ## Customization
 
