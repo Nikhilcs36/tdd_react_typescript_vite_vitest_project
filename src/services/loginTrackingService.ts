@@ -96,7 +96,7 @@ export const fetchApiServiceLoginTracking: ApiGetService = {
     },
   };
   
-  const loginTrackingApi: ApiGetService = ((import.meta as any)?.env?.VITEST) ? fetchApiServiceLoginTracking : axiosApiServiceLoginTracking;
+  const loginTrackingApi: ApiGetService = import.meta.env.VITEST ? fetchApiServiceLoginTracking : axiosApiServiceLoginTracking;
   
   // Specific service functions for each endpoint
 export const loginTrackingService = {
