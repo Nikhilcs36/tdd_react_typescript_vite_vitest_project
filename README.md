@@ -8,6 +8,14 @@ This repository contains the frontend code for a comprehensive **Login Tracking 
 
 The primary focus of this project is the **Login Tracking Dashboard**, which offers real-time analytics and statistics about user login behavior, trends, and patterns through interactive charts, data tables, and comprehensive filtering capabilities. The system includes secure JWT authentication, role-based access control, internationalization, dark mode support, and comprehensive error handling.
 
+## Backend
+
+This frontend application is designed to pair with a Django backend API. The backend provides authentication, user management, login tracking analytics, and dashboard data endpoints.
+
+- **Backend Repository**: [tdd_backend_python_django_project](https://github.com/Nikhilcs36/tdd_backend_python_django_project)
+
+The frontend and backend communicate over a shared Docker network (`tdd-network`). See the [Installation & Backend Integration](#recommended-approach-docker-deployment) section for setup details.
+
 ## Development Methodology: Test-Driven Development (TDD)
 
 This project was built using **Test-Driven Development (TDD)**, a software development approach where tests are written before the actual implementation code. The TDD process follows a simple cycle:
@@ -24,20 +32,6 @@ This project was built using **Test-Driven Development (TDD)**, a software devel
 - **API Mocking**: MSW (Mock Service Worker) enables testing without a live backend
 
 The TDD approach was particularly valuable for building the Login Tracking Dashboard, ensuring that all analytics features, chart rendering, data filtering, and API integrations work correctly and can be extended safely.
-
-## Primary Feature: Login Tracking Dashboard
-
-The **Login Tracking Dashboard** is the core feature of this application, providing:
-
-- **Real-time Login Statistics**: Display user login counts, success/failure rates, and login frequency
-- **Interactive Charts**: Visual charts using Chart.js showing login trends, comparisons, and distribution over time
-- **Weekly/Monthly Analytics**: Detailed breakdown of login patterns by week and month with date range filters
-- **User-specific Dashboard**: Individual users can view their own login activity and statistics
-- **Admin Dashboard**: Comprehensive admin interface with user selection dropdown for viewing any user's analytics
-- **Login Activity Table**: Detailed table of login events with status badges, timestamps, and IP addresses
-- **Chart Mode Toggle**: Switch between different chart visualization modes
-- **Custom Date Range Filters**: Flexible date range selection for targeted analysis
-- **User Selection**: Admin users can select specific users to view their login analytics
 
 ## Features
 
@@ -148,20 +142,6 @@ The **Login Tracking Dashboard** is the core feature of this application, provid
 - **Pagination Tests**: User list pagination functionality
 - **Dashboard Tests**: Chart data, filters, and login activity tables
 
-### Docker Support
-- **Containerized Development**: Docker and Docker Compose setup for consistent development environment
-- **Hot Reload**: Source code mounted for live updates inside the container
-- **Shared Network**: External network configuration for connecting with backend container
-- **Node Volume**: Named volume for `node_modules` to prevent host/container conflicts
-
-### Development Tooling
-- **TypeScript**: Strict type checking with full type safety
-- **ESLint**: TypeScript-aware linting with React hooks rules
-- **Twin Macro**: CSS-in-JS with Tailwind CSS utility classes
-- **Styled Components**: Component-scoped styling
-- **PostCSS**: CSS transformation and optimization
-- **Vite HMR**: Blazing-fast hot module replacement during development
-
 ## Tech Stack
 
 ### Core Technologies
@@ -246,6 +226,25 @@ docker-compose up --build
 | `docker compose up --build` | Rebuild after package.json changes |
 | `docker compose run --rm frontend npm run test -- --run` | Run tests in container |
 | `docker compose run --rm frontend npm run lint` | Run linter in container |
+
+### Backend Integration (Docker Network)
+
+This frontend connects to the backend API at `http://backend:8000` over the shared `tdd-network` Docker network. To run the full application stack:
+
+1. **Create the shared network** (one-time, if not already done):
+   ```bash
+   docker network create tdd-network
+   ```
+2. **Start the backend** from the [backend repository](https://github.com/Nikhilcs36/tdd_backend_python_django_project):
+   ```bash
+   docker-compose up -d
+   ```
+3. **Start the frontend**:
+   ```bash
+   docker-compose up --build
+   ```
+
+The frontend container will automatically connect to the backend container on the same network.
 
 ### Alternative: Local Development Setup
 
@@ -460,13 +459,6 @@ The project uses **Vitest** with **React Testing Library** for comprehensive tes
 # Run all tests
 npm run test
 ```
-
-### Testing Tools
-- **Vitest**: Fast test runner with Vite integration
-- **React Testing Library**: Component testing with user-centric queries
-- **MSW (Mock Service Worker)**: API mocking without mocking modules
-- **jsdom**: Browser-like DOM environment
-- **jest-styled-components**: Styled component assertion matchers
 
 ## Configuration Files
 
