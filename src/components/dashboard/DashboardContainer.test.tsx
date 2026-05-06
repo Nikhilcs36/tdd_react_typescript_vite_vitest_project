@@ -76,9 +76,10 @@ vi.mock('../../services/apiService', () => ({
   },
 }));
 
+let mockIsAdmin = true;
 vi.mock('../../utils/authorization', () => ({
   useUserAuthorization: () => ({
-    isAdmin: () => true,
+    isAdmin: () => mockIsAdmin,
     canAccessUserData: () => true,
   }),
 }));
@@ -89,7 +90,20 @@ vi.mock('./UserDashboardCard', () => ({
 }));
 
 vi.mock('./LoginActivityTable', () => ({
-  default: ({ loginActivity }: any) => <div data-testid="login-activity-table">{loginActivity?.length || 0} items</div>,
+  default: ({ loginActivity, hasNext, onLoadMore, loadMoreLoading }: any) => (
+    <div data-testid="login-activity-table">
+      <div data-testid="activity-items-count">{loginActivity?.length || 0} items</div>
+      {hasNext && onLoadMore && (
+        <button
+          data-testid="load-more-button"
+          onClick={onLoadMore}
+          disabled={loadMoreLoading}
+        >
+          {loadMoreLoading ? 'Loading...' : 'Load More'}
+        </button>
+      )}
+    </div>
+  ),
 }));
 
 vi.mock('./LoginTrendsChart', () => ({
@@ -1283,6 +1297,156 @@ describe('DashboardContainer UI/UX Improvements', () => {
         expect(getLoginTrends).toHaveBeenCalledWith([1], '2023-01-01', '2023-01-31');
         expect(getLoginComparison).toHaveBeenCalledWith([1], '2023-01-01', '2023-01-31');
         expect(getLoginDistribution).toHaveBeenCalledWith([1], '2023-01-01', '2023-01-31');
+      });
+    });
+  });
+
+  // BUG FIX TESTS: Login activity load more for regular users
+  // Bug: Regular users got 404 on load more because targetUserId was undefined (falling to userId prop which is not passed)
+  // Fix: Use currentUserId (which falls back to authState.user.id) instead of userId for non-admin users
+  describe('Load More Login Activity - Regular vs Admin Users', () => {
+    const mockPaginatedLoginActivity = (page: number, pageSize: number = 3, totalCount: number = 10) => ({
+      count: totalCount,
+      results: Array.from({ length: pageSize }, (_, i) => ({
+        id: (page - 1) * pageSize + i + 1,
+        username: `user${(page - 1) * pageSize + i + 1}`,
+        timestamp: '2023-01-01',
+        ip_address: '127.0.0.1',
+        user_agent: 'test',
+        success: true
+      }))
+    });
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Reset to admin by default
+      mockIsAdmin = true;
+    });
+
+    describe('Regular User Behavior', () => {
+      beforeEach(() => {
+        mockIsAdmin = false;
+        vi.mocked(getLoginActivity).mockResolvedValue(mockPaginatedLoginActivity(1, 3, 10));
+        vi.mocked(getUserStats).mockResolvedValue(mockUserStats);
+      });
+
+      it('should fetch initial login activity with the user ID from auth state (currentUserId) for regular user', async () => {
+        // Regular user with id=5 in auth state, no userId prop passed
+        renderWithProviders(<DashboardContainer />, {}, {
+          user: { id: 5, username: 'regularuser', is_staff: false, is_superuser: false },
+        });
+
+        await waitFor(() => {
+          // Should pass the user's own ID (5) from auth state, not undefined
+          expect(getLoginActivity).toHaveBeenCalledWith(1, 100, 5, undefined, undefined);
+        });
+      });
+
+      it('should load more login activity with the user ID from auth state for regular user', async () => {
+        const firstPageResponse = {
+          count: 10,
+          results: Array.from({ length: 3 }, (_, i) => ({
+            id: i + 1,
+            username: `user${i + 1}`,
+            timestamp: '2023-01-01',
+            ip_address: '127.0.0.1',
+            user_agent: 'test',
+            success: true
+          }))
+        };
+        
+        vi.mocked(getLoginActivity).mockResolvedValue(firstPageResponse);
+
+        renderWithProviders(<DashboardContainer />, {}, {
+          user: { id: 5, username: 'regularuser', is_staff: false, is_superuser: false },
+        });
+
+        // Wait for initial render - verify all calls use user ID 5 (from auth state)
+        await waitFor(() => {
+          expect(getLoginActivity).toHaveBeenCalled();
+        });
+
+        // Track initial calls
+        const initialCount = vi.mocked(getLoginActivity).mock.calls.length;
+
+        // Click load more button
+        const loadMoreButton = screen.getByTestId('load-more-button');
+        loadMoreButton.click();
+
+        // After clicking load more, more calls should happen with user ID 5
+        await waitFor(() => {
+          const currentCount = vi.mocked(getLoginActivity).mock.calls.length;
+          expect(currentCount).toBeGreaterThan(initialCount);
+        });
+
+        // All calls should use user ID 5 (currentUserId from auth state)
+        const allCalls = vi.mocked(getLoginActivity).mock.calls;
+        for (const callArgs of allCalls) {
+          expect(callArgs[2]).toBe(5);
+        }
+      });
+    });
+
+    describe('Admin User Behavior (Unchanged)', () => {
+      beforeEach(() => {
+        mockIsAdmin = true;
+        vi.mocked(getLoginActivity).mockResolvedValue(mockPaginatedLoginActivity(1, 3, 10));
+        vi.mocked(getUserStats).mockResolvedValue(mockUserStats);
+      });
+
+      it('should fetch initial login activity with selectedDashboardUserId for admin', async () => {
+        renderWithProviders(<DashboardContainer />, {
+          selectedDashboardUserId: 7,
+        });
+
+        await waitFor(() => {
+          // Admin should use selectedDashboardUserId
+          expect(getLoginActivity).toHaveBeenCalledWith(1, 100, 7, undefined, undefined);
+        });
+      });
+
+      it('should use selectedDashboardUserId for admin on load more (unchanged behavior)', async () => {
+        const firstPageResponse = {
+          count: 10,
+          results: Array.from({ length: 3 }, (_, i) => ({
+            id: i + 1,
+            username: `user${i + 1}`,
+            timestamp: '2023-01-01',
+            ip_address: '127.0.0.1',
+            user_agent: 'test',
+            success: true
+          }))
+        };
+        
+        vi.mocked(getLoginActivity).mockResolvedValue(firstPageResponse);
+
+        renderWithProviders(<DashboardContainer />, {
+          selectedDashboardUserId: 7,
+        });
+
+        // Wait for initial load (page 1) - should use selectedDashboardUserId (7)
+        await waitFor(() => {
+          expect(getLoginActivity).toHaveBeenCalledWith(1, 100, 7, undefined, undefined);
+        });
+
+        // Get the initial call count using vi.mocked().mock
+        const mockedGetLoginActivity = vi.mocked(getLoginActivity);
+        const initialCallCount = mockedGetLoginActivity.mock.calls.length;
+
+        // Click load more button - this will call getLoginActivity again with page=1
+        // (since Math.floor(3/100) + 1 = 1)
+        const loadMoreButton = screen.getByTestId('load-more-button');
+        loadMoreButton.click();
+
+        // Wait for load more to be called
+        await waitFor(() => {
+          expect(mockedGetLoginActivity.mock.calls.length).toBeGreaterThan(initialCallCount);
+        });
+
+        // All calls should use selectedDashboardUserId (7) for admin
+        for (let i = 0; i < mockedGetLoginActivity.mock.calls.length; i++) {
+          expect(mockedGetLoginActivity.mock.calls[i][2]).toBe(7);
+        }
       });
     });
   });

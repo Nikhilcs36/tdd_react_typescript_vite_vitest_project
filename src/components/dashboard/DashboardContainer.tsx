@@ -125,7 +125,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
       setError(null);
 
       try {
-        const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : userId;
+        const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : currentUserId;
         const startDate = dashboardState.startDate || undefined;
         const endDate = dashboardState.endDate || undefined;
 
@@ -155,7 +155,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
       setLoginActivityLoading(true);
 
       try {
-        const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : userId;
+        const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : currentUserId;
         const startDate = dashboardState.startDate || undefined;
         const endDate = dashboardState.endDate || undefined;
 
@@ -181,7 +181,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     setLoginActivityLoadMoreLoading(true);
 
     try {
-      const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : userId;
+      const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : currentUserId;
       const startDate = dashboardState.startDate || undefined;
       const endDate = dashboardState.endDate || undefined;
 
