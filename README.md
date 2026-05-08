@@ -82,6 +82,7 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 - **Role-based Access**: Admin-only routes protected with `ProtectedRoute` component
 - **Token Management**: Automatic token refresh via axios interceptors on 401 responses
 - **Secure Token Storage**: Tokens stored in Redux state (in-memory) with encrypted localStorage backup via Secure-LS
+- **RSA-OAEP Password Encryption**: Login passwords encrypted with 2048-bit RSA public key using the Web Crypto API (SubtleCrypto) before transmission over the network
 - **Session Persistence**: Auth state persisted across page refreshes using sessionStorage
 - **Automatic Token Invalidation**: Tokens cleared on logout with Redux state cleanup
 - **Axios Interceptors**: Language-aware API headers (Accept-Language) and authorization header management
@@ -188,6 +189,7 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 
 ### Security
 - **Secure-LS** - Encrypted localStorage for sensitive data
+- **Web Crypto API** - Browser-native RSA-OAEP encryption (SubtleCrypto)
 
 ### Deployment & Infrastructure
 - **Docker** - Containerized development environment
@@ -364,6 +366,8 @@ npm run dev
 │   │   ├── authorization.ts       # User authorization utilities
 │   │   ├── dateUtils.ts           # Date formatting utilities
 │   │   ├── djangoErrorHandler.ts  # Django error response parser
+│   │   ├── encryption.ts          # RSA-OAEP public key encryption (Web Crypto API)
+│   │   ├── encryption.test.ts     # Encryption utility tests
 │   │   └── validationRules.ts     # Form validation rules
 │   ├── App.tsx                    # Root application with routing
 │   ├── App.test.tsx               # Root application tests
@@ -393,7 +397,8 @@ The frontend communicates with the [backend REST API](https://github.com/Nikhilc
 ### API Endpoints Consumed
 
 #### Authentication Endpoints
-- `POST /api/user/token/` - Login
+- `POST /api/user/token/` - Login (accepts `password` or `encrypted_password`)
+- `GET /api/user/public-key/` - Fetch RSA 2048-bit public key for password encryption
 - `POST /api/user/token/refresh/` - Refresh token
 - `POST /api/user/create/` - Register
 - `GET /api/user/logout/` - Logout
@@ -425,12 +430,15 @@ The frontend communicates with the [backend REST API](https://github.com/Nikhilc
 
 ### Authentication Flow
 
-1. User submits credentials via login form
-2. Backend returns JWT access and refresh tokens
-3. Tokens are stored in Redux state and encrypted localStorage
-4. Axios interceptor attaches `Authorization: JWT <token>` header to all requests
-5. On 401 response, interceptor attempts token refresh
-6. On logout, tokens are cleared from Redux and storage
+1. Login form fetches RSA 2048-bit public key from `/api/user/public-key/`
+2. Password is encrypted with RSA-OAEP SHA-256 using the browser's Web Crypto API
+3. Encrypted password (hex-encoded) is sent in place of the plaintext password
+4. Backend validates credentials (supports both `encrypted_password` and legacy `password`)
+5. On success, JWT access and refresh tokens are returned
+6. Tokens are stored in Redux state and encrypted localStorage via Secure-LS
+7. Axios interceptor attaches `Authorization: JWT <token>` header to all requests
+8. On 401 response, interceptor attempts token refresh
+9. On logout, tokens are cleared from Redux and storage
 
 ## Testing
 
