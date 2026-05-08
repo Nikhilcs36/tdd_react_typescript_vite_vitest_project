@@ -7,7 +7,8 @@ export type SignUpRequestBody = {
 
 export type LoginRequestBody = {
   email: string;
-  password: string;
+  password?: string;
+  encrypted_password?: string;
 };
 
 export type UserUpdateRequestBody = {
@@ -78,7 +79,8 @@ export const validateLogin = (values: LoginRequestBody) => {
     errors.email = "email_invalid";
   }
 
-  if (!values.password) {
+  // Password is required only if encrypted_password is not provided
+  if (!values.password && !values.encrypted_password) {
     errors.password = "password_required";
   }
 

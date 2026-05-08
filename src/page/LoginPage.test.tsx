@@ -19,6 +19,8 @@ import store from "../store";
 import { logoutSuccess } from "../store/actions";
 import { resetDashboardState } from "../store/dashboardSlice";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
+import { http, HttpResponse } from "msw";
+import { server } from "../tests/mocks/server";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
@@ -165,13 +167,20 @@ describe("Login Page", () => {
 
       await fillAndSubmitLoginForm(validCredentials);
 
+      // The handleSubmit now encrypts the password before sending
+      // So the body should contain encrypted_password instead of plaintext password
       expect(mockedAxios.post).toHaveBeenCalledWith(
         API_ENDPOINTS.LOGIN,
-        validCredentials,
+        expect.objectContaining({
+          email: "user@example.com",
+          encrypted_password: expect.any(String),
+        }),
         expect.objectContaining({
           headers: { "Accept-Language": "en" },
         })
       );
+      // Ensure plaintext password is NOT sent
+      expect(mockedAxios.post.mock.calls[0][1]).not.toHaveProperty("password");
     });
 
     it("disables button during submission (MSW integration test)", async () => {
@@ -319,6 +328,19 @@ describe("Login Page", () => {
   });
 
   describe("Login Page - Authentication Failure", () => {
+    beforeEach(() => {
+      // Override public key endpoint to return 500 so the test falls back to plaintext password
+      // This is needed because handleSubmit now tries to encrypt the password first
+      server.use(
+        http.get(API_ENDPOINTS.PUBLIC_KEY, async () => {
+          return HttpResponse.json(
+            { error: "Public key unavailable" },
+            { status: 500 }
+          );
+        })
+      );
+    });
+
     it("displays authentication fail message", async () => {
       renderWithProviders(
         <LoginPageWrapper apiService={fetchApiServiceLogin} />
@@ -779,6 +801,19 @@ describe("Login Page", () => {
   });
 
   describe("Forgot Password - Inline Flow", () => {
+    beforeEach(() => {
+      // Override public key endpoint to return 500 so the test falls back to plaintext password
+      // This is needed because handleSubmit now tries to encrypt the password first
+      server.use(
+        http.get(API_ENDPOINTS.PUBLIC_KEY, async () => {
+          return HttpResponse.json(
+            { error: "Public key unavailable" },
+            { status: 500 }
+          );
+        })
+      );
+    });
+
     it("shows forgot password link after login failure", async () => {
       renderWithProviders(
         <LoginPageWrapper apiService={fetchApiServiceLogin} />

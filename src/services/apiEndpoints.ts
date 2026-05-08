@@ -2,6 +2,7 @@
 export const API_ENDPOINTS = {
   SIGNUP: "/api/user/create/",
   LOGIN: "/api/user/token/",
+  PUBLIC_KEY: "/api/user/public-key/",
   ME: "/api/user/me/",
   TOKEN_REFRESH: "/api/user/token/refresh/",
   LOGOUT: "/api/user/logout/",
