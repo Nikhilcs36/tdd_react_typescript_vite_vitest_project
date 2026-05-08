@@ -31,7 +31,7 @@ export async function encryptWithPublicKey(
   // 2. Import the RSA public key using the Web Crypto API
   const publicKey = await crypto.subtle.importKey(
     "spki", // SubjectPublicKeyInfo format
-    binaryDer.buffer,
+    binaryDer,
     {
       name: "RSA-OAEP",
       hash: { name: "SHA-256" },
