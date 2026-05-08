@@ -1,6 +1,7 @@
 import { Component } from "react";
 import { ApiService } from "../services/apiService";
 import { LoginRequestBody, validateLogin } from "../utils/validationRules";
+import { encryptWithPublicKey, fetchPublicKey } from "../utils/encryption";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
@@ -141,12 +142,21 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
 
     try {
       const { email, password } = this.state;
+      let requestBody: LoginRequestBody = { email, password };
+
+      // Attempt to encrypt the password using the backend's public key
+      try {
+        const publicKey = await fetchPublicKey();
+        const encryptedPassword = await encryptWithPublicKey(publicKey, password);
+        requestBody = { email, encrypted_password: encryptedPassword };
+      } catch (encryptionError) {
+        // Fallback to plaintext password if encryption fails
+        console.warn("Password encryption failed, falling back to plaintext:", encryptionError);
+      }
+
       const response = await this.props.apiService.post<LoginResponse>(
         API_ENDPOINTS.LOGIN,
-        {
-          email,
-          password,
-        }
+        requestBody
       );
 
       // Dispatch loginSuccess action with id, username, access, refresh, and role fields

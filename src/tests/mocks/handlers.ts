@@ -224,7 +224,24 @@ export const handlers = [
     return HttpResponse.json(currentUser, { status: 200 });
   }),
 
-  // Mock API for user login (msw) ----(5)
+  // Mock API for public key retrieval (msw) ----(5)
+  http.get(API_ENDPOINTS.PUBLIC_KEY, async ({ request }) => {
+    const acceptLanguage = request.headers.get("Accept-Language");
+    return HttpResponse.json({
+      public_key: `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqWkeynxt+9WEI88BSdxX
+5cCNHv8Z1A88wB1QGu9Qxv4q0waJ82/4DvZ8mhi9e7zOuepiuAPSpcZIefdxuUab
+VpioiV8LvFJAW1mnnRESNycQ5gMfI/piI5BaeHyWhEw7t/8coUrEsIst99v3GW7z
+kaATt6w7hA0HDQiFPcXwaUD5QfiGbcfxc7hyaMjIXgjL83Ff6XzVVpiFc7e5Up9e
+vbqiHVaJ+CZB6X429gQCJc18AST6cscfFvGDknMWJ7f/7JpcNbAR3Ww32z+MjVwG
+FiFHDnq0XqBiacU8fk3NdlY8TqjxR8e9GaTTgx+UMvfR2itgEuKGfd2oImkMxC4L
+5QIDAQAB
+-----END PUBLIC KEY-----`,
+      languageReceived: acceptLanguage,
+    });
+  }),
+
+  // Mock API for user login (msw) ----(6)
   http.post(API_ENDPOINTS.LOGIN, async ({ request }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     const body = (await request.json()) as LoginRequestBody;
@@ -240,12 +257,39 @@ export const handlers = [
       return HttpResponse.json(djangoValidationErrors, { status: 400 });
     }
 
-    // Handle empty fields (Django returns field-specific errors)
-    if (!body.email || !body.password) {
-      const emptyFieldErrors: Record<string, string[]> = {};
-      if (!body.email) emptyFieldErrors.email = ["email_required"];
-      if (!body.password) emptyFieldErrors.password = ["password_required"];
-      return HttpResponse.json(emptyFieldErrors, { status: 400 });
+    // Handle empty fields
+    if (!body.email) {
+      return HttpResponse.json({ email: ["email_required"] }, { status: 400 });
+    }
+
+    // Handle encrypted_password flow - if encrypted_password is provided, treat as valid for user@example.com
+    if (body.encrypted_password && !body.password) {
+      if (body.email !== "user@example.com") {
+        return HttpResponse.json(
+          {
+            non_field_errors: ["no_active_account"],
+            languageReceived: acceptLanguage,
+          },
+          { status: 400 }
+        );
+      }
+      // Successful login with encrypted password
+      return HttpResponse.json(
+        {
+          id: 1,
+          username: "testuser",
+          email: body.email,
+          access: "mock-access-token",
+          refresh: "mock-refresh-token",
+          languageReceived: acceptLanguage,
+        },
+        { status: 200 }
+      );
+    }
+
+    // Handle plaintext password flow
+    if (!body.password) {
+      return HttpResponse.json({ password: ["password_required"] }, { status: 400 });
     }
 
     // Mock database of valid users (could be moved to a separate file)
