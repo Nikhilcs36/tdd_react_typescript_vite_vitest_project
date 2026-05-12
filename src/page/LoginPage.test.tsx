@@ -1144,6 +1144,9 @@ describe("Login Page", () => {
 
       // Should show the resend verification link on the login form
       expect(screen.getByTestId("login-resend-verification-link")).toBeInTheDocument();
+
+      // Should NOT show the Forgot Password link when email not verified
+      expect(screen.queryByText("Forgot Password?")).not.toBeInTheDocument();
     });
 
     it("resend verification link sends request and shows success message", async () => {
