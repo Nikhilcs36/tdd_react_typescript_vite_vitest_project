@@ -57,6 +57,7 @@ interface LoginState {
   showEmailNotVerified: boolean;
   resendVerificationSending: boolean;
   resendVerificationSuccess: boolean;
+  isPasswordIncorrect: boolean;
 }
 
 // Add dispatch and navigate to props interface
@@ -92,6 +93,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     showEmailNotVerified: false,
     resendVerificationSending: false,
     resendVerificationSuccess: false,
+    isPasswordIncorrect: false,
   };
 
   validateFields = () => {
@@ -128,6 +130,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
             showEmailNotVerified: false,
             resendVerificationSending: false,
             resendVerificationSuccess: false,
+            isPasswordIncorrect: false,
           } as Pick<
             LoginState,
             | "email"
@@ -140,6 +143,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
             | "showEmailNotVerified"
             | "resendVerificationSending"
             | "resendVerificationSuccess"
+            | "isPasswordIncorrect"
           >),
         this.validateFields
       );
@@ -204,7 +208,10 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         } else if (message === "Please verify your email before logging in.") {
           this.setState({ apiErrorMessage: "login.errors.email_not_verified", showEmailNotVerified: true });
         } else if (nonFieldErrors && nonFieldErrors.length > 0) {
-          this.setState({ apiErrorMessage: `login.errors.${nonFieldErrors[0]}` });
+          this.setState({ 
+            apiErrorMessage: `login.errors.${nonFieldErrors[0]}`,
+            isPasswordIncorrect: nonFieldErrors[0] === "password_incorrect",
+          });
         } else if (apiErrorMessage) {
           this.setState({ apiErrorMessage });
         } else if (validationErrors) {
@@ -321,6 +328,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       resendVerificationSending,
       resendVerificationSuccess,
       email,
+      isPasswordIncorrect,
     } = this.state;
     const { t } = this.props;
 
@@ -417,8 +425,8 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
             </Button>
           )}
 
-          {/* Forgot Password Link - shown after login failure (but not for email not verified) */}
-          {!showForgotPassword && apiErrorMessage && !showEmailNotVerified && (
+          {/* Forgot Password Link - shown only for password_incorrect errors (not for no_active_account or email_not_verified) */}
+          {!showForgotPassword && apiErrorMessage && isPasswordIncorrect && !showEmailNotVerified && (
             <ForgotPasswordLink
               href="#"
               onClick={(e: React.MouseEvent) => {
