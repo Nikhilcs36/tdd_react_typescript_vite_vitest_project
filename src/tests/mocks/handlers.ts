@@ -956,7 +956,7 @@ FiFHDnq0XqBiacU8fk3NdlY8TqjxR8e9GaTTgx+UMvfR2itgEuKGfd2oImkMxC4L
   }),
 
   // Mock API for resend verification email ----(18)
-  http.post("/api/user/resend-verification", async ({ request }) => {
+  http.post("/api/user/resend-verification/", async ({ request }) => {
     const acceptLanguage = request.headers.get("Accept-Language");
     
     // Parse request body but don't use it (security: always return success)

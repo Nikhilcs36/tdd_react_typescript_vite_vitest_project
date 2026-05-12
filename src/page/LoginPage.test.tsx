@@ -1010,6 +1010,180 @@ describe("Login Page", () => {
         screen.queryByText("Check your email for password reset instructions.")
       ).not.toBeInTheDocument();
     }, 15000);
+
+    it("displays proper i18n error message when email is not verified (axios mock)", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      // First call (login) - reject to trigger forgot password link
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["no_active_account"] },
+        },
+      });
+
+      await fillAndSubmitLoginForm({
+        email: "unverified@example.com",
+        password: "wrongpassword",
+      });
+
+      // Wait for the forgot password link to appear
+      await waitFor(() => {
+        expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+      });
+
+      // Click forgot password to show inline reset form
+      await userEvent.click(screen.getByText("Forgot Password?"));
+
+      // Mock the password reset API to return email not verified error
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: {
+            message: "Please verify your email before resetting password.",
+            nonFieldErrors: [],
+          },
+        },
+      });
+
+      // Click send reset link
+      await userEvent.click(
+        screen.getByRole("button", { name: "Send Reset Link" })
+      );
+
+      // Should show the proper i18n translated error
+      await waitFor(() => {
+        expect(screen.getByTestId("forgot-password-api-error")).toHaveTextContent(
+          "Please verify your email before resetting password."
+        );
+      });
+    });
+
+    it("shows resend verification link when email not verified error occurs (MSW)", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      // Trigger login failure to show forgot password link
+      await fillAndSubmitLoginForm({
+        email: "wrong@example.com",
+        password: "wrongpassword",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByText("Forgot Password?"));
+
+      // Use unverified email
+      const emailInput = screen.getByLabelText("E-mail") as HTMLInputElement;
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, "unverified@example.com");
+
+      // Click send reset link
+      await userEvent.click(
+        screen.getByRole("button", { name: "Send Reset Link" })
+      );
+
+      // Should show the proper translated error message
+      await waitFor(() => {
+        expect(screen.getByTestId("forgot-password-api-error")).toHaveTextContent(
+          "Please verify your email before resetting password."
+        );
+      });
+
+      // Should show the resend verification link
+      expect(screen.getByTestId("resend-verification-link")).toBeInTheDocument();
+    });
+  });
+
+  describe("Login Page - Email Not Verified with Resend Link", () => {
+    beforeEach(() => {
+      // Override public key endpoint to return 500 so the test falls back to plaintext password
+      server.use(
+        http.get(API_ENDPOINTS.PUBLIC_KEY, async () => {
+          return HttpResponse.json(
+            { error: "Public key unavailable" },
+            { status: 500 }
+          );
+        })
+      );
+    });
+
+    it("shows resend verification link when login fails with email_not_verified (MSW)", async () => {
+      server.use(
+        http.post(API_ENDPOINTS.LOGIN, async () => {
+          return HttpResponse.json(
+            {
+              non_field_errors: ["email_not_verified"],
+              message: "Please verify your email before logging in.",
+            },
+            { status: 400 }
+          );
+        })
+      );
+
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "unverified@example.com",
+        password: "anypassword",
+      });
+
+      // Should show the email not verified error message
+      await waitFor(() => {
+        expect(screen.getByTestId("api-error")).toHaveTextContent(
+          "Please verify your email before logging in."
+        );
+      });
+
+      // Should show the resend verification link on the login form
+      expect(screen.getByTestId("login-resend-verification-link")).toBeInTheDocument();
+    });
+
+    it("resend verification link sends request and shows success message", async () => {
+      server.use(
+        http.post(API_ENDPOINTS.LOGIN, async () => {
+          return HttpResponse.json(
+            {
+              non_field_errors: ["email_not_verified"],
+              message: "Please verify your email before logging in.",
+            },
+            { status: 400 }
+          );
+        })
+      );
+
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "unverified@example.com",
+        password: "anypassword",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("api-error")).toHaveTextContent(
+          "Please verify your email before logging in."
+        );
+      });
+
+      // Click the resend verification link text
+      await userEvent.click(screen.getByText("Resend Verification Email"));
+
+      // Should show success message
+      await waitFor(() => {
+        expect(screen.getByTestId("login-resend-verification-success")).toHaveTextContent(
+          "Verification email sent successfully."
+        );
+      });
+    });
   });
 
   describe("Login Page - Dashboard State Reset", () => {
@@ -1047,4 +1221,5 @@ describe("Login Page", () => {
       dispatchSpy.mockRestore();
     });
   });
+
 });
