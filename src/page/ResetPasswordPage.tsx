@@ -29,12 +29,22 @@ interface ResetPasswordState {
     password: boolean;
     passwordRepeat: boolean;
   };
+  showEmailNotVerified: boolean;
+  resendVerificationSending: boolean;
+  resendVerificationSuccess: boolean;
 }
 
 interface ResetPasswordProps extends WithTranslation {
   apiService: ApiService<ResetPasswordRequestBody>;
   navigate: ReturnType<typeof useNavigate>;
   token: string;
+}
+
+interface ErrorResponse {
+  message?: string;
+  error?: string;
+  nonFieldErrors?: string[];
+  non_field_errors?: string[];
 }
 
 class ResetPasswordPage extends Component<ResetPasswordProps, ResetPasswordState> {
@@ -49,6 +59,9 @@ class ResetPasswordPage extends Component<ResetPasswordProps, ResetPasswordState
       password: false,
       passwordRepeat: false,
     },
+    showEmailNotVerified: false,
+    resendVerificationSending: false,
+    resendVerificationSuccess: false,
   };
 
   validateFields = () => {
@@ -101,7 +114,7 @@ class ResetPasswordPage extends Component<ResetPasswordProps, ResetPasswordState
 
   handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    this.setState({ isSubmitting: true, apiErrorMessage: "", isSuccess: false });
+    this.setState({ isSubmitting: true, apiErrorMessage: "", showEmailNotVerified: false });
 
     try {
       const { password, passwordRepeat } = this.state;
@@ -116,12 +129,14 @@ class ResetPasswordPage extends Component<ResetPasswordProps, ResetPasswordState
 
       this.setState({ isSuccess: true });
     } catch (error) {
-      const apiError = error as { response?: { data?: { message?: string; nonFieldErrors?: string[]; validationErrors?: Record<string, string> } } };
+      const apiError = error as { response?: { data?: ErrorResponse } };
       if (apiError.response?.data) {
         const errorData = apiError.response.data;
         
         // Handle specific error messages from the standardized error format
-        if (errorData.message === "Invalid password reset token.") {
+        if (errorData.message === "Please verify your email before resetting password.") {
+          this.setState({ apiErrorMessage: "resetPassword.errors.email_not_verified", showEmailNotVerified: true });
+        } else if (errorData.message === "Invalid password reset token.") {
           this.setState({ apiErrorMessage: "resetPassword.errors.invalid_token" });
         } else if (errorData.message === "Invalid or expired password reset token.") {
           this.setState({ apiErrorMessage: "resetPassword.errors.expired_token" });
@@ -140,8 +155,19 @@ class ResetPasswordPage extends Component<ResetPasswordProps, ResetPasswordState
     }
   };
 
+  handleResendVerification = async () => {
+    this.setState({ resendVerificationSending: true, resendVerificationSuccess: false });
+
+    try {
+      await this.props.apiService.post(API_ENDPOINTS.RESEND_VERIFICATION, {} as ResetPasswordRequestBody);
+      this.setState({ resendVerificationSuccess: true, resendVerificationSending: false });
+    } catch {
+      this.setState({ resendVerificationSending: false });
+    }
+  };
+
   render() {
-    const { validationErrors, apiErrorMessage, isSuccess } = this.state;
+    const { validationErrors, apiErrorMessage, isSuccess, showEmailNotVerified, resendVerificationSending, resendVerificationSuccess } = this.state;
     const { t } = this.props;
 
     if (isSuccess) {
@@ -172,6 +198,25 @@ class ResetPasswordPage extends Component<ResetPasswordProps, ResetPasswordState
           {apiErrorMessage && (
             <ApiErrorMessage data-testid="api-error">
               {t(apiErrorMessage)}
+            </ApiErrorMessage>
+          )}
+
+          {/* Resend Verification Link - shown when email not verified error occurs */}
+          {showEmailNotVerified && !resendVerificationSuccess && (
+            <LinkWrapper data-testid="resend-verification-link">
+              <span
+                style={{ cursor: "pointer", color: "blue", textDecoration: "underline" }}
+                onClick={this.handleResendVerification}
+              >
+                {resendVerificationSending ? t("emailVerification.resend.sending") : t("emailVerification.resend.button")}
+              </span>
+            </LinkWrapper>
+          )}
+
+          {/* Resend Verification Success Message */}
+          {showEmailNotVerified && resendVerificationSuccess && (
+            <ApiErrorMessage as="div" data-testid="resend-verification-success">
+              {t("emailVerification.resend.success")}
             </ApiErrorMessage>
           )}
 

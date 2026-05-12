@@ -3,7 +3,7 @@ import { ApiService } from "../services/apiService";
 import { LoginRequestBody, validateLogin } from "../utils/validationRules";
 import { encryptWithPublicKey, fetchPublicKey } from "../utils/encryption";
 import { withTranslation, WithTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate} from "react-router-dom";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/actions";
@@ -19,6 +19,7 @@ import {
   ErrorWrapper,
   ErrorMessage,
   ApiErrorMessage,
+  SuccessMessage,
   ForgotPasswordLink,
 } from "./LoginPage.styles";
 
@@ -36,6 +37,7 @@ interface ErrorResponse {
   apiErrorMessage?: string;
   nonFieldErrors?: string[];
   non_field_errors?: string[]; // Keep for backward compatibility
+  message?: string; // Backend message field for standardized errors
 }
 
 interface LoginState {
@@ -52,6 +54,9 @@ interface LoginState {
   forgotPasswordSubmitting: boolean;
   forgotPasswordSuccess: boolean;
   forgotPasswordApiError: string;
+  showEmailNotVerified: boolean;
+  resendVerificationSending: boolean;
+  resendVerificationSuccess: boolean;
 }
 
 // Add dispatch and navigate to props interface
@@ -84,6 +89,9 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     forgotPasswordSubmitting: false,
     forgotPasswordSuccess: false,
     forgotPasswordApiError: "",
+    showEmailNotVerified: false,
+    resendVerificationSending: false,
+    resendVerificationSuccess: false,
   };
 
   validateFields = () => {
@@ -113,13 +121,25 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
               ...prev.touched,
               [id]: true,
             },
-            apiErrorMessage: "", // Clear API error on input change
-            showForgotPassword: false, // Reset forgot password mode when editing
+            apiErrorMessage: "",
+            showForgotPassword: prev.showForgotPassword,
             forgotPasswordSuccess: false,
             forgotPasswordApiError: "",
+            showEmailNotVerified: false,
+            resendVerificationSending: false,
+            resendVerificationSuccess: false,
           } as Pick<
             LoginState,
-            "email" | "password" | "touched" | "apiErrorMessage" | "showForgotPassword" | "forgotPasswordSuccess" | "forgotPasswordApiError"
+            | "email"
+            | "password"
+            | "touched"
+            | "apiErrorMessage"
+            | "showForgotPassword"
+            | "forgotPasswordSuccess"
+            | "forgotPasswordApiError"
+            | "showEmailNotVerified"
+            | "resendVerificationSending"
+            | "resendVerificationSuccess"
           >),
         this.validateFields
       );
@@ -150,7 +170,6 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         const encryptedPassword = await encryptWithPublicKey(publicKey, password);
         requestBody = { email, encrypted_password: encryptedPassword };
       } catch (encryptionError) {
-        // Fallback to plaintext password if encryption fails
         console.warn("Password encryption failed, falling back to plaintext:", encryptionError);
       }
 
@@ -159,7 +178,6 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         requestBody
       );
 
-      // Dispatch loginSuccess action with id, username, access, refresh, and role fields
       this.props.dispatch(
         loginSuccess({
           id: response.id,
@@ -171,21 +189,20 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
         })
       );
 
-      // Start proactive token refresh timer
       startTokenRefreshTimer();
-
-      // Reset dashboard state to ensure Recent Activity shows dropdown's first user
       this.props.dispatch(resetDashboardState());
-
-      // Redirect using navigate prop
-      this.props.navigate("/"); // Redirect to home page
+      this.props.navigate("/");
     } catch (error) {
       const apiError = error as { response?: { data?: ErrorResponse } };
       if (apiError.response?.data) {
-        const { validationErrors, apiErrorMessage, nonFieldErrors } = apiError.response.data;
+        const { validationErrors, apiErrorMessage, nonFieldErrors, message } = apiError.response.data;
 
-        // Handle Django nonFieldErrors format (standardized by errorService)
-        if (nonFieldErrors && nonFieldErrors.length > 0) {
+        // Handle specific backend message for unverified email during login
+        if (nonFieldErrors && nonFieldErrors.length > 0 && nonFieldErrors[0] === "email_not_verified") {
+          this.setState({ apiErrorMessage: "login.errors.email_not_verified", showEmailNotVerified: true });
+        } else if (message === "Please verify your email before logging in.") {
+          this.setState({ apiErrorMessage: "login.errors.email_not_verified", showEmailNotVerified: true });
+        } else if (nonFieldErrors && nonFieldErrors.length > 0) {
           this.setState({ apiErrorMessage: `login.errors.${nonFieldErrors[0]}` });
         } else if (apiErrorMessage) {
           this.setState({ apiErrorMessage });
@@ -208,6 +225,10 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       forgotPasswordSuccess: false,
       forgotPasswordApiError: "",
       forgotPasswordSubmitting: false,
+      resendVerificationSuccess: false,
+      resendVerificationSending: false,
+      showEmailNotVerified: false,
+      apiErrorMessage: "",
     });
   };
 
@@ -222,11 +243,14 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       apiErrorMessage: "",
       validationErrors: {},
       touched: { email: false, password: false },
+      showEmailNotVerified: false,
+      resendVerificationSending: false,
+      resendVerificationSuccess: false,
     });
   };
 
   handleSendResetLink = async () => {
-    this.setState({ forgotPasswordSubmitting: true, forgotPasswordApiError: "" });
+    this.setState({ forgotPasswordSubmitting: true, forgotPasswordApiError: "", showEmailNotVerified: false });
 
     try {
       await this.props.apiService.post(API_ENDPOINTS.PASSWORD_RESET, {
@@ -234,7 +258,6 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       } as LoginRequestBody);
       this.setState({ forgotPasswordSuccess: true });
 
-      // After 3 seconds, reset state to show the login form
       this.redirectTimer = setTimeout(() => {
         this.setState({
           showForgotPassword: false,
@@ -245,13 +268,19 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
           apiErrorMessage: "",
           validationErrors: {},
           touched: { email: false, password: false },
+          showEmailNotVerified: false,
+          resendVerificationSending: false,
+          resendVerificationSuccess: false,
         });
       }, 3000);
     } catch (error) {
       const apiError = error as { response?: { data?: ErrorResponse } };
       if (apiError.response?.data) {
-        const { apiErrorMessage, nonFieldErrors } = apiError.response.data;
-        if (nonFieldErrors && nonFieldErrors.length > 0) {
+        const { message, apiErrorMessage, nonFieldErrors } = apiError.response.data;
+
+        if (message === "Please verify your email before resetting password.") {
+          this.setState({ forgotPasswordApiError: "forgotPassword.errors.email_not_verified", showEmailNotVerified: true });
+        } else if (nonFieldErrors && nonFieldErrors.length > 0) {
           this.setState({ forgotPasswordApiError: `forgotPassword.errors.${nonFieldErrors[0]}` });
         } else if (apiErrorMessage) {
           this.setState({ forgotPasswordApiError: apiErrorMessage });
@@ -266,6 +295,19 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
     }
   };
 
+  handleResendVerification = async () => {
+    this.setState({ resendVerificationSending: true, resendVerificationSuccess: false });
+
+    try {
+      await this.props.apiService.post(API_ENDPOINTS.RESEND_VERIFICATION, {
+        email: this.state.email,
+      });
+      this.setState({ resendVerificationSuccess: true, resendVerificationSending: false });
+    } catch {
+      this.setState({ resendVerificationSending: false });
+    }
+  };
+
   render() {
     const {
       validationErrors,
@@ -274,6 +316,9 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
       forgotPasswordSubmitting,
       forgotPasswordSuccess,
       forgotPasswordApiError,
+      showEmailNotVerified,
+      resendVerificationSending,
+      resendVerificationSuccess,
       email,
     } = this.state;
     const { t } = this.props;
@@ -295,14 +340,36 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
             </ApiErrorMessage>
           )}
 
-          {/* Success message */}
-          {showForgotPassword && forgotPasswordSuccess && (
-            <ApiErrorMessage as="div" data-testid="forgot-password-success">
-              {t("forgotPassword.success")}
-            </ApiErrorMessage>
+          {/* Resend Verification Link - shown when email not verified error occurs (works in both login and forgot password modes) */}
+          {showEmailNotVerified && !resendVerificationSuccess && (
+            <div data-testid={showForgotPassword ? "resend-verification-link" : "login-resend-verification-link"}>
+              <ForgotPasswordLink
+                href="#"
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  this.handleResendVerification();
+                }}
+              >
+                {resendVerificationSending ? t("emailVerification.resend.sending") : t("emailVerification.resend.button")}
+              </ForgotPasswordLink>
+            </div>
           )}
 
-          {/* Email Field - shown in both modes */}
+          {/* Resend Verification Success Message */}
+          {resendVerificationSuccess && (
+            <SuccessMessage data-testid={showForgotPassword ? "resend-verification-success" : "login-resend-verification-success"}>
+              {t("emailVerification.resend.success")}
+            </SuccessMessage>
+          )}
+
+          {/* Success message */}
+          {showForgotPassword && forgotPasswordSuccess && (
+            <SuccessMessage data-testid="forgot-password-success">
+              {t("forgotPassword.success")}
+            </SuccessMessage>
+          )}
+
+          {/* Email Field */}
           <ErrorWrapper>
             <Label htmlFor="email">{t("login.email")}</Label>
             <Input
@@ -362,7 +429,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
             </ForgotPasswordLink>
           )}
 
-          {/* Back to Login link - shown in forgot password mode */}
+          {/* Back to Login link */}
           {showForgotPassword && !forgotPasswordSuccess && (
             <ForgotPasswordLink
               href="#"
@@ -380,14 +447,11 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
   }
 }
 
-// Create a functional wrapper component to use hooks - Named for Fast Refresh
 function LoginPageWrapper(props: Omit<LoginPageProps, "dispatch" | "navigate">) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  // Pass dispatch and navigate as props to the class component
   return <LoginPage {...props} dispatch={dispatch} navigate={navigate} />;
 };
 
-// Apply withTranslation to the wrapper component
 const TranslatedLoginPage = withTranslation()(LoginPageWrapper);
 export default TranslatedLoginPage;
