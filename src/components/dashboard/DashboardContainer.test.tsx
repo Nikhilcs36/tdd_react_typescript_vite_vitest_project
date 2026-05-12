@@ -452,7 +452,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
   });
 
   describe('Admin Statistics Title Generation', () => {
-    it('should show admin statistics title with filter name when no users selected in group mode', async () => {
+    it('should show chart titles with filter name when no users selected in group mode', async () => {
       renderWithProviders(<DashboardContainer />, {
         chartMode: 'grouped', // Group mode shows filter labels
         activeFilter: 'all',
@@ -465,12 +465,14 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
 
       await waitFor(() => {
-        // Use regex for more flexible text matching
-        expect(screen.getByText(/Admin Statistics - All Users/)).toBeInTheDocument();
+        const chartTitles = screen.getAllByTestId('login-trends-chart');
+        expect(chartTitles[0]).toHaveTextContent('Login Trends - All Users');
+        expect(chartTitles[1]).toHaveTextContent('Login Comparison - All Users');
+        expect(chartTitles[2]).toHaveTextContent('Login Distribution - All Users');
       });
     });
 
-    it('should show admin statistics title with filter name and user count when users selected in group mode', async () => {
+    it('should show chart titles with filter name and user count when users selected in group mode', async () => {
       renderWithProviders(<DashboardContainer />, {
         chartMode: 'grouped', // Group mode shows filter labels
         activeFilter: 'regular',
@@ -484,12 +486,14 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
 
       await waitFor(() => {
-        // Use regex for more flexible text matching
-        expect(screen.getByText(/Admin Statistics - Regular Users.*2 users selected/)).toBeInTheDocument();
+        const chartTitles = screen.getAllByTestId('login-trends-chart');
+        expect(chartTitles[0]).toHaveTextContent('Login Trends - Regular Users (2 users selected)');
+        expect(chartTitles[1]).toHaveTextContent('Login Comparison - Regular Users (2 users selected)');
+        expect(chartTitles[2]).toHaveTextContent('Login Distribution - Regular Users (2 users selected)');
       });
     });
 
-    it('should show admin statistics title with admin filter when admin users selected in group mode', async () => {
+    it('should show chart titles with admin filter when admin users selected in group mode', async () => {
       renderWithProviders(<DashboardContainer />, {
         chartMode: 'grouped', // Group mode shows filter labels
         activeFilter: 'admin',
@@ -501,12 +505,12 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
 
       await waitFor(() => {
-        // Use regex for more flexible text matching
-        expect(screen.getByText(/Admin Statistics - Admin Only.*1 users selected/)).toBeInTheDocument();
+        const chartTitles = screen.getAllByTestId('login-trends-chart');
+        expect(chartTitles[1]).toHaveTextContent('Login Comparison - Admin Only (1 users selected)');
       });
     });
 
-    it('should show individual username in admin statistics title when in individual mode', async () => {
+    it('should show individual username in chart titles when in individual mode', async () => {
       renderWithProviders(<DashboardContainer />, {
         chartMode: 'individual', // Individual mode shows username
         activeFilter: 'admin',
@@ -518,14 +522,16 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
       await waitFor(() => {
         // Individual mode shows username from currentDropdownUsers, not filter label
-        // Use regex for more flexible text matching
-        expect(screen.getByText(/Admin Statistics - admin1/)).toBeInTheDocument();
+        const chartTitles = screen.getAllByTestId('login-trends-chart');
+        expect(chartTitles[0]).toHaveTextContent('Login Trends - admin1');
+        expect(chartTitles[1]).toHaveTextContent('Login Comparison - admin1');
+        expect(chartTitles[2]).toHaveTextContent('Login Distribution - admin1');
       });
     });
 
-    // BUG FIX TESTS: Admin statistics title should respect chart mode
+    // BUG FIX TESTS: Chart titles should respect chart mode for admin users
     describe('Chart Mode Integration', () => {
-      it('should show individual username in admin statistics title when in individual chart mode', async () => {
+      it('should show individual username in chart titles when in individual chart mode', async () => {
         const mockUserInfo = { id: 2, username: 'selecteduser', email: 'selected@test.com' };
         vi.mocked(axiosApiServiceLoadUserList.get).mockResolvedValue(mockUserInfo);
 
@@ -541,8 +547,10 @@ describe('DashboardContainer UI/UX Improvements', () => {
         });
 
         await waitFor(() => {
-          // Use regex for more flexible text matching
-          expect(screen.getByText(/Admin Statistics - selecteduser/)).toBeInTheDocument();
+          const chartTitles = screen.getAllByTestId('login-trends-chart');
+          expect(chartTitles[0]).toHaveTextContent('Login Trends - selecteduser');
+          expect(chartTitles[1]).toHaveTextContent('Login Comparison - selecteduser');
+          expect(chartTitles[2]).toHaveTextContent('Login Distribution - selecteduser');
         });
       });
 
@@ -565,15 +573,17 @@ describe('DashboardContainer UI/UX Improvements', () => {
 
         // Should show username immediately from currentDropdownUsers, not "Select User" or "User"
         await waitFor(() => {
-          // Use regex for more flexible text matching
-          expect(screen.getByText(/Admin Statistics - selecteduser/)).toBeInTheDocument();
+          const chartTitles = screen.getAllByTestId('login-trends-chart');
+          expect(chartTitles[0]).toHaveTextContent('Login Trends - selecteduser');
+          expect(chartTitles[1]).toHaveTextContent('Login Comparison - selecteduser');
+          expect(chartTitles[2]).toHaveTextContent('Login Distribution - selecteduser');
         });
 
         // API may still be called in background for fresh data, but username should show immediately
         // The key is that we don't wait for the API to show the username
       });
 
-      it('should show filter label in admin statistics title when in grouped chart mode', async () => {
+      it('should show filter label in chart titles when in grouped chart mode', async () => {
         renderWithProviders(<DashboardContainer />, {
           chartMode: 'grouped',
           activeFilter: 'admin',
@@ -585,8 +595,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
         });
 
         await waitFor(() => {
-          // Should show filter label in grouped mode - use regex for flexible matching
-          expect(screen.getByText(/Admin Statistics - Admin Only.*1 users selected/)).toBeInTheDocument();
+          const chartTitles = screen.getAllByTestId('login-trends-chart');
+          expect(chartTitles[1]).toHaveTextContent('Login Comparison - Admin Only (1 users selected)');
         });
       });
 
