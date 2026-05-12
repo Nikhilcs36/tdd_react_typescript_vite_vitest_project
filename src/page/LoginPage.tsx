@@ -416,8 +416,8 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
             </Button>
           )}
 
-          {/* Forgot Password Link - shown after login failure */}
-          {!showForgotPassword && apiErrorMessage && (
+          {/* Forgot Password Link - shown after login failure (but not for email not verified) */}
+          {!showForgotPassword && apiErrorMessage && !showEmailNotVerified && (
             <ForgotPasswordLink
               href="#"
               onClick={(e: React.MouseEvent) => {
