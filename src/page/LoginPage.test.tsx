@@ -814,14 +814,14 @@ describe("Login Page", () => {
       );
     });
 
-    it("shows forgot password link after login failure", async () => {
+    it("does not show forgot password link for no_active_account error", async () => {
       renderWithProviders(
         <LoginPageWrapper apiService={fetchApiServiceLogin} />
       );
 
       await fillAndSubmitLoginForm({
-        email: "user@example.com",
-        password: "wrongpassword",
+        email: "nonexistent@example.com",
+        password: "anypassword",
       });
 
       await waitFor(() => {
@@ -832,12 +832,48 @@ describe("Login Page", () => {
         ).toBeInTheDocument();
       });
 
+      // Forgot Password link should NOT be shown for no_active_account error
+      // because the email might be wrong
+      expect(screen.queryByText("Forgot Password?")).not.toBeInTheDocument();
+    });
+
+    it("shows forgot password link only for password_incorrect error (axios mock)", async () => {
+      mockedAxios.post.mockRejectedValue({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["password_incorrect"] },
+        },
+      });
+
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "wrongpassword",
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Password is incorrect.")
+        ).toBeInTheDocument();
+      });
+
+      // Forgot Password link should be shown for password_incorrect error
       expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
     });
 
     it("clicking forgot password shows inline reset form with send button", async () => {
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["password_incorrect"] },
+        },
+      });
+
       renderWithProviders(
-        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
       );
 
       await fillAndSubmitLoginForm({
@@ -867,8 +903,15 @@ describe("Login Page", () => {
     });
 
     it("back button returns to login form and clears email field", async () => {
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["password_incorrect"] },
+        },
+      });
+
       renderWithProviders(
-        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
       );
 
       await fillAndSubmitLoginForm({
@@ -908,7 +951,7 @@ describe("Login Page", () => {
       mockedAxios.post.mockRejectedValueOnce({
         response: {
           status: 400,
-          data: { nonFieldErrors: ["no_active_account"] },
+          data: { nonFieldErrors: ["password_incorrect"] },
         },
       });
 
@@ -954,8 +997,21 @@ describe("Login Page", () => {
     });
 
     it("shows login form with email, password, and login button after forgot password success", async () => {
+      // First call (login) - reject with password_incorrect
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["password_incorrect"] },
+        },
+      });
+
+      // Second call (password reset) - resolve success
+      mockedAxios.post.mockResolvedValueOnce({
+        data: { message: "Password reset email sent successfully." },
+      });
+
       renderWithProviders(
-        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
       );
 
       // Trigger login failure to show forgot password link
@@ -1020,7 +1076,7 @@ describe("Login Page", () => {
       mockedAxios.post.mockRejectedValueOnce({
         response: {
           status: 400,
-          data: { nonFieldErrors: ["no_active_account"] },
+          data: { nonFieldErrors: ["password_incorrect"] },
         },
       });
 
@@ -1062,8 +1118,27 @@ describe("Login Page", () => {
     });
 
     it("shows resend verification link when email not verified error occurs (MSW)", async () => {
+      // First call (login) - reject with password_incorrect
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["password_incorrect"] },
+        },
+      });
+
+      // Second call (password reset) - reject with email not verified
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: {
+            message: "Please verify your email before resetting password.",
+            nonFieldErrors: [],
+          },
+        },
+      });
+
       renderWithProviders(
-        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
       );
 
       // Trigger login failure to show forgot password link
@@ -1177,8 +1252,27 @@ describe("Login Page", () => {
     });
 
     it("disables send reset link button when forgot password API error is shown", async () => {
+      // First call (login) - reject with password_incorrect
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["password_incorrect"] },
+        },
+      });
+
+      // Second call (password reset) - reject with email not verified
+      mockedAxios.post.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: {
+            message: "Please verify your email before resetting password.",
+            nonFieldErrors: [],
+          },
+        },
+      });
+
       renderWithProviders(
-        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
       );
 
       // Trigger login failure
