@@ -147,12 +147,13 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
   };
 
   get isDisabled() {
-    const { email, password, validationErrors, isSubmitting } = this.state;
+    const { email, password, validationErrors, isSubmitting, apiErrorMessage } = this.state;
     return (
       !email ||
       !password ||
       Object.keys(validationErrors).length > 0 ||
-      isSubmitting
+      isSubmitting ||
+      !!apiErrorMessage
     );
   }
 
@@ -411,7 +412,7 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
           )}
 
           {showForgotPassword && !forgotPasswordSuccess && (
-            <Button disabled={!email || forgotPasswordSubmitting}>
+            <Button disabled={!email || forgotPasswordSubmitting || !!forgotPasswordApiError}>
               {t("forgotPassword.submit")}
             </Button>
           )}

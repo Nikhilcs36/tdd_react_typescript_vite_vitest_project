@@ -1113,6 +1113,106 @@ describe("Login Page", () => {
       );
     });
 
+    it("disables login button when API error message is shown", async () => {
+      mockedAxios.post.mockRejectedValue({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["no_active_account"] },
+        },
+      });
+
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("api-error")).toHaveTextContent(
+          "No active account found with the given credentials."
+        );
+      });
+
+      // Login button should be disabled when API error is shown
+      expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
+    });
+
+    it("re-enables login button when user starts typing after API error", async () => {
+      mockedAxios.post.mockRejectedValue({
+        response: {
+          status: 400,
+          data: { nonFieldErrors: ["no_active_account"] },
+        },
+      });
+
+      renderWithProviders(
+        <LoginPageWrapper apiService={axiosApiServiceLogin} />
+      );
+
+      await fillAndSubmitLoginForm({
+        email: "user@example.com",
+        password: "Password1",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("api-error")).toHaveTextContent(
+          "No active account found with the given credentials."
+        );
+      });
+
+      // Button should be disabled
+      expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
+
+      // Type in the email field to clear the error
+      const emailInput = screen.getByLabelText("E-mail");
+      await userEvent.type(emailInput, "a");
+
+      // Button should be enabled again
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+      });
+    });
+
+    it("disables send reset link button when forgot password API error is shown", async () => {
+      renderWithProviders(
+        <LoginPageWrapper apiService={fetchApiServiceLogin} />
+      );
+
+      // Trigger login failure
+      await fillAndSubmitLoginForm({
+        email: "wrong@example.com",
+        password: "wrongpassword",
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Forgot Password?")).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByText("Forgot Password?"));
+
+      // Use unverified email and click send
+      const emailInput = screen.getByLabelText("E-mail") as HTMLInputElement;
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, "unverified@example.com");
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Send Reset Link" })
+      );
+
+      // Wait for the error message
+      await waitFor(() => {
+        expect(screen.getByTestId("forgot-password-api-error")).toHaveTextContent(
+          "Please verify your email before resetting password."
+        );
+      });
+
+      // Send Reset Link button should be disabled when error is shown
+      expect(screen.getByRole("button", { name: "Send Reset Link" })).toBeDisabled();
+    });
+
     it("shows resend verification link when login fails with email_not_verified (MSW)", async () => {
       server.use(
         http.post(API_ENDPOINTS.LOGIN, async () => {
