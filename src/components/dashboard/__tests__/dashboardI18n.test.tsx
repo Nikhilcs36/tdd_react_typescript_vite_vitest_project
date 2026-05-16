@@ -8,6 +8,8 @@ import { describe, beforeEach, it, expect } from 'vitest';
 // Mock data for testing
 const mockUserStats: UserStats = {
   total_logins: 42,
+  total_successful_logins: 35,
+  total_failed_logins: 7,
   last_login: '2025-12-13 14:30:25',
   login_trend: 80,
   weekly_data: {},

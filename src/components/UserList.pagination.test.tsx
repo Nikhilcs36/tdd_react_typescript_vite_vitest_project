@@ -54,10 +54,12 @@ describe("UserList Pagination with 1-based indexing", () => {
 
     store.dispatch(
       loginSuccess({
-        id: 10, // A user not in the list
+        id: 10,
         username: "testuser",
         access: "mock-access-token",
         refresh: "mock-refresh-token",
+        is_staff: false,
+        is_superuser: false,
       })
     );
 

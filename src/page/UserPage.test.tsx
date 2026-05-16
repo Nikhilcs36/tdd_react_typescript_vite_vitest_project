@@ -78,6 +78,8 @@ describe("UserPage", () => {
             username: "authedUser",
             access: "test-access-token",
             refresh: "test-refresh-token",
+            is_staff: false,
+            is_superuser: false,
           })
         );
       });
@@ -355,6 +357,8 @@ describe("UserPage", () => {
             username: "authedUser",
             access: "mock-access-token",
             refresh: "mock-refresh-token",
+            is_staff: false,
+            is_superuser: false,
           })
         );
       });

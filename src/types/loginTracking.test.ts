@@ -10,6 +10,8 @@ describe('Type Guards', () => {
       const validResponse: AdminUserStatsResponse = {
         "1": {
           total_logins: 42,
+          total_successful_logins: 35,
+          total_failed_logins: 7,
           last_login: "2025-12-13 14:30:25",
           weekly_data: { "2025-12-07": 5, "2025-12-08": 3 },
           monthly_data: { "2025-11": 15, "2025-12": 27 },
@@ -17,6 +19,8 @@ describe('Type Guards', () => {
         },
         "2": {
           total_logins: 25,
+          total_successful_logins: 20,
+          total_failed_logins: 5,
           last_login: "2025-12-12 10:15:30",
           weekly_data: { "2025-12-06": 2, "2025-12-07": 4 },
           monthly_data: { "2025-11": 10, "2025-12": 15 },
