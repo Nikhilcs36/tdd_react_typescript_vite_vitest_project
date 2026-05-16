@@ -75,25 +75,25 @@ describe("handleApiError - i18n", () => {
       it("should return translated message for 401 error", () => {
         const error = { response: { status: 401 } };
         const result = handleApiError(error);
-        expect(result.response.data.translationKey).toBe("errors.401.token_invalid_or_expired");
+        expect(result.response!.data.translationKey).toBe("errors.401.token_invalid_or_expired");
       });
 
       it("should return translated message for 403 error", () => {
         const error = { response: { status: 403 } };
         const result = handleApiError(error);
-        expect(result.response.data.translationKey).toBe("errors.403.permission_denied");
+        expect(result.response!.data.translationKey).toBe("errors.403.permission_denied");
       });
 
       it("should return translated message for 500 error", () => {
         const error = { response: { status: 500 } };
         const result = handleApiError(error);
-        expect(result.response.data.translationKey).toBe("errors.500.internal_server_error");
+        expect(result.response!.data.translationKey).toBe("errors.500.internal_server_error");
       });
 
       it("should return translated message for network error", () => {
         const error = { request: {} }; // No response object for network errors
         const result = handleApiError(error);
-        expect(result.response.data.translationKey).toBe("errors.network.network_error");
+        expect(result.response!.data.translationKey).toBe("errors.network.network_error");
       });
 
       it("should return translated message for Django validation error", () => {
@@ -106,7 +106,7 @@ describe("handleApiError - i18n", () => {
           },
         };
         const result = handleApiError(error);
-        expect(result.response.data.message).toBe("Username already exists");
+        expect(result.response!.data.message).toBe("Username already exists");
       });
 
       it("should return translated message for Django validation error with email", () => {
@@ -119,7 +119,7 @@ describe("handleApiError - i18n", () => {
           },
         };
         const result = handleApiError(error);
-        expect(result.response.data.message).toBe("E-mail in use");
+        expect(result.response!.data.message).toBe("E-mail in use");
       });
 
       it("should return translated message for 401 error with realistic response body", () => {
@@ -130,7 +130,7 @@ describe("handleApiError - i18n", () => {
           },
         };
         const result = handleApiError(error);
-        expect(result.response.data.translationKey).toBe("errors.401.token_invalid_or_expired");
+        expect(result.response!.data.translationKey).toBe("errors.401.token_invalid_or_expired");
       });
     });
   });

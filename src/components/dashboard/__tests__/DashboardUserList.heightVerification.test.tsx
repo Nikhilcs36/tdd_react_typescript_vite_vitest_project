@@ -23,6 +23,7 @@ const createMockStore = (initialState: Partial<DashboardState> = {}) => {
     selectedDashboardUserId: null,
     currentDropdownUsers: [],
     chartMode: 'individual',
+    datePreset: '30days',
     startDate: null,
     endDate: null,
     isLoading: false,
