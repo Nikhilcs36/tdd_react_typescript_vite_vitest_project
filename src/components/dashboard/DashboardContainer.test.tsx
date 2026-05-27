@@ -135,6 +135,7 @@ vi.mock('./ChartModeToggle', () => ({
   default: () => <div data-testid="chart-mode-toggle">Chart Mode Toggle</div>,
 }));
 
+
 describe('DashboardContainer', () => {
   // Basic rendering tests (fast, lightweight)
   describe('Basic Rendering', () => {
@@ -1353,6 +1354,7 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
 
       it('should load more login activity with the user ID from auth state for regular user', async () => {
+        mockIsAdmin = false; // Ensure isolation from other tests
         const firstPageResponse = {
           count: 10,
           results: Array.from({ length: 3 }, (_, i) => ({
