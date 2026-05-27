@@ -35,6 +35,14 @@ i18n.use(initReactI18next).init({
             themeDesc: "Toggle between dark and light mode for comfortable viewing in any environment.",
             tdd: "Test-Driven Development",
             tddDesc: "Built with TDD principles using React, TypeScript, Vite, and Vitest for reliable code.",
+            game: "🎮 Entertainment Zone",
+            gameDesc: "Need a fun break? Draw circles, beat your score — a playful escape from analytics.",
+          },
+          gameSection: {
+            title: "Take a Mental Break 🎯",
+            subtitle: "Unlock entertainment, free your mind instead of digital analysis",
+            playButton: "🎯 Play Now",
+            hideButton: "Hide Game",
           },
         },
         myProfile: "My Profile",
@@ -289,6 +297,38 @@ i18n.use(initReactI18next).init({
             email_not_verified: "Please verify your email before resetting password.",
             generic: "An unexpected error occurred.",
           },
+        },
+        game: {
+          title: "Draw a Circle",
+          instruction: "Draw a perfect circle on the canvas. Release to see your score!",
+          submit: "Submit Score",
+          clear: "Clear",
+          drawAgain: "Draw Again",
+          score: "Accuracy: {{score}}%",
+          bestScore: "Best Score: {{score}}%",
+          noBestScore: "No best score yet",
+          loading: "Scoring...",
+          error: "Failed to save score. Please try again.",
+          disabled: "Game section is currently disabled.",
+          rating: {
+            excellent: "Excellent!",
+            good: "Good!",
+            fair: "Fair",
+            poor: "Try Again"
+          },
+          leaderboard: {
+            show: "Show Leaderboard",
+            hide: "Hide Leaderboard",
+            title: "Leaderboard",
+            rank: "Rank",
+            username: "Username",
+            score: "Score",
+            lastPlayed: "Last Played",
+            empty: "No scores yet",
+            error: "Failed to load leaderboard",
+            loadMore: "Load More",
+            loading: "Loading..."
+          }
         },
         footer: {
           copyright: "© {{year}} TDD Dashboard. All rights reserved.",

@@ -1055,4 +1055,135 @@ FiFHDnq0XqBiacU8fk3NdlY8TqjxR8e9GaTTgx+UMvfR2itgEuKGfd2oImkMxC4L
       { status: 200 }
     );
   }),
+
+  // Mock API for save game score ----(21)
+  http.post("/api/game/scores/", async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { detail: "Authentication credentials were not provided." },
+        { status: 401 }
+      );
+    }
+
+    const body = (await request.json()) as { score: number };
+
+    // Validate score range
+    if (typeof body.score !== 'number' || body.score < 0 || body.score > 100) {
+      return HttpResponse.json(
+        { score: ["Score must be between 0 and 100."] },
+        { status: 400 }
+      );
+    }
+
+    // Simulate game section disabled (feature flag)
+    if (body.score === -1) {
+      return HttpResponse.json(
+        { detail: "Game section is disabled" },
+        { status: 403 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        id: 1,
+        user: 1,
+        score: body.score,
+        created_at: "2026-01-03T09:35:14Z",
+      },
+      { status: 201 }
+    );
+  }),
+
+  // Mock API for get my game scores ----(22)
+  http.get("/api/game/scores/me/", async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { detail: "Authentication credentials were not provided." },
+        { status: 401 }
+      );
+    }
+
+    // Simulate game section disabled (feature flag)
+    const url = new URL(request.url);
+    const forceDisabled = url.searchParams.get("disabled") === "true";
+    if (forceDisabled) {
+      return HttpResponse.json(
+        { detail: "Game section is disabled" },
+        { status: 403 }
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        best_score: 87,
+        count: 3,
+        next: null,
+        previous: null,
+        results: [
+          { id: 3, user: 1, score: 76, created_at: "2026-01-03T09:35:14Z" },
+          { id: 2, user: 1, score: 87, created_at: "2026-01-02T09:35:14Z" },
+          { id: 1, user: 1, score: 55, created_at: "2026-01-01T09:35:14Z" },
+        ],
+      },
+      { status: 200 }
+    );
+  }),
+
+  // Mock API for game leaderboard (admin only) ----(23)
+  http.get("/api/game/leaderboard/", async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { detail: "Authentication credentials were not provided." },
+        { status: 401 }
+      );
+    }
+
+    // Simulate game section disabled (feature flag)
+    const url = new URL(request.url);
+    const forceDisabled = url.searchParams.get("disabled") === "true";
+    if (forceDisabled) {
+      return HttpResponse.json(
+        { detail: "Game section is disabled" },
+        { status: 403 }
+      );
+    }
+
+    // Validate authorization - check for staff/admin token
+    // In tests, the is_staff flag is encoded in the token or we use the mock auth state
+    // For simplicity, we check if the token contains "admin" or "staff"
+    const token = authHeader.replace("JWT ", "");
+    if (token !== "mock-admin-token" && token !== "mock-staff-token") {
+      return HttpResponse.json(
+        { detail: "You do not have permission to perform this action." },
+        { status: 403 }
+      );
+    }
+
+    return HttpResponse.json({
+      count: 2,
+      next: null,
+      previous: null,
+      results: [
+        {
+          username: "admin",
+          score: 95,
+          created_at: "2026-01-03T09:35:14Z",
+        },
+        {
+          username: "user1",
+          score: 87,
+          created_at: "2026-01-02T09:35:14Z",
+        },
+      ],
+    });
+  }),
 ];

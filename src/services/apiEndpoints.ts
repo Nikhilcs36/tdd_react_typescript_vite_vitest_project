@@ -36,4 +36,9 @@ export const API_ENDPOINTS = {
   // Password Reset Endpoints
   PASSWORD_RESET: "/api/user/password-reset/",
   RESET_PASSWORD: (token: string) => `/api/user/reset-password/${token}/`,
+
+  // Game Endpoints
+  GAME_SCORES: "/api/game/scores/",
+  GAME_SCORES_ME: "/api/game/scores/me/",
+  GAME_LEADERBOARD: "/api/game/leaderboard/",
 };
