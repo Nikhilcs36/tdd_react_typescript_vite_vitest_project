@@ -74,9 +74,9 @@ describe('GameLeaderboard - response format handling', () => {
 
     // Verify entries are displayed
     expect(screen.getByText('admin')).toBeDefined();
-    expect(screen.getByText('95%')).toBeDefined();
+    expect(screen.getByText('95.0%')).toBeDefined();
     expect(screen.getByText('user1')).toBeDefined();
-    expect(screen.getByText('87%')).toBeDefined();
+    expect(screen.getByText('87.0%')).toBeDefined();
   });
 
   it('should handle plain array response format (current MSW mock format)', async () => {
@@ -110,8 +110,8 @@ describe('GameLeaderboard - response format handling', () => {
 
     // Verify entries are displayed
     expect(screen.getByText('admin')).toBeDefined();
-    expect(screen.getByText('95%')).toBeDefined();
+    expect(screen.getByText('95.0%')).toBeDefined();
     expect(screen.getByText('user1')).toBeDefined();
-    expect(screen.getByText('87%')).toBeDefined();
+    expect(screen.getByText('87.0%')).toBeDefined();
   });
 });

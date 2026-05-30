@@ -94,6 +94,6 @@ describe('GameLeaderboard - stale admin state', () => {
     });
 
     expect(screen.getByText('admin')).toBeDefined();
-    expect(screen.getByText('95%')).toBeDefined();
+    expect(screen.getByText('95.0%')).toBeDefined();
   });
 });
