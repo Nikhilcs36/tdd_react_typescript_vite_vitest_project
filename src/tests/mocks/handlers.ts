@@ -1168,22 +1168,30 @@ FiFHDnq0XqBiacU8fk3NdlY8TqjxR8e9GaTTgx+UMvfR2itgEuKGfd2oImkMxC4L
       );
     }
 
+    // Build a paginated leaderboard response for testing Load More functionality
+    // Returning 2 entries per page with a next URL so the "Load More" button appears
+    const pageParam = url.searchParams.get('page');
+    const page = pageParam ? Number(pageParam) : 1;
+    const pageSize = 2;
+
+    const allEntries = [
+      { username: 'admin', score: 95, created_at: '2026-01-03T09:35:14Z' },
+      { username: 'user1', score: 87, created_at: '2026-01-02T09:35:14Z' },
+      { username: 'user2', score: 76, created_at: '2026-01-01T09:35:14Z' },
+      { username: 'user3', score: 65, created_at: '2025-12-31T09:35:14Z' },
+    ];
+
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pageResults = allEntries.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(allEntries.length / pageSize);
+    const nextPage = page < totalPages ? `${API_ENDPOINTS.GAME_LEADERBOARD}?page=${page + 1}` : null;
+
     return HttpResponse.json({
-      count: 2,
-      next: null,
-      previous: null,
-      results: [
-        {
-          username: "admin",
-          score: 95,
-          created_at: "2026-01-03T09:35:14Z",
-        },
-        {
-          username: "user1",
-          score: 87,
-          created_at: "2026-01-02T09:35:14Z",
-        },
-      ],
+      count: allEntries.length,
+      next: nextPage,
+      previous: page > 1 ? `${API_ENDPOINTS.GAME_LEADERBOARD}?page=${page - 1}` : null,
+      results: pageResults,
     });
   }),
 ];

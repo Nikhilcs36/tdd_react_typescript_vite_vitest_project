@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   LeaderboardButton,
@@ -19,6 +19,8 @@ import { LeaderboardEntry } from '../../types/game';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 
+const SCROLL_THRESHOLD = 5; // px from bottom to consider "at bottom"
+
 const THEAD_STYLE: React.CSSProperties = {
   position: 'sticky',
   top: 0,
@@ -36,9 +38,6 @@ const HEADERS = ['rank', 'username', 'score', 'lastPlayed'] as const;
 
 const GameLeaderboard: React.FC = () => {
   const { t } = useTranslation();
-  // Read user directly from Redux for a stable boolean that only changes
-  // when the actual is_staff/is_superuser values change — not when function references change.
-  // This prevents the fetch effect from re-firing on parent re-renders.
   const user = useSelector((state: RootState) => state.auth.user);
   const isAdminUser = user?.is_staff === true || user?.is_superuser === true;
   const [isOpen, setIsOpen] = useState(false);
@@ -47,6 +46,16 @@ const GameLeaderboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const checkIsAtBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setIsAtBottom(remaining < SCROLL_THRESHOLD);
+  }, []);
 
   useEffect(() => {
     if (!isOpen || !isAdminUser) return;
@@ -67,6 +76,16 @@ const GameLeaderboard: React.FC = () => {
 
     fetchLeaderboard();
   }, [isOpen, isAdminUser, t]);
+
+  // Check initial scroll position and listen for scroll events
+  // Using both onScroll prop (for React/test compatibility) and addEventListener
+  // (for native browser behavior) to ensure reliable detection everywhere
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !entries.length) return;
+
+    checkIsAtBottom();
+  }, [entries, checkIsAtBottom]);
 
   const handleLoadMore = async () => {
     if (!nextPageUrl || loadingMore) return;
@@ -138,7 +157,11 @@ const GameLeaderboard: React.FC = () => {
 
         {!loading && !error && entries.length > 0 && (
           <>
-            <LeaderboardScrollWrapper data-testid="leaderboard-scroll-body">
+            <LeaderboardScrollWrapper
+              ref={scrollRef}
+              onScroll={checkIsAtBottom}
+              data-testid="leaderboard-scroll-body"
+            >
               <LeaderboardTable data-testid="leaderboard-table">
                 <thead style={THEAD_STYLE}>
                   <tr>
@@ -161,17 +184,28 @@ const GameLeaderboard: React.FC = () => {
                 </tbody>
               </LeaderboardTable>
             </LeaderboardScrollWrapper>
-            {nextPageUrl && (
-              <LeaderboardFooter>
+            {/* Always render LeaderboardFooter to reserve space and prevent
+                bottom-edge shifting when toggling between pages / last page.
+                The Load More button itself is visually hidden when not at the
+                scroll bottom or when nextPageUrl is null (replaced by placeholder). */}
+            <LeaderboardFooter>
+              {nextPageUrl ? (
                 <LeaderboardLoadMoreButton
                   onClick={handleLoadMore}
-                  disabled={loadingMore}
+                  disabled={loadingMore || !isAtBottom}
                   data-testid="leaderboard-load-more"
+                  style={{
+                    visibility: isAtBottom ? 'visible' : 'hidden',
+                    opacity: isAtBottom ? 1 : 0,
+                    pointerEvents: isAtBottom ? 'auto' as const : 'none' as const,
+                  }}
                 >
                   {loadingMore ? t('game.leaderboard.loading') : t('game.leaderboard.loadMore')}
                 </LeaderboardLoadMoreButton>
-              </LeaderboardFooter>
-            )}
+              ) : (
+                <div style={{ height: '40px' }} />
+              )}
+            </LeaderboardFooter>
           </>
         )}
       </LeaderboardContent>
