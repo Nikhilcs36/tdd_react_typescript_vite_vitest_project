@@ -19,7 +19,7 @@ const GameBestScore: React.FC<GameBestScoreProps> = ({ bestScore }) => {
 
   return (
     <BestScoreDisplay data-testid="game-best-score">
-      {t('game.bestScore', { score: Math.round(bestScore) })}
+      {t('game.bestScore', { score: bestScore.toFixed(1) })}
     </BestScoreDisplay>
   );
 };

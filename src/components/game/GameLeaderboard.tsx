@@ -154,7 +154,7 @@ const GameLeaderboard: React.FC = () => {
                     <LeaderboardRow key={`${entry.username}-${index}`} data-testid={`leaderboard-row-${index}`}>
                       <LeaderboardCell style={COLUMN_WIDTHS[0]}>{index + 1}</LeaderboardCell>
                       <LeaderboardCell style={COLUMN_WIDTHS[1]}>{entry.username}</LeaderboardCell>
-                      <LeaderboardCell style={COLUMN_WIDTHS[2]}>{Math.round(entry.score)}%</LeaderboardCell>
+                      <LeaderboardCell style={COLUMN_WIDTHS[2]}>{entry.score.toFixed(1)}%</LeaderboardCell>
                       <LeaderboardCell style={COLUMN_WIDTHS[3]}>{new Date(entry.created_at).toLocaleDateString()}</LeaderboardCell>
                     </LeaderboardRow>
                   ))}

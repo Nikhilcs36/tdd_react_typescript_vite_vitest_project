@@ -67,7 +67,7 @@ describe('GameLeaderboard - no flicker', () => {
 
     // Verify data is shown
     expect(screen.getByText('admin')).toBeDefined();
-    expect(screen.getByText('95%')).toBeDefined();
+    expect(screen.getByText('95.0%')).toBeDefined();
 
     // Trigger a re-render by dispatching identical auth state
     fireEvent.click(screen.getByTestId('re-render-trigger'));
@@ -76,6 +76,6 @@ describe('GameLeaderboard - no flicker', () => {
     // BUG: currently the useMemo recalculates, effect re-fires, loading = true, table disappears
     expect(screen.getByTestId('leaderboard-table')).toBeDefined();
     expect(screen.getByText('admin')).toBeDefined();
-    expect(screen.getByText('95%')).toBeDefined();
+    expect(screen.getByText('95.0%')).toBeDefined();
   });
 });

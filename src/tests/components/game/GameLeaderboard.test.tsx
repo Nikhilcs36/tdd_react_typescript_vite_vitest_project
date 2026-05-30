@@ -67,9 +67,9 @@ describe('GameLeaderboard', () => {
 
     // Check entries
     expect(screen.getByText('admin')).toBeDefined();
-    expect(screen.getByText('95%')).toBeDefined();
+    expect(screen.getByText('95.0%')).toBeDefined();
     expect(screen.getByText('user1')).toBeDefined();
-    expect(screen.getByText('87%')).toBeDefined();
+    expect(screen.getByText('87.0%')).toBeDefined();
   });
 
   it('should toggle open/close (content always mounted for smooth CSS animation)', async () => {
@@ -88,7 +88,7 @@ describe('GameLeaderboard', () => {
 
     // Verify entries are loaded
     expect(screen.getByText('admin')).toBeDefined();
-    expect(screen.getByText('95%')).toBeDefined();
+    expect(screen.getByText('95.0%')).toBeDefined();
 
     // Close — content stays in DOM but is visually hidden (CSS transition hides it)
     fireEvent.click(screen.getByTestId('leaderboard-toggle'));
