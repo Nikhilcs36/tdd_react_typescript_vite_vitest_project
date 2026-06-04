@@ -265,6 +265,96 @@ export const loginTrackingService = {
   },
 };
 
+// Report download result interface
+export interface DownloadReportResult {
+  blob: Blob;
+  filename: string;
+}
+
+// Download report params interface
+export interface DownloadReportParams {
+  mode: 'individual' | 'grouped';
+  userIds?: number[];
+  selectedUserId?: number;
+  startDate?: string;
+  endDate?: string;
+  filter?: 'all' | 'admin_only' | 'regular_users' | 'me';
+  role?: 'admin' | 'regular';
+}
+
+/**
+ * Download login activity summary report as Excel file
+ * Uses fetch for both production and testing (MSW compatibility)
+ */
+export const downloadReport = async (params: DownloadReportParams): Promise<DownloadReportResult> => {
+  const headers = buildHeaders();
+
+  // Build URL with query parameters
+  let url = API_ENDPOINTS.REPORT_DOWNLOAD;
+  const queryParams = new URLSearchParams();
+  
+  queryParams.append('mode', params.mode);
+
+  if (params.userIds?.length) {
+    params.userIds.forEach(id => queryParams.append('user_ids[]', id.toString()));
+  }
+
+  if (params.startDate) {
+    queryParams.append('start_date', params.startDate);
+  }
+
+  if (params.endDate) {
+    queryParams.append('end_date', params.endDate);
+  }
+
+  if (params.filter) {
+    queryParams.append('filter', params.filter);
+  }
+
+  if (params.role) {
+    queryParams.append('role', params.role);
+  }
+
+  if (params.selectedUserId !== undefined) {
+    queryParams.append('selected_user_id', params.selectedUserId.toString());
+  }
+
+  if (queryParams.toString()) {
+    url += `?${queryParams.toString()}`;
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw handleApiError(
+        { response: { status: response.status, data: errorData } },
+        { endpoint: url, operation: 'get' }
+      );
+    }
+
+    // Extract filename from Content-Disposition header
+    const disposition = response.headers.get('content-disposition');
+    let filename = 'login_report.xlsx';
+    
+    if (disposition) {
+      const match = disposition.match(/filename="(.+)"/);
+      if (match) {
+        filename = match[1];
+      }
+    }
+
+    const blob = await response.blob();
+    return { blob, filename };
+  } catch (error) {
+    throw handleApiError(error, { endpoint: url, operation: 'get' });
+  }
+};
+
 // Export individual functions for easier testing
 export const {
   getUserStats,

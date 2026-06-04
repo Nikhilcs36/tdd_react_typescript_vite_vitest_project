@@ -916,7 +916,430 @@ describe('loginTrackingService', () => {
     });
   });
 
-  // Test authentication error handling - removed due to complex mocking issues
-  // The authentication is already handled by the buildHeaders function which
-  // is properly tested through the error handling in individual service calls
+  // Test downloadReport function
+  describe('downloadReport', () => {
+    it('should download report and return blob with filename for individual mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_testuser_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'individual' });
+      expect(result).toBeDefined();
+      expect(result.filename).toBe('login_report_testuser_individual_20260101_120000.xlsx');
+      expect(result.blob).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=individual'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include date parameters when provided', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_testuser_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({
+        mode: 'individual',
+        startDate: '2025-12-01',
+        endDate: '2025-12-31',
+      });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=individual&start_date=2025-12-01&end_date=2025-12-31'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include user_ids parameter when provided', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_admin_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({
+        mode: 'individual',
+        userIds: [1, 2, 3],
+      });
+      expect(result).toBeDefined();
+      const fetchCall = (globalThis.fetch as any).mock.calls[0][0];
+      expect(fetchCall).toContain('/api/user/dashboard/report/download/');
+      expect(fetchCall).toContain('mode=individual');
+      expect(fetchCall).toContain('user_ids%5B%5D=1');
+      expect(fetchCall).toContain('user_ids%5B%5D=2');
+      expect(fetchCall).toContain('user_ids%5B%5D=3');
+    });
+
+    it('should handle grouped mode download', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_grouped_3_users_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({
+        mode: 'grouped',
+        userIds: [1, 2, 3],
+      });
+      expect(result).toBeDefined();
+      expect(result.filename).toContain('login_report_grouped');
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=grouped'),
+        expect.any(Object)
+      );
+    });
+
+    it('should throw error on 400 response', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ error: "Missing required parameter: 'mode'." }),
+        headers: new Map(),
+      });
+
+      await expect(getDownloadReport({ mode: 'individual' })).rejects.toBeDefined();
+    });
+
+    it('should throw error on 403 response', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: () => Promise.resolve({ error: "Only admin users can use grouped mode." }),
+        headers: new Map(),
+      });
+
+      await expect(getDownloadReport({ mode: 'grouped' })).rejects.toBeDefined();
+    });
+
+    it('should throw error on 401 response', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve({ detail: 'Token is invalid or expired' }),
+        headers: new Map(),
+      });
+
+      await expect(getDownloadReport({ mode: 'individual' })).rejects.toBeDefined();
+    });
+
+    it('should extract filename from Content-Disposition header', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_johndoe_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'individual' });
+      expect(result.filename).toBe('login_report_johndoe_individual_20260101_120000.xlsx');
+    });
+
+    it('should fallback to default filename when Content-Disposition is missing', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      // Mock the getDownloadReport to handle missing Content-Disposition
+      const result = await getDownloadReport({ mode: 'individual' });
+      // Should have a fallback filename
+      expect(result.filename).toBe('login_report.xlsx');
+    });
+
+    it('should include filter=admin_only when filter param is provided for grouped mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_admin_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'grouped', filter: 'admin_only' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=grouped&filter=admin_only'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include filter=regular_users when filter param is provided for grouped mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_regular_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'grouped', filter: 'regular_users' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=grouped&filter=regular_users'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include filter=me when filter param is provided for grouped mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_me_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'grouped', filter: 'me' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=grouped&filter=me'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include filter=all when filter param is provided for grouped mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_all_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'grouped', filter: 'all' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=grouped&filter=all'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include role=admin when role param is provided for grouped mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_admin_role_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'grouped', role: 'admin' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=grouped&role=admin'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include role=regular when role param is provided for grouped mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_regular_role_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'grouped', role: 'regular' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=grouped&role=regular'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include both filter and date params together for grouped mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_filtered_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({
+        mode: 'grouped',
+        filter: 'admin_only',
+        startDate: '2025-01-01',
+        endDate: '2025-12-31',
+      });
+      expect(result).toBeDefined();
+      const fetchCall = (globalThis.fetch as any).mock.calls[0][0];
+      expect(fetchCall).toContain('mode=grouped');
+      expect(fetchCall).toContain('filter=admin_only');
+      expect(fetchCall).toContain('start_date=2025-01-01');
+      expect(fetchCall).toContain('end_date=2025-12-31');
+    });
+
+    // INDIVIDUAL MODE FILTER TESTS
+    it('should include filter=all for individual mode when filter param is all', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_all_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'individual', filter: 'all' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=individual&filter=all'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include filter=admin_only for individual mode when filter param is admin_only', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_admin_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'individual', filter: 'admin_only' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=individual&filter=admin_only'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include filter=regular_users for individual mode when filter param is regular_users', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_regular_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'individual', filter: 'regular_users' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=individual&filter=regular_users'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include filter=me for individual mode when filter param is me', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_me_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'individual', filter: 'me' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=individual&filter=me'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include role=admin for individual mode when role param is admin', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_admin_role_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'individual', role: 'admin' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=individual&role=admin'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include role=regular for individual mode when role param is regular', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_regular_role_individual_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({ mode: 'individual', role: 'regular' });
+      expect(result).toBeDefined();
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/user/dashboard/report/download/?mode=individual&role=regular'),
+        expect.any(Object)
+      );
+    });
+
+    it('should include filter, role, date, and userIds together for individual mode', async () => {
+      (globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['mock xlsx content'])),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="login_report_all_combined_20260101_120000.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      const result = await getDownloadReport({
+        mode: 'individual',
+        filter: 'regular_users',
+        role: 'admin',
+        startDate: '2025-06-01',
+        endDate: '2025-06-30',
+        userIds: [5],
+      });
+      expect(result).toBeDefined();
+      const fetchCall = (globalThis.fetch as any).mock.calls[0][0];
+      expect(fetchCall).toContain('mode=individual');
+      expect(fetchCall).toContain('filter=regular_users');
+      expect(fetchCall).toContain('role=admin');
+      expect(fetchCall).toContain('start_date=2025-06-01');
+      expect(fetchCall).toContain('end_date=2025-06-30');
+      expect(fetchCall).toContain('user_ids%5B%5D=5');
+    });
+  });
 });
+
+// Helper to import the downloadReport function after mocking
+const getDownloadReport = async (params: { mode: string; userIds?: number[]; startDate?: string; endDate?: string; filter?: string; role?: string }) => {
+  const { downloadReport } = await import('../loginTrackingService');
+  return downloadReport(params as any);
+};

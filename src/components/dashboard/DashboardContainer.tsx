@@ -17,6 +17,7 @@ import DashboardUserList from './DashboardUserList';
 import DateRangePicker from './DateRangePicker';
 import UserSelectorDropdown from './UserSelectorDropdown';
 import ChartModeToggle from './ChartModeToggle';
+import ReportDownloadButton from './ReportDownloadButton';
 import {
   DashboardContainerWrapper,
   DashboardGrid,
@@ -37,6 +38,7 @@ const PageHeader = tw.div`mb-8`;
 const Title = tw.h1`text-3xl font-bold text-gray-900 dark:text-dark-text mb-2`;
 const Subtitle = tw.p`text-gray-600 dark:text-gray-300`;
 
+const DownloadSection = tw.div`mt-6 mb-4`;
 
 interface DashboardContainerProps {
   userId?: number;
@@ -128,7 +130,6 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : currentUserId;
         const startDate = dashboardState.startDate || undefined;
         const endDate = dashboardState.endDate || undefined;
-
         const response = await getUserStats(targetUserId, startDate, endDate);
         setUserStats(response);
       } catch (_err: unknown) {
@@ -158,7 +159,6 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
         const targetUserId = isAdmin() ? (dashboardState.selectedDashboardUserId || userId) : currentUserId;
         const startDate = dashboardState.startDate || undefined;
         const endDate = dashboardState.endDate || undefined;
-
         // Use maximum page size (100) to get as many records as possible initially
         const response = await getLoginActivity(1, 100, targetUserId, startDate, endDate);
         setLoginActivity(response);
@@ -562,6 +562,11 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
               </AdminOverviewCard>
             </>
           )}
+
+          {/* Download Report Button - Show at the bottom for all authenticated users */}
+          <DownloadSection data-testid="report-download-section">
+            <ReportDownloadButton isAdmin={isAdmin()} />
+          </DownloadSection>
         </DashboardContainerWrapper>
       </ContentWrapper>
     </PageContainer>

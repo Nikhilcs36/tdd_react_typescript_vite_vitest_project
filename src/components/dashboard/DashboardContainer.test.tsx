@@ -135,6 +135,13 @@ vi.mock('./ChartModeToggle', () => ({
   default: () => <div data-testid="chart-mode-toggle">Chart Mode Toggle</div>,
 }));
 
+vi.mock('./ReportDownloadButton', () => ({
+  default: ({ isAdmin }: { isAdmin: boolean }) => (
+    <div data-testid="report-download-button">
+      {isAdmin ? 'Download Report (Admin)' : 'Download Report'}
+    </div>
+  ),
+}));
 
 describe('DashboardContainer', () => {
   // Basic rendering tests (fast, lightweight)

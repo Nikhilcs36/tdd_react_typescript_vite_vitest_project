@@ -1135,6 +1135,101 @@ FiFHDnq0XqBiacU8fk3NdlY8TqjxR8e9GaTTgx+UMvfR2itgEuKGfd2oImkMxC4L
     );
   }),
 
+  // Mock API for report download ----(24)
+  http.get(API_ENDPOINTS.REPORT_DOWNLOAD, async ({ request }) => {
+    const url = new URL(request.url);
+    const mode = url.searchParams.get('mode');
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return new HttpResponse(null, { status: 401 });
+    }
+
+    // Validate mode parameter
+    if (!mode) {
+      return HttpResponse.json(
+        { error: "Missing required parameter: 'mode'." },
+        { status: 400 }
+      );
+    }
+
+    if (mode !== 'individual' && mode !== 'grouped') {
+      return HttpResponse.json(
+        { error: "Invalid mode. Must be 'individual' or 'grouped'." },
+        { status: 400 }
+      );
+    }
+
+    // Check for regular user trying grouped mode
+    const token = authHeader.replace("JWT ", "");
+    const isAdminUser = token === "mock-admin-token" || token === "mock-staff-token";
+
+    if (mode === 'grouped' && !isAdminUser) {
+      return HttpResponse.json(
+        { error: "Only admin users can use grouped mode." },
+        { status: 403 }
+      );
+    }
+
+    // Check for regular user trying to specify user_ids
+    const user_ids = url.searchParams.getAll('user_ids[]');
+    if (user_ids.length > 0 && !isAdminUser) {
+      return HttpResponse.json(
+        { error: "Only admin users can specify user IDs." },
+        { status: 403 }
+      );
+    }
+
+    // Check for invalid date format
+    const startDate = url.searchParams.get('start_date');
+    const endDate = url.searchParams.get('end_date');
+    if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+      return HttpResponse.json(
+        { error: "Invalid date format. Use YYYY-MM-DD format." },
+        { status: 400 }
+      );
+    }
+    if (endDate && !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+      return HttpResponse.json(
+        { error: "Invalid date format. Use YYYY-MM-DD format." },
+        { status: 400 }
+      );
+    }
+
+    // Check for non-integer user_ids
+    if (user_ids.some(id => !/^\d+$/.test(id))) {
+      return HttpResponse.json(
+        { error: "Invalid user_ids format. Must be integers." },
+        { status: 400 }
+      );
+    }
+
+    // Generate filename based on mode
+    const now = new Date();
+    const datetime = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+    
+    let filename: string;
+    if (mode === 'individual') {
+      const username = isAdminUser ? 'admin' : 'testuser';
+      filename = `login_report_${username}_individual_${datetime}.xlsx`;
+    } else {
+      const userCount = user_ids.length > 0 ? user_ids.length : 'all';
+      filename = `login_report_grouped_${userCount}_users_${datetime}.xlsx`;
+    }
+
+    // Generate a mock xlsx binary content (minimal valid xlsx)
+    const mockXlsxContent = new Uint8Array([80, 75, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]); // Minimal ZIP file marker for xlsx
+
+    return new HttpResponse(mockXlsxContent, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      },
+    });
+  }),
+
   // Mock API for game leaderboard (admin only) ----(23)
   http.get("/api/game/leaderboard/", async ({ request }) => {
     const authHeader = request.headers.get("Authorization");

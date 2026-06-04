@@ -41,4 +41,7 @@ export const API_ENDPOINTS = {
   GAME_SCORES: "/api/game/scores/",
   GAME_SCORES_ME: "/api/game/scores/me/",
   GAME_LEADERBOARD: "/api/game/leaderboard/",
+
+  // Report Download Endpoint
+  REPORT_DOWNLOAD: "/api/user/dashboard/report/download/",
 };
