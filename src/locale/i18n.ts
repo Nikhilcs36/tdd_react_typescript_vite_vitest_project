@@ -220,6 +220,7 @@ i18n.use(initReactI18next).init({
           },
           user_selector: {
             label: "Select User",
+            selected: "Selected User",
             aria_label: "Select user for dashboard",
             error_loading: "Error loading users",
             no_users: "No users available"
@@ -239,6 +240,18 @@ i18n.use(initReactI18next).init({
             showingLast7Days: "Showing data for the last 7 days",
             showingLast1Day: "Showing data for the last 1 day",
             showingCustomRange: "Showing data for custom date range"
+          },
+          report_download: {
+            button: "Download Report",
+            downloading: "Downloading...",
+            confirm_title: "Download Report",
+            confirm_summary: "Report Summary",
+            mode_label: "Mode",
+            individual: "Individual",
+            grouped: "Grouped",
+            cancel: "Cancel",
+            download: "Download Excel",
+            file_error: "Failed to download report. Please try again.",
           },
           user_not_found: "User not found",
           unauthorized_access: "Unauthorized access to dashboard data"
@@ -543,6 +556,7 @@ i18n.use(initReactI18next).init({
           },
           user_selector: {
             label: "ഉപയോക്താവിനെ തിരഞ്ഞെടുക്കുക",
+            selected: "തിരഞ്ഞെടുത്ത ഉപയോക്താവ്",
             aria_label: "ഡാഷ്ബോർഡിനായി ഉപയോക്താവിനെ തിരഞ്ഞെടുക്കുക",
             error_loading: "ഉപയോക്താക്കളെ ലോഡ് ചെയ്യുന്നതിൽ പിശക്",
             no_users: "ഉപയോക്താക്കളെ ലഭ്യമല്ല"
@@ -551,6 +565,18 @@ i18n.use(initReactI18next).init({
             label: "ചാർട്ട് മോഡ്",
             individual: "വ്യക്തിഗതം",
             group: "ഗ്രൂപ്പ്"
+          },
+          report_download: {
+            button: "റിപ്പോർട്ട് ഡൗൺലോഡ്",
+            downloading: "ഡൗൺലോഡ് ചെയ്യുന്നു...",
+            confirm_title: "റിപ്പോർട്ട് ഡൗൺലോഡ്",
+            confirm_summary: "റിപ്പോർട്ട് സംഗ്രഹം",
+            mode_label: "മോഡ്",
+            individual: "വ്യക്തിഗതം",
+            grouped: "ഗ്രൂപ്പ്",
+            cancel: "റദ്ദാക്കുക",
+            download: "Excel ഡൗൺലോഡ്",
+            file_error: "റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
           },
           user_not_found: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
           unauthorized_access: "ഡാഷ്ബോർഡ് ഡാറ്റയിലേക്ക് അനധികൃത ആക്സസ്"
@@ -854,6 +880,7 @@ i18n.use(initReactI18next).init({
           },
           user_selector: {
             label: "اختر المستخدم",
+            selected: "المستخدم المحدد",
             aria_label: "اختر مستخدم للوحة التحكم",
             error_loading: "خطأ في تحميل المستخدمين",
             no_users: "لا يوجد مستخدمون متاحون"
@@ -862,6 +889,18 @@ i18n.use(initReactI18next).init({
             label: "وضع الرسم البياني",
             individual: "فردي",
             group: "مجموعة"
+          },
+          report_download: {
+            button: "تحميل التقرير",
+            downloading: "جاري التحميل...",
+            confirm_title: "تحميل التقرير",
+            confirm_summary: "ملخص التقرير",
+            mode_label: "الوضع",
+            individual: "فردي",
+            grouped: "مجموعة",
+            cancel: "إلغاء",
+            download: "تحميل Excel",
+            file_error: "فشل تحميل التقرير. يرجى المحاولة مرة أخرى.",
           },
           user_not_found: "لم يتم العثور على المستخدم",
           unauthorized_access: "وصول غير مصرح به لبيانات لوحة التحكم"
