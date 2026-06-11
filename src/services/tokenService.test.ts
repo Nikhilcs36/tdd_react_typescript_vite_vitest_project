@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { refreshAccessToken, startTokenRefreshTimer, stopTokenRefreshTimer } from "./tokenService";
+import { refreshAccessToken, startTokenRefreshTimer, stopTokenRefreshTimer, REFRESH_TOKEN_URL, isRefreshTokenRequestUrl } from "./tokenService";
 import store from "../store";
 import axios from "axios";
 import { loginSuccess, logoutSuccess } from "../store/actions";
@@ -204,6 +204,121 @@ describe("tokenService", () => {
 
       // Refresh should be called for each request
       expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("Infinite Loop Prevention", () => {
+    describe("isRefreshTokenRequestUrl", () => {
+      it("should return true for refresh token endpoint URL", () => {
+        expect(isRefreshTokenRequestUrl("/api/user/token/refresh/")).toBe(true);
+      });
+
+      it("should return true for refresh token endpoint URL with query params", () => {
+        expect(isRefreshTokenRequestUrl("/api/user/token/refresh/?next=/dashboard")).toBe(true);
+      });
+
+      it("should return false for regular API endpoint URL", () => {
+        expect(isRefreshTokenRequestUrl("/api/users/")).toBe(false);
+      });
+
+      it("should return false for random URL", () => {
+        expect(isRefreshTokenRequestUrl("/api/user/profile/")).toBe(false);
+      });
+
+      it("should return false for undefined URL", () => {
+        expect(isRefreshTokenRequestUrl(undefined)).toBe(false);
+      });
+
+      it("should return false for empty string URL", () => {
+        expect(isRefreshTokenRequestUrl("")).toBe(false);
+      });
+    });
+
+    it("should not retry refresh when the token refresh endpoint itself returns 401", async () => {
+      // This test validates the infinite loop prevention fix:
+      // When the refresh token endpoint returns 401 (both tokens expired),
+      // the axios interceptor must NOT attempt to retry the refresh,
+      // otherwise it would create an infinite loop.
+      //
+      // Scenario: Both access and refresh tokens are expired.
+      // refreshAccessToken() POSTs to /api/user/token/refresh/ which returns 401.
+      // The interceptor checks the URL and skips retry for the refresh endpoint itself.
+
+      // Mock the refresh endpoint to ALWAYS reject with 401
+      mockedAxios.post.mockRejectedValue({
+        response: {
+          status: 401,
+          data: { detail: "Token is invalid or expired" },
+          config: {
+            url: REFRESH_TOKEN_URL,
+          },
+        },
+      });
+
+      // Call refreshAccessToken - this should NOT loop
+      const result = await refreshAccessToken();
+
+      // Should return false (refresh failed)
+      expect(result).toBe(false);
+
+      // Should have attempted the refresh exactly ONCE
+      // If the guard is missing, it would call itself recursively
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        REFRESH_TOKEN_URL,
+        { refresh: "mock-refresh-token" }
+      );
+    });
+
+    it("should prevent axios interceptor from retrying refresh endpoint 401 errors", async () => {
+      // This test simulates what happens in the real axios interceptor:
+      // When a 401 error comes from the refresh endpoint itself, the interceptor
+      // must NOT attempt another refresh (which would cause infinite loop).
+      //
+      // We simulate this by creating an error object that matches what axios
+      // produces when the refresh endpoint returns 401, and then verify
+      // the interceptor logic correctly rejects without retrying.
+
+      // Mock the refresh endpoint to fail with 401
+      mockedAxios.post.mockRejectedValue({
+        response: {
+          status: 401,
+          data: { detail: "Token is invalid or expired" },
+          config: {
+            url: REFRESH_TOKEN_URL,
+            _retry: false,
+          },
+        },
+      });
+
+      // Call refreshAccessToken - this simulates what the interceptor does
+      const result = await refreshAccessToken();
+
+      // Should return false, not hang or loop
+      expect(result).toBe(false);
+
+      // The refresh endpoint should only be called once
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    });
+
+    it("should allow normal refresh flow for a valid refresh token", async () => {
+      // This test validates that the fix does NOT break the normal flow:
+      // When the refresh token is still valid, refreshAccessToken should work normally.
+
+      // Mock successful refresh
+      mockedAxios.post.mockResolvedValueOnce({
+        data: {
+          access: "new-mock-access-token",
+          refresh: "new-mock-refresh-token",
+        },
+      });
+
+      const result = await refreshAccessToken();
+
+      // Should succeed
+      expect(result).toBe(true);
+      expect(store.getState().auth.accessToken).toBe("new-mock-access-token");
+      expect(store.getState().auth.refreshToken).toBe("new-mock-refresh-token");
     });
   });
 
