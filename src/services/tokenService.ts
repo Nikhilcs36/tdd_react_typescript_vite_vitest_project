@@ -7,6 +7,16 @@ interface TokenResponse {
   refresh: string;
 }
 
+export const REFRESH_TOKEN_URL = '/api/user/token/refresh/';
+
+/**
+ * Check if a URL is the token refresh endpoint.
+ * This is used to prevent infinite retry loops in the axios interceptor.
+ */
+export const isRefreshTokenRequestUrl = (url?: string): boolean => {
+  return !!url && url.includes(REFRESH_TOKEN_URL);
+};
+
 export const refreshAccessToken = async (): Promise<boolean> => {
   try {
     const refreshToken = store.getState().auth.refreshToken;
@@ -16,7 +26,7 @@ export const refreshAccessToken = async (): Promise<boolean> => {
     }
 
     const response = await axios.post<TokenResponse>(
-      "/api/user/token/refresh/",
+      REFRESH_TOKEN_URL,
       { refresh: refreshToken }
     );
 
@@ -84,6 +94,13 @@ axios.interceptors.response.use(
 
     // If error is unauthorized and we haven't tried to refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // IMPORTANT: Prevent infinite loop when the refresh token endpoint itself returns 401.
+      // Without this guard, a 401 on the refresh endpoint would trigger another refresh
+      // attempt, creating an infinite retry loop that floods the console with 401 errors.
+      if (isRefreshTokenRequestUrl(originalRequest.url)) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
