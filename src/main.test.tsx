@@ -1,6 +1,12 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { initializeTheme } from './main';
 
+describe('Document Title', () => {
+  it('should set the document title to "Login Tracking Dashboard"', () => {
+    expect(document.title).toBe('Login Tracking Dashboard');
+  });
+});
+
 describe('Theme Initialization', () => {
   afterEach(() => {
     localStorage.clear();
