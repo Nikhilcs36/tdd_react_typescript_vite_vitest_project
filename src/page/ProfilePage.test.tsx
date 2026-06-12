@@ -245,6 +245,22 @@ describe("ProfilePage", () => {
       });
     });
 
+    it("makes email input readonly in edit form", async () => {
+      await setup({ withAuth: true });
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Verify email input has readOnly attribute
+      const emailInput = screen.getByTestId("email-input");
+      expect(emailInput).toHaveAttribute("readOnly");
+    });
+
     it("makes image field read-only in edit form", async () => {
       await setup({ withAuth: true });
 
