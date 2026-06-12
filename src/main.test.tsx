@@ -7,6 +7,15 @@ describe('Document Title', () => {
   });
 });
 
+describe('Favicon', () => {
+  it('should set the favicon to the custom logo', () => {
+    const faviconLink = document.querySelector('link[rel="icon"]');
+    expect(faviconLink).not.toBeNull();
+    expect(faviconLink?.getAttribute('href')).toBe('/favicon.svg');
+    expect(faviconLink?.getAttribute('type')).toBe('image/svg+xml');
+  });
+});
+
 describe('Theme Initialization', () => {
   afterEach(() => {
     localStorage.clear();

@@ -1,0 +1,18 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <!-- Dashboard/gauge arc -->
+  <path d="M12 44 Q32 20 52 44" stroke="url(#g1)" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M20 38 Q32 26 44 38" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <!-- Login/key indicator dot -->
+  <circle cx="32" cy="46" r="4" fill="#3B82F6"/>
+  <circle cx="32" cy="46" r="1.5" fill="white"/>
+  <!-- Small gauge ticks -->
+  <line x1="32" y1="28" x2="32" y2="20" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/>
+  <line x1="22" y1="32" x2="16" y2="28" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="42" y1="32" x2="48" y2="28" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+</svg>
