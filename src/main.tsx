@@ -18,6 +18,13 @@ initializeTheme();
 
 document.title = 'Login Tracking Dashboard';
 
+// Set favicon for browser tab
+const faviconLink = document.createElement('link');
+faviconLink.rel = 'icon';
+faviconLink.type = 'image/svg+xml';
+faviconLink.href = '/favicon.svg';
+document.head.appendChild(faviconLink);
+
 export const renderApp = () => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
