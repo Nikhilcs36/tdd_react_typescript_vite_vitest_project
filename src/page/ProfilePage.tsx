@@ -534,6 +534,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
             value={editForm.email}
             onChange={this.handleInputChange}
             data-testid="email-input"
+            readOnly
           />
           {validationErrors.email && (
             <ErrorMessage data-testid="email-error">
