@@ -195,6 +195,11 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       return;
     }
 
+    // Clean up previous blob URL if it exists
+    if (this.state.imagePreviewUrl && URL.revokeObjectURL) {
+      URL.revokeObjectURL(this.state.imagePreviewUrl);
+    }
+
     this.setState((prevState) => ({
       isEditing: !prevState.isEditing,
       // Reset form data when entering edit mode
@@ -205,6 +210,9 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       },
       validationErrors: {},
       successMessage: null,
+      selectedFile: null,
+      clearImage: false,
+      imagePreviewUrl: null,
     }));
   };
 

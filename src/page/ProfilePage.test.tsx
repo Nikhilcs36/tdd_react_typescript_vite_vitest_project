@@ -859,6 +859,44 @@ describe("ProfilePage", () => {
       });
     });
 
+    it("clears selected file and image preview when canceling edit mode", async () => {
+      await setup();
+
+      // Wait for user data to load
+      await waitFor(() =>
+        expect(screen.getByTestId("username")).toBeInTheDocument()
+      );
+
+      // Enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Select a file
+      const file = new File(["dummy content"], "test-image.jpg", {
+        type: "image/jpeg",
+      });
+      const fileInput = screen.getByTestId("image-file-input");
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      // Verify preview is shown
+      await waitFor(() => {
+        expect(screen.getByTestId("image-preview")).toBeInTheDocument();
+      });
+
+      // Click cancel button
+      fireEvent.click(screen.getByTestId("cancel-edit-button"));
+
+      // Re-enter edit mode
+      fireEvent.click(screen.getByTestId("edit-profile-button"));
+
+      // Verify the preview is no longer displayed (cleared on cancel)
+      await waitFor(() => {
+        expect(screen.queryByTestId("image-preview")).not.toBeInTheDocument();
+      });
+
+      // Verify the "No file chosen" text is shown instead of the file name
+      expect(screen.getByText("Choose file")).toBeInTheDocument();
+    });
+
     it("stays on ProfilePage when canceling edit form accessed directly", async () => {
       const { mockNavigate } = await setup();
 
