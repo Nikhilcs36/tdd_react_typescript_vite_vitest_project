@@ -16,6 +16,8 @@ export const initializeTheme = () => {
 
 initializeTheme();
 
+document.title = 'Login Tracking Dashboard';
+
 export const renderApp = () => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
