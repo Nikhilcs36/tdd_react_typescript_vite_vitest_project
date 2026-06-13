@@ -44,6 +44,7 @@ const HomePage = () => {
     { key: 'multilang', title: t('homepage.features.multilang'), desc: t('homepage.features.multilangDesc') },
     { key: 'theme', title: t('homepage.features.theme'), desc: t('homepage.features.themeDesc') },
     { key: 'tdd', title: t('homepage.features.tdd'), desc: t('homepage.features.tddDesc') },
+    { key: 'report', title: t('homepage.features.report'), desc: t('homepage.features.reportDesc') },
   ];
 
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);

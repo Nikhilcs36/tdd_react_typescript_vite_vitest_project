@@ -47,6 +47,7 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 - **Custom Date Range Filters**: Filter dashboard data by specific date ranges for flexible analysis
 - **User Selector Dropdown**: Admin users can switch between different users' dashboards
 - **Chart Mode Toggle**: Toggle between different chart visualization modes
+- **Excel Report Downloads**: Download detailed login activity reports in Excel format with individual and grouped modes, date range filtering, and admin-specific filters (admin only, regular users, me, all)
 
 ### User Management
 - **User Registration**: Secure sign-up form with client-side validation
@@ -427,6 +428,9 @@ The frontend communicates with the [backend REST API](https://github.com/Nikhilc
 - `GET /api/user/admin/dashboard/users/stats/` - Admin users statistics
 - `GET /api/user/<user_id>/dashboard/stats/` - User-specific statistics (admin)
 - `GET /api/user/<user_id>/dashboard/login-activity/` - User-specific login activity (admin)
+
+#### Report Download Endpoint
+- `GET /api/user/dashboard/report/download/` - Download login activity report as Excel file with support for individual/grouped modes, date filtering, user selection, admin filters, and role filters
 
 ### Authentication Flow
 
