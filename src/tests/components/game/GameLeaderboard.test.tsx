@@ -7,6 +7,20 @@ import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
 import { loginSuccess, logoutSuccess } from '../../../store/actions';
 
+const defaultAdminFields = {
+  logins_remaining_for_staff: 0,
+  staff_access_granted: true,
+  active_role: 'superuser' as const,
+  role_label: 'Superuser',
+};
+
+const defaultRegularFields = {
+  logins_remaining_for_staff: 3,
+  staff_access_granted: false,
+  active_role: 'regular' as const,
+  role_label: 'Regular',
+};
+
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <Provider store={store}>
@@ -27,6 +41,7 @@ describe('GameLeaderboard', () => {
       refresh: 'mock-refresh-token',
       is_staff: true,
       is_superuser: true,
+      ...defaultAdminFields,
     }));
   });
 
@@ -43,6 +58,7 @@ describe('GameLeaderboard', () => {
       refresh: 'mock-refresh-token',
       is_staff: false,
       is_superuser: false,
+      ...defaultRegularFields,
     }));
 
     const { container } = renderWithProviders(<GameLeaderboard />);
@@ -122,7 +138,8 @@ describe('GameLeaderboard', () => {
                     refresh: 'mock-refresh-token',
                     is_staff: true,
                     is_superuser: true,
-                  }));
+                    ...defaultAdminFields,
+    }));
                 }}
               >
                 Force Re-render

@@ -30,6 +30,10 @@ interface LoginResponse {
   refresh: string;
   is_staff: boolean;
   is_superuser: boolean;
+  logins_remaining_for_staff: number;
+  staff_access_granted: boolean;
+  active_role: 'regular' | 'staff' | 'superuser';
+  role_label: string;
 }
 
 interface ErrorResponse {
@@ -191,6 +195,10 @@ class LoginPage extends Component<LoginPageProps, LoginState> {
           refresh: response.refresh,
           is_staff: response.is_staff,
           is_superuser: response.is_superuser,
+          logins_remaining_for_staff: response.logins_remaining_for_staff,
+          staff_access_granted: response.staff_access_granted,
+          active_role: response.active_role,
+          role_label: response.role_label,
         })
       );
 

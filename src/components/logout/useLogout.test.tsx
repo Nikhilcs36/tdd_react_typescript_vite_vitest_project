@@ -61,7 +61,7 @@ describe("useLogout Hook", () => {
         refresh: "mock-refresh-token",
         is_staff: false,
         is_superuser: false,
-      })
+    })
     );
   });
 

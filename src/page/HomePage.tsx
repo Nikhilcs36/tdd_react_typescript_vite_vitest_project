@@ -9,6 +9,7 @@ import {
   GridLayout
 } from "../components/common/Layout";
 import DrawCircleGame from "../components/game/DrawCircleGame";
+import { LoginCountdownBanner } from "../components/LoginCountdownBanner";
 import type { RootState } from "../store";
 
 // Reuse standardized components
@@ -52,6 +53,7 @@ const HomePage = () => {
   return (
     <PageContainer data-testid="home-page">
       <ContentWrapper>
+        <LoginCountdownBanner />
         <Card>
           <Title>{t("welcomeTitle")}</Title>
           <Message>{t("welcomeMessage")}</Message>

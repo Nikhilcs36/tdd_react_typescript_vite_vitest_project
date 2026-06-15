@@ -26,6 +26,8 @@ import { AppDispatch, RootState } from "../store";
 import { withTranslation, WithTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { AuthState } from "../store/authSlice";
+import { switchRole as switchRoleAction } from "../store/authSlice";
+import { switchRole as switchRoleApi } from "../services/apiService";
 import { CaughtError } from "../types/apiError";
 import { Location } from "react-router-dom";
 import {
@@ -73,7 +75,7 @@ interface ProfilePageProps extends WithTranslation {
   };
   dispatch: AppDispatch;
   navigate: (path: string) => void;
-  location?: Location; // Add location prop to access navigation state
+  location?: Location;
 }
 
 interface User {
@@ -86,6 +88,7 @@ interface User {
 interface ProfilePageState {
   user: User | null;
   isEditing: boolean;
+  isRoleSwitching: boolean;
   editForm: {
     username: string;
     email: string;
@@ -96,8 +99,8 @@ interface ProfilePageState {
   showDeleteConfirmation: boolean;
   selectedFile: File | null;
   clearImage: boolean;
-  imagePreviewUrl: string | null; // Store blob URL for cleanup
-  accessedFromUserPage: boolean; // Track if accessed from UserPage
+  imagePreviewUrl: string | null;
+  accessedFromUserPage: boolean;
 }
 
 class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
@@ -107,7 +110,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     super(props);
     this.fileInputRef = React.createRef<HTMLInputElement>();
   }
-  // Set default props
   static defaultProps = {
     ApiGetService: axiosApiServiceGetCurrentUser,
     ApiPutService: axiosApiServiceUpdateUser,
@@ -117,6 +119,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   state: ProfilePageState = {
     user: null,
     isEditing: false,
+    isRoleSwitching: false,
     editForm: {
       username: "",
       email: "",
@@ -127,8 +130,8 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     showDeleteConfirmation: false,
     selectedFile: null,
     clearImage: false,
-    imagePreviewUrl: null, // Initialize image preview URL
-    accessedFromUserPage: false, // Initialize accessedFromUserPage
+    imagePreviewUrl: null,
+    accessedFromUserPage: false,
   };
 
   private successTimeout: NodeJS.Timeout | null = null;
@@ -136,13 +139,11 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   componentDidMount() {
     this.loadUser();
     
-    // Check if navigation state contains showEditForm: true and automatically enter edit mode
-    // This allows direct navigation to edit form from UserPage
     const locationState = this.props.location?.state as { showEditForm?: boolean } | undefined;
     if (locationState && locationState.showEditForm === true) {
       this.setState({ 
         isEditing: true,
-        accessedFromUserPage: true // Track that we came from UserPage
+        accessedFromUserPage: true
       });
     }
   }
@@ -151,7 +152,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     if (this.successTimeout) {
       clearTimeout(this.successTimeout);
     }
-    // Clean up any blob URLs to prevent memory leaks
     if (this.state.imagePreviewUrl && URL.revokeObjectURL) {
       URL.revokeObjectURL(this.state.imagePreviewUrl);
     }
@@ -166,7 +166,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       );
       this.setState({
         user,
-        // Initialize edit form with user data
         editForm: {
           username: user.username,
           email: user.email,
@@ -174,7 +173,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         },
       });
     } catch (error: unknown) {
-      // Check if the error message is one of our known error keys
       const caughtError = error as CaughtError;
       const errorData = caughtError.response?.data;
       const errorMessage = (errorData && typeof errorData === 'object' && 'detail' in errorData) 
@@ -184,25 +182,21 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     }
   };
 
-  // Toggle edit mode
   toggleEditMode = () => {
     const { user, accessedFromUserPage } = this.state;
     if (!user) return;
 
-    // If exiting edit mode and accessed from UserPage, navigate back to UserPage
     if (this.state.isEditing && accessedFromUserPage) {
       this.props.navigate(`/user/${user.id}`);
       return;
     }
 
-    // Clean up previous blob URL if it exists
     if (this.state.imagePreviewUrl && URL.revokeObjectURL) {
       URL.revokeObjectURL(this.state.imagePreviewUrl);
     }
 
     this.setState((prevState) => ({
       isEditing: !prevState.isEditing,
-      // Reset form data when entering edit mode
       editForm: {
         username: user.username,
         email: user.email,
@@ -216,7 +210,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     }));
   };
 
-  // Update handleInputChange to validate on each change
   handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -228,13 +221,11 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         },
       }),
       () => {
-        // Validate after state update
         this.validateField(name, value);
       }
     );
   };
 
-  // Add method to validate individual fields
   validateField = (fieldName: string, value: string): void => {
     const { editForm } = this.state;
     const validationErrors = validateUserUpdate({
@@ -250,31 +241,19 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     }));
   };
 
-  // Update validateForm to display validation errors in the UI
   validateForm = (): boolean => {
     const { editForm } = this.state;
     const validationErrors = validateUserUpdate(editForm);
-
     this.setState({ validationErrors });
-
     return Object.keys(validationErrors).length === 0;
   };
 
-  // Check if there are any changes to the form
   hasChanges = (): boolean => {
     const { editForm, user, selectedFile, clearImage } = this.state;
 
-    if (selectedFile) {
-      return true; // File upload always counts as a change
-    }
-
-    if (clearImage) {
-      return true; // Clearing image counts as a change
-    }
-
-    if (!user) {
-      return false; // No user data yet
-    }
+    if (selectedFile) return true;
+    if (clearImage) return true;
+    if (!user) return false;
 
     return (
       editForm.username !== user.username ||
@@ -283,7 +262,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     );
   };
 
-  // Handle button click for clearing the image
   handleClearImageClick = () => {
     this.setState({
       clearImage: true,
@@ -294,16 +272,12 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     });
   };
 
-  // Update handleSubmit to properly call the API service with file upload support
   handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { editForm, selectedFile, clearImage, user } = this.state;
     const { ApiPutService, dispatch } = this.props;
 
-    // Validate form before submission
-    if (!this.validateForm()) {
-      return;
-    }
+    if (!this.validateForm()) return;
 
     this.setState({ successMessage: null });
     dispatch(updateUserStart());
@@ -312,7 +286,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       let response: User;
 
       if (selectedFile) {
-        // Use FormData for file upload
         const formData = new FormData();
         if (editForm.username !== user?.username) {
           formData.append("username", editForm.username);
@@ -322,13 +295,11 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         }
         formData.append("image", selectedFile);
 
-        // Use the file upload service
         response = await axiosApiServiceUpdateUserWithFile.put<User>(
           API_ENDPOINTS.ME,
           formData
         );
       } else {
-        // Use regular JSON for non-file updates
         const partialUpdateData: Partial<UserUpdateRequestBody> = {};
 
         if (editForm.username !== user?.username) {
@@ -341,42 +312,35 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           partialUpdateData.image = null;
         }
 
-        // Only send request if there are changes
         if (Object.keys(partialUpdateData).length === 0) {
-          this.setState({
-            isEditing: false,
-          });
+          this.setState({ isEditing: false });
           return;
         }
 
         response = await ApiPutService!.put<User>(
-          API_ENDPOINTS.ME, // Use ME endpoint for updates
+          API_ENDPOINTS.ME,
           partialUpdateData
         );
       }
 
-      // Update state with new user data
       this.setState({
         user: response,
         isEditing: false,
         successMessage: this.props.t("profile.successMessage"),
-        selectedFile: null, // Clear selected file after successful upload
-        clearImage: false, // Uncheck the clear image checkbox
-        imagePreviewUrl: null, // Clear image preview after successful upload
+        selectedFile: null,
+        clearImage: false,
+        imagePreviewUrl: null,
       });
 
-      // If accessed from UserPage, navigate back to UserPage after successful update
       if (this.state.accessedFromUserPage) {
         this.props.navigate(`/user/${response.id}`);
         return;
       }
 
-      // Reset the file input's value using the ref
       if (this.fileInputRef.current) {
         this.fileInputRef.current.value = "";
       }
 
-      // Clear any existing timeout and set new one
       if (this.successTimeout) {
         clearTimeout(this.successTimeout);
       }
@@ -384,7 +348,6 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         this.setState({ successMessage: null });
       }, 3000);
 
-      // Update Redux store with the updated user data
       dispatch(
         updateUserSuccess({
           user: {
@@ -396,17 +359,13 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         })
       );
     } catch (error: unknown) {
-      // Handle validation errors from the server
       const caughtError = error as CaughtError;
       const errorData = caughtError.response?.data;
       
       if (errorData && typeof errorData === 'object' && 'validationErrors' in errorData) {
         const validationErrors = (errorData as { validationErrors: Record<string, string> }).validationErrors;
-        this.setState({
-          validationErrors,
-        });
+        this.setState({ validationErrors });
       } else {
-        // Check if the error message is one of our known error keys
         let errorMessage = 'Unknown error';
         if (errorData && typeof errorData === 'object') {
           if ('detail' in errorData) {
@@ -425,16 +384,13 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     }
   };
 
-  // Handle file selection for image upload
   handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
 
-    // Clean up previous blob URL if it exists
     if (this.state.imagePreviewUrl && URL.revokeObjectURL) {
       URL.revokeObjectURL(this.state.imagePreviewUrl);
     }
 
-    // Create new blob URL for preview
     const imagePreviewUrl =
       file && URL.createObjectURL ? URL.createObjectURL(file) : null;
 
@@ -443,13 +399,11 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       imagePreviewUrl,
     });
 
-    // Clear previous error messages when a new file is selected
     if (this.props.user.error) {
       this.props.dispatch(clearUserError());
     }
   };
 
-  // Delete functionality
   openDeleteConfirmation = () => {
     this.setState({ showDeleteConfirmation: true });
   };
@@ -462,10 +416,8 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
     this.closeDeleteConfirmation();
     this.props.dispatch(updateUserStart());
     try {
-      await this.props.ApiDeleteService!.delete(
-        API_ENDPOINTS.ME // Use ME endpoint for deletion
-      );
-      this.props.dispatch(logoutSuccess()); // Dispatch logout action
+      await this.props.ApiDeleteService!.delete(API_ENDPOINTS.ME);
+      this.props.dispatch(logoutSuccess());
       if (this.state.user) {
         this.props.dispatch(
           updateUserSuccess({
@@ -474,16 +426,11 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
         );
       }
       this.setState(
-        {
-          successMessage: this.props.t("profile.deleteSuccess"),
-        },
+        { successMessage: this.props.t("profile.deleteSuccess") },
         () => {
-          // Clear existing timeout before setting new one
           if (this.successTimeout) {
             clearTimeout(this.successTimeout);
           }
-
-          // Set timeout with navigation after message clear
           this.successTimeout = setTimeout(() => {
             this.setState({ successMessage: null });
             this.props.navigate("/");
@@ -499,6 +446,66 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
       this.props.dispatch(updateUserFailure(errorMessage));
     }
   };
+
+  handleRoleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newRole = event.target.value as 'regular' | 'staff' | 'superuser';
+    this.setState({ isRoleSwitching: true });
+    try {
+      const response = await switchRoleApi(newRole);
+      this.props.dispatch(
+        switchRoleAction({
+          active_role: response.active_role as 'regular' | 'staff' | 'superuser',
+          role_label: response.role_label,
+        })
+      );
+    } catch (error) {
+      console.error("Failed to switch role:", error);
+    } finally {
+      this.setState({ isRoleSwitching: false });
+    }
+  };
+
+  renderRoleDropdown() {
+    const { auth, t } = this.props;
+    const user = auth?.user;
+    if (!user || (!user.staff_access_granted)) return null;
+
+    const roleOptions: { value: 'regular' | 'staff' | 'superuser'; label: string }[] = [];
+
+    if (user.is_superuser) {
+      roleOptions.push(
+        { value: 'regular', label: t('profile.roles.regular') },
+        { value: 'staff', label: t('profile.roles.staff') },
+        { value: 'superuser', label: t('profile.roles.superuser') }
+      );
+    } else if (user.is_staff) {
+      roleOptions.push(
+        { value: 'regular', label: t('profile.roles.regular') },
+        { value: 'staff', label: t('profile.roles.staff') }
+      );
+    }
+
+    if (roleOptions.length === 0) return null;
+
+    return (
+      <div className="flex items-center self-center gap-1 sm:gap-2">
+        <span className="text-xs font-medium text-gray-700 sm:text-sm dark:text-gray-300 whitespace-nowrap">{t('profile.role')}:</span>
+        <select
+          data-testid="role-select"
+          value={user.active_role}
+          onChange={this.handleRoleChange}
+          disabled={this.state.isRoleSwitching}
+          className="px-2 py-1 text-xs border border-gray-300 rounded sm:text-sm dark:bg-dark-secondary dark:text-dark-text dark:border-dark-accent"
+        >
+          {roleOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
 
   renderEditForm() {
     const { editForm, validationErrors } = this.state;
@@ -550,10 +557,10 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
             name="image"
             value={editForm.image}
             onChange={this.handleInputChange}
-            disabled={true} // Make image field read-only
+            disabled={true}
             placeholder="https://example.com/image.jpg"
             data-testid="image-input"
-            readOnly // Add readOnly attribute
+            readOnly
           />
           <p className="mt-1 text-sm text-gray-500">
             {t("profile.imageUrlInfo")}
@@ -583,7 +590,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
               onChange={this.handleFileChange}
               data-testid="image-file-input"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              ref={this.fileInputRef} // Attach the ref here
+              ref={this.fileInputRef}
             />
             <div className="flex items-center px-4 py-2 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200 dark:bg-dark-secondary dark:border-dark-accent dark:hover:bg-dark-primary">
               <span className="text-gray-700 dark:text-dark-text">
@@ -643,13 +650,20 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
 
     return (
       <ProfileCard>
-        <ProfileImage
-          src={user.image || defaultProfileImage}
-          alt={user.username}
-          data-testid="profile-image"
-        />
-        <ProfileName data-testid="username">{user.username}</ProfileName>
-        <ProfileEmail data-testid="email">{user.email}</ProfileEmail>
+        <div className="relative">
+          <div className="absolute top-0 right-0 mt-2 mr-2">
+            {this.renderRoleDropdown()}
+          </div>
+          <div className="flex flex-col items-center">
+            <ProfileImage
+              src={user.image || defaultProfileImage}
+              alt={user.username}
+              data-testid="profile-image"
+            />
+            <ProfileName data-testid="username">{user.username}</ProfileName>
+            <ProfileEmail data-testid="email">{user.email}</ProfileEmail>
+          </div>
+        </div>
 
         <ButtonGroup>
           <EditButton
@@ -750,19 +764,15 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
   }
 }
 
-// Connect component to Redux store
 const mapStateToProps = (state: RootState) => ({
   auth: state.auth,
   user: state.user,
 });
 
-// Apply withTranslation to the component
 const TranslatedProfilePage = withTranslation()(ProfilePage);
 
-// Connect to Redux store
 const ConnectedProfilePage = connect(mapStateToProps)(TranslatedProfilePage);
 
-// Functional wrapper for routing
 export const ProfilePageWrapper = (props: {
   ApiGetService?: ApiGetService;
   ApiPutService?: ApiPutService<UserUpdateRequestBody>;

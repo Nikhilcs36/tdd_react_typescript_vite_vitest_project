@@ -51,7 +51,7 @@ const setup = (authenticated = false, isAdmin = false) => {
         refresh: "mock-refresh-token",
         is_staff: isAdmin,
         is_superuser: isAdmin,
-      })
+    })
     );
   } else {
     store.dispatch(logoutSuccess());
@@ -708,7 +708,7 @@ describe("User List", () => {
           refresh: "mock-refresh-token",
           is_staff: false,
           is_superuser: false,
-        })
+    })
       );
 
       // Mock axios to return filtered user list (excluding user2)
@@ -750,7 +750,7 @@ describe("User List", () => {
           refresh: "mock-refresh-token",
           is_staff: false,
           is_superuser: false,
-        })
+    })
       );
 
       // The MSW handler should automatically filter out the authenticated user
@@ -814,7 +814,7 @@ describe("User List", () => {
           refresh: "mock-refresh-token",
           is_staff: false,
           is_superuser: false,
-        })
+    })
       );
 
       render(

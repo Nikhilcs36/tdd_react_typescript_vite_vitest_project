@@ -6,7 +6,16 @@ const secureLS = new SecureLS({ encodingType: "aes" });
 
 interface PersistedAuthState {
   isAuthenticated: boolean;
-  user: { id: number; username: string; is_staff: boolean; is_superuser: boolean } | null;
+  user: {
+    id: number;
+    username: string;
+    is_staff: boolean;
+    is_superuser: boolean;
+    logins_remaining_for_staff: number;
+    staff_access_granted: boolean;
+    active_role: 'regular' | 'staff' | 'superuser';
+    role_label: string;
+  } | null;
   accessToken: string | null;
   refreshToken: string | null;
   showLogoutMessage: boolean;
@@ -44,6 +53,21 @@ const isPersistedAuthState = (value: unknown): value is PersistedAuthState => {
   );
 };
 
+const DEFAULT_AUTH_FIELDS = {
+  logins_remaining_for_staff: 0,
+  staff_access_granted: false,
+  active_role: "regular" as const,
+  role_label: "Regular",
+};
+
+const migrateAuthUser = (user: PersistedAuthState["user"]): PersistedAuthState["user"] => {
+  if (!user) return null;
+  return {
+    ...DEFAULT_AUTH_FIELDS,
+    ...user,
+  };
+};
+
 const loadPersistedAuthState = (): Partial<RootStateForPersistence> | undefined => {
   try {
     const storedAuthState = sessionStorage.getItem(AUTH_STORAGE_KEY);
@@ -56,7 +80,10 @@ const loadPersistedAuthState = (): Partial<RootStateForPersistence> | undefined 
 
     if (isPersistedAuthState(parsedState)) {
       return {
-        auth: parsedState,
+        auth: {
+          ...parsedState,
+          user: migrateAuthUser(parsedState.user),
+        },
       };
     }
 
@@ -85,6 +112,10 @@ const saveState = (state: RootStateForPersistence) => {
             username: state.auth.user.username,
             is_staff: state.auth.user.is_staff,
             is_superuser: state.auth.user.is_superuser,
+            logins_remaining_for_staff: state.auth.user.logins_remaining_for_staff,
+            staff_access_granted: state.auth.user.staff_access_granted,
+            active_role: state.auth.user.active_role,
+            role_label: state.auth.user.role_label,
           }
         : null,
       accessToken: state.auth.accessToken,

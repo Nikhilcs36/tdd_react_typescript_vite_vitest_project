@@ -281,6 +281,12 @@ FiFHDnq0XqBiacU8fk3NdlY8TqjxR8e9GaTTgx+UMvfR2itgEuKGfd2oImkMxC4L
           email: body.email,
           access: "mock-access-token",
           refresh: "mock-refresh-token",
+          is_staff: false,
+          is_superuser: false,
+          logins_remaining_for_staff: 0,
+          staff_access_granted: true,
+          active_role: "superuser",
+          role_label: "Superuser",
           languageReceived: acceptLanguage,
         },
         { status: 200 }
@@ -323,6 +329,12 @@ FiFHDnq0XqBiacU8fk3NdlY8TqjxR8e9GaTTgx+UMvfR2itgEuKGfd2oImkMxC4L
         email: user.email,
         access: "mock-access-token",
         refresh: "mock-refresh-token",
+        is_staff: false,
+        is_superuser: false,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: true,
+        active_role: "superuser",
+        role_label: "Superuser",
         languageReceived: acceptLanguage,
       },
       { status: 200 }
@@ -1282,11 +1294,49 @@ FiFHDnq0XqBiacU8fk3NdlY8TqjxR8e9GaTTgx+UMvfR2itgEuKGfd2oImkMxC4L
     const totalPages = Math.ceil(allEntries.length / pageSize);
     const nextPage = page < totalPages ? `${API_ENDPOINTS.GAME_LEADERBOARD}?page=${page + 1}` : null;
 
-    return HttpResponse.json({
+      return HttpResponse.json({
       count: allEntries.length,
       next: nextPage,
       previous: page > 1 ? `${API_ENDPOINTS.GAME_LEADERBOARD}?page=${page - 1}` : null,
       results: pageResults,
     });
+  }),
+
+  // Mock API for switch role ----(25)
+  http.post(API_ENDPOINTS.SWITCH_ROLE, async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    // Check authentication
+    if (!authHeader || !authHeader.startsWith("JWT ")) {
+      return HttpResponse.json(
+        { detail: "Authentication credentials were not provided." },
+        { status: 401 }
+      );
+    }
+
+    const body = (await request.json()) as { role?: string };
+    const validRoles = ['regular', 'staff', 'superuser'];
+
+    if (!body.role || !validRoles.includes(body.role)) {
+      return HttpResponse.json(
+        { detail: "Invalid role. Must be 'regular', 'staff', or 'superuser'." },
+        { status: 400 }
+      );
+    }
+
+    const roleLabels: Record<string, string> = {
+      regular: 'Regular',
+      staff: 'Staff',
+      superuser: 'Superuser',
+    };
+
+    return HttpResponse.json(
+      {
+        active_role: body.role,
+        role_label: roleLabels[body.role],
+        message: "Role switched successfully.",
+      },
+      { status: 200 }
+    );
   }),
 ];

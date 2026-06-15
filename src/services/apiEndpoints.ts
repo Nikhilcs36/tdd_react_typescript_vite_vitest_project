@@ -44,4 +44,7 @@ export const API_ENDPOINTS = {
 
   // Report Download Endpoint
   REPORT_DOWNLOAD: "/api/user/dashboard/report/download/",
+
+  // Role Switching Endpoint
+  SWITCH_ROLE: "/api/user/switch-role/",
 };

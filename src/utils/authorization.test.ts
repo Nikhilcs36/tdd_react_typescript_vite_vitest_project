@@ -152,6 +152,69 @@ describe('Authorization Utilities', () => {
       expect(result.current.isCurrentUser).toBe(initialIsCurrentUser);
       expect(result.current.canAccessUserData).toBe(initialCanAccessUserData);
     });
+
+    it('should NOT identify staff user as admin when active_role is regular', () => {
+      (useSelector as any).mockImplementation(() => ({
+        user: { id: 1, is_staff: true, is_superuser: false, active_role: 'regular' }
+      }));
+
+      const { result } = renderHook(() => useUserAuthorization());
+
+      expect(result.current.isAdmin()).toBe(false);
+      expect(result.current.getUserRole()).toEqual({
+        isStaff: true,
+        isSuperuser: false,
+        isAdmin: false,
+        userId: 1
+      });
+    });
+
+    it('should NOT identify superuser as admin when active_role is regular', () => {
+      (useSelector as any).mockImplementation(() => ({
+        user: { id: 2, is_staff: false, is_superuser: true, active_role: 'regular' }
+      }));
+
+      const { result } = renderHook(() => useUserAuthorization());
+
+      expect(result.current.isAdmin()).toBe(false);
+      expect(result.current.getUserRole()).toEqual({
+        isStaff: false,
+        isSuperuser: true,
+        isAdmin: false,
+        userId: 2
+      });
+    });
+
+    it('should identify staff user as admin when active_role is staff', () => {
+      (useSelector as any).mockImplementation(() => ({
+        user: { id: 1, is_staff: true, is_superuser: false, active_role: 'staff' }
+      }));
+
+      const { result } = renderHook(() => useUserAuthorization());
+
+      expect(result.current.isAdmin()).toBe(true);
+    });
+
+    it('should identify superuser as admin when active_role is superuser', () => {
+      (useSelector as any).mockImplementation(() => ({
+        user: { id: 2, is_staff: false, is_superuser: true, active_role: 'superuser' }
+      }));
+
+      const { result } = renderHook(() => useUserAuthorization());
+
+      expect(result.current.isAdmin()).toBe(true);
+    });
+
+    it('should restrict admin user to own data when active_role is regular', () => {
+      (useSelector as any).mockImplementation(() => ({
+        user: { id: 1, is_staff: true, is_superuser: false, active_role: 'regular' }
+      }));
+
+      const { result } = renderHook(() => useUserAuthorization());
+
+      expect(result.current.canAccessUserData(1)).toBe(true); // Own data
+      expect(result.current.canAccessUserData(999)).toBe(false); // Other user's data
+    });
   });
 
   describe('Standalone authorization functions', () => {
@@ -182,6 +245,26 @@ describe('Authorization Utilities', () => {
 
       it('should return false for undefined role fields', () => {
         const user = {};
+        expect(isUserAdmin(user)).toBe(false);
+      });
+
+      it('should return true for staff user when active_role is staff', () => {
+        const user = { is_staff: true, is_superuser: false, active_role: 'staff' as const };
+        expect(isUserAdmin(user)).toBe(true);
+      });
+
+      it('should return true for superuser when active_role is superuser', () => {
+        const user = { is_staff: false, is_superuser: true, active_role: 'superuser' as const };
+        expect(isUserAdmin(user)).toBe(true);
+      });
+
+      it('should return false for staff user when active_role is regular', () => {
+        const user = { is_staff: true, is_superuser: false, active_role: 'regular' as const };
+        expect(isUserAdmin(user)).toBe(false);
+      });
+
+      it('should return false for superuser when active_role is regular', () => {
+        const user = { is_staff: false, is_superuser: true, active_role: 'regular' as const };
         expect(isUserAdmin(user)).toBe(false);
       });
     });
@@ -227,6 +310,12 @@ describe('Authorization Utilities', () => {
       it('should return false when user has no permissions and IDs do not match', () => {
         const user = { id: 1, is_staff: false, is_superuser: false };
         expect(canUserAccessUserData(user, 2)).toBe(false);
+      });
+
+      it('should restrict admin user to own data when active_role is regular', () => {
+        const adminUserRegular = { id: 1, is_staff: true, is_superuser: false, active_role: 'regular' as const };
+        expect(canUserAccessUserData(adminUserRegular, 1)).toBe(true); // Own data
+        expect(canUserAccessUserData(adminUserRegular, 999)).toBe(false); // Other user's data
       });
     });
   });

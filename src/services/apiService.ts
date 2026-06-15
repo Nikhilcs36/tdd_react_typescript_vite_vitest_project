@@ -8,6 +8,7 @@ import {
 import store from "../store";
 import { handleApiError, shouldDisplayErrorToUser } from "./errorService";
 import { setGlobalError } from "../store/globalErrorSlice";
+import { API_ENDPOINTS } from "./apiEndpoints";
 
 // Axios interceptor for centralized error handling
 axios.interceptors.response.use(
@@ -755,4 +756,15 @@ export const fetchApiServiceResendVerification: ApiService<EmailVerificationRequ
     }
     return response.json() as T;
   },
+};
+
+// Switch Role API function
+export const switchRole = async (role: 'regular' | 'staff' | 'superuser') => {
+  const accessToken = store.getState().auth.accessToken;
+  const response = await axios.post<{ active_role: string; role_label: string; message: string }>(
+    API_ENDPOINTS.SWITCH_ROLE,
+    { role },
+    { headers: { Authorization: `JWT ${accessToken}` } }
+  );
+  return response.data;
 };

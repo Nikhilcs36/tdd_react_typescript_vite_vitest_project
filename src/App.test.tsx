@@ -12,6 +12,7 @@ import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
 import store, { createStore } from "./store";
 import { loginSuccess, logoutSuccess } from "./store/actions";
+import { defaultAuthFields } from "./tests/testAuthHelpers";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
@@ -59,7 +60,9 @@ vi.mock("./components/dashboard/DashboardContainer", () => ({
 // Helper function to set up authenticated state
 const mockAuth = (
   isAuthenticated: boolean,
-  user = {
+  userOverrides: Record<string, unknown> = {}
+) => {
+  const user = {
     id: 1,
     username: "user1",
     access: "mock-jwt-access-token",
@@ -67,10 +70,11 @@ const mockAuth = (
     email: "user1@mail.com",
     is_staff: false,
     is_superuser: false,
-  }
-) => {
+    ...defaultAuthFields,
+    ...userOverrides,
+  };
   if (isAuthenticated) {
-    store.dispatch(loginSuccess(user));
+    store.dispatch(loginSuccess(user as any));
   } else {
     store.dispatch(logoutSuccess());
   }
@@ -212,6 +216,7 @@ describe("Routing", () => {
       email: "user1@mail.com",
       is_staff: false,
       is_superuser: false,
+      ...defaultAuthFields,
     }
   ) => {
     // Updated user default
@@ -240,9 +245,10 @@ describe("Routing", () => {
               email: "user1@mail.com",
               is_staff: false,
               is_superuser: false,
+              ...defaultAuthFields,
             }
           : user;
-      store.dispatch(loginSuccess(userToDispatch));
+      store.dispatch(loginSuccess(userToDispatch as any));
     }
 
     // Change the language before rendering (only if a specific language is requested)
@@ -368,6 +374,7 @@ describe("Routing", () => {
       email: "user1@mail.com",
       is_staff: false,
       is_superuser: false,
+      ...defaultAuthFields,
     };
     store.dispatch(loginSuccess(mockUser));
 
@@ -403,6 +410,7 @@ describe("Routing", () => {
       email: "user2@mail.com",
       is_staff: true,
       is_superuser: true,
+      ...defaultAuthFields,
     };
     store.dispatch(loginSuccess(mockAdminUser2));
 
@@ -1181,6 +1189,7 @@ describe("Protected Route", () => {
       email: "admin@example.com",
       is_staff: true,
       is_superuser: true,
+      ...defaultAuthFields,
     };
     store.dispatch(loginSuccess(adminUser));
 
@@ -1210,6 +1219,7 @@ describe("Protected Route", () => {
       email: "regular@example.com",
       is_staff: false,
       is_superuser: false,
+      ...defaultAuthFields,
     };
     store.dispatch(loginSuccess(regularUser));
 
@@ -1286,12 +1296,14 @@ describe("Navbar persistence with sessionStorage", () => {
       refresh: "mock-jwt-refresh-token",
       is_staff: false,
       is_superuser: false,
+      ...defaultAuthFields,
     };
     const expectedUser = {
       id: 5,
       username: "persistedUser",
       is_staff: false,
       is_superuser: false,
+      ...defaultAuthFields,
     };
 
     // Render the app with the Redux provider
@@ -1357,6 +1369,7 @@ describe("Navbar persistence with sessionStorage", () => {
       refresh: "mock-admin-refresh-token",
       is_staff: true,
       is_superuser: true,
+      ...defaultAuthFields,
     };
 
     // Render the app with the Redux provider

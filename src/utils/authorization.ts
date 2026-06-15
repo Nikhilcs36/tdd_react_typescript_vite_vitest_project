@@ -18,8 +18,12 @@ export const useUserAuthorization = () => {
    * Check if the current user is an admin (staff or superuser)
    */
   const isAdmin = useCallback((): boolean => {
+    // When active_role is 'regular', user operates as a regular user regardless of is_staff/is_superuser
+    if (authState.user?.active_role === 'regular') {
+      return false;
+    }
     return authState.user?.is_staff === true || authState.user?.is_superuser === true;
-  }, [authState.user?.is_staff, authState.user?.is_superuser]);
+  }, [authState.user?.is_staff, authState.user?.is_superuser, authState.user?.active_role]);
 
   /**
    * Check if the given userId matches the current user's ID
@@ -67,9 +71,13 @@ export const useUserAuthorization = () => {
 
 /**
  * Check if a user is an admin based on their role fields
+ * Respects active_role - if active_role is 'regular', the user is treated as non-admin
  */
-export const isUserAdmin = (user: { is_staff?: boolean; is_superuser?: boolean } | null): boolean => {
-  return user?.is_staff === true || user?.is_superuser === true;
+export const isUserAdmin = (user: { is_staff?: boolean; is_superuser?: boolean; active_role?: string } | null): boolean => {
+  if (!user) return false;
+  // When active_role is 'regular', user operates as a regular user regardless of is_staff/is_superuser
+  if (user.active_role === 'regular') return false;
+  return user.is_staff === true || user.is_superuser === true;
 };
 
 /**
@@ -82,6 +90,6 @@ export const isUserCurrentUser = (user: { id?: number } | null, userId: number):
 /**
  * Check if a user can access data for the given userId
  */
-export const canUserAccessUserData = (user: { id?: number; is_staff?: boolean; is_superuser?: boolean } | null, userId: number): boolean => {
+export const canUserAccessUserData = (user: { id?: number; is_staff?: boolean; is_superuser?: boolean; active_role?: string } | null, userId: number): boolean => {
   return isUserAdmin(user) || isUserCurrentUser(user, userId);
 };

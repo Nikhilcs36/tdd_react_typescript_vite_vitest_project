@@ -10,6 +10,7 @@ export default {
           secondary: "#2d3748",
           text: "#e2e8f0",
           accent: "#4a5568",
+          card: "#2d3748",
         },
       },
     },
