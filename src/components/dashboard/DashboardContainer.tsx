@@ -506,7 +506,7 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
 
           {/* Charts Section */}
           <SectionTitle>{t('dashboard.visualizations')}</SectionTitle>
-          <ChartModeToggle disabled={false} dateRangeLabel={dateRangeLabel} />
+          {isAdmin() && <ChartModeToggle disabled={false} dateRangeLabel={dateRangeLabel} />}
           <ChartGrid data-testid="dashboard-chart-grid">
             <LoginTrendsChart
               chartData={loginTrends}

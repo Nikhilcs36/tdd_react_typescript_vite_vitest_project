@@ -60,7 +60,7 @@ describe("UserList Pagination with 1-based indexing", () => {
         refresh: "mock-refresh-token",
         is_staff: false,
         is_superuser: false,
-      })
+    })
     );
 
     render(

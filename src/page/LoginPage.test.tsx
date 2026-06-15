@@ -281,7 +281,7 @@ describe("Login Page", () => {
       await waitFor(() => {
         const state = store.getState();
         expect(state.auth.isAuthenticated).toBe(true);
-        expect(state.auth.user).toEqual({
+        expect(state.auth.user).toMatchObject({
           id: 1,
           username: "testuser",
         });

@@ -128,6 +128,12 @@ i18n.use(initReactI18next).init({
           deleteConfirmationMessage: "Are you sure you want to delete your profile?",
           deleteSuccess: "Account deleted successfully",
           removeProfileImage: "Remove Profile Image",
+          role: "Role",
+          roles: {
+            regular: "Regular",
+            staff: "Staff",
+            superuser: "Superuser",
+          },
           errors: {
             userNotFound: "User not found",
             error_loading: "Error loading profile data",
@@ -258,6 +264,7 @@ i18n.use(initReactI18next).init({
           user_not_found: "User not found",
           unauthorized_access: "Unauthorized access to dashboard data"
         },
+        staffAccess: "🎉 {{count}} more login(s) to unlock staff access!",
         emailVerification: {
           title: "Email Verification",
           verifying: "Verifying your email...",
@@ -471,6 +478,12 @@ i18n.use(initReactI18next).init({
             "നിങ്ങളുടെ പ്രൊഫൈൽ ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ?",
           deleteSuccess: "അക്കൗണ്ട് വിജയകരമായി നീക്കം ചെയ്തു",
           removeProfileImage: "പ്രൊഫൈൽ ചിത്രം നീക്കം ചെയ്യുക",
+          role: "റോൾ",
+          roles: {
+            regular: "സാധാരണ",
+            staff: "സ്റ്റാഫ്",
+            superuser: "സൂപ്പർ യൂസർ",
+          },
           errors: {
             userNotFound: "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
             error_loading: "പ്രൊഫൈൽ ലോഡ് ചെയ്യുന്നതിൽ പിശക്",
@@ -503,6 +516,7 @@ i18n.use(initReactI18next).init({
           network_error: "നെറ്റ്‌വർക്ക് കണക്ഷൻ പരാജയപ്പെട്ടു. ദയവായി നിങ്ങളുടെ ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക.",
           },
         },
+        staffAccess: "🎉 {{count}} കൂടുതൽ ലോഗിൻ(s) സ്റ്റാഫ് ആക്സസ് അൺലോക്ക് ചെയ്യാൻ!",
         dashboard: {
           title: "ഡാഷ്ബോർഡ്",
           subtitle: "ഉപയോക്തൃ പ്രവർത്തനവും സിസ്റ്റം സ്ഥിതിവിവരക്കണക്കുകളും നിരീക്ഷിക്കുക",
@@ -797,6 +811,12 @@ i18n.use(initReactI18next).init({
           deleteConfirmationMessage: "هل أنت متأكد أنك تريد حذف ملفك الشخصي؟",
           deleteSuccess: "تم حذف الحساب بنجاح",
           removeProfileImage: "إزالة صورة الملف الشخصي",
+          role: "الدور",
+          roles: {
+            regular: "عادي",
+            staff: "موظف",
+            superuser: "مستخدم خارق",
+          },
           errors: {
             userNotFound: "لم يتم العثور على المستخدم",
             error_loading: "خطأ في تحميل بيانات الملف الشخصي",
@@ -829,6 +849,7 @@ i18n.use(initReactI18next).init({
             network_error: "فشل الاتصال بالشبكة. يرجى التحقق من اتصالك بالإنترنت.",
           },
         },
+        staffAccess: "🎉 {{count}} تسجيل دخول إضافي(p) لفتح وصول الموظفين!",
         dashboard: {
           title: "لوحة التحكم",
           subtitle: "مراقبة نشاط المستخدمين وإحصائيات النظام",

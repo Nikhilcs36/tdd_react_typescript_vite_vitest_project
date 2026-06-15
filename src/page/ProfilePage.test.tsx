@@ -12,9 +12,12 @@ import { createStore } from "../store";
 import { Provider } from "react-redux";
 import { ProfilePageWrapper } from "./ProfilePage";
 import { loginSuccess } from "../store/actions";
+import { defaultAuthFields } from "../tests/testAuthHelpers";
 import i18n from "../locale/i18n";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { axiosApiServiceUpdateUserWithFile } from "../services/apiService";
+
+const mockSwitchRole = vi.hoisted(() => vi.fn());
 
 // Mock the apiService module to intercept the file upload service
 vi.mock("../services/apiService", async (importOriginal) => {
@@ -26,6 +29,7 @@ vi.mock("../services/apiService", async (importOriginal) => {
     axiosApiServiceUpdateUserWithFile: {
       put: vi.fn(),
     },
+    switchRole: mockSwitchRole,
   };
 });
 
@@ -82,6 +86,7 @@ describe("ProfilePage", () => {
       mockPut = mockApiPutService.put,
       mockDelete = mockApiDeleteService.delete,
       withAuth = false,
+      authUser = {},
     } = opts;
 
     await act(async () => {
@@ -98,6 +103,8 @@ describe("ProfilePage", () => {
             refresh: "test-refresh-token",
             is_staff: false,
             is_superuser: false,
+            ...defaultAuthFields,
+            ...authUser,
           })
         );
       });
@@ -136,7 +143,7 @@ describe("ProfilePage", () => {
       ...baseUser,
       username: "updatedUser",
     });
-    mockApiDeleteService.delete.mockResolvedValue({}); // Reset delete mock
+    mockApiDeleteService.delete.mockResolvedValue({});
   });
 
   afterEach(cleanup);
@@ -172,7 +179,7 @@ describe("ProfilePage", () => {
       expect(store.getState().auth.accessToken).toBe("test-access-token");
       expect(store.getState().auth.refreshToken).toBe("test-refresh-token");
       expect(mockPut).toHaveBeenCalledWith(
-        API_ENDPOINTS.ME, // Should use ME endpoint for updates
+        API_ENDPOINTS.ME,
         expect.objectContaining({
           username: "updateduser",
         })
@@ -182,23 +189,18 @@ describe("ProfilePage", () => {
     it("sends only the changed fields for partial updates", async () => {
       const { mockPut } = await setup({ withAuth: true });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Change only the username
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "updateduser" },
       });
 
-      // Submit the form
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // Verify that only the username is sent in the request
       await waitFor(() => {
         expect(mockPut).toHaveBeenCalledWith(API_ENDPOINTS.ME, {
           username: "updateduser",
@@ -214,28 +216,22 @@ describe("ProfilePage", () => {
         image: "new-image.jpg",
       });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Change only the username
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "updateduser" },
       });
 
-      // Select a file
       const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
       const fileInput = screen.getByTestId("image-file-input");
       fireEvent.change(fileInput, { target: { files: [file] } });
 
-      // Submit the form
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // Verify that only the username and image are sent in the request
       await waitFor(() => {
         const formData = (axiosApiServiceUpdateUserWithFile.put as Mock).mock
           .calls[0][1] as FormData;
@@ -248,15 +244,12 @@ describe("ProfilePage", () => {
     it("makes email input readonly in edit form", async () => {
       await setup({ withAuth: true });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify email input has readOnly attribute
       const emailInput = screen.getByTestId("email-input");
       expect(emailInput).toHaveAttribute("readOnly");
     });
@@ -266,12 +259,10 @@ describe("ProfilePage", () => {
 
       fireEvent.click(await screen.findByTestId("edit-profile-button"));
 
-      // Verify that the image input field is read-only
       const imageInput = screen.getByTestId("image-input");
       expect(imageInput).toHaveAttribute("readOnly");
       expect(imageInput).toHaveAttribute("disabled");
 
-      // Verify that the read-only message is displayed (check for the specific text)
       const readOnlyMessage = screen.getByText(
         "Image URL cannot be edited directly"
       );
@@ -312,26 +303,21 @@ describe("ProfilePage", () => {
     it("handles update errors", async () => {
       await setup();
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Mock the update to fail
       mockApiPutService.put.mockRejectedValueOnce({
         response: { data: { detail: "Update failed" } },
       });
 
-      // Make a change and submit the form
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "updateduser" },
       });
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // Verify error message is displayed
       await waitFor(() => {
         expect(screen.getByTestId("error-message")).toHaveTextContent(
           "Update failed"
@@ -342,7 +328,6 @@ describe("ProfilePage", () => {
     it("automatically enters edit mode when navigation state contains showEditForm: true", async () => {
       await setup({ initialEntries: ["/profile", { state: { showEditForm: true } }] });
 
-      // Wait for user data to load and verify that edit form is automatically displayed
       await waitFor(() => {
         expect(screen.getByTestId("edit-profile-form")).toBeInTheDocument();
         expect(screen.getByTestId("username-input")).toBeInTheDocument();
@@ -370,15 +355,12 @@ describe("ProfilePage", () => {
     it("allows selecting image file from PC", async () => {
       await setup();
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Check that file input is available
       const fileInput = screen.getByTestId("image-file-input");
       expect(fileInput).toBeInTheDocument();
       expect(fileInput).toHaveAttribute("type", "file");
@@ -388,24 +370,19 @@ describe("ProfilePage", () => {
     it("displays selected image preview", async () => {
       await setup();
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Create a mock file
       const file = new File(["dummy content"], "test-image.jpg", {
         type: "image/jpeg",
       });
 
-      // Trigger file selection
       const fileInput = screen.getByTestId("image-file-input");
       fireEvent.change(fileInput, { target: { files: [file] } });
 
-      // Check that image preview is displayed
       await waitFor(() => {
         const previewImg = screen.getByTestId("image-preview");
         expect(previewImg).toBeInTheDocument();
@@ -446,15 +423,12 @@ describe("ProfilePage", () => {
       ) => {
         await setup({ withAuth: true, language });
 
-        // Wait for user data to load
         await waitFor(() =>
           expect(screen.getByTestId("username")).toBeInTheDocument()
         );
 
-        // Enter edit mode
         fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-        // Check that all translations are displayed
         await waitFor(() => {
           expect(screen.getByText(imageUrlInfoText)).toBeInTheDocument();
           expect(screen.getByText(uploadProfileImageText)).toBeInTheDocument();
@@ -467,24 +441,19 @@ describe("ProfilePage", () => {
     it("displays selected file name when a file is chosen", async () => {
       await setup({ withAuth: true });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Create a mock file
       const file = new File(["dummy content"], "test-image.jpg", {
         type: "image/jpeg",
       });
 
-      // Trigger file selection
       const fileInput = screen.getByTestId("image-file-input");
       fireEvent.change(fileInput, { target: { files: [file] } });
 
-      // Check that the selected file name is displayed in the custom file input button
       await waitFor(() => {
         const fileButtonText = screen.getByText("test-image.jpg", {
           selector: "span.text-gray-700",
@@ -496,22 +465,17 @@ describe("ProfilePage", () => {
     it("sends a null image field when the clear image button is clicked", async () => {
       const { mockPut } = await setup({ withAuth: true });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Find and click the clear image button
       const clearImageButton = screen.getByTestId("clear-image-button");
       fireEvent.click(clearImageButton);
 
-      // Submit the form
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // Verify that the request data contains image: null
       await waitFor(() => {
         expect(mockPut).toHaveBeenCalledWith(
           API_ENDPOINTS.ME,
@@ -525,30 +489,23 @@ describe("ProfilePage", () => {
     it("resets the clear image state after successful submission", async () => {
       await setup({ withAuth: true });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Find and click the clear image button
       const clearImageButton = screen.getByTestId("clear-image-button");
       fireEvent.click(clearImageButton);
 
-      // Submit the form
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // Wait for the success message to ensure the form has been processed
       await waitFor(() => {
         expect(screen.getByTestId("success-message")).toBeInTheDocument();
       });
 
-      // Re-enter edit mode to check the state of the button
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify that the clear image button is enabled (meaning no image is set to be cleared)
       const updatedClearImageButton = screen.getByTestId("clear-image-button");
       expect(updatedClearImageButton).toBeEnabled();
     });
@@ -556,15 +513,12 @@ describe("ProfilePage", () => {
     it("disables clear image button when there is no existing profile image", async () => {
       await setup({ userData: { ...baseUser, image: null } });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify that the clear image button is disabled
       const clearImageButton = screen.getByTestId("clear-image-button");
       expect(clearImageButton).toBeDisabled();
     });
@@ -574,21 +528,17 @@ describe("ProfilePage", () => {
         userData: { ...baseUser, image: "https://example.com/image.jpg" },
       });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify that the clear image button is enabled
       const clearImageButton = screen.getByTestId("clear-image-button");
       expect(clearImageButton).toBeEnabled();
     });
 
     it("clears previous image upload error when a new image is selected", async () => {
-      // Mock a failed image upload response
       (axiosApiServiceUpdateUserWithFile.put as Mock).mockRejectedValue({
         response: {
           data: {
@@ -601,37 +551,31 @@ describe("ProfilePage", () => {
 
       await setup({ withAuth: true });
 
-      // 1. Enter edit mode
       fireEvent.click(await screen.findByTestId("edit-profile-button"));
 
-      // 2. Simulate the first file upload that fails
       const file1 = new File(["dummy"], "test1.txt", { type: "text/plain" });
       fireEvent.change(screen.getByTestId("image-file-input"), {
         target: { files: [file1] },
       });
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // 3. Wait for the error message to be displayed
       await waitFor(() => {
         expect(screen.getByTestId("error-message")).toHaveTextContent(
           "Invalid image format. Only JPG, JPEG, and PNG are allowed."
         );
       });
 
-      // 4. Simulate selecting a new, valid image file
       const file2 = new File(["dummy"], "test2.jpg", { type: "image/jpeg" });
       fireEvent.change(screen.getByTestId("image-file-input"), {
         target: { files: [file2] },
       });
 
-      // 5. Assert that the error message is cleared
       await waitFor(() => {
         expect(screen.queryByTestId("error-message")).not.toBeInTheDocument();
       });
     });
 
     it("clears the file input after a successful image upload", async () => {
-      // Mock a successful image upload response
       (axiosApiServiceUpdateUserWithFile.put as Mock).mockResolvedValue({
         ...baseUser,
         image: "new-image.jpg",
@@ -639,10 +583,8 @@ describe("ProfilePage", () => {
 
       await setup({ withAuth: true });
 
-      // 1. Enter edit mode
       fireEvent.click(await screen.findByTestId("edit-profile-button"));
 
-      // 2. Simulate file selection
       const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
       const fileInput = screen.getByTestId(
         "image-file-input"
@@ -651,23 +593,18 @@ describe("ProfilePage", () => {
         target: { files: [file] },
       });
 
-      // 3. Verify the file name is displayed
       await waitFor(() => {
         expect(screen.getByText("test.jpg")).toBeInTheDocument();
       });
 
-      // 4. Submit the form
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // 5. Wait for the success message
       await waitFor(() => {
         expect(screen.getByTestId("success-message")).toBeInTheDocument();
       });
 
-      // 6. Re-enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // 7. Assert that the file input is cleared
       await waitFor(() => {
         const fileInput = screen.getByTestId(
           "image-file-input"
@@ -678,60 +615,102 @@ describe("ProfilePage", () => {
     });
   });
 
+  describe("Profile Card Layout", () => {
+    it("profile image is centered inside the profile card", async () => {
+      await setup({ withAuth: true });
+      const img = await screen.findByTestId("profile-image");
+      const parentDiv = img.closest("div[class*='flex-col']");
+      expect(parentDiv?.className).toContain("items-center");
+    });
+
+    it("role dropdown is positioned in top-right with absolute positioning", async () => {
+      await setup({
+        withAuth: true,
+        authUser: {
+          is_staff: true,
+          is_superuser: true,
+          staff_access_granted: true,
+          active_role: "superuser",
+          role_label: "Superuser",
+        },
+      });
+
+      const select = await screen.findByTestId("role-select");
+      expect(select).toBeInTheDocument();
+      const absoluteParent = select.closest("[class*='absolute']");
+      expect(absoluteParent?.className).toContain("top-0");
+      expect(absoluteParent?.className).toContain("right-0");
+    });
+
+    it("disables role dropdown while role is switching", async () => {
+      mockSwitchRole.mockImplementation(() => new Promise(() => {}));
+
+      await setup({
+        withAuth: true,
+        authUser: {
+          is_staff: true,
+          is_superuser: true,
+          staff_access_granted: true,
+          active_role: "superuser",
+          role_label: "Superuser",
+        },
+      });
+
+      const select = await screen.findByTestId("role-select");
+      expect(select).toBeEnabled();
+
+      fireEvent.change(select, { target: { value: "staff" } });
+
+      await waitFor(() => {
+        expect(select).toBeDisabled();
+      });
+    });
+  });
+
   describe("Profile Update", () => {
     it("clears the profile edit success message after 3 seconds", async () => {
       await setup();
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Change the username to trigger an update
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "new-username" },
       });
 
-      // Submit the form to trigger the success message
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // Check that the success message is displayed
       await waitFor(() => {
         expect(screen.getByTestId("success-message")).toBeInTheDocument();
       });
 
-      // Check that the success message is no longer displayed after 3 seconds
       await waitFor(
         () => {
           expect(
             screen.queryByTestId("success-message")
           ).not.toBeInTheDocument();
         },
-        { timeout: 4000 } // Wait for 4 seconds to be safe
+        { timeout: 4000 }
       );
     });
 
     it("displays success message after successful profile update", async () => {
       await setup();
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Make a change and submit the form
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "updateduser" },
       });
       fireEvent.click(screen.getByTestId("save-profile-button"));
 
-      // Verify success message is displayed
       await waitFor(() => {
         expect(screen.getByTestId("success-message")).toHaveTextContent(
           "Profile updated successfully"
@@ -742,78 +721,61 @@ describe("ProfilePage", () => {
     it("disables save button when no changes have been made", async () => {
       await setup({ withAuth: true });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify save button is initially disabled (no changes)
       const saveButton = screen.getByTestId("save-profile-button");
       expect(saveButton).toBeDisabled();
 
-      // Make a change to username
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "updateduser" },
       });
 
-      // Verify save button is now enabled
       expect(saveButton).toBeEnabled();
 
-      // Revert the change
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "user1" },
       });
 
-      // Verify save button is disabled again
       expect(saveButton).toBeDisabled();
     });
 
     it("enables save button when file is selected", async () => {
       await setup({ withAuth: true });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify save button is initially disabled
       const saveButton = screen.getByTestId("save-profile-button");
       expect(saveButton).toBeDisabled();
 
-      // Select a file
       const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
       const fileInput = screen.getByTestId("image-file-input");
       fireEvent.change(fileInput, { target: { files: [file] } });
 
-      // Verify save button is enabled after file selection
       expect(saveButton).toBeEnabled();
     });
 
     it("enables save button when clear image is clicked", async () => {
       await setup({ withAuth: true });
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify save button is initially disabled
       const saveButton = screen.getByTestId("save-profile-button");
       expect(saveButton).toBeDisabled();
 
-      // Click clear image button
       fireEvent.click(screen.getByTestId("clear-image-button"));
 
-      // Verify save button is enabled after clear image
       expect(saveButton).toBeEnabled();
     });
   });
@@ -822,17 +784,14 @@ describe("ProfilePage", () => {
     it("reverts changes and exits edit mode when cancel button is clicked", async () => {
       const { userData } = await setup();
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toHaveTextContent(
           userData.username
         )
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Make changes to the form
       fireEvent.change(screen.getByTestId("username-input"), {
         target: { value: "changedusername" },
       });
@@ -840,19 +799,15 @@ describe("ProfilePage", () => {
         target: { value: "changed@example.com" },
       });
 
-      // Click cancel button
       fireEvent.click(screen.getByTestId("cancel-edit-button"));
 
-      // Verify edit mode is exited (edit form is no longer displayed)
       expect(screen.queryByTestId("edit-profile-form")).not.toBeInTheDocument();
 
-      // Verify profile card is displayed with original data
       expect(screen.getByTestId("username")).toHaveTextContent(
         userData.username
       );
       expect(screen.getByTestId("email")).toHaveTextContent(userData.email);
 
-      // Verify edit button is displayed again
       expect(screen.getByTestId("edit-profile-button")).toBeInTheDocument();
     });
 
@@ -861,15 +816,12 @@ describe("ProfilePage", () => {
         initialEntries: ["/profile", { state: { showEditForm: true } }]
       });
 
-      // Wait for edit form to be automatically displayed
       await waitFor(() => {
         expect(screen.getByTestId("edit-profile-form")).toBeInTheDocument();
       });
 
-      // Click cancel button
       fireEvent.click(screen.getByTestId("cancel-edit-button"));
 
-      // Verify navigation back to UserPage
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith(`/user/${userData.id}`);
       });
@@ -878,56 +830,44 @@ describe("ProfilePage", () => {
     it("clears selected file and image preview when canceling edit mode", async () => {
       await setup();
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Select a file
       const file = new File(["dummy content"], "test-image.jpg", {
         type: "image/jpeg",
       });
       const fileInput = screen.getByTestId("image-file-input");
       fireEvent.change(fileInput, { target: { files: [file] } });
 
-      // Verify preview is shown
       await waitFor(() => {
         expect(screen.getByTestId("image-preview")).toBeInTheDocument();
       });
 
-      // Click cancel button
       fireEvent.click(screen.getByTestId("cancel-edit-button"));
 
-      // Re-enter edit mode
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Verify the preview is no longer displayed (cleared on cancel)
       await waitFor(() => {
         expect(screen.queryByTestId("image-preview")).not.toBeInTheDocument();
       });
 
-      // Verify the "No file chosen" text is shown instead of the file name
       expect(screen.getByText("Choose file")).toBeInTheDocument();
     });
 
     it("stays on ProfilePage when canceling edit form accessed directly", async () => {
       const { mockNavigate } = await setup();
 
-      // Wait for user data to load
       await waitFor(() =>
         expect(screen.getByTestId("username")).toBeInTheDocument()
       );
 
-      // Enter edit mode manually (not from UserPage)
       fireEvent.click(screen.getByTestId("edit-profile-button"));
 
-      // Click cancel button
       fireEvent.click(screen.getByTestId("cancel-edit-button"));
 
-      // Verify no navigation occurred (stays on ProfilePage)
       await waitFor(() => {
         expect(mockNavigate).not.toHaveBeenCalled();
         expect(screen.getByTestId("profile-page")).toBeInTheDocument();
@@ -961,7 +901,7 @@ describe("ProfilePage", () => {
       fireEvent.click(screen.getByTestId("confirm-delete-button"));
 
       await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalledWith(API_ENDPOINTS.ME); // Should use ME endpoint for deletion
+        expect(mockDelete).toHaveBeenCalledWith(API_ENDPOINTS.ME);
         expect(screen.getByTestId("success-message")).toHaveTextContent(
           "Account deleted successfully"
         );
@@ -1041,7 +981,6 @@ describe("ProfilePage", () => {
         language: lang,
       });
 
-      // Simulate form submission
       fireEvent.click(await screen.findByTestId("edit-profile-button"));
       const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
       fireEvent.change(screen.getByTestId("image-file-input"), {
@@ -1078,7 +1017,6 @@ describe("ProfilePage", () => {
         language: lang,
       });
 
-      // Simulate form submission
       fireEvent.click(await screen.findByTestId("edit-profile-button"));
       const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
       fireEvent.change(screen.getByTestId("image-file-input"), {
@@ -1120,7 +1058,6 @@ describe("ProfilePage", () => {
           mockGet: mockError,
         });
 
-        // Verify error message displays with correct translation
         await waitFor(() => {
           expect(screen.getByTestId("error-message")).toHaveTextContent(expected);
         });

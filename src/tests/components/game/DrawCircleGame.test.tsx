@@ -6,6 +6,7 @@ import i18n from '../../../locale/i18n';
 import store from '../../../store';
 import DrawCircleGame from '../../../components/game/DrawCircleGame';
 import { loginSuccess, logoutSuccess } from '../../../store/actions';
+import { defaultAuthFields } from '../../testAuthHelpers';
 import { server } from '../../mocks/server';
 import { http, HttpResponse } from 'msw';
 import { API_ENDPOINTS } from '../../../services/apiEndpoints';
@@ -29,6 +30,7 @@ describe('DrawCircleGame', () => {
       refresh: 'mock-refresh-token',
       is_staff: false,
       is_superuser: false,
+      ...defaultAuthFields,
     }));
   });
 
@@ -124,6 +126,7 @@ describe('DrawCircleGame', () => {
       refresh: 'mock-refresh-token',
       is_staff: true,
       is_superuser: true,
+      ...defaultAuthFields,
     }));
 
     renderWithProviders(<DrawCircleGame />);

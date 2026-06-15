@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import tw from 'twin.macro';
 import { RootState } from '../../store';
+import { useUserAuthorization } from '../../utils/authorization';
 import { downloadReport, DownloadReportResult } from '../../services/loginTrackingService';
 
 interface ReportDownloadButtonProps {
@@ -139,7 +140,7 @@ const ReportDownloadButton: React.FC<ReportDownloadButtonProps> = ({ isAdmin }) 
     return user ? user.username : null;
   }, [dashboardState]);
 
-  const authState = useSelector((state: RootState) => state.auth);
+  const { isAdmin: isAdminUser, user: authUser } = useUserAuthorization();
 
   /**
    * Map activeFilter from dashboard state to backend filter parameter
@@ -163,13 +164,13 @@ const ReportDownloadButton: React.FC<ReportDownloadButtonProps> = ({ isAdmin }) 
    * Get role parameter from auth user's actual role
    */
   const getRoleParam = useCallback((): 'admin' | 'regular' | undefined => {
-    const user = authState.user;
+    const user = authUser;
     if (!user) return undefined;
-    if (user.is_staff || user.is_superuser) {
+    if (isAdminUser()) {
       return 'admin';
     }
     return 'regular';
-  }, [authState.user]);
+  }, [authUser, isAdminUser]);
 
   /**
    * Execute the download using mode from dashboard state

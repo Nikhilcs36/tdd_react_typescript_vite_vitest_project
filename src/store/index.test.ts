@@ -8,6 +8,7 @@ vi.mock("secure-ls", () => createSecureLSMock(mockSecureLS));
 // Import modules that use secure-ls after the mock is set up
 import { createStore } from "./index";
 import { loginSuccess, logoutSuccess } from "./actions";
+import { defaultAuthFields } from "../tests/testAuthHelpers";
 
 describe("Store with auth persistence", () => {
   beforeEach(() => {
@@ -22,6 +23,7 @@ describe("Store with auth persistence", () => {
       username: "testuser",
       is_staff: false,
       is_superuser: false,
+      ...defaultAuthFields,
       access: "mock-access-token",
       refresh: "mock-refresh-token",
     };
@@ -65,7 +67,7 @@ describe("Store with auth persistence", () => {
     const store = createStore();
 
     const loadedAuthState = store.getState().auth;
-    expect(loadedAuthState).toEqual({
+    expect(loadedAuthState).toMatchObject({
       isAuthenticated: true,
       user: { id: 5, username: "persistedUser", is_staff: false, is_superuser: false },
       accessToken: "mock-persisted-access-token",
@@ -128,6 +130,7 @@ describe("Store with auth persistence", () => {
       username: "adminuser",
       is_staff: true,
       is_superuser: false,
+      ...defaultAuthFields,
       access: "admin-access-token",
       refresh: "admin-refresh-token",
     };

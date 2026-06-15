@@ -27,7 +27,7 @@ const createMockStore = (dashboardState: Partial<DashboardState> = {}, authState
   };
 
   const defaultAuthState: AuthState = {
-    user: { id: 1, username: 'testuser', is_staff: true, is_superuser: false },
+    user: { id: 1, username: 'testuser', is_staff: true, is_superuser: false, logins_remaining_for_staff: 0, staff_access_granted: true, active_role: 'superuser' as const, role_label: 'Superuser' },
     accessToken: 'fake-token',
     refreshToken: 'fake-refresh-token',
     isAuthenticated: true,
@@ -1380,9 +1380,9 @@ describe('DashboardContainer UI/UX Improvements', () => {
           user: { id: 5, username: 'regularuser', is_staff: false, is_superuser: false },
         });
 
-        // Wait for initial render - verify all calls use user ID 5 (from auth state)
+        // Wait for initial render - wait for the actual data to be rendered
         await waitFor(() => {
-          expect(getLoginActivity).toHaveBeenCalled();
+          expect(screen.getByTestId('activity-items-count')).toHaveTextContent('3 items');
         });
 
         // Track initial calls
@@ -1469,6 +1469,71 @@ describe('DashboardContainer UI/UX Improvements', () => {
       });
     });
   });
+
+  describe('Regular User Dashboard - active_role regular', () => {
+    beforeEach(() => {
+      mockIsAdmin = false;
+      vi.clearAllMocks();
+      vi.mocked(getUserStats).mockResolvedValue(mockUserStats);
+      vi.mocked(getLoginActivity).mockResolvedValue(mockLoginActivity);
+      vi.mocked(getLoginTrends).mockResolvedValue(mockChartData);
+      vi.mocked(getLoginComparison).mockResolvedValue(mockChartData);
+      vi.mocked(getLoginDistribution).mockResolvedValue(mockChartData);
+    });
+
+    it('should NOT render DashboardFilters when user has active_role regular', async () => {
+      renderWithProviders(<DashboardContainer />, {}, {
+        user: { id: 5, username: 'regularuser', is_staff: true, is_superuser: false, active_role: 'regular' },
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-filters')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should NOT render DashboardUserList when user has active_role regular', async () => {
+      renderWithProviders(<DashboardContainer />, {}, {
+        user: { id: 5, username: 'regularuser', is_staff: true, is_superuser: false, active_role: 'regular' },
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-user-list')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should NOT render UserSelectorDropdown when user has active_role regular', async () => {
+      renderWithProviders(<DashboardContainer />, {}, {
+        user: { id: 5, username: 'regularuser', is_staff: true, is_superuser: false, active_role: 'regular' },
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('user-selector-dropdown')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should NOT render ChartModeToggle (group mode) when user has active_role regular', async () => {
+      renderWithProviders(<DashboardContainer />, {}, {
+        user: { id: 5, username: 'regularuser', is_staff: true, is_superuser: false, active_role: 'regular' },
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('chart-mode-toggle')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should render basic dashboard components for regular user', async () => {
+      renderWithProviders(<DashboardContainer />, {}, {
+        user: { id: 5, username: 'regularuser', is_staff: false, is_superuser: false, active_role: 'regular' },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-page-container')).toBeInTheDocument();
+        expect(screen.getByTestId('dashboard-title')).toBeInTheDocument();
+        expect(screen.getByTestId('user-dashboard-card')).toBeInTheDocument();
+        expect(screen.getByTestId('login-activity-table')).toBeInTheDocument();
+    });
+  });
+});
 });
 });
 });

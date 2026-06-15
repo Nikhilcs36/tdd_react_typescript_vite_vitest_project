@@ -35,7 +35,7 @@ describe("Logout Message Component", () => {
           refresh: "valid-refresh-token",
           is_staff: false,
           is_superuser: false,
-        })
+    })
       );
     });
 
@@ -65,7 +65,7 @@ describe("Logout Message Component", () => {
           refresh: "refresh-token1",
           is_staff: false,
           is_superuser: false
-        })
+    })
       );
     });
     const logoutLink1 = await screen.findByTestId("logout-link");
@@ -87,7 +87,7 @@ describe("Logout Message Component", () => {
           refresh: "refresh-token2",
           is_staff: false,
           is_superuser: false
-        })
+    })
       );
     });
     const logoutLink2 = await screen.findByTestId("logout-link");
@@ -123,7 +123,7 @@ describe("Logout Message Component", () => {
             refresh: "valid-refresh-token",
             is_staff: false,
             is_superuser: false,
-          })
+    })
         );
       });
 

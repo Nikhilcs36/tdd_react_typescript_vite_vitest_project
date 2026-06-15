@@ -6,6 +6,14 @@ import i18n from '../../../locale/i18n';
 import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
 import { loginSuccess, logoutSuccess } from '../../../store/actions';
+import { defaultAuthFields } from '../../testAuthHelpers';
+
+const defaultRegularFields = {
+  logins_remaining_for_staff: 3,
+  staff_access_granted: false,
+  active_role: 'regular' as const,
+  role_label: 'Regular',
+};
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
@@ -31,6 +39,7 @@ describe('GameLeaderboard - stale admin state', () => {
       refresh: 'mock-refresh-token',
       is_staff: false,
       is_superuser: false,
+      ...defaultRegularFields,
     }));
 
     // Mount the component while user is non-admin
@@ -47,6 +56,7 @@ describe('GameLeaderboard - stale admin state', () => {
       refresh: 'mock-refresh-token',
       is_staff: true,
       is_superuser: true,
+      ...defaultAuthFields,
     }));
 
     // After Redux state update, the component should now show the toggle button
@@ -66,6 +76,7 @@ describe('GameLeaderboard - stale admin state', () => {
       refresh: 'mock-refresh-token',
       is_staff: false,
       is_superuser: false,
+      ...defaultRegularFields,
     }));
 
     renderWithProviders(<GameLeaderboard />);
@@ -78,6 +89,7 @@ describe('GameLeaderboard - stale admin state', () => {
       refresh: 'mock-refresh-token',
       is_staff: true,
       is_superuser: true,
+      ...defaultAuthFields,
     }));
 
     // Toggle should appear after admin state update

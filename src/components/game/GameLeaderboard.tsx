@@ -16,8 +16,7 @@ import {
 } from './GameLeaderboard.styles';
 import { getGameLeaderboardPage } from '../../services/gameService';
 import { LeaderboardEntry } from '../../types/game';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
+import { useUserAuthorization } from '../../utils/authorization';
 
 const SCROLL_THRESHOLD = 5; // px from bottom to consider "at bottom"
 
@@ -38,8 +37,8 @@ const HEADERS = ['rank', 'username', 'score', 'lastPlayed'] as const;
 
 const GameLeaderboard: React.FC = () => {
   const { t } = useTranslation();
-  const user = useSelector((state: RootState) => state.auth.user);
-  const isAdminUser = user?.is_staff === true || user?.is_superuser === true;
+  const { isAdmin } = useUserAuthorization();
+  const isAdminUser = isAdmin();
   const [isOpen, setIsOpen] = useState(false);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);

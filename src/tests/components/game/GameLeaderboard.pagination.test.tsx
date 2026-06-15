@@ -9,6 +9,7 @@ import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
 import { loginSuccess, logoutSuccess } from '../../../store/actions';
 import { API_ENDPOINTS } from '../../../services/apiEndpoints';
+import { defaultAuthFields } from '../../testAuthHelpers';
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
@@ -29,6 +30,7 @@ describe('GameLeaderboard - response format handling', () => {
       refresh: 'mock-refresh-token',
       is_staff: true,
       is_superuser: true,
+      ...defaultAuthFields,
     }));
   });
 
