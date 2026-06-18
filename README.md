@@ -49,6 +49,13 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 - **Chart Mode Toggle**: Toggle between different chart visualization modes
 - **Excel Report Downloads**: Download detailed login activity reports in Excel format with individual and grouped modes, date range filtering, and admin-specific filters (admin only, regular users, me, all)
 
+### Staff Auto Permission & Role Switching
+- **Auto Staff Access**: After 3 successful logins, users automatically unlock staff privileges. A countdown banner shows remaining logins needed
+- **Role Switching**: Switch your active role between Regular, Staff, and Superuser from the Profile page. Staff users can toggle between regular/staff, Superusers have access to all three roles
+- **Active Role Enforcement**: Switching to 'regular' mode disables admin capabilities — useful for testing or limited access
+- **Persistent Role State**: Your role preference (regular/staff) is saved and restored across sessions. Superuser role switching is temporary — after next login, superuser retains superuser status
+- **Login Countdown Banner**: Visual indicator on the home page showing how many more logins are needed to unlock staff access (e.g., "🎉 X more login(s) to unlock staff access!")
+
 ### User Management
 - **User Registration**: Secure sign-up form with client-side validation
 - **User Login**: JWT-based authentication with token management
@@ -61,21 +68,21 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 
 ### User Access Levels Comparison
 
-| Feature | Regular User | Admin User |
-|---------|-------------|------------|
-| View own login statistics | ✅ | ✅ |
-| View own login activity | ✅ | ✅ |
-| View own dashboard charts | ✅ | ✅ |
-| Access personal dashboard | ✅ | ✅ |
-| Edit own profile | ✅ | ✅ |
-| View all users' statistics | ❌ | ✅ |
-| View all login activities | ❌ | ✅ |
-| Access admin dashboard | ❌ | ✅ |
-| View user-specific analytics | ❌ | ✅ |
-| View other user profiles | ❌ | ✅ |
-| Access user list | ❌ | ✅ |
-| View any user's dashboard | ❌ | ✅ |
-| Use user selector dropdown | ❌ | ✅ |
+| Feature | Regular User | Staff User | Admin User |
+|---------|-------------|------------|------------|
+| View own login statistics | ✅ | ✅ | ✅ |
+| View own login activity | ✅ | ✅ | ✅ |
+| View own dashboard charts | ✅ | ✅ | ✅ |
+| Access personal dashboard | ✅ | ✅ | ✅ |
+| Edit own profile | ✅ | ✅ | ✅ |
+| View all users' statistics | ❌ | ✅ | ✅ |
+| View all login activities | ❌ | ✅ | ✅ |
+| Access admin dashboard | ❌ | ✅ | ✅ |
+| View user-specific analytics | ❌ | ✅ | ✅ |
+| View other user profiles | ❌ | ✅ | ✅ |
+| Access user list | ❌ | ✅ | ✅ |
+| View any user's dashboard | ❌ | ✅ | ✅ |
+| Use user selector dropdown | ❌ | ✅ | ✅ |
 
 ### Authentication & Security
 - **JWT Token Authentication**: Secure token-based authentication with access and refresh tokens

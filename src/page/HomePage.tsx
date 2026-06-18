@@ -46,6 +46,7 @@ const HomePage = () => {
     { key: 'theme', title: t('homepage.features.theme'), desc: t('homepage.features.themeDesc') },
     { key: 'tdd', title: t('homepage.features.tdd'), desc: t('homepage.features.tddDesc') },
     { key: 'report', title: t('homepage.features.report'), desc: t('homepage.features.reportDesc') },
+    { key: 'staff', title: t('homepage.features.staff'), desc: t('homepage.features.staffDesc') },
   ];
 
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
