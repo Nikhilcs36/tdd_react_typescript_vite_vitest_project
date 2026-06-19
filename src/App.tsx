@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import i18n from "./locale/i18n";
@@ -46,21 +46,30 @@ const NavBar = tw.nav`
   px-4
   sm:px-6
   flex
+  flex-col
+  xl:flex-row
+  xl:justify-between
   items-center
-  justify-between
   fixed
   w-full
   top-0
   z-20
   shadow-lg
 `;
-const NavLeft = tw.div`flex items-center gap-2 sm:gap-4`;
-const NavRight = tw.div`flex flex-wrap items-center gap-2 sm:gap-4 lg:gap-6`;
+const NavRow = tw.div`flex items-center gap-2 sm:gap-4 lg:gap-6`;
 const MobileMenu = tw.div`md:hidden absolute top-full left-0 right-0 bg-gray-400 dark:bg-dark-secondary shadow-lg py-2 px-4 flex flex-col gap-2`;
 const NavLink = tw(Link)`
   font-semibold
   cursor-pointer
-  hover:underline
+  px-3
+  sm:px-4
+  py-1.5
+  sm:py-2
+  rounded-lg
+  border
+  border-transparent
+  hover:border-white/50
+  hover:bg-white/10
   transition-all
   duration-200
   text-sm
@@ -69,16 +78,27 @@ const NavLink = tw(Link)`
 const StyledButton = tw.button`
   font-semibold
   cursor-pointer
-  hover:underline
+  px-3
+  sm:px-4
+  py-1.5
+  sm:py-2
+  rounded-lg
+  border
+  border-transparent
+  hover:border-white/50
+  hover:bg-white/10
   transition-all
   duration-200
   text-sm
   sm:text-base
 `;
+const NavItemSeparator = tw.span`border-r border-white/20 mx-1 sm:mx-2 h-6 self-center`;
 const Content = tw.div`
-  mt-16
+  mt-28
+  xl:mt-16
   dark:bg-dark-primary
-  min-h-[calc(100vh-4rem)]
+  min-h-[calc(100vh-7rem)]
+  xl:min-h-[calc(100vh-4rem)]
 `;
 const Footer = tw.footer`
   bg-gray-200
@@ -150,6 +170,7 @@ export const AppContent = ({
     return (savedTheme || "light") as "light" | "dark";
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     if (theme === "dark") {
@@ -171,29 +192,40 @@ export const AppContent = ({
 
   const currentLang = i18n.language;
 
+  const isActivePath = (path: string) => {
+    if (path === "/") return location.pathname === "/";
+    return location.pathname.startsWith(path);
+  };
+
   const navLinks = isAuthenticated ? (
     <>
-      <NavLink to="/dashboard" data-testid="dashboard-link">
+      <NavLink to="/dashboard" data-testid="dashboard-link" className={isActivePath("/dashboard") ? "border-white/50 bg-white/10" : ""}>
         {t("dashboard.title")}
       </NavLink>
-      <NavLink to="/profile" data-testid="my-profile-link">
+      <NavItemSeparator />
+      <NavLink to="/profile" data-testid="my-profile-link" className={isActivePath("/profile") ? "border-white/50 bg-white/10" : ""}>
         {t("myProfile")}
       </NavLink>
       {isAdmin() && (
-        <NavLink to="/users" data-testid="users-link">
-          {t("userlist.title")}
-        </NavLink>
+        <>
+          <NavItemSeparator />
+          <NavLink to="/users" data-testid="users-link" className={isActivePath("/users") ? "border-white/50 bg-white/10" : ""}>
+            {t("userlist.title")}
+          </NavLink>
+        </>
       )}
+      <NavItemSeparator />
       <StyledButton onClick={logoutUser} data-testid="logout-link">
         {t("logout.title")}
       </StyledButton>
     </>
   ) : (
     <>
-      <NavLink to="/signup" data-testid="signup-link">
+      <NavLink to="/signup" data-testid="signup-link" className={isActivePath("/signup") ? "border-white/50 bg-white/10" : ""}>
         {t("signup.title")}
       </NavLink>
-      <NavLink to="/login" data-testid="login-link">
+      <NavItemSeparator />
+      <NavLink to="/login" data-testid="login-link" className={isActivePath("/login") ? "border-white/50 bg-white/10" : ""}>
         {t("login.title")}
       </NavLink>
     </>
@@ -203,38 +235,40 @@ export const AppContent = ({
     <I18nextProvider i18n={i18n}>
       <GlobalErrorDisplay />
       <NavBar data-testid="navbar">
-        <NavLeft>
-          <NavLink to="/" title="Home">
+        {/* Row 1: Home + ThemeSwitcher + Language switcher */}
+        <NavRow data-testid="nav-row-1">
+          <NavLink to="/" title="Home" data-testid="home-link" className={location.pathname === "/" ? "border-white/50 bg-white/10" : ""}>
             {t("home")}
           </NavLink>
+          <NavItemSeparator />
           <ThemeSwitcher onClick={handleThemeSwitch} theme={theme} />
-        </NavLeft>
-        <NavRight data-testid="nav-right">
+          <NavItemSeparator />
+          <LanguageButton
+            onClick={() => changeLanguage("en")}
+            className={currentLang === "en" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
+            data-testid="lang-en"
+          >
+            EN
+          </LanguageButton>
+          <LanguageButton
+            onClick={() => changeLanguage("ml")}
+            className={currentLang === "ml" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
+            data-testid="lang-ml"
+          >
+            ML
+          </LanguageButton>
+          <LanguageButton
+            onClick={() => changeLanguage("ar")}
+            className={currentLang === "ar" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
+            data-testid="lang-ar"
+          >
+            AR
+          </LanguageButton>
+        </NavRow>
+        {/* Row 2: Page header nav links */}
+        <NavRow data-testid="nav-row-2">
           {navLinks}
-          <div className="flex items-center gap-1 pl-2 ml-2 border-l border-white/30">
-            <LanguageButton
-              onClick={() => changeLanguage("en")}
-              className={currentLang === "en" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
-              data-testid="lang-en"
-            >
-              EN
-            </LanguageButton>
-            <LanguageButton
-              onClick={() => changeLanguage("ml")}
-              className={currentLang === "ml" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
-              data-testid="lang-ml"
-            >
-              ML
-            </LanguageButton>
-            <LanguageButton
-              onClick={() => changeLanguage("ar")}
-              className={currentLang === "ar" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
-              data-testid="lang-ar"
-            >
-              AR
-            </LanguageButton>
-          </div>
-        </NavRight>
+        </NavRow>
         {/* Mobile hamburger button - hidden in jsdom (no media query support), visible on real mobile */}
         <button
           className="hidden p-2 text-white"
