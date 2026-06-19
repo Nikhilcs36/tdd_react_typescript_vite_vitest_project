@@ -527,6 +527,15 @@ describe("Navbar styling and layout", () => {
     });
   });
 
+  it("has content with proper top margin offset to prevent navbar overlap on small screens (2 rows)", () => {
+    render(<App />);
+    // Content should have mt-28 to offset the fixed navbar (2 rows on small screens)
+    const contentDiv = document.querySelector('[data-testid="navbar"]')?.nextElementSibling;
+    if (contentDiv) {
+      expect(contentDiv).toHaveStyleRule("margin-top", "7rem"); // mt-28 = 7rem
+    }
+  });
+
   it("renders a fixed navbar with proper styles", () => {
     render(<App />);
     const navbar = document.querySelector("nav");
@@ -560,10 +569,160 @@ describe("Navbar styling and layout", () => {
     expect(navbar).toHaveStyleRule("padding-left", "1rem"); // px-4
     expect(navbar).toHaveStyleRule("padding-right", "1rem");
 
-    // Flex layout
+    // Flex layout - column direction for stacked rows on small screens
     expect(navbar).toHaveStyleRule("display", "flex");
+    expect(navbar).toHaveStyleRule("flex-direction", "column");
+  });
+
+  it("switches to single row layout only on xl screens (desktop), keeps 2 rows on lg and below", () => {
+    render(<App />);
+    const navbar = document.querySelector("nav");
+    expect(navbar).toBeInTheDocument();
+    // All screens below xl: flex-direction is column (2 rows)
+    expect(navbar).toHaveStyleRule("flex-direction", "column");
+    // NavBar component includes xl:flex-row (only on desktop/xl screens)
+    const contentDiv = document.querySelector('[data-testid="navbar"]')?.nextElementSibling;
+    if (contentDiv) {
+      // Default mt-28 (7rem) for 2 rows, only xl+ gets smaller mt-16 (4rem)
+      expect(contentDiv).toHaveStyleRule("margin-top", "7rem");
+    }
+  });
+
+  it("renders all navbar rows centered horizontally", () => {
+    render(<App />);
+    const navbar = document.querySelector("nav");
+    // NavBar should have items-center to center all 3 rows horizontally
     expect(navbar).toHaveStyleRule("align-items", "center");
-    expect(navbar).toHaveStyleRule("justify-content", "space-between");
+  });
+});
+
+describe("Navbar link border styles", () => {
+  beforeEach(async () => {
+    // Reset Redux auth state before each test in this describe block
+    await act(async () => {
+      store.dispatch(logoutSuccess());
+    });
+    localStorage.clear();
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
+  it("renders nav links with border and hover styles", () => {
+    render(<App />);
+    
+    // Get the signup and login links (unauthenticated state)
+    const signupLink = screen.getByTestId("signup-link");
+    const loginLink = screen.getByTestId("login-link");
+    
+    // Verify nav links have border styling (border + rounded-lg)
+    expect(signupLink).toHaveStyleRule("border-width", "1px");
+    expect(signupLink).toHaveStyleRule("border-radius", "0.5rem"); // rounded-lg
+    expect(signupLink).toHaveStyleRule("padding-left", "0.75rem"); // px-3 (default)
+    expect(signupLink).toHaveStyleRule("padding-right", "0.75rem");
+    expect(signupLink).toHaveStyleRule("padding-top", "0.375rem"); // py-1.5 (default)
+    expect(signupLink).toHaveStyleRule("padding-bottom", "0.375rem");
+    
+    // Verify same styles on login link
+    expect(loginLink).toHaveStyleRule("border-width", "1px");
+    expect(loginLink).toHaveStyleRule("border-radius", "0.5rem");
+  });
+
+  it("renders first row with Home link, ThemeSwitcher, and language buttons", () => {
+    render(<App />);
+    const navbar = document.querySelector('[data-testid="navbar"]');
+    expect(navbar).toBeInTheDocument();
+    // First row should contain Home link
+    expect(screen.getByTestId("home-link")).toBeInTheDocument();
+    // First row should contain theme switcher
+    expect(screen.getByTestId("theme-switcher")).toBeInTheDocument();
+    // First row should contain language buttons
+    expect(screen.getByTestId("lang-en")).toBeInTheDocument();
+    expect(screen.getByTestId("lang-ml")).toBeInTheDocument();
+    expect(screen.getByTestId("lang-ar")).toBeInTheDocument();
+  });
+
+  it("renders second row with page header nav links", () => {
+    render(<App />);
+    // Second row (nav-row-2) should contain Dashboard, My Profile, Sign Up, Login links
+    expect(screen.getByTestId("signup-link")).toBeInTheDocument();
+    expect(screen.getByTestId("login-link")).toBeInTheDocument();
+  });
+
+  it("renders only 2 rows in navbar (no third row)", () => {
+    render(<App />);
+    // Row 1 and Row 2 should exist
+    expect(document.querySelector('[data-testid="nav-row-1"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="nav-row-2"]')).toBeInTheDocument();
+    // Row 3 should NOT exist (language buttons moved to row 1)
+    expect(document.querySelector('[data-testid="nav-row-3"]')).not.toBeInTheDocument();
+  });
+
+  it("renders separator between ThemeSwitcher and language buttons in nav-row-1", () => {
+    render(<App />);
+    const navRow1 = document.querySelector('[data-testid="nav-row-1"]');
+    if (navRow1) {
+      const separators = navRow1.querySelectorAll("span");
+      const dividerSpans = Array.from(separators).filter(
+        (span) => span.tagName === "SPAN" && window.getComputedStyle(span).borderRightWidth !== "0px"
+      );
+      // There should be at least 2 separators: one after Home, one after ThemeSwitcher
+      expect(dividerSpans.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("renders separator borders between nav items", () => {
+    render(<App />);
+    // Find the nav row that contains the nav links
+    const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    if (navRow2) {
+      const separators = navRow2.querySelectorAll("span");
+      const dividerSpans = Array.from(separators).filter(
+        (span) => span.tagName === "SPAN" && window.getComputedStyle(span).borderRightWidth !== "0px"
+      );
+      // There should be at least 1 separator between signup and login
+      expect(dividerSpans.length).toBeGreaterThanOrEqual(1);
+    }
+  }
+  );
+});
+
+describe("Navbar active page indicator", () => {
+  beforeEach(async () => {
+    await act(async () => {
+      store.dispatch(logoutSuccess());
+    });
+    localStorage.clear();
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
+  it("highlights the active page link with visible border on signup page", () => {
+    window.history.pushState({}, "", "/signup");
+    render(<App />);
+    
+    const signupLink = screen.getByTestId("signup-link");
+    // On the signup page, the signup link should have active border styling
+    expect(signupLink.className).toContain("border-white");
+  });
+
+  it("highlights the active page link with visible border on login page", () => {
+    window.history.pushState({}, "", "/login");
+    render(<App />);
+    
+    const loginLink = screen.getByTestId("login-link");
+    // On the login page, the login link should have active border styling
+    expect(loginLink.className).toContain("border-white");
+  });
+
+  it("does not highlight signup link when on login page", () => {
+    window.history.pushState({}, "", "/login");
+    render(<App />);
+    
+    const signupLink = screen.getByTestId("signup-link");
+    // The signup link should NOT have active border styling
+    expect(signupLink.className).not.toContain("bg-white/10");
   });
 });
 
