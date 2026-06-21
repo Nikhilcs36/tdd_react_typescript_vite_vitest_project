@@ -18,7 +18,7 @@ import {
 import { defaultService } from "../services/defaultService";
 import "../locale/i18n";
 import i18n from "../locale/i18n";
-import { Form } from "./SignUpPage.styles";
+import { Form, FormWrapper } from "./SignUpPage.styles";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 vi.mock("axios");
@@ -160,6 +160,18 @@ describe("signup page", () => {
       ); // Tailwind green-100
       expect(successMessage).toHaveStyleRule("text-align", "center");
       expect(successMessage).toHaveStyleRule("border-radius", "0.25rem"); // Tailwind rounded (default)
+    });
+
+    describe("FormWrapper spacing", () => {
+      it("should have padding-top (pt-8 = 2rem) to prevent overlap with fixed navbar", () => {
+        const { container } = render(<FormWrapper />);
+        expect(container.firstChild).toHaveStyleRule("padding-top", "2rem");
+      });
+
+      it("should have min-height (min-h-[60vh]) for vertical centering", () => {
+        const { container } = render(<FormWrapper />);
+        expect(container.firstChild).toHaveStyleRule("min-height", "60vh");
+      });
     });
 
     describe("Form responsive width", () => {
