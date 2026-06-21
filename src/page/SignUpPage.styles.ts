@@ -1,6 +1,6 @@
 import tw, { styled } from "twin.macro";
 
-export const FormWrapper = tw.div`min-h-[60vh] flex items-center justify-center bg-gray-100 dark:bg-dark-primary px-4`;
+export const FormWrapper = tw.div`min-h-[60vh] flex items-center justify-center bg-gray-100 dark:bg-dark-primary px-4 pt-8`;
 
 export const Form = tw.form`w-full max-w-lg p-4 bg-white rounded-lg shadow-md dark:bg-dark-secondary`;
 
