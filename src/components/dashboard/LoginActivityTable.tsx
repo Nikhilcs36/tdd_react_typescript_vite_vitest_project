@@ -107,8 +107,8 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({
               <TableHeaderCell>{t('dashboard.row_number', '#')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.username')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.timestamp')}</TableHeaderCell>
-              <TableHeaderCell className="hidden md:table-cell">{t('dashboard.ip_address')}</TableHeaderCell>
-              <TableHeaderCell className="hidden md:table-cell">{t('dashboard.user_agent')}</TableHeaderCell>
+              <TableHeaderCell>{t('dashboard.ip_address')}</TableHeaderCell>
+              <TableHeaderCell>{t('dashboard.user_agent')}</TableHeaderCell>
               <TableHeaderCell>{t('dashboard.status')}</TableHeaderCell>
             </tr>
           </TableHead>
@@ -118,8 +118,8 @@ const LoginActivityTable: React.FC<LoginActivityTableProps> = React.memo(({
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{activity.username}</TableCell>
                 <TableCell>{formatTimestamp(activity.timestamp)}</TableCell>
-                <TableCell className="hidden md:table-cell">{activity.ip_address}</TableCell>
-                <TableCell title={activity.user_agent} className="hidden md:table-cell">
+                <TableCell>{activity.ip_address}</TableCell>
+                <TableCell title={activity.user_agent}>
                   {truncateUserAgent(activity.user_agent)}
                 </TableCell>
                 <TableCell>
