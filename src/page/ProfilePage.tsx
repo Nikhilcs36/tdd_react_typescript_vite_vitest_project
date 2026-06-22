@@ -495,7 +495,7 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
           value={user.active_role}
           onChange={this.handleRoleChange}
           disabled={this.state.isRoleSwitching}
-          className="px-2 py-1 text-xs border border-gray-300 rounded sm:text-sm dark:bg-dark-secondary dark:text-dark-text dark:border-dark-accent"
+          className="px-1.5 py-0.5 text-[10px] border border-gray-300 rounded sm:px-2 sm:py-1 sm:text-xs dark:bg-dark-secondary dark:text-dark-text dark:border-dark-accent"
         >
           {roleOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -650,8 +650,8 @@ class ProfilePage extends Component<ProfilePageProps, ProfilePageState> {
 
     return (
       <ProfileCard>
-        <div className="relative">
-          <div className="absolute top-0 right-0 mt-2 mr-2">
+        <div className="sm:relative">
+          <div className="mb-2 sm:absolute sm:top-0 sm:left-0 sm:mt-2 sm:ml-2 sm:mb-0">
             {this.renderRoleDropdown()}
           </div>
           <div className="flex flex-col items-center">

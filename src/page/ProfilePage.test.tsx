@@ -623,7 +623,7 @@ describe("ProfilePage", () => {
       expect(parentDiv?.className).toContain("items-center");
     });
 
-    it("role dropdown is positioned in top-right with absolute positioning", async () => {
+    it("role dropdown is positioned above profile on small screens and top-left on larger screens", async () => {
       await setup({
         withAuth: true,
         authUser: {
@@ -637,9 +637,37 @@ describe("ProfilePage", () => {
 
       const select = await screen.findByTestId("role-select");
       expect(select).toBeInTheDocument();
-      const absoluteParent = select.closest("[class*='absolute']");
-      expect(absoluteParent?.className).toContain("top-0");
-      expect(absoluteParent?.className).toContain("right-0");
+      // The dropdown wrapper should use responsive absolute positioning (sm: prefix)
+      // On small screens (< sm), it should not be absolutely positioned to avoid overlapping the profile image
+      // On sm+, it should use absolute top-0 left-0 for the top-left corner
+      const absoluteParent = select.closest("[class*='sm:absolute']");
+      expect(absoluteParent).not.toBeNull();
+      expect(absoluteParent?.className).toContain("sm:top-0");
+      expect(absoluteParent?.className).toContain("sm:left-0");
+    });
+
+    it("role dropdown uses smaller padding on small screens", async () => {
+      await setup({
+        withAuth: true,
+        authUser: {
+          is_staff: true,
+          is_superuser: true,
+          staff_access_granted: true,
+          active_role: "superuser",
+          role_label: "Superuser",
+        },
+      });
+
+      const select = await screen.findByTestId("role-select");
+      expect(select).toBeInTheDocument();
+      // On small screens, the select should have smaller padding (px-1.5 py-0.5)
+      // On sm+, it should have normal padding (sm:px-2 sm:py-1)
+      expect(select.className).toContain("px-1.5");
+      expect(select.className).toContain("py-0.5");
+      // The select dropdown should use smaller font size on small screens
+      expect(select.className).toContain("text-[10px]");
+      // On larger screens (sm+), it should use xs (12px) instead of sm (14px) to keep it compact
+      expect(select.className).toContain("sm:text-xs");
     });
 
     it("disables role dropdown while role is switching", async () => {
