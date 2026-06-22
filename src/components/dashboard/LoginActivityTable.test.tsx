@@ -133,6 +133,30 @@ describe('LoginActivityTable', () => {
     expect(mozillaElements[0]).toBeInTheDocument();
   });
 
+  it('should always show all columns including IP Address and User Agent on any screen size', () => {
+    render(<LoginActivityTable loginActivity={mockLoginActivity} loading={false} />);
+
+    // IP Address column should be visible (not hidden on small screens)
+    expect(screen.getByText('192.168.1.100')).toBeInTheDocument();
+    expect(screen.getByText('192.168.1.101')).toBeInTheDocument();
+
+    // User Agent column should be visible (not hidden on small screens)
+    const userAgentCells = screen.getAllByText(/Mozilla/);
+    expect(userAgentCells.length).toBeGreaterThan(0);
+
+    // IP Address and User Agent header cells should NOT have the "hidden" class
+    const table = screen.getByTestId('table-scroll-wrapper').querySelector('table');
+    const headerCells = table?.querySelectorAll('thead th');
+    expect(headerCells).toBeDefined();
+    if (headerCells) {
+      // Header cell index 3 = IP Address, index 4 = User Agent
+      const ipHeader = headerCells[3];
+      const uaHeader = headerCells[4];
+      expect(ipHeader?.className).not.toContain('hidden');
+      expect(uaHeader?.className).not.toContain('hidden');
+    }
+  });
+
   it('should show scroll bar when content exceeds max height', () => {
     // Create enough mock data to exceed max-h-96 (384px)
     // Each row is roughly 50px, so 15 rows = ~750px > 384px
