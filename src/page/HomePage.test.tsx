@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -25,7 +25,9 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
 describe('HomePage', () => {
   afterEach(() => {
-    store.dispatch(logoutSuccess());
+    act(() => {
+      store.dispatch(logoutSuccess());
+    });
   });
 
   it('should render page container', () => {
@@ -73,29 +75,41 @@ describe('HomePage', () => {
 
   describe('when authenticated', () => {
     beforeEach(() => {
-      store.dispatch(loginSuccess({
-        id: 1,
-        username: 'testuser',
-        access: 'mock-access-token',
-        refresh: 'mock-refresh-token',
-        is_staff: false,
-        is_superuser: false,
-        ...defaultAuthFields,
-      }));
+      act(() => {
+        store.dispatch(loginSuccess({
+          id: 1,
+          username: 'testuser',
+          access: 'mock-access-token',
+          refresh: 'mock-refresh-token',
+          is_staff: false,
+          is_superuser: false,
+          ...defaultAuthFields,
+        }));
+      });
     });
 
     afterEach(() => {
-      store.dispatch(logoutSuccess());
+      act(() => {
+        store.dispatch(logoutSuccess());
+      });
     });
 
-    it('should render features/game toggle buttons when authenticated', () => {
-      renderWithProviders(<HomePage />);
+    it('should render features/game toggle buttons when authenticated', async () => {
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      // Flush effects to resolve useSelector subscription re-renders
+      await act(async () => {});
       expect(screen.getByTestId('view-features-btn')).toBeDefined();
       expect(screen.getByTestId('view-game-btn')).toBeDefined();
     });
 
-    it('should show features grid by default when authenticated', () => {
-      renderWithProviders(<HomePage />);
+    it('should show features grid by default when authenticated', async () => {
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      // Flush effects to resolve useSelector subscription re-renders
+      await act(async () => {});
       // Features grid should be visible
       expect(screen.getByTestId('home-features-grid')).toBeDefined();
       // Game container should NOT be visible
@@ -104,43 +118,73 @@ describe('HomePage', () => {
       expect(screen.queryByTestId('feature-game')).toBeNull();
     });
 
-    it('should switch to game section when game button is clicked', () => {
-      renderWithProviders(<HomePage />);
+    it('should switch to game section when game button is clicked', async () => {
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      // Flush effects to resolve useSelector subscription re-renders
+      await act(async () => {});
       // Click on game toggle button
-      fireEvent.click(screen.getByTestId('view-game-btn'));
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('view-game-btn'));
+      });
       // Game container should now be visible
       expect(screen.getByTestId('game-container')).toBeDefined();
       // Features grid should NOT be visible
       expect(screen.queryByTestId('home-features-grid')).toBeNull();
     });
 
-    it('should switch back to features when features button is clicked after switching to game', () => {
-      renderWithProviders(<HomePage />);
+    it('should switch back to features when features button is clicked after switching to game', async () => {
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      // Flush effects to resolve useSelector subscription re-renders
+      await act(async () => {});
       // Switch to game first
-      fireEvent.click(screen.getByTestId('view-game-btn'));
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('view-game-btn'));
+      });
       expect(screen.getByTestId('game-container')).toBeDefined();
       // Switch back to features
-      fireEvent.click(screen.getByTestId('view-features-btn'));
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('view-features-btn'));
+      });
       expect(screen.getByTestId('home-features-grid')).toBeDefined();
       expect(screen.queryByTestId('game-container')).toBeNull();
     });
 
-    it('should render the game section title when game view is selected', () => {
-      renderWithProviders(<HomePage />);
-      fireEvent.click(screen.getByTestId('view-game-btn'));
+    it('should render the game section title when game view is selected', async () => {
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      // Flush effects to resolve useSelector subscription re-renders
+      await act(async () => {});
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('view-game-btn'));
+      });
       expect(screen.getByText(/🎮 Entertainment Zone/)).toBeDefined();
     });
 
-    it('should render the game section tagline when game view is selected', () => {
-      renderWithProviders(<HomePage />);
-      fireEvent.click(screen.getByTestId('view-game-btn'));
+    it('should render the game section tagline when game view is selected', async () => {
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      // Flush effects to resolve useSelector subscription re-renders
+      await act(async () => {});
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('view-game-btn'));
+      });
       expect(
         screen.getByText(/Unlock entertainment/)
       ).toBeDefined();
     });
 
-    it('should not show unauthenticated game feature card', () => {
-      renderWithProviders(<HomePage />);
+    it('should not show unauthenticated game feature card', async () => {
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      // Flush effects to resolve useSelector subscription re-renders
+      await act(async () => {});
       expect(screen.queryByText(t => t.includes('game-unauth'))).toBeNull();
     });
   });

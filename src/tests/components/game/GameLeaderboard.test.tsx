@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import i18n from '../../../locale/i18n';
@@ -34,47 +34,65 @@ const renderWithProviders = (ui: React.ReactElement) => {
 describe('GameLeaderboard', () => {
   beforeEach(() => {
     // Set up admin user
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: 'admin',
-      access: 'mock-admin-token',
-      refresh: 'mock-refresh-token',
-      is_staff: true,
-      is_superuser: true,
-      ...defaultAdminFields,
-    }));
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 1,
+        username: 'admin',
+        access: 'mock-admin-token',
+        refresh: 'mock-refresh-token',
+        is_staff: true,
+        is_superuser: true,
+        ...defaultAdminFields,
+      }));
+    });
   });
 
   afterEach(() => {
-    store.dispatch(logoutSuccess());
+    act(() => {
+      store.dispatch(logoutSuccess());
+    });
   });
 
   it('should not render for non-admin users', () => {
-    store.dispatch(logoutSuccess());
-    store.dispatch(loginSuccess({
-      id: 2,
-      username: 'user',
-      access: 'mock-access-token',
-      refresh: 'mock-refresh-token',
-      is_staff: false,
-      is_superuser: false,
-      ...defaultRegularFields,
-    }));
+    act(() => {
+      store.dispatch(logoutSuccess());
+    });
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 2,
+        username: 'user',
+        access: 'mock-access-token',
+        refresh: 'mock-refresh-token',
+        is_staff: false,
+        is_superuser: false,
+        ...defaultRegularFields,
+      }));
+    });
 
-    const { container } = renderWithProviders(<GameLeaderboard />);
-    expect(container.textContent).toBe('');
+    act(() => {
+      const { container } = renderWithProviders(<GameLeaderboard />);
+      expect(container.textContent).toBe('');
+    });
   });
 
-  it('should show toggle button for admin users', () => {
-    renderWithProviders(<GameLeaderboard />);
+  it('should show toggle button for admin users', async () => {
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
+    // Flush effects to resolve useSelector subscription re-renders
+    await act(async () => {});
     expect(screen.getByTestId('leaderboard-toggle')).toBeDefined();
   });
 
   it('should fetch and display leaderboard entries when opened', async () => {
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Click toggle to open
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for leaderboard table to appear
     await waitFor(() => {
@@ -86,17 +104,27 @@ describe('GameLeaderboard', () => {
     expect(screen.getByText('95.0%')).toBeDefined();
     expect(screen.getByText('user1')).toBeDefined();
     expect(screen.getByText('87.0%')).toBeDefined();
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should toggle open/close (content always mounted for smooth CSS animation)', async () => {
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
+
+    // Flush effects to resolve useSelector subscription re-renders
+    await act(async () => {});
 
     // LeaderboardContent is always mounted (for smooth CSS transition via maxHeight/opacity)
     // Initially closed — no entries fetched yet, so "leaderboard-empty" shows (not the table)
     expect(screen.getByTestId('leaderboard-empty')).toBeDefined();
 
     // Open — content becomes visible via CSS animation + fetches data
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
     await waitFor(() => {
       // After opening, entries are fetched and the leaderboard table renders
       expect(screen.getByTestId('leaderboard-table')).toBeDefined();
@@ -107,7 +135,9 @@ describe('GameLeaderboard', () => {
     expect(screen.getByText('95.0%')).toBeDefined();
 
     // Close — content stays in DOM but is visually hidden (CSS transition hides it)
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
     // Verify the toggle worked by checking the button text changed to "Show"
     expect(screen.getByTestId('leaderboard-toggle').textContent).toBe(
       'Show Leaderboard'
@@ -115,6 +145,9 @@ describe('GameLeaderboard', () => {
     // The table is still in the DOM (not unmounted) because LeaderboardContent keeps
     // its children always-mounted for a smooth CSS fade-out
     expect(screen.getByTestId('leaderboard-table')).toBeDefined();
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should persist toggle button across parent re-renders (no flicker)', async () => {
@@ -150,13 +183,20 @@ describe('GameLeaderboard', () => {
       );
     };
 
-    render(<Wrapper />);
+    await act(async () => {
+      render(<Wrapper />);
+    });
+
+    // Flush effects to resolve useSelector subscription re-renders
+    await act(async () => {});
 
     // Confirm toggle button is initially visible for admin
     expect(screen.getByTestId('leaderboard-toggle')).toBeDefined();
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for entries to load
     await waitFor(() => {
@@ -165,11 +205,16 @@ describe('GameLeaderboard', () => {
     expect(screen.getByText('admin')).toBeDefined();
 
     // Force re-render by clicking button (which dispatches login)
-    fireEvent.click(screen.getByTestId('force-render-button'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('force-render-button'));
+    });
 
     // After re-render, leaderboard toggle and table should STILL be visible (no flicker)
     expect(screen.getByTestId('leaderboard-toggle')).toBeDefined();
     expect(screen.getByTestId('leaderboard-table')).toBeDefined();
     expect(screen.getByText('admin')).toBeDefined();
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 });

@@ -65,7 +65,16 @@ import { getGameLeaderboardPage } from '../../services/gameService';
 
 const createMockStore = (authState: Partial<AuthState> = {}) => {
   const defaultAuthState: AuthState = {
-    user: { id: 1, username: 'admin', is_staff: true, is_superuser: false },
+    user: {
+      id: 1,
+      username: 'admin',
+      is_staff: true,
+      is_superuser: false,
+      logins_remaining_for_staff: 3,
+      staff_access_granted: false,
+      active_role: 'staff',
+      role_label: 'Staff',
+    },
     accessToken: 'mock-admin-token',
     refreshToken: 'mock-refresh-token',
     isAuthenticated: true,
