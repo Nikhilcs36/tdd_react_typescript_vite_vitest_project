@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import i18n from '../../../locale/i18n';
@@ -27,37 +27,45 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
 describe('GameLeaderboard - stale admin state', () => {
   afterEach(() => {
-    store.dispatch(logoutSuccess());
+    act(() => {
+      store.dispatch(logoutSuccess());
+    });
   });
 
   it('should show toggle button when admin state is set AFTER component mount', async () => {
     // Start with non-admin user
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: 'user',
-      access: 'mock-access-token',
-      refresh: 'mock-refresh-token',
-      is_staff: false,
-      is_superuser: false,
-      ...defaultRegularFields,
-    }));
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 1,
+        username: 'user',
+        access: 'mock-access-token',
+        refresh: 'mock-refresh-token',
+        is_staff: false,
+        is_superuser: false,
+        ...defaultRegularFields,
+      }));
+    });
 
     // Mount the component while user is non-admin
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Initially, should not render for non-admin
     expect(screen.queryByTestId('leaderboard-toggle')).toBeNull();
 
     // Now update Redux state to make the user admin (simulating role change)
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: 'admin',
-      access: 'mock-admin-token',
-      refresh: 'mock-refresh-token',
-      is_staff: true,
-      is_superuser: true,
-      ...defaultAuthFields,
-    }));
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 1,
+        username: 'admin',
+        access: 'mock-admin-token',
+        refresh: 'mock-refresh-token',
+        is_staff: true,
+        is_superuser: true,
+        ...defaultAuthFields,
+      }));
+    });
 
     // After Redux state update, the component should now show the toggle button
     // BUG: Currently the useState(() => isAdminFn()) captures the initial non-admin value
@@ -65,32 +73,41 @@ describe('GameLeaderboard - stale admin state', () => {
     await waitFor(() => {
       expect(screen.getByTestId('leaderboard-toggle')).toBeDefined();
     });
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should fetch and display leaderboard entries after admin state is set post-mount', async () => {
     // Start with non-admin user
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: 'user',
-      access: 'mock-access-token',
-      refresh: 'mock-refresh-token',
-      is_staff: false,
-      is_superuser: false,
-      ...defaultRegularFields,
-    }));
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 1,
+        username: 'user',
+        access: 'mock-access-token',
+        refresh: 'mock-refresh-token',
+        is_staff: false,
+        is_superuser: false,
+        ...defaultRegularFields,
+      }));
+    });
 
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Update Redux state to make the user admin
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: 'admin',
-      access: 'mock-admin-token',
-      refresh: 'mock-refresh-token',
-      is_staff: true,
-      is_superuser: true,
-      ...defaultAuthFields,
-    }));
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 1,
+        username: 'admin',
+        access: 'mock-admin-token',
+        refresh: 'mock-refresh-token',
+        is_staff: true,
+        is_superuser: true,
+        ...defaultAuthFields,
+      }));
+    });
 
     // Toggle should appear after admin state update
     await waitFor(() => {
@@ -98,7 +115,9 @@ describe('GameLeaderboard - stale admin state', () => {
     });
 
     // Click to open leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Should fetch and display entries
     await waitFor(() => {
@@ -107,5 +126,8 @@ describe('GameLeaderboard - stale admin state', () => {
 
     expect(screen.getByText('admin')).toBeDefined();
     expect(screen.getByText('95.0%')).toBeDefined();
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 });

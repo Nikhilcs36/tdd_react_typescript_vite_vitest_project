@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { http, HttpResponse } from 'msw';
@@ -23,19 +23,23 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
 describe('GameLeaderboard - response format handling', () => {
   beforeEach(() => {
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: 'admin',
-      access: 'mock-admin-token',
-      refresh: 'mock-refresh-token',
-      is_staff: true,
-      is_superuser: true,
-      ...defaultAuthFields,
-    }));
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 1,
+        username: 'admin',
+        access: 'mock-admin-token',
+        refresh: 'mock-refresh-token',
+        is_staff: true,
+        is_superuser: true,
+        ...defaultAuthFields,
+      }));
+    });
   });
 
   afterEach(() => {
-    store.dispatch(logoutSuccess());
+    act(() => {
+      store.dispatch(logoutSuccess());
+    });
     server.resetHandlers();
   });
 
@@ -64,10 +68,14 @@ describe('GameLeaderboard - response format handling', () => {
       })
     );
 
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for the table to render with data
     await waitFor(() => {
@@ -79,6 +87,9 @@ describe('GameLeaderboard - response format handling', () => {
     expect(screen.getByText('95.0%')).toBeDefined();
     expect(screen.getByText('user1')).toBeDefined();
     expect(screen.getByText('87.0%')).toBeDefined();
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should handle plain array response format (current MSW mock format)', async () => {
@@ -100,10 +111,14 @@ describe('GameLeaderboard - response format handling', () => {
       })
     );
 
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for the table to render with data
     await waitFor(() => {
@@ -115,5 +130,8 @@ describe('GameLeaderboard - response format handling', () => {
     expect(screen.getByText('95.0%')).toBeDefined();
     expect(screen.getByText('user1')).toBeDefined();
     expect(screen.getByText('87.0%')).toBeDefined();
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 });

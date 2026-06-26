@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import i18n from '../../../locale/i18n';
@@ -23,19 +23,23 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
 describe('GameLeaderboard - Scrollable Container', () => {
   beforeEach(() => {
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: 'admin',
-      access: 'mock-admin-token',
-      refresh: 'mock-refresh-token',
-      is_staff: true,
-      is_superuser: true,
-      ...defaultAuthFields,
-    }));
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 1,
+        username: 'admin',
+        access: 'mock-admin-token',
+        refresh: 'mock-refresh-token',
+        is_staff: true,
+        is_superuser: true,
+        ...defaultAuthFields,
+      }));
+    });
   });
 
   afterEach(() => {
-    store.dispatch(logoutSuccess());
+    act(() => {
+      store.dispatch(logoutSuccess());
+    });
     server.resetHandlers();
   });
 
@@ -58,10 +62,14 @@ describe('GameLeaderboard - Scrollable Container', () => {
       })
     );
 
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for entries to load
     await waitFor(() => {
@@ -73,13 +81,20 @@ describe('GameLeaderboard - Scrollable Container', () => {
     const computedStyle = window.getComputedStyle(scrollBody);
     expect(computedStyle.overflowY).toBe('auto');
     expect(computedStyle.maxHeight).toBe('300px');
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should keep table header fixed and not inside the scrollable area', async () => {
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for entries to load
     await waitFor(() => {
@@ -94,13 +109,20 @@ describe('GameLeaderboard - Scrollable Container', () => {
       expect(theadStyle.position).toBe('sticky');
       expect(theadStyle.top).toBe('0px');
     }
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should have the scrollable body as a block-level element for proper overflow', async () => {
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for entries to load
     await waitFor(() => {
@@ -110,6 +132,9 @@ describe('GameLeaderboard - Scrollable Container', () => {
     const scrollBody = screen.getByTestId('leaderboard-scroll-body');
     const computedStyle = window.getComputedStyle(scrollBody);
     expect(computedStyle.display).toBe('block');
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should have table-layout fixed on the table so th and td columns stay aligned', async () => {
@@ -130,10 +155,14 @@ describe('GameLeaderboard - Scrollable Container', () => {
       })
     );
 
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for entries to load
     await waitFor(() => {
@@ -143,13 +172,20 @@ describe('GameLeaderboard - Scrollable Container', () => {
     const table = screen.getByTestId('leaderboard-table');
     const tableStyle = window.getComputedStyle(table);
     expect(tableStyle.tableLayout).toBe('fixed');
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should render a styled th element with background for each column header to prevent bleed-through', async () => {
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for entries to load
     await waitFor(() => {
@@ -164,13 +200,20 @@ describe('GameLeaderboard - Scrollable Container', () => {
     headers.forEach(th => {
       expect(th.className).toBeTruthy();
     });
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 
   it('should have the sticky header above the scrollable body for proper coverage on scroll', async () => {
-    renderWithProviders(<GameLeaderboard />);
+    await act(async () => {
+      renderWithProviders(<GameLeaderboard />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for entries to load
     await waitFor(() => {
@@ -188,5 +231,8 @@ describe('GameLeaderboard - Scrollable Container', () => {
     expect(tableChildren?.[0]?.tagName).toBe('THEAD');
     const tbody = table?.querySelector('tbody');
     expect(tbody).not.toBeNull();
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 });

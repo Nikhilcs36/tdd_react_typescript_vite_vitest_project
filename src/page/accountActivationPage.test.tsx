@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import AccountActivationPage from "./accountActivationPage";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
@@ -210,14 +210,12 @@ describe("Account Activation Page", () => {
     // Ensure spinner disappears after the first activation
     expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
 
-    // Simulate route change by re-rendering with a different token
-    setup("/activate/5678", fetchApiServiceActivation);
+    // Simulate route change by re-rendering with a different token that fails
+    setup("/activate/invalid", fetchApiServiceActivation);
 
     await screen.findByTestId("loading-spinner");
 
-    await waitFor(() => {
-      screen.findByTestId("fail-message");
-    });
+    await screen.findByTestId("fail-message");
 
     // Ensure the spinner disappears after the second activation attempt
     expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();

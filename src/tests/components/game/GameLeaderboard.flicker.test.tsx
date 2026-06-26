@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import i18n from '../../../locale/i18n';
@@ -12,19 +12,23 @@ import { defaultAuthFields } from '../../testAuthHelpers';
 
 describe('GameLeaderboard - no flicker', () => {
   beforeEach(() => {
-    store.dispatch(loginSuccess({
-      id: 1,
-      username: 'admin',
-      access: 'mock-admin-token',
-      refresh: 'mock-refresh-token',
-      is_staff: true,
-      is_superuser: true,
-      ...defaultAuthFields,
-    }));
+    act(() => {
+      store.dispatch(loginSuccess({
+        id: 1,
+        username: 'admin',
+        access: 'mock-admin-token',
+        refresh: 'mock-refresh-token',
+        is_staff: true,
+        is_superuser: true,
+        ...defaultAuthFields,
+      }));
+    });
   });
 
   afterEach(() => {
-    store.dispatch(logoutSuccess());
+    act(() => {
+      store.dispatch(logoutSuccess());
+    });
   });
 
   it('should keep leaderboard table visible across parent re-renders after data is loaded', async () => {
@@ -58,10 +62,14 @@ describe('GameLeaderboard - no flicker', () => {
       );
     };
 
-    render(<Wrapper />);
+    await act(async () => {
+      render(<Wrapper />);
+    });
 
     // Open the leaderboard
-    fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('leaderboard-toggle'));
+    });
 
     // Wait for entries to load
     await waitFor(() => {
@@ -73,12 +81,17 @@ describe('GameLeaderboard - no flicker', () => {
     expect(screen.getByText('95.0%')).toBeDefined();
 
     // Trigger a re-render by dispatching identical auth state
-    fireEvent.click(screen.getByTestId('re-render-trigger'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('re-render-trigger'));
+    });
 
     // The table should STILL be visible immediately after re-render
     // BUG: currently the useMemo recalculates, effect re-fires, loading = true, table disappears
     expect(screen.getByTestId('leaderboard-table')).toBeDefined();
     expect(screen.getByText('admin')).toBeDefined();
     expect(screen.getByText('95.0%')).toBeDefined();
+
+    // Flush any remaining effects
+    await act(async () => {});
   });
 });

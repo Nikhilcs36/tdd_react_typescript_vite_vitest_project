@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, useSearchParams } from 'react-router-dom';
 import VerifyEmailPage from './VerifyEmailPage';
 import { useTranslation } from 'react-i18next';
@@ -176,7 +176,9 @@ describe('VerifyEmailPage', () => {
       expect(screen.getByText('emailVerification.resend.button')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('emailVerification.resend.button'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('emailVerification.resend.button'));
+    });
 
     await waitFor(() => {
       expect(mockResendApiService.post).toHaveBeenCalledWith(
@@ -215,7 +217,9 @@ describe('VerifyEmailPage', () => {
       expect(screen.getByText('emailVerification.resend.button')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('emailVerification.resend.button'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('emailVerification.resend.button'));
+    });
 
     await waitFor(() => {
       expect(screen.getByText('emailVerification.resend.error')).toBeInTheDocument();
@@ -249,7 +253,9 @@ describe('VerifyEmailPage', () => {
     // Button should be enabled initially
     expect(resendButton).not.toBeDisabled();
     
-    fireEvent.click(resendButton);
+    await act(async () => {
+      fireEvent.click(resendButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('emailVerification.resend.success')).toBeInTheDocument();
@@ -289,7 +295,9 @@ describe('VerifyEmailPage', () => {
     // Button should be enabled initially
     expect(resendButton).not.toBeDisabled();
     
-    fireEvent.click(resendButton);
+    await act(async () => {
+      fireEvent.click(resendButton);
+    });
 
     await waitFor(() => {
       // Should show "Email is already verified." not "Verification email sent successfully."
