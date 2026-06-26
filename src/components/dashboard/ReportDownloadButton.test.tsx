@@ -35,7 +35,7 @@ const createMockStore = (dashboardState: Partial<DashboardState> = {}, authState
   };
 
   const defaultAuthState: AuthState = {
-    user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false },
+    user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false, logins_remaining_for_staff: 3, staff_access_granted: false, active_role: 'regular', role_label: 'Regular' },
     accessToken: 'fake-token',
     refreshToken: 'fake-refresh-token',
     isAuthenticated: true,
