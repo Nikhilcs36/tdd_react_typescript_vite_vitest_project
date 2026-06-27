@@ -8,7 +8,6 @@ vi.mock("secure-ls", () => createSecureLSMock(mockSecureLS));
 // Import modules that use secure-ls after the mock is set up
 import { loginSuccess, logoutSuccess } from "./actions";
 import { createStore } from "./index";
-import { defaultAuthFields } from "../tests/testAuthHelpers";
 
 describe("Auth Slice", () => {
   beforeEach(() => {
@@ -19,7 +18,16 @@ describe("Auth Slice", () => {
   it("should properly clear auth state and session storage on logout", async () => {
     // Setup: Create store and login a user
     const store = createStore();
-    const testUser = { id: 1, username: "testuser", is_staff: false, is_superuser: false, ...defaultAuthFields };
+    const testUser = {
+      id: 1,
+      username: "testuser",
+      is_staff: false,
+      is_superuser: false,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: false,
+      active_role: 'regular' as const,
+      role_label: 'Regular',
+    };
 
     // Dispatch login action
     store.dispatch(
@@ -60,7 +68,16 @@ describe("Auth Slice", () => {
 
   it("should store tokens in SecureLS and restore auth state from session storage on store creation", () => {
     const store = createStore();
-    const testUser = { id: 1, username: "testuser", is_staff: false, is_superuser: false, ...defaultAuthFields };
+    const testUser = {
+      id: 1,
+      username: "testuser",
+      is_staff: false,
+      is_superuser: false,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: false,
+      active_role: 'regular' as const,
+      role_label: 'Regular',
+    };
     const testAccessToken = "test-access-token";
     const testRefreshToken = "test-refresh-token";
 

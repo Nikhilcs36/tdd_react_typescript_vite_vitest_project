@@ -12,7 +12,6 @@ import { createStore } from "../store";
 import { Provider } from "react-redux";
 import { ProfilePageWrapper } from "./ProfilePage";
 import { loginSuccess } from "../store/actions";
-import { defaultAuthFields } from "../tests/testAuthHelpers";
 import i18n from "../locale/i18n";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { axiosApiServiceUpdateUserWithFile } from "../services/apiService";
@@ -103,7 +102,10 @@ describe("ProfilePage", () => {
             refresh: "test-refresh-token",
             is_staff: false,
             is_superuser: false,
-            ...defaultAuthFields,
+            logins_remaining_for_staff: 0,
+            staff_access_granted: false,
+            active_role: 'regular' as const,
+            role_label: 'Regular',
             ...authUser,
           })
         );

@@ -61,6 +61,10 @@ describe("useLogout Hook", () => {
         refresh: "mock-refresh-token",
         is_staff: false,
         is_superuser: false,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: false,
+        active_role: 'regular' as const,
+        role_label: 'Regular',
     })
     );
   });

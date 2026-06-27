@@ -12,7 +12,6 @@ import { createStore } from "../store";
 import { Provider } from "react-redux";
 import { UserPageWrapper } from "./UserPage";
 import { loginSuccess } from "../store/actions";
-import { defaultAuthFields } from "../tests/testAuthHelpers";
 import i18n from "../locale/i18n";
 import { fetchApiServiceDeleteUser } from "../services/apiService";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
@@ -81,7 +80,10 @@ describe("UserPage", () => {
             refresh: "test-refresh-token",
             is_staff: false,
             is_superuser: false,
-            ...defaultAuthFields,
+            logins_remaining_for_staff: 0,
+            staff_access_granted: false,
+            active_role: 'regular' as const,
+            role_label: 'Regular',
           })
         );
       });
@@ -361,7 +363,10 @@ describe("UserPage", () => {
             refresh: "mock-refresh-token",
             is_staff: false,
             is_superuser: false,
-            ...defaultAuthFields,
+            logins_remaining_for_staff: 0,
+            staff_access_granted: false,
+            active_role: 'regular' as const,
+            role_label: 'Regular',
           })
         );
       });

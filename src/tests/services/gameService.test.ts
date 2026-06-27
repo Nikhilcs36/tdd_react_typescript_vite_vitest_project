@@ -28,6 +28,10 @@ const setAuthState = (token: string | null, isStaff: boolean = false) => {
     refresh: 'mock-refresh-token',
     is_staff: isStaff,
     is_superuser: isStaff,
+    logins_remaining_for_staff: 0,
+    staff_access_granted: isStaff,
+    active_role: isStaff ? 'staff' as const : 'regular' as const,
+    role_label: isStaff ? 'Staff' : 'Regular',
   }));
 };
 

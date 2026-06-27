@@ -6,7 +6,6 @@ import i18n from '../../../locale/i18n';
 import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
 import { loginSuccess, logoutSuccess } from '../../../store/actions';
-import { defaultAuthFields } from '../../testAuthHelpers';
 
 // renderWithProviders not used here — this test uses a custom Wrapper component
 
@@ -20,7 +19,10 @@ describe('GameLeaderboard - no flicker', () => {
         refresh: 'mock-refresh-token',
         is_staff: true,
         is_superuser: true,
-        ...defaultAuthFields,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: true,
+        active_role: 'staff' as const,
+        role_label: 'Staff',
       }));
     });
   });
@@ -50,7 +52,10 @@ describe('GameLeaderboard - no flicker', () => {
                     refresh: 'mock-refresh-token',
                     is_staff: true,
                     is_superuser: true,
-                    ...defaultAuthFields,
+                    logins_remaining_for_staff: 0,
+                    staff_access_granted: true,
+                    active_role: 'staff' as const,
+                    role_label: 'Staff',
     }));
                 }}
               >

@@ -9,7 +9,6 @@ import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
 import { loginSuccess, logoutSuccess } from '../../../store/actions';
 import { API_ENDPOINTS } from '../../../services/apiEndpoints';
-import { defaultAuthFields } from '../../testAuthHelpers';
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
@@ -44,7 +43,10 @@ describe('GameLeaderboard - load more pagination', () => {
         refresh: 'mock-refresh-token',
         is_staff: true,
         is_superuser: true,
-        ...defaultAuthFields,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: true,
+        active_role: 'staff' as const,
+        role_label: 'Staff',
       }));
     });
   });

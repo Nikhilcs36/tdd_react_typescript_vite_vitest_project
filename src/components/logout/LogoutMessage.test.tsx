@@ -35,6 +35,10 @@ describe("Logout Message Component", () => {
           refresh: "valid-refresh-token",
           is_staff: false,
           is_superuser: false,
+          logins_remaining_for_staff: 0,
+          staff_access_granted: false,
+          active_role: 'regular' as const,
+          role_label: 'Regular',
     })
       );
     });
@@ -64,7 +68,11 @@ describe("Logout Message Component", () => {
           access: "token1",
           refresh: "refresh-token1",
           is_staff: false,
-          is_superuser: false
+          is_superuser: false,
+          logins_remaining_for_staff: 0,
+          staff_access_granted: false,
+          active_role: 'regular' as const,
+          role_label: 'Regular',
     })
       );
     });
@@ -86,7 +94,11 @@ describe("Logout Message Component", () => {
           access: "token2",
           refresh: "refresh-token2",
           is_staff: false,
-          is_superuser: false
+          is_superuser: false,
+          logins_remaining_for_staff: 0,
+          staff_access_granted: false,
+          active_role: 'regular' as const,
+          role_label: 'Regular',
     })
       );
     });
@@ -123,6 +135,10 @@ describe("Logout Message Component", () => {
             refresh: "valid-refresh-token",
             is_staff: false,
             is_superuser: false,
+            logins_remaining_for_staff: 0,
+            staff_access_granted: false,
+            active_role: 'regular' as const,
+            role_label: 'Regular',
     })
         );
       });

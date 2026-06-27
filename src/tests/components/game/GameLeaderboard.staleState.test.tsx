@@ -6,14 +6,6 @@ import i18n from '../../../locale/i18n';
 import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
 import { loginSuccess, logoutSuccess } from '../../../store/actions';
-import { defaultAuthFields } from '../../testAuthHelpers';
-
-const defaultRegularFields = {
-  logins_remaining_for_staff: 3,
-  staff_access_granted: false,
-  active_role: 'regular' as const,
-  role_label: 'Regular',
-};
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
@@ -42,7 +34,10 @@ describe('GameLeaderboard - stale admin state', () => {
         refresh: 'mock-refresh-token',
         is_staff: false,
         is_superuser: false,
-        ...defaultRegularFields,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: false,
+        active_role: 'regular' as const,
+        role_label: 'Regular',
       }));
     });
 
@@ -63,7 +58,10 @@ describe('GameLeaderboard - stale admin state', () => {
         refresh: 'mock-refresh-token',
         is_staff: true,
         is_superuser: true,
-        ...defaultAuthFields,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: true,
+        active_role: 'staff' as const,
+        role_label: 'Staff',
       }));
     });
 
@@ -88,7 +86,10 @@ describe('GameLeaderboard - stale admin state', () => {
         refresh: 'mock-refresh-token',
         is_staff: false,
         is_superuser: false,
-        ...defaultRegularFields,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: false,
+        active_role: 'regular' as const,
+        role_label: 'Regular',
       }));
     });
 
@@ -105,7 +106,10 @@ describe('GameLeaderboard - stale admin state', () => {
         refresh: 'mock-refresh-token',
         is_staff: true,
         is_superuser: true,
-        ...defaultAuthFields,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: true,
+        active_role: 'staff' as const,
+        role_label: 'Staff',
       }));
     });
 
