@@ -12,7 +12,6 @@ import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
 import store, { createStore } from "./store";
 import { loginSuccess, logoutSuccess } from "./store/actions";
-import { defaultAuthFields } from "./tests/testAuthHelpers";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
@@ -70,7 +69,10 @@ const mockAuth = (
     email: "user1@mail.com",
     is_staff: false,
     is_superuser: false,
-    ...defaultAuthFields,
+    logins_remaining_for_staff: 0,
+    staff_access_granted: false,
+    active_role: 'regular' as const,
+    role_label: 'Regular',
     ...userOverrides,
   };
   if (isAuthenticated) {
@@ -216,7 +218,10 @@ describe("Routing", () => {
       email: "user1@mail.com",
       is_staff: false,
       is_superuser: false,
-      ...defaultAuthFields,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: false,
+      active_role: 'regular' as const,
+      role_label: 'Regular',
     }
   ) => {
     // Updated user default
@@ -245,7 +250,10 @@ describe("Routing", () => {
               email: "user1@mail.com",
               is_staff: false,
               is_superuser: false,
-              ...defaultAuthFields,
+              logins_remaining_for_staff: 0,
+              staff_access_granted: false,
+              active_role: 'regular' as const,
+              role_label: 'Regular',
             }
           : user;
       store.dispatch(loginSuccess(userToDispatch as any));
@@ -374,7 +382,10 @@ describe("Routing", () => {
       email: "user1@mail.com",
       is_staff: false,
       is_superuser: false,
-      ...defaultAuthFields,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: false,
+      active_role: 'regular' as const,
+      role_label: 'Regular',
     };
     store.dispatch(loginSuccess(mockUser));
 
@@ -410,7 +421,10 @@ describe("Routing", () => {
       email: "user2@mail.com",
       is_staff: true,
       is_superuser: true,
-      ...defaultAuthFields,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: true,
+      active_role: 'staff' as const,
+      role_label: 'Staff',
     };
     store.dispatch(loginSuccess(mockAdminUser2));
 
@@ -855,6 +869,9 @@ describe("Authentication navbar visible", () => {
             email: "admin@example.com",
             is_staff: true,
             is_superuser: true,
+            active_role: 'superuser' as const,
+            staff_access_granted: true,
+            role_label: 'Superuser',
           });
         });
         setup("/", "en");
@@ -894,6 +911,9 @@ describe("Authentication navbar visible", () => {
           email: "admin@example.com",
           is_staff: true,
           is_superuser: true,
+          active_role: 'superuser' as const,
+          staff_access_granted: true,
+          role_label: 'Superuser',
         });
       });
 
@@ -1348,7 +1368,10 @@ describe("Protected Route", () => {
       email: "admin@example.com",
       is_staff: true,
       is_superuser: true,
-      ...defaultAuthFields,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: true,
+      active_role: 'staff' as const,
+      role_label: 'Staff',
     };
     store.dispatch(loginSuccess(adminUser));
 
@@ -1378,7 +1401,10 @@ describe("Protected Route", () => {
       email: "regular@example.com",
       is_staff: false,
       is_superuser: false,
-      ...defaultAuthFields,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: false,
+      active_role: 'regular' as const,
+      role_label: 'Regular',
     };
     store.dispatch(loginSuccess(regularUser));
 
@@ -1455,14 +1481,20 @@ describe("Navbar persistence with sessionStorage", () => {
       refresh: "mock-jwt-refresh-token",
       is_staff: false,
       is_superuser: false,
-      ...defaultAuthFields,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: false,
+      active_role: 'regular' as const,
+      role_label: 'Regular',
     };
     const expectedUser = {
       id: 5,
       username: "persistedUser",
       is_staff: false,
       is_superuser: false,
-      ...defaultAuthFields,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: false,
+      active_role: 'regular' as const,
+      role_label: 'Regular',
     };
 
     // Render the app with the Redux provider
@@ -1528,7 +1560,10 @@ describe("Navbar persistence with sessionStorage", () => {
       refresh: "mock-admin-refresh-token",
       is_staff: true,
       is_superuser: true,
-      ...defaultAuthFields,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: true,
+      active_role: 'staff' as const,
+      role_label: 'Staff',
     };
 
     // Render the app with the Redux provider

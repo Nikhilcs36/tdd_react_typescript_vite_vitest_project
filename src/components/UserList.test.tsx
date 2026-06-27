@@ -51,6 +51,10 @@ const setup = (authenticated = false, isAdmin = false) => {
         refresh: "mock-refresh-token",
         is_staff: isAdmin,
         is_superuser: isAdmin,
+        logins_remaining_for_staff: 0,
+        staff_access_granted: isAdmin,
+        active_role: isAdmin ? 'staff' as const : 'regular' as const,
+        role_label: isAdmin ? 'Staff' : 'Regular',
     })
     );
   } else {
@@ -708,6 +712,10 @@ describe("User List", () => {
           refresh: "mock-refresh-token",
           is_staff: false,
           is_superuser: false,
+          logins_remaining_for_staff: 0,
+          staff_access_granted: false,
+          active_role: 'regular' as const,
+          role_label: 'Regular',
     })
       );
 
@@ -750,6 +758,10 @@ describe("User List", () => {
           refresh: "mock-refresh-token",
           is_staff: false,
           is_superuser: false,
+          logins_remaining_for_staff: 0,
+          staff_access_granted: false,
+          active_role: 'regular' as const,
+          role_label: 'Regular',
     })
       );
 
@@ -814,6 +826,10 @@ describe("User List", () => {
           refresh: "mock-refresh-token",
           is_staff: false,
           is_superuser: false,
+          logins_remaining_for_staff: 0,
+          staff_access_granted: false,
+          active_role: 'regular' as const,
+          role_label: 'Regular',
     })
       );
 

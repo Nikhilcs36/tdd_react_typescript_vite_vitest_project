@@ -6,7 +6,6 @@ import i18n from '../locale/i18n';
 import store from '../store';
 import HomePage from './HomePage';
 import { loginSuccess, logoutSuccess } from '../store/actions';
-import { defaultAuthFields } from '../tests/testAuthHelpers';
 
 // Mock DrawCircleGame since it makes API calls
 vi.mock('../components/game/DrawCircleGame', () => ({
@@ -83,7 +82,10 @@ describe('HomePage', () => {
           refresh: 'mock-refresh-token',
           is_staff: false,
           is_superuser: false,
-          ...defaultAuthFields,
+          logins_remaining_for_staff: 0,
+          staff_access_granted: false,
+          active_role: 'regular' as const,
+          role_label: 'Regular',
         }));
       });
     });
