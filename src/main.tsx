@@ -35,6 +35,12 @@ faviconLink.type = 'image/svg+xml';
 faviconLink.href = '/favicon.svg';
 document.head.appendChild(faviconLink);
 
+// Prevent Google Translate popup when lang is set to non-English
+const notranslateMeta = document.createElement('meta');
+notranslateMeta.name = 'google';
+notranslateMeta.content = 'notranslate';
+document.head.appendChild(notranslateMeta);
+
 export const renderApp = () => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
