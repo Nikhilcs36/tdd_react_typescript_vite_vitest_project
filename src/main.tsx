@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import GlobalStyles from './styles/GlobalStyles.tsx'
+import i18n from './locale/i18n'
 
 // Initialize theme before React hydration
 export const initializeTheme = () => {
@@ -14,7 +15,16 @@ export const initializeTheme = () => {
   }
 };
 
+// Initialize language before React hydration
+export const initializeLanguage = () => {
+  const savedLanguage = localStorage.getItem('language');
+  if (savedLanguage) {
+    i18n.changeLanguage(savedLanguage);
+  }
+};
+
 initializeTheme();
+initializeLanguage();
 
 document.title = 'Login Tracking Dashboard';
 

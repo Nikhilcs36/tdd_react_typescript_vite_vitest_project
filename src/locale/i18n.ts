@@ -1,8 +1,10 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
+const savedLanguage = localStorage.getItem("language");
+
 i18n.use(initReactI18next).init({
-  lng: "en",
+  lng: savedLanguage || "en",
   fallbackLng: "en",
   supportedLngs: ["en", "ar", "ml"],
   interpolation: {
@@ -1034,9 +1036,13 @@ i18n.use(initReactI18next).init({
 });
 
 i18n.on("languageChanged", (lng) => {
+  localStorage.setItem("language", lng);
+});
+
+i18n.on("languageChanged", (lng) => {
   const html = document.documentElement;
   html.lang = lng;
-  html.dir = i18n.dir(lng); // This will set 'rtl' for Arabic
+  html.dir = i18n.dir(lng);
 });
 
 export default i18n;
