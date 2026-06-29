@@ -16,6 +16,14 @@ describe('Favicon', () => {
   });
 });
 
+describe('Google Translate Prevention', () => {
+  it('should have notranslate meta tag to prevent Google Translate popup', () => {
+    const meta = document.querySelector('meta[name="google"]');
+    expect(meta).not.toBeNull();
+    expect(meta?.getAttribute('content')).toBe('notranslate');
+  });
+});
+
 describe('Theme Initialization', () => {
   afterEach(() => {
     localStorage.clear();
