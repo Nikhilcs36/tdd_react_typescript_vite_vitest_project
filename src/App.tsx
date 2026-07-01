@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import { I18nextProvider, useTranslation } from "react-i18next";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import i18n from "./locale/i18n";
 import SignUpPage from "./page/SignUpPage";
 import HomePage from "./page/HomePage";
@@ -216,44 +216,46 @@ export const AppContent = ({
 
   const currentLang = i18n.language;
 
-  const isActivePath = (path: string) => {
-    if (path === "/") return location.pathname === "/";
-    return location.pathname.startsWith(path);
-  };
-
-  const navLinks = isAuthenticated ? (
-    <>
-      <NavLink to="/dashboard" data-testid="dashboard-link" className={isActivePath("/dashboard") ? "border-white/50 bg-white/10" : ""}>
-        {t("dashboard.title")}
-      </NavLink>
-      <NavItemSeparator />
-      <NavLink to="/profile" data-testid="my-profile-link" className={isActivePath("/profile") ? "border-white/50 bg-white/10" : ""}>
-        {t("myProfile")}
-      </NavLink>
-      {isAdmin() && (
-        <>
-          <NavItemSeparator />
-          <NavLink to="/users" data-testid="users-link" className={isActivePath("/users") ? "border-white/50 bg-white/10" : ""}>
-            {t("userlist.title")}
-          </NavLink>
-        </>
-      )}
-      <NavItemSeparator />
-      <StyledButton onClick={logoutUser} data-testid="logout-link">
-        {t("logout.title")}
-      </StyledButton>
-    </>
-  ) : (
-    <>
-      <NavLink to="/signup" data-testid="signup-link" className={isActivePath("/signup") ? "border-white/50 bg-white/10" : ""}>
-        {t("signup.title")}
-      </NavLink>
-      <NavItemSeparator />
-      <NavLink to="/login" data-testid="login-link" className={isActivePath("/login") ? "border-white/50 bg-white/10" : ""}>
-        {t("login.title")}
-      </NavLink>
-    </>
-  );
+  // Memoize navLinks to prevent useEffect from running on every render
+  const navLinks = useMemo(() => {
+    const active = (path: string) => {
+      if (path === "/") return location.pathname === "/";
+      return location.pathname.startsWith(path);
+    };
+    return isAuthenticated ? (
+      <>
+        <NavLink to="/dashboard" data-testid="dashboard-link" className={active("/dashboard") ? "border-white/50 bg-white/10" : ""}>
+          {t("dashboard.title")}
+        </NavLink>
+        <NavItemSeparator />
+        <NavLink to="/profile" data-testid="my-profile-link" className={active("/profile") ? "border-white/50 bg-white/10" : ""}>
+          {t("myProfile")}
+        </NavLink>
+        {isAdmin() && (
+          <>
+            <NavItemSeparator />
+            <NavLink to="/users" data-testid="users-link" className={active("/users") ? "border-white/50 bg-white/10" : ""}>
+              {t("userlist.title")}
+            </NavLink>
+          </>
+        )}
+        <NavItemSeparator />
+        <StyledButton onClick={logoutUser} data-testid="logout-link">
+          {t("logout.title")}
+        </StyledButton>
+      </>
+    ) : (
+      <>
+        <NavLink to="/signup" data-testid="signup-link" className={active("/signup") ? "border-white/50 bg-white/10" : ""}>
+          {t("signup.title")}
+        </NavLink>
+        <NavItemSeparator />
+        <NavLink to="/login" data-testid="login-link" className={active("/login") ? "border-white/50 bg-white/10" : ""}>
+          {t("login.title")}
+        </NavLink>
+      </>
+    );
+  }, [isAuthenticated, isAdmin, t, location.pathname, logoutUser]);
 
   // Track scroll position for Malayalam scrollable row
   useEffect(() => {
