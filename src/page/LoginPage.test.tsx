@@ -727,15 +727,17 @@ describe("Login Page", () => {
           password: "Password1",
         });
 
-        expect(mockedAxios.post).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.any(Object),
-          expect.objectContaining({
-            headers: expect.objectContaining({
-              "Accept-Language": lang,
-            }),
-          })
-        );
+        await waitFor(() => {
+          expect(mockedAxios.post).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.any(Object),
+            expect.objectContaining({
+              headers: expect.objectContaining({
+                "Accept-Language": lang,
+              }),
+            })
+          );
+        });
       }
     );
   });
