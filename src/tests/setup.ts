@@ -5,6 +5,14 @@ import "jest-styled-components";
 // Import MSW server
 import { server } from "../tests/mocks/server";
 
+// Polyfill ResizeObserver for jsdom environment
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+window.ResizeObserver = ResizeObserverMock as any;
+
 // Start the server before all tests
 beforeAll(() => server.listen());
 

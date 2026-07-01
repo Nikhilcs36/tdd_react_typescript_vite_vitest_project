@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import { I18nextProvider, useTranslation } from "react-i18next";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import i18n from "./locale/i18n";
 import SignUpPage from "./page/SignUpPage";
 import HomePage from "./page/HomePage";
@@ -57,6 +57,27 @@ const NavBar = tw.nav`
   shadow-lg
 `;
 const NavRow = tw.div`flex items-center gap-2 sm:gap-4 lg:gap-6`;
+// Scrollable variant of NavRow - only used for Malayalam language
+const NavRowScrollable = tw.div`
+  flex
+  items-center
+  gap-2 sm:gap-4 lg:gap-6
+  overflow-x-auto
+  flex-nowrap
+  scroll-smooth
+  max-w-full
+  [-ms-overflow-style:none]
+  [scrollbar-width:none]
+  [mask-image:linear-gradient(to right, transparent 0.5rem, black 1.5rem, black calc(100%-1.5rem), transparent calc(100%-0.5rem))]
+  [-webkit-mask-image:linear-gradient(to right, transparent 0.5rem, black 1.5rem, black calc(100%-1.5rem), transparent calc(100%-0.5rem))]
+`;
+const NavRowScrollWrapper = tw.div`relative max-w-full w-full`;
+const ScrollArrow = tw.button`
+  absolute top-1/2 -translate-y-1/2 z-10
+  w-6 h-6 flex items-center justify-center
+  rounded-full bg-gray-500/80 text-white text-sm shadow-md
+  hover:bg-gray-600 transition-all duration-200 cursor-pointer
+`;
 const MobileMenu = tw.div`md:hidden absolute top-full left-0 right-0 bg-gray-400 dark:bg-dark-secondary shadow-lg py-2 px-4 flex flex-col gap-2`;
 const NavLink = tw(Link)`
   font-semibold
@@ -170,6 +191,9 @@ export const AppContent = ({
     return (savedTheme || "light") as "light" | "dark";
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const navRow2Ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -231,6 +255,35 @@ export const AppContent = ({
     </>
   );
 
+  // Track scroll position for Malayalam scrollable row
+  useEffect(() => {
+    if (currentLang !== 'ml') return;
+    const el = navRow2Ref.current;
+    if (!el) return;
+
+    const check = () => {
+      setCanScrollLeft(el.scrollLeft > 0);
+      setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
+    };
+
+    check();
+    el.addEventListener('scroll', check);
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+
+    return () => {
+      el.removeEventListener('scroll', check);
+      observer.disconnect();
+    };
+  }, [currentLang, navLinks]);
+
+  const scrollRow2 = (direction: 'left' | 'right') => {
+    navRow2Ref.current?.scrollBy({
+      left: direction === 'left' ? -200 : 200,
+      behavior: 'smooth',
+    });
+  };
+
   return (
     <I18nextProvider i18n={i18n}>
       <GlobalErrorDisplay />
@@ -265,10 +318,28 @@ export const AppContent = ({
             AR
           </LanguageButton>
         </NavRow>
-        {/* Row 2: Page header nav links */}
-        <NavRow data-testid="nav-row-2">
-          {navLinks}
-        </NavRow>
+        {/* Row 2: Page header nav links - scrollable only for Malayalam language */}
+        {currentLang === 'ml' ? (
+          <NavRowScrollWrapper data-testid="nav-row-2-wrapper-ml">
+            {canScrollLeft && (
+              <ScrollArrow onClick={() => scrollRow2('left')} style={{ left: 0, transform: 'translate(-50%, -50%)' }} data-testid="scroll-left-arrow">
+                ‹
+              </ScrollArrow>
+            )}
+            <NavRowScrollable ref={navRow2Ref} data-testid="nav-row-2">
+              {navLinks}
+            </NavRowScrollable>
+            {canScrollRight && (
+              <ScrollArrow onClick={() => scrollRow2('right')} style={{ right: 0, transform: 'translate(50%, -50%)' }} data-testid="scroll-right-arrow">
+                ›
+              </ScrollArrow>
+            )}
+          </NavRowScrollWrapper>
+        ) : (
+          <NavRow data-testid="nav-row-2">
+            {navLinks}
+          </NavRow>
+        )}
         {/* Mobile hamburger button - hidden in jsdom (no media query support), visible on real mobile */}
         <button
           className="hidden p-2 text-white"
