@@ -1630,3 +1630,144 @@ describe("Navbar persistence with sessionStorage", () => {
     expect(screen.getByTestId("login-link")).toBeInTheDocument();
   });
 });
+
+describe("Navbar Row 2 language-specific scroll behavior", () => {
+  beforeEach(async () => {
+    // Reset Redux auth state before each test
+    await act(async () => {
+      store.dispatch(logoutSuccess());
+    });
+    localStorage.clear();
+    // Set default language to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
+  it("uses normal NavRow (no scroll) when language is English in unauthenticated state", async () => {
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+    render(<App />);
+    const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    expect(navRow2).toBeInTheDocument();
+    // Should NOT have overflow-x-auto style for English
+    expect(navRow2).not.toHaveStyleRule("overflow-x", "auto");
+    // Should be a plain flex div (NavRow) without scrollable wrapper
+    expect(navRow2?.parentElement).not.toHaveAttribute("data-testid", "nav-row-2-wrapper-ml");
+  });
+
+  it("uses normal NavRow (no scroll) when language is Arabic in unauthenticated state", async () => {
+    await act(async () => {
+      await i18n.changeLanguage("ar");
+    });
+    render(<App />);
+    const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    expect(navRow2).toBeInTheDocument();
+    expect(navRow2).not.toHaveStyleRule("overflow-x", "auto");
+  });
+
+  it("uses NavRowScrollable when language is Malayalam in unauthenticated state", async () => {
+    await act(async () => {
+      await i18n.changeLanguage("ml");
+    });
+    render(<App />);
+    const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    expect(navRow2).toBeInTheDocument();
+    // Should have overflow-x-auto for scrollable behavior
+    expect(navRow2).toHaveStyleRule("overflow-x", "auto");
+    // Should have flex-nowrap to prevent wrapping
+    expect(navRow2).toHaveStyleRule("flex-wrap", "nowrap");
+    // Should be wrapped in the ML-specific scrollable wrapper
+    const wrapper = document.querySelector('[data-testid="nav-row-2-wrapper-ml"]');
+    expect(wrapper).toBeInTheDocument();
+  });
+
+  it("switches Row 2 from scrollable back to normal when switching from ML to EN", async () => {
+    // Start in Malayalam
+    await act(async () => {
+      await i18n.changeLanguage("ml");
+    });
+    const { rerender } = render(<App />);
+    
+    // Verify ML has scrollable row
+    let navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    expect(navRow2).toHaveStyleRule("overflow-x", "auto");
+    
+    // Switch to English
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+    rerender(<App />);
+    
+    // Verify EN has normal row
+    navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    expect(navRow2).not.toHaveStyleRule("overflow-x", "auto");
+  });
+
+  it("uses normal NavRow when logged in as admin with English language", async () => {
+    // Set up admin auth
+    const adminUser = {
+      id: 1,
+      username: "admin",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
+      email: "admin@example.com",
+      is_staff: true,
+      is_superuser: true,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: true,
+      active_role: 'staff' as const,
+      role_label: 'Staff',
+    };
+    await act(async () => {
+      store.dispatch(loginSuccess(adminUser));
+      await i18n.changeLanguage("en");
+    });
+    render(<App />);
+    
+    // Verify admin nav links are present (more items = potential overflow in ML)
+    expect(screen.getByTestId("dashboard-link")).toBeInTheDocument();
+    expect(screen.getByTestId("my-profile-link")).toBeInTheDocument();
+    expect(screen.getByTestId("users-link")).toBeInTheDocument();
+    expect(screen.getByTestId("logout-link")).toBeInTheDocument();
+    
+    // Row 2 should still be normal for English
+    const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    expect(navRow2).not.toHaveStyleRule("overflow-x", "auto");
+  });
+
+  it("uses NavRowScrollable when logged in as admin with Malayalam language", async () => {
+    // Set up admin auth
+    const adminUser = {
+      id: 1,
+      username: "admin",
+      access: "mock-jwt-access-token",
+      refresh: "mock-jwt-refresh-token",
+      email: "admin@example.com",
+      is_staff: true,
+      is_superuser: true,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: true,
+      active_role: 'staff' as const,
+      role_label: 'Staff',
+    };
+    await act(async () => {
+      store.dispatch(loginSuccess(adminUser));
+      await i18n.changeLanguage("ml");
+    });
+    render(<App />);
+    
+    // Verify admin nav links are present with ML text
+    expect(screen.getByTestId("dashboard-link")).toBeInTheDocument();
+    expect(screen.getByTestId("my-profile-link")).toBeInTheDocument();
+    expect(screen.getByTestId("users-link")).toBeInTheDocument();
+    expect(screen.getByTestId("logout-link")).toBeInTheDocument();
+    
+    // Row 2 should be scrollable for Malayalam
+    const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    expect(navRow2).toHaveStyleRule("overflow-x", "auto");
+    const wrapper = document.querySelector('[data-testid="nav-row-2-wrapper-ml"]');
+    expect(wrapper).toBeInTheDocument();
+  });
+});
