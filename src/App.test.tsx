@@ -1789,3 +1789,61 @@ describe("Navbar Row 2 language-specific scroll behavior", () => {
     expect(styleAttr).toContain('mask-image: none');
   });
 });
+
+describe("Navbar alignment for Malayalam language", () => {
+  beforeEach(async () => {
+    await act(async () => {
+      store.dispatch(logoutSuccess());
+    });
+    localStorage.clear();
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  });
+
+  it("uses NavRowScrollWrapper with proper structure for Malayalam right alignment", async () => {
+    // This test verifies the fix for the Malayalam alignment issue:
+    // The NavRowScrollWrapper should have the correct structure and styles
+    // so that on xl screens, it sizes to its content and allows justify-between 
+    // to push it to the right (same as English nav links behavior)
+    await act(async () => {
+      await i18n.changeLanguage("ml");
+    });
+    render(<App />);
+
+    // Verify the ML-specific scrollable wrapper exists
+    const wrapper = document.querySelector('[data-testid="nav-row-2-wrapper-ml"]');
+    expect(wrapper).toBeInTheDocument();
+
+    // Verify the wrapper is a direct child of NavBar (same level as Row 1)
+    // so justify-between can distribute space between them on xl
+    const navbar = document.querySelector('[data-testid="navbar"]');
+    expect(wrapper!.parentElement).toBe(navbar);
+
+    // The wrapper should NOT have flex-grow: 1 (which would prevent right alignment)
+    const wrapperStyle = window.getComputedStyle(wrapper!);
+    expect(wrapperStyle.flexGrow).not.toBe("1");
+
+    // Verify width is set to 100% (w-full) for small screens 
+    // On xl screens, xl:w-auto overrides this for proper right alignment
+    expect(wrapperStyle.width).toBe("100%");
+  });
+
+  it("ensures NavRowScrollWrapper does not use flex-grow to prevent right alignment issue", async () => {
+    // This test specifically validates that the NavRowScrollWrapper
+    // doesn't use any flex-grow property that would prevent justify-between
+    // from correctly aligning it to the right on xl screens
+    await act(async () => {
+      await i18n.changeLanguage("ml");
+    });
+    render(<App />);
+
+    const wrapper = document.querySelector('[data-testid="nav-row-2-wrapper-ml"]');
+    expect(wrapper).toBeInTheDocument();
+
+    // Verify the wrapper does NOT have flex-grow set to 1
+    // flex-grow:1 would make it take all remaining space, breaking right-alignment
+    const wrapperStyle = window.getComputedStyle(wrapper!);
+    expect(wrapperStyle.flexGrow).not.toBe("1");
+  });
+});
