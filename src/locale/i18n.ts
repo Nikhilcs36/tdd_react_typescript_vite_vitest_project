@@ -1,7 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-const savedLanguage = localStorage.getItem("language");
+const savedLanguage = sessionStorage.getItem("language");
 
 i18n.use(initReactI18next).init({
   lng: savedLanguage || "en",
@@ -1036,7 +1036,7 @@ i18n.use(initReactI18next).init({
 });
 
 i18n.on("languageChanged", (lng) => {
-  localStorage.setItem("language", lng);
+  sessionStorage.setItem("language", lng);
 });
 
 i18n.on("languageChanged", (lng) => {

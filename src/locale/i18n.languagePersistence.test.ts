@@ -1,36 +1,36 @@
 import { describe, expect, it, afterEach, beforeEach } from "vitest";
 import i18n from "./i18n";
 
-describe("Language persistence in localStorage", () => {
+describe("Language persistence in sessionStorage", () => {
   beforeEach(async () => {
-    // Ensure we start from a clean state: English language, no localStorage
-    localStorage.removeItem("language");
+    // Ensure we start from a clean state: English language, no sessionStorage
+    sessionStorage.removeItem("language");
     await i18n.changeLanguage("en");
   });
 
   afterEach(() => {
-    // Clean up localStorage after each test
-    localStorage.removeItem("language");
+    // Clean up sessionStorage after each test
+    sessionStorage.removeItem("language");
   });
 
-  it("should persist language to localStorage when language is changed", async () => {
+  it("should persist language to sessionStorage when language is changed", async () => {
     await i18n.changeLanguage("ml");
-    expect(localStorage.getItem("language")).toBe("ml");
+    expect(sessionStorage.getItem("language")).toBe("ml");
   });
 
-  it("should persist Arabic language to localStorage when changed", async () => {
+  it("should persist Arabic language to sessionStorage when changed", async () => {
     await i18n.changeLanguage("ar");
-    expect(localStorage.getItem("language")).toBe("ar");
+    expect(sessionStorage.getItem("language")).toBe("ar");
   });
 
-  it("should restore language from localStorage on i18n initialization", async () => {
+  it("should restore language from sessionStorage on i18n initialization", async () => {
     // Simulate a previously saved language
-    localStorage.setItem("language", "ml");
+    sessionStorage.setItem("language", "ml");
 
     // Re-initialize i18n by calling changeLanguage to simulate what happens on page load
-    // In production, the init function reads localStorage directly
-    // Here we simulate by reading from localStorage and applying it
-    const savedLanguage = localStorage.getItem("language");
+    // In production, the init function reads sessionStorage directly
+    // Here we simulate by reading from sessionStorage and applying it
+    const savedLanguage = sessionStorage.getItem("language");
     if (savedLanguage) {
       await i18n.changeLanguage(savedLanguage);
     }
@@ -38,9 +38,9 @@ describe("Language persistence in localStorage", () => {
     expect(i18n.language).toBe("ml");
   });
 
-  it("should fall back to English when no language is saved in localStorage", async () => {
-    // Ensure no language is in localStorage
-    localStorage.removeItem("language");
+  it("should fall back to English when no language is saved in sessionStorage", async () => {
+    // Ensure no language is in sessionStorage
+    sessionStorage.removeItem("language");
 
     // Reset to English
     await i18n.changeLanguage("en");
@@ -48,14 +48,14 @@ describe("Language persistence in localStorage", () => {
     expect(i18n.language).toBe("en");
   });
 
-  it("should update localStorage when language is changed multiple times", async () => {
+  it("should update sessionStorage when language is changed multiple times", async () => {
     await i18n.changeLanguage("ml");
-    expect(localStorage.getItem("language")).toBe("ml");
+    expect(sessionStorage.getItem("language")).toBe("ml");
 
     await i18n.changeLanguage("ar");
-    expect(localStorage.getItem("language")).toBe("ar");
+    expect(sessionStorage.getItem("language")).toBe("ar");
 
     await i18n.changeLanguage("en");
-    expect(localStorage.getItem("language")).toBe("en");
+    expect(sessionStorage.getItem("language")).toBe("en");
   });
 });
