@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   act,
   cleanup,
@@ -1845,5 +1845,38 @@ describe("Navbar alignment for Malayalam language", () => {
     // flex-grow:1 would make it take all remaining space, breaking right-alignment
     const wrapperStyle = window.getComputedStyle(wrapper!);
     expect(wrapperStyle.flexGrow).not.toBe("1");
+  });
+
+  describe("Global Malayalam font scaling", () => {
+    beforeAll(async () => {
+      // Import the CSS so the html[lang="ml"] rule is processed by PostCSS in jsdom
+      await import("./index.css");
+    });
+
+    it("sets html lang to 'ml' when Malayalam language is active", async () => {
+      await act(async () => {
+        await i18n.changeLanguage("en");
+      });
+      render(<App />);
+      expect(document.documentElement.lang).toBe("en");
+
+      await act(async () => {
+        await i18n.changeLanguage("ml");
+      });
+      expect(document.documentElement.lang).toBe("ml");
+    });
+
+    it("reverts html lang from 'ml' back to 'en' when switching to English", async () => {
+      await act(async () => {
+        await i18n.changeLanguage("ml");
+      });
+      render(<App />);
+      expect(document.documentElement.lang).toBe("ml");
+
+      await act(async () => {
+        await i18n.changeLanguage("en");
+      });
+      expect(document.documentElement.lang).toBe("en");
+    });
   });
 });

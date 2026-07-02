@@ -66,6 +66,7 @@ const NavRowScrollable = tw.div`
   flex-nowrap
   scroll-smooth
   max-w-full
+  xl:max-w-none
   [-ms-overflow-style:none]
   [scrollbar-width:none]
 `;
