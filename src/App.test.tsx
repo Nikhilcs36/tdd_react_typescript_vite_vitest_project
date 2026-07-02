@@ -1770,4 +1770,22 @@ describe("Navbar Row 2 language-specific scroll behavior", () => {
     const wrapper = document.querySelector('[data-testid="nav-row-2-wrapper-ml"]');
     expect(wrapper).toBeInTheDocument();
   });
+
+  it("does not apply fade mask to NavRowScrollable when no scroll arrows are visible", async () => {
+    // In jsdom, content doesn't overflow so canScrollLeft and canScrollRight are both false
+    await act(async () => {
+      await i18n.changeLanguage("ml");
+    });
+    render(<App />);
+    const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
+    expect(navRow2).toBeInTheDocument();
+
+    // Both arrows should NOT be visible (no overflow in jsdom)
+    expect(screen.queryByTestId("scroll-left-arrow")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("scroll-right-arrow")).not.toBeInTheDocument();
+
+    // When no arrows are visible, mask-image should be 'none'
+    const styleAttr = navRow2?.getAttribute('style') || '';
+    expect(styleAttr).toContain('mask-image: none');
+  });
 });

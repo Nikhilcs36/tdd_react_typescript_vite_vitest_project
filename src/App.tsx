@@ -68,8 +68,6 @@ const NavRowScrollable = tw.div`
   max-w-full
   [-ms-overflow-style:none]
   [scrollbar-width:none]
-  [mask-image:linear-gradient(to right, transparent 0.5rem, black 1.5rem, black calc(100%-1.5rem), transparent calc(100%-0.5rem))]
-  [-webkit-mask-image:linear-gradient(to right, transparent 0.5rem, black 1.5rem, black calc(100%-1.5rem), transparent calc(100%-0.5rem))]
 `;
 const NavRowScrollWrapper = tw.div`relative max-w-full w-full`;
 const ScrollArrow = tw.button`
@@ -286,6 +284,21 @@ export const AppContent = ({
     });
   };
 
+  // Dynamic mask based on arrow visibility: fade only on edges where scroll arrows are shown
+  const maskGradient = useMemo(() => {
+    if (currentLang !== 'ml') return 'none';
+    if (canScrollLeft && canScrollRight) {
+      return 'linear-gradient(to right, transparent 0.5rem, black 1.5rem, black calc(100% - 1.5rem), transparent calc(100% - 0.5rem))';
+    }
+    if (canScrollLeft) {
+      return 'linear-gradient(to right, transparent 0.5rem, black 1.5rem)';
+    }
+    if (canScrollRight) {
+      return 'linear-gradient(to right, black calc(100% - 1.5rem), transparent calc(100% - 0.5rem))';
+    }
+    return 'none';
+  }, [currentLang, canScrollLeft, canScrollRight]);
+
   return (
     <I18nextProvider i18n={i18n}>
       <GlobalErrorDisplay />
@@ -328,7 +341,7 @@ export const AppContent = ({
                 ‹
               </ScrollArrow>
             )}
-            <NavRowScrollable ref={navRow2Ref} data-testid="nav-row-2">
+            <NavRowScrollable ref={navRow2Ref} data-testid="nav-row-2" style={{ maskImage: maskGradient, WebkitMaskImage: maskGradient }}>
               {navLinks}
             </NavRowScrollable>
             {canScrollRight && (
