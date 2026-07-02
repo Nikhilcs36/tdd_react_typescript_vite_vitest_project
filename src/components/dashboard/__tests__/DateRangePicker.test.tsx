@@ -485,7 +485,7 @@ describe('DateRangePicker', () => {
       expect(dateInputs?.length).toBe(2);
     });
 
-    it('renders date input wrappers with responsive flex behavior', () => {
+    it('renders date input wrappers with responsive stack layout', () => {
       const { container } = renderWithProviders(<DateRangePicker />);
       
       // Both date input wrapper divs should exist for responsive layout
@@ -493,11 +493,12 @@ describe('DateRangePicker', () => {
       const wrappers = dateRangeContainer?.querySelectorAll(':scope > div');
       expect(wrappers?.length).toBeGreaterThanOrEqual(2);
       
-      // Check first two wrapper divs have flex-1 for mobile responsiveness
+      // Check first two wrapper divs have w-full for mobile (stacked) and sm:w-auto for desktop (side by side)
       wrappers?.forEach((wrapper, index) => {
         if (index < 2) {
           const className = wrapper.getAttribute('class') || '';
-          expect(className).toContain('flex-1');
+          expect(className).toContain('w-full');
+          expect(className).toContain('sm:w-auto');
         }
       });
     });
