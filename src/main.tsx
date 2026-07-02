@@ -17,7 +17,7 @@ export const initializeTheme = () => {
 
 // Initialize language before React hydration
 export const initializeLanguage = () => {
-  const savedLanguage = localStorage.getItem('language');
+  const savedLanguage = sessionStorage.getItem('language');
   if (savedLanguage) {
     i18n.changeLanguage(savedLanguage);
   }
