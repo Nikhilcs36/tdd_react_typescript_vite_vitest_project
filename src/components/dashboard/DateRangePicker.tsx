@@ -125,7 +125,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ disabled = false }) =
       </ButtonGroup>
 
       <DateRangeContainer>
-        <div className="flex flex-col flex-1 min-w-0 gap-1 sm:flex-none">
+        <div className="flex flex-col w-full gap-1 sm:w-auto">
           <Label htmlFor="start-date">{t('dashboard.dateRange.startDate')}</Label>
           <DateInput
             id="start-date"
@@ -138,7 +138,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ disabled = false }) =
           />
         </div>
 
-        <div className="flex flex-col flex-1 min-w-0 gap-1 sm:flex-none">
+        <div className="flex flex-col w-full gap-1 sm:w-auto">
           <Label htmlFor="end-date">{t('dashboard.dateRange.endDate')}</Label>
           <DateInput
             id="end-date"
