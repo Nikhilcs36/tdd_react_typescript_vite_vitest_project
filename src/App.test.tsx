@@ -709,7 +709,7 @@ describe("Malayalam font-size", () => {
             }
           }
         }
-      } catch (e) {
+      } catch (_e) {
         // Cross-origin stylesheets may throw, skip them
       }
     }
