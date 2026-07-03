@@ -52,9 +52,9 @@ describe("Navbar Language Switcher", () => {
     it("displays correct button labels", () => {
       setup();
       
-      expect(screen.getByTestId("lang-en")).toHaveTextContent("EN");
-      expect(screen.getByTestId("lang-ml")).toHaveTextContent("ML");
-      expect(screen.getByTestId("lang-ar")).toHaveTextContent("AR");
+      expect(screen.getByTestId("lang-en")).toHaveTextContent("AB");
+      expect(screen.getByTestId("lang-ml")).toHaveTextContent("അആ");
+      expect(screen.getByTestId("lang-ar")).toHaveTextContent("أب");
     });
 
     it("highlights active language button (English by default)", () => {
@@ -168,20 +168,20 @@ describe("Navbar Language Switcher", () => {
       
       // Check English footer
       const currentYear = new Date().getFullYear();
-      expect(screen.getByTestId("app-footer")).toHaveTextContent(`© ${currentYear} TDD Dashboard. All rights reserved.`);
+      expect(screen.getByTestId("app-footer")).toHaveTextContent(`© ${currentYear} Dashboard. All rights reserved.`);
       
       // Switch to Malayalam
       await userEvent.click(screen.getByTestId("lang-ml"));
       
       await waitFor(() => {
-        expect(screen.getByTestId("app-footer")).toHaveTextContent(`© ${currentYear} TDD ഡാഷ്ബോർഡ്. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തമാണ്.`);
+        expect(screen.getByTestId("app-footer")).toHaveTextContent(`© ${currentYear} ഡാഷ്ബോർഡ്. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തമാണ്.`);
       });
       
       // Switch to Arabic
       await userEvent.click(screen.getByTestId("lang-ar"));
       
       await waitFor(() => {
-        expect(screen.getByTestId("app-footer")).toHaveTextContent(`© ${currentYear} TDD لوحة التحكم. جميع الحقوق محفوظة.`);
+        expect(screen.getByTestId("app-footer")).toHaveTextContent(`© ${currentYear} لوحة التحكم. جميع الحقوق محفوظة.`);
       });
     });
   });
