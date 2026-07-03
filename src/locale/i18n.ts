@@ -18,6 +18,10 @@ i18n.use(initReactI18next).init({
         welcomeMessage: "Monitor login activity, track trends, and analyze user authentication patterns.",
         homepage: {
           featuresTitle: "Features",
+          toggle: {
+            features: "Features",
+            game: "Game",
+          },
           features: {
             auth: "Authentication & Email Verification",
             authDesc: "Secure user registration with email verification and JWT-based authentication.",
@@ -357,7 +361,7 @@ i18n.use(initReactI18next).init({
           }
         },
         footer: {
-          copyright: "© {{year}} TDD Dashboard. All rights reserved.",
+          copyright: "© {{year}} Dashboard. All rights reserved.",
         },
       },
     },
@@ -369,6 +373,10 @@ i18n.use(initReactI18next).init({
         welcomeMessage: "ലോഗിൻ പ്രവർത്തനം നിരീക്ഷിക്കുക, ട്രെൻഡുകൾ ട്രാക്ക് ചെയ്യുക, ഉപയോക്തൃ ആധികാരികത പാറ്റേണുകൾ വിശകലനം ചെയ്യുക.",
         homepage: {
           featuresTitle: "സവിശേഷതകൾ",
+          toggle: {
+            features: "സവിശേഷതകൾ",
+            game: "ഗെയിം",
+          },
           features: {
             auth: "ആധികാരികതയും ഇമെയിൽ സ്ഥിരീകരണവും",
             authDesc: "ഇമെയിൽ സ്ഥിരീകരണവും JWT അടിസ്ഥാനമാക്കിയുള്ള ആധികാരികതയും ഉപയോഗിച്ച് സുരക്ഷിതമായ ഉപയോക്തൃ രജിസ്ട്രേഷൻ.",
@@ -693,7 +701,7 @@ i18n.use(initReactI18next).init({
           }
         },
         footer: {
-          copyright: "© {{year}} TDD ഡാഷ്ബോർഡ്. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തമാണ്.",
+          copyright: "© {{year}} ഡാഷ്ബോർഡ്. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തമാണ്.",
         },
       },
     },
@@ -705,6 +713,10 @@ i18n.use(initReactI18next).init({
         welcomeMessage: "راقب نشاط تسجيل الدخول، تتبع الاتجاهات، وقم بتحليل أنماط المصادقة للمستخدمين.",
         homepage: {
           featuresTitle: "الميزات",
+          toggle: {
+            features: "الميزات",
+            game: "لعبة",
+          },
           features: {
             auth: "المصادقة والتحقق من البريد الإلكتروني",
             authDesc: "تسجيل مستخدم آمن مع التحقق من البريد الإلكتروني والمصادقة القائمة على JWT.",
@@ -1028,7 +1040,7 @@ i18n.use(initReactI18next).init({
           }
         },
         footer: {
-          copyright: "© {{year}} TDD لوحة التحكم. جميع الحقوق محفوظة.",
+          copyright: "© {{year}} لوحة التحكم. جميع الحقوق محفوظة.",
         },
       },
     },

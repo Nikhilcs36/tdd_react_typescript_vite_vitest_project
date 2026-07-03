@@ -67,14 +67,14 @@ const HomePage = () => {
               data-testid="view-features-btn"
               onClick={() => setViewMode('features')}
             >
-              {t('homepage.toggle.features', 'Features')}
+              {t('homepage.toggle.features')}
             </ToggleButtonActive>
             <ToggleButtonActive
               as={viewMode === 'game' ? ToggleButtonActive : ToggleButtonInactive}
               data-testid="view-game-btn"
               onClick={() => setViewMode('game')}
             >
-              🎮 {t('homepage.toggle.game', 'Game')}
+              🎮 {t('homepage.toggle.game')}
             </ToggleButtonActive>
           </ToggleContainer>
         )}

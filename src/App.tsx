@@ -317,21 +317,21 @@ export const AppContent = ({
             className={currentLang === "en" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
             data-testid="lang-en"
           >
-            EN
+            AB
           </LanguageButton>
           <LanguageButton
             onClick={() => changeLanguage("ml")}
             className={currentLang === "ml" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
             data-testid="lang-ml"
           >
-            ML
+            അആ
           </LanguageButton>
           <LanguageButton
             onClick={() => changeLanguage("ar")}
             className={currentLang === "ar" ? "bg-white/30 text-white" : "text-white/80 hover:bg-white/20"}
             data-testid="lang-ar"
           >
-            AR
+            أب
           </LanguageButton>
         </NavRow>
         {/* Row 2: Page header nav links - scrollable only for Malayalam language */}
