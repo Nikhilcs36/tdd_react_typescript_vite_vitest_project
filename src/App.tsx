@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import { I18nextProvider, useTranslation } from "react-i18next";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useLayoutEffect } from "react";
 import i18n from "./locale/i18n";
 import SignUpPage from "./page/SignUpPage";
 import HomePage from "./page/HomePage";
@@ -55,6 +55,7 @@ const NavBar = tw.nav`
   top-0
   z-20
   shadow-lg
+  overflow-hidden
 `;
 const NavRow = tw.div`flex items-center gap-2 sm:gap-4 lg:gap-6`;
 // Scrollable variant of NavRow - only used for Malayalam language
@@ -114,11 +115,7 @@ const StyledButton = tw.button`
 `;
 const NavItemSeparator = tw.span`border-r border-white/20 mx-1 sm:mx-2 h-6 self-center`;
 const Content = tw.div`
-  mt-28
-  xl:mt-16
   dark:bg-dark-primary
-  min-h-[calc(100vh-7rem)]
-  xl:min-h-[calc(100vh-4rem)]
 `;
 const Footer = tw.footer`
   bg-gray-200
@@ -192,7 +189,9 @@ export const AppContent = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [navbarHeight, setNavbarHeight] = useState<number | undefined>(undefined);
   const navRow2Ref = useRef<HTMLDivElement>(null);
+  const navbarRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -256,6 +255,24 @@ export const AppContent = ({
     );
   }, [isAuthenticated, isAdmin, t, location.pathname, logoutUser]);
 
+  // Track navbar height dynamically to prevent content overlap across all languages
+  useLayoutEffect(() => {
+    const el = navbarRef.current;
+    if (!el) return;
+
+    const updateHeight = () => {
+      setNavbarHeight(el.offsetHeight);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [currentLang, navLinks]);
+
   // Track scroll position for Malayalam scrollable row
   useEffect(() => {
     if (currentLang !== 'ml') return;
@@ -303,7 +320,7 @@ export const AppContent = ({
   return (
     <I18nextProvider i18n={i18n}>
       <GlobalErrorDisplay />
-      <NavBar data-testid="navbar">
+      <NavBar ref={navbarRef} data-testid="navbar">
         {/* Row 1: Home + ThemeSwitcher + Language switcher */}
         <NavRow data-testid="nav-row-1">
           <NavLink to="/" title="Home" data-testid="home-link" className={location.pathname === "/" ? "border-white/50 bg-white/10" : ""}>
@@ -398,7 +415,7 @@ export const AppContent = ({
           </MobileMenu>
         )}
       </NavBar>
-      <Content>
+      <Content style={{ marginTop: navbarHeight !== undefined ? navbarHeight : undefined, minHeight: navbarHeight !== undefined ? `calc(100vh - ${navbarHeight}px)` : undefined }}>
         <ErrorBoundary>
           <LogoutMessage />
           <Routes>
