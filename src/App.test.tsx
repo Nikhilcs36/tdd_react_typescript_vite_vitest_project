@@ -543,10 +543,15 @@ describe("Navbar styling and layout", () => {
 
   it("has content with proper top margin offset to prevent navbar overlap on small screens (2 rows)", () => {
     render(<App />);
-    // Content should have mt-28 to offset the fixed navbar (2 rows on small screens)
+    // Content should have dynamic margin-top based on navbar height via inline style
     const contentDiv = document.querySelector('[data-testid="navbar"]')?.nextElementSibling;
     if (contentDiv) {
-      expect(contentDiv).toHaveStyleRule("margin-top", "7rem"); // mt-28 = 7rem
+      // margin-top is now set via inline style (style prop) matching navbar's offsetHeight
+      const navBar = document.querySelector('nav');
+      const expectedMargin = navBar ? `${navBar.offsetHeight}px` : undefined;
+      if (expectedMargin) {
+        expect(contentDiv).toHaveStyle(`margin-top: ${expectedMargin}`);
+      }
     }
   });
 
@@ -594,11 +599,13 @@ describe("Navbar styling and layout", () => {
     expect(navbar).toBeInTheDocument();
     // All screens below xl: flex-direction is column (2 rows)
     expect(navbar).toHaveStyleRule("flex-direction", "column");
-    // NavBar component includes xl:flex-row (only on desktop/xl screens)
+    // Content margin-top is now dynamically set via inline style based on navbar height
     const contentDiv = document.querySelector('[data-testid="navbar"]')?.nextElementSibling;
     if (contentDiv) {
-      // Default mt-28 (7rem) for 2 rows, only xl+ gets smaller mt-16 (4rem)
-      expect(contentDiv).toHaveStyleRule("margin-top", "7rem");
+      const expectedMargin = navbar ? `${navbar.offsetHeight}px` : undefined;
+      if (expectedMargin) {
+        expect(contentDiv).toHaveStyle(`margin-top: ${expectedMargin}`);
+      }
     }
   });
 
