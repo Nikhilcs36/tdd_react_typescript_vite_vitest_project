@@ -615,6 +615,124 @@ describe("Navbar styling and layout", () => {
     // NavBar should have items-center to center all 3 rows horizontally
     expect(navbar).toHaveStyleRule("align-items", "center");
   });
+
+  it("has overflow-hidden on navbar to prevent content overflow", () => {
+    render(<App />);
+    const navbar = document.querySelector("nav");
+    expect(navbar).toHaveStyleRule("overflow", "hidden");
+  });
+});
+
+describe("Malayalam language navbar layout", () => {
+  beforeEach(async () => {
+    await act(async () => {
+      store.dispatch(logoutSuccess());
+    });
+    localStorage.clear();
+    await act(async () => {
+      await i18n.changeLanguage("ml");
+    });
+  });
+
+  it("renders NavRowScrollWrapper with flex justify-center for Malayalam", () => {
+    render(<App />);
+    const scrollWrapper = document.querySelector('[data-testid="nav-row-2-wrapper-ml"]');
+    expect(scrollWrapper).toBeInTheDocument();
+    expect(scrollWrapper).toHaveStyleRule("display", "flex");
+    expect(scrollWrapper).toHaveStyleRule("justify-content", "center");
+  });
+
+  it("shows ml-row-separator when authenticated in Malayalam", async () => {
+    await act(async () => {
+      mockAuth(true);
+    });
+    render(<App />);
+    const separator = screen.queryByTestId("ml-row-separator");
+    expect(separator).toBeInTheDocument();
+  });
+
+  it("does not show ml-row-separator when not authenticated in Malayalam", () => {
+    render(<App />);
+    const separator = screen.queryByTestId("ml-row-separator");
+    expect(separator).not.toBeInTheDocument();
+  });
+
+  it("does not show ml-row-separator in English regardless of auth", async () => {
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+    await act(async () => {
+      mockAuth(true);
+    });
+    render(<App />);
+    const separator = screen.queryByTestId("ml-row-separator");
+    expect(separator).not.toBeInTheDocument();
+  });
+
+  it("does not show ml-row-separator in Arabic regardless of auth", async () => {
+    await act(async () => {
+      await i18n.changeLanguage("ar");
+    });
+    await act(async () => {
+      mockAuth(true);
+    });
+    render(<App />);
+    const separator = screen.queryByTestId("ml-row-separator");
+    expect(separator).not.toBeInTheDocument();
+  });
+});
+
+describe("Malayalam font-size", () => {
+  beforeEach(async () => {
+    await act(async () => {
+      store.dispatch(logoutSuccess());
+    });
+    localStorage.clear();
+  });
+
+  it("does not have a reduced font-size rule for Malayalam language in CSS", async () => {
+    // The html[lang="ml"] { font-size: 87.5% } rule was removed from index.css
+    // Verify no stylesheet contains a rule targeting html[lang="ml"] with font-size
+    for (const sheet of document.styleSheets) {
+      try {
+        const rules = sheet.cssRules || sheet.rules;
+        for (const rule of rules) {
+          if (rule instanceof CSSStyleRule) {
+            const selectorText = rule.selectorText;
+            const cssText = rule.style.cssText;
+            // Check if any rule targets html[lang="ml"] with font-size
+            const targetsMl = selectorText?.includes('html[lang="ml"]') || selectorText?.includes("html[lang='ml']");
+            const hasFontSize = cssText?.includes('font-size');
+            if (targetsMl && hasFontSize) {
+              // If found, it should NOT be 87.5% (the old reduced value)
+              expect(rule.style.fontSize).not.toBe("87.5%");
+            }
+          }
+        }
+      } catch (e) {
+        // Cross-origin stylesheets may throw, skip them
+      }
+    }
+    // Also verify the html element has no inline font-size override when lang is ml
+    await act(async () => {
+      await i18n.changeLanguage("ml");
+    });
+    render(<App />);
+    const htmlEl = document.documentElement;
+    expect(htmlEl.style.fontSize).toBe("");
+  });
+
+  it("does not set inline font-size on html element for any language", async () => {
+    for (const lang of ["en", "ml", "ar"]) {
+      await act(async () => {
+        await i18n.changeLanguage(lang);
+      });
+      render(<App />);
+      const htmlEl = document.documentElement;
+      expect(htmlEl.style.fontSize).toBe("");
+      cleanup();
+    }
+  });
 });
 
 describe("Navbar link border styles", () => {

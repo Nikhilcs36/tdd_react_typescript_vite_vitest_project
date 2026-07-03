@@ -189,5 +189,77 @@ describe('HomePage', () => {
       await act(async () => {});
       expect(screen.queryByText(t => t.includes('game-unauth'))).toBeNull();
     });
+
+    it('displays translated Features toggle button text in English', async () => {
+      await act(async () => {
+        await i18n.changeLanguage("en");
+      });
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      await act(async () => {});
+      const featuresBtn = screen.getByTestId('view-features-btn');
+      expect(featuresBtn).toHaveTextContent('Features');
+    });
+
+    it('displays translated Features toggle button text in Malayalam', async () => {
+      await act(async () => {
+        await i18n.changeLanguage("ml");
+      });
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      await act(async () => {});
+      const featuresBtn = screen.getByTestId('view-features-btn');
+      expect(featuresBtn).toHaveTextContent('സവിശേഷതകൾ');
+    });
+
+    it('displays translated Features toggle button text in Arabic', async () => {
+      await act(async () => {
+        await i18n.changeLanguage("ar");
+      });
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      await act(async () => {});
+      const featuresBtn = screen.getByTestId('view-features-btn');
+      expect(featuresBtn).toHaveTextContent('الميزات');
+    });
+
+    it('displays translated Game toggle button text in English', async () => {
+      await act(async () => {
+        await i18n.changeLanguage("en");
+      });
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      await act(async () => {});
+      const gameBtn = screen.getByTestId('view-game-btn');
+      expect(gameBtn).toHaveTextContent('Game');
+    });
+
+    it('displays translated Game toggle button text in Malayalam', async () => {
+      await act(async () => {
+        await i18n.changeLanguage("ml");
+      });
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      await act(async () => {});
+      const gameBtn = screen.getByTestId('view-game-btn');
+      expect(gameBtn).toHaveTextContent('ഗെയിം');
+    });
+
+    it('displays translated Game toggle button text in Arabic', async () => {
+      await act(async () => {
+        await i18n.changeLanguage("ar");
+      });
+      await act(async () => {
+        renderWithProviders(<HomePage />);
+      });
+      await act(async () => {});
+      const gameBtn = screen.getByTestId('view-game-btn');
+      expect(gameBtn).toHaveTextContent('لعبة');
+    });
   });
 });
