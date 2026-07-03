@@ -353,7 +353,11 @@ export const AppContent = ({
         </NavRow>
         {/* Row 2: Page header nav links - scrollable only for Malayalam language */}
         {currentLang === 'ml' ? (
-          <NavRowScrollWrapper data-testid="nav-row-2-wrapper-ml">
+          <>
+            {isAuthenticated && (
+              <NavItemSeparator data-testid="ml-row-separator" className="hidden xl:inline-flex" />
+            )}
+            <NavRowScrollWrapper data-testid="nav-row-2-wrapper-ml">
             {canScrollLeft && (
               <ScrollArrow onClick={() => scrollRow2('left')} style={{ left: 0, transform: 'translate(-50%, -50%)' }} data-testid="scroll-left-arrow">
                 ‹
@@ -367,7 +371,8 @@ export const AppContent = ({
                 ›
               </ScrollArrow>
             )}
-          </NavRowScrollWrapper>
+            </NavRowScrollWrapper>
+          </>
         ) : (
           <NavRow data-testid="nav-row-2">
             {navLinks}
