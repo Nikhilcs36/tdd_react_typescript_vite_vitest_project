@@ -71,7 +71,7 @@ const NavRowScrollable = tw.div`
   [-ms-overflow-style:none]
   [scrollbar-width:none]
 `;
-const NavRowScrollWrapper = tw.div`relative max-w-full w-full xl:w-auto`;
+const NavRowScrollWrapper = tw.div`relative flex justify-center max-w-full w-full xl:w-auto`;
 const ScrollArrow = tw.button`
   absolute top-1/2 -translate-y-1/2 z-10
   w-6 h-6 flex items-center justify-center
