@@ -35,6 +35,8 @@ import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalErrorDisplay from "./components/GlobalErrorDisplay";
 import { ReactElement } from "react";
+import { PageTransition } from "./components/common/PageTransition";
+import { LanguageTransition } from "./components/common/LanguageTransition";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -423,6 +425,8 @@ export const AppContent = ({
       <Content style={{ marginTop: navbarHeight !== undefined ? navbarHeight : undefined, minHeight: navbarHeight !== undefined ? `calc(100vh - ${navbarHeight}px)` : undefined }}>
         <ErrorBoundary>
           <LogoutMessage />
+          <LanguageTransition>
+          <PageTransition>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route
@@ -497,6 +501,8 @@ export const AppContent = ({
               }
             />
           </Routes>
+          </PageTransition>
+          </LanguageTransition>
         </ErrorBoundary>
       </Content>
       <Footer data-testid="app-footer">
