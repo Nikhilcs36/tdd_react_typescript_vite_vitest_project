@@ -1,6 +1,7 @@
 import axios from "axios";
 import store from "../store";
 import { loginSuccess } from "../store/actions";
+import { setGlobalError } from "../store/globalErrorSlice";
 
 interface TokenResponse {
   access: string;
@@ -8,6 +9,18 @@ interface TokenResponse {
 }
 
 export const REFRESH_TOKEN_URL = '/api/user/token/refresh/';
+
+// Maximum number of retry attempts for refresh token
+export const MAX_RETRIES = 5;
+// Delay between retries in milliseconds
+export const RETRY_DELAY_MS = 1000;
+
+/**
+ * Dedicated axios instance for refresh token calls.
+ * This bypasses the global error interceptor in apiService.ts
+ * to prevent the global error modal from appearing on every refresh failure.
+ */
+const refreshAxios = axios.create();
 
 /**
  * Check if a URL is the token refresh endpoint.
@@ -25,7 +38,7 @@ export const refreshAccessToken = async (): Promise<boolean> => {
       return false;
     }
 
-    const response = await axios.post<TokenResponse>(
+    const response = await refreshAxios.post<TokenResponse>(
       REFRESH_TOKEN_URL,
       { refresh: refreshToken }
     );
@@ -45,6 +58,45 @@ export const refreshAccessToken = async (): Promise<boolean> => {
   } catch (_error) {
     return false;
   }
+};
+
+/**
+ * Attempts to refresh the access token with retry logic.
+ * Retries up to MAX_RETRIES times with a delay between each attempt.
+ * If all attempts fail, dispatches a global error to inform the user.
+ * @returns Promise<boolean> true if refresh succeeded, false if all retries failed
+ */
+export const refreshAccessTokenWithRetry = async (): Promise<boolean> => {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const success = await refreshAccessToken();
+    if (success) {
+      return true;
+    }
+
+    // If no refresh token is available, fail immediately
+    if (!store.getState().auth.refreshToken) {
+      return false;
+    }
+
+    // Wait before retrying (only if not the last attempt)
+    if (attempt < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+    }
+  }
+
+  // All retries failed - dispatch global error to inform the user
+  store.dispatch(
+    setGlobalError({
+      response: {
+        status: 401,
+        data: {
+          message: "Your session refresh failed after multiple attempts. Please log in again.",
+          translationKey: "errors.401.token_invalid_or_expired",
+        },
+      },
+    })
+  );
+  return false;
 };
 
 // Global variable to store the refresh timer
