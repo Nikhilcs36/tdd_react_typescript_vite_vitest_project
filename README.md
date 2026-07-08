@@ -88,7 +88,7 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 - **JWT Token Authentication**: Secure token-based authentication with access and refresh tokens
 - **Protected Routes**: Route guards that redirect unauthenticated users to the home page
 - **Role-based Access**: Admin-only routes protected with `ProtectedRoute` component
-- **Token Management**: Automatic token refresh via axios interceptors on 401 responses
+- **Token Management**: Automatic token refresh via axios interceptors on 401 responses. When a 401 occurs, the dedicated `refreshAxios` instance (bypassing global error interceptors) retries the refresh up to **5 times** with a **1-second delay** between attempts. A global error is dispatched only after all 5 retries fail, preventing premature error modals on transient failures
 - **Secure Token Storage**: Tokens stored in Redux state (in-memory) with encrypted localStorage backup via Secure-LS
 - **RSA-OAEP Password Encryption**: Login passwords encrypted with 2048-bit RSA public key using the Web Crypto API (SubtleCrypto) before transmission over the network
 - **Session Persistence**: Auth state persisted across page refreshes using sessionStorage
@@ -96,12 +96,18 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 - **Axios Interceptors**: Language-aware API headers (Accept-Language) and authorization header management
 
 ### Internationalization (i18n)
-- **Multi-language Support**: Complete translations for English (EN), Malayalam (ML), and Arabic (AR)
+- **Multi-language Support**: Complete translations for English (AB), Malayalam (അആ), and Arabic (أب)
 - **Language Switcher**: Navbar language toggle with active language highlighting
-- **RTL Support**: Right-to-left direction support for Arabic language
 - **Translation Coverage**: All UI text including navigation, forms, dashboards, charts, error messages, and footer
-- **Dynamic Language Switching**: Instant language change without page reload
+- **Dynamic Language Switching**: Instant language change without page reload, animated with CSS keyframes via `LanguageTransition` component
+- **Language Persistence**: Selected language is persisted across page refreshes using `sessionStorage`
 - **Extensible Translation System**: Easy to add new languages via i18n configuration
+- **Chrome Translate Prevention**: `notranslate` meta tag added to `index.html` to prevent Chrome Translate popup from interfering with the built-in i18n system
+
+### Page & Language Transitions
+- **Page Transition Animations**: Smooth CSS keyframe animations when navigating between pages, implemented via `PageTransition` wrapper component
+- **Language Switch Animations**: Animated language switching with CSS keyframes via `LanguageTransition` component, providing a polished UX when toggling between EN, ML, and AR
+- **Reusable Animation System**: Centralized CSS keyframe definitions in `src/styles/animations.ts` for consistent, maintainable animations across the application
 
 ### Dark Mode
 - **Theme Switcher**: Toggle between light and dark themes
@@ -303,8 +309,10 @@ npm run dev
 │   │   └── profile.png
 │   ├── components/                # Reusable React components
 │   │   ├── common/                # Shared components
+│   │   │   ├── LanguageTransition.tsx  # Language switch animation wrapper
 │   │   │   ├── Layout.tsx         # Standardized layout components
-│   │   │   └── Loading.tsx        # Loading spinner component
+│   │   │   ├── Loading.tsx        # Loading spinner component
+│   │   │   └── PageTransition.tsx  # Page navigation animation wrapper
 │   │   ├── dashboard/             # Dashboard-specific components
 │   │   │   ├── ChartModeToggle.tsx       # Chart visualization mode toggle
 │   │   │   ├── DashboardContainer.tsx    # Main dashboard container
@@ -357,7 +365,8 @@ npm run dev
 │   │   ├── globalErrorSlice.ts    # Global error state slice
 │   │   └── userSlice.ts           # User profile state slice
 │   ├── styles/                    # Global styles and theme
-│   │   └── GlobalStyles.tsx       # Global CSS-in-JS styles
+│   │   ├── GlobalStyles.tsx       # Global CSS-in-JS styles
+│   │   └── animations.ts          # CSS keyframe animation definitions (page transitions, language toggles)
 │   ├── tests/                     # Test infrastructure
 │   │   ├── setup.ts               # Vitest setup and configuration
 │   │   ├── testUtils.ts           # Shared test utilities
