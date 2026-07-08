@@ -81,6 +81,8 @@ axios.interceptors.response.use(
 );
 ```
 
+> **Note**: The token refresh mechanism uses a **dedicated `refreshAxios` instance** that bypasses this global error interceptor. This prevents the global error modal from appearing on each individual refresh failure. Instead, the `refreshAccessTokenWithRetry()` function retries the refresh up to **5 times** with a **1-second delay** between attempts, and only dispatches a global error (`setGlobalError`) after all 5 retries fail. See `src/services/tokenService.ts` for implementation details.
+
 #### 4. Component Error Handling
 
 Components are responsible for handling `400 Bad Request` errors, which are typically validation-related.
