@@ -69,6 +69,7 @@ const renderWithProviders = (component: React.ReactElement, dashboardState = {},
 
 describe('ReportDownloadButton', () => {
   beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.clearAllMocks();
     // Ensure document starts without dark class
     document.documentElement.classList.remove('dark');

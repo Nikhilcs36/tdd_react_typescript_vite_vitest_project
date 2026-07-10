@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -69,7 +69,13 @@ describe('DashboardUserList', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Suppress expected console.error from error handling tests to keep test output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     mockGetUsers.mockResolvedValue(mockPaginatedResponse);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('Rendering', () => {

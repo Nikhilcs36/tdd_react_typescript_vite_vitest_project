@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -22,6 +22,11 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
 describe('DrawCircleGame', () => {
   beforeEach(() => {
+    // Suppress expected console.error from error handling tests to keep test output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Mock canvas getContext since jsdom doesn't implement it
+    HTMLCanvasElement.prototype.getContext = vi.fn() as any;
+
     act(() => {
       store.dispatch(loginSuccess({
         id: 1,
@@ -39,6 +44,7 @@ describe('DrawCircleGame', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     act(() => {
       store.dispatch(logoutSuccess());
     });

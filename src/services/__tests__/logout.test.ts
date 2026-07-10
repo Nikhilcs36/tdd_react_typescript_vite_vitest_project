@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { axiosApiServiceLogout, fetchApiServiceLogout } from "../apiService";
 import { API_ENDPOINTS } from "../apiEndpoints";
 
@@ -20,6 +20,15 @@ vi.mock("../../store", () => ({
 }));
 
 describe("Logout Error Handling with MSW", () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("axiosApiServiceLogout", () => {
     it("should handle 'refresh_token_not_valid' error when invalid refresh token provided", async () => {
       // Test the actual MSW handler with invalid refresh token from store

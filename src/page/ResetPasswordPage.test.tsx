@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
-import { vi, beforeEach } from "vitest";
+import { vi, beforeEach, afterEach } from "vitest";
 import { defaultService } from "../services/defaultService";
 import {
   fetchApiServiceResetPassword,
@@ -29,6 +29,8 @@ vi.mock("react-router-dom", async (importOriginal) => {
 });
 
 beforeEach(async () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
+  vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.resetAllMocks();
   mockedNavigate.mockClear();
   window.localStorage.clear();
@@ -36,6 +38,10 @@ beforeEach(async () => {
   await act(async () => {
     await i18n.changeLanguage("en");
   });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 // Helper function to render the component wrapped with Provider and MemoryRouter

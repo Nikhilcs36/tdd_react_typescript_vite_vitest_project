@@ -38,6 +38,9 @@ vi.mock("react-router-dom", async (importOriginal) => {
 
   beforeEach(async () => {
     vi.resetAllMocks();
+    // Suppress expected console.error and console.warn from error handling tests to keep test output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     mockedNavigate.mockClear(); // Clear navigate mock before each test
     store.dispatch(logoutSuccess()); // Reset Redux auth state before each test
     store.dispatch(resetDashboardState()); // Reset dashboard state before each test

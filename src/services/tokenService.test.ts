@@ -30,6 +30,8 @@ const mockedAxios = axios as any;
 describe("tokenService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Suppress expected console.error from error handling tests to keep test output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     store.dispatch(
       loginSuccess({
         id: 1,

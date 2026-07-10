@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import axios from "axios";
-import { vi, beforeEach } from "vitest";
+import { vi, beforeEach, afterEach } from "vitest";
 import { fillAndSubmitSignUpForm } from "../tests/testUtils";
 import {
   axiosApiServiceSignUp,
@@ -25,7 +25,13 @@ vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
 
 beforeEach(() => {
+  // Suppress expected console.error from error handling tests to keep test output clean
+  vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.resetAllMocks();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("signup page", () => {

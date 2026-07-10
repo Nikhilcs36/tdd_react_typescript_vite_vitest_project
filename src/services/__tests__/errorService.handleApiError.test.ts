@@ -1,7 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { handleApiError } from '../errorService';
 
 describe('handleApiError - Centralized API Error Handler', () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   it('should handle network errors (status 0)', () => {
     const networkError = {
       message: 'Network Error',

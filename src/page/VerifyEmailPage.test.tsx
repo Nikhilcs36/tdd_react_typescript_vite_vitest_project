@@ -40,6 +40,7 @@ describe('VerifyEmailPage', () => {
   const mockT = (key: string) => key;
 
   beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     (useTranslation as any).mockReturnValue({ t: mockT });
   });
 
@@ -472,6 +473,7 @@ describe('VerifyEmailPage i18n Language Switching', () => {
   };
 
   beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.resetAllMocks();
   });
 
@@ -528,13 +530,15 @@ describe('VerifyEmailPage i18n Language Switching', () => {
       // Trigger re-render by changing a prop or forcing update
       // Since we can't easily trigger language change in the component,
       // we'll re-render with the new translation function
+      const container = document.createElement('div');
+      document.body.appendChild(container);
       render(
         <Provider store={store}>
           <MemoryRouter>
             <VerifyEmailPage apiService={mockApiService} resendApiService={mockResendApiService} />
           </MemoryRouter>
         </Provider>,
-        { container: document.body }
+        { container }
       );
 
       // The error message should NOW be in toLang if the component is working correctly

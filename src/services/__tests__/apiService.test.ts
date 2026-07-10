@@ -23,8 +23,10 @@ vi.mock("../../store", () => ({
 const mockedStore = store as any;
 
 describe("API Service Authentication", () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     // Reset store mock
     mockedStore.getState.mockReturnValue({
       auth: {
