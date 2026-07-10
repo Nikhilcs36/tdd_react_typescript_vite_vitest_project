@@ -144,6 +144,10 @@ vi.mock('./ReportDownloadButton', () => ({
 }));
 
 describe('DashboardContainer', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   // Basic rendering tests (fast, lightweight)
   describe('Basic Rendering', () => {
     // Mock the entire DashboardContainer component for basic rendering tests

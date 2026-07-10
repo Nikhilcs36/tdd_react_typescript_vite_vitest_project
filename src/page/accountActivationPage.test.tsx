@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import AccountActivationPage from "./accountActivationPage";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
@@ -15,6 +15,12 @@ const mockedAxios = vi.mocked(axios, { deep: true });
 
 beforeEach(() => {
   vi.restoreAllMocks(); // Clears all spies/mocks before each test
+  // Suppress expected console.error from error handling tests to keep test output clean
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 /**

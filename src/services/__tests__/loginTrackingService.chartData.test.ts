@@ -2,7 +2,7 @@
  * Login Tracking Service Chart Data Extraction Tests
  * Tests the chart data extraction from backend wrapper objects
  */
-import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterEach, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { API_ENDPOINTS } from '../apiEndpoints';
 import { getLoginTrends, getLoginComparison, getLoginDistribution } from '../loginTrackingService';
@@ -33,6 +33,12 @@ describe('Login Tracking Service - Chart Data Extraction', () => {
   beforeEach(() => {
     // Reset any mocks
     vi.clearAllMocks();
+    // Suppress expected console.error from error handling tests to keep test output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('getLoginTrends', () => {

@@ -2,7 +2,7 @@
  * Game Service Tests
  * Tests for the "Draw a Circle" game API service
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../mocks/server';
 import { API_ENDPOINTS } from '../../services/apiEndpoints';
@@ -36,16 +36,22 @@ const setAuthState = (token: string | null, isStaff: boolean = false) => {
 };
 
 describe('Game Service', () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    server.resetHandlers();
+  });
+
   beforeAll(() => {
     setAuthState('mock-access-token');
   });
 
   afterAll(() => {
     setAuthState(null);
-  });
-
-  afterEach(() => {
-    server.resetHandlers();
   });
 
   describe('saveGameScore', () => {

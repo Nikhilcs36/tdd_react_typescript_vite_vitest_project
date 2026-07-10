@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import i18n from "../../locale/i18n";
 import { handleApiError } from "../errorService";
 import { act } from "@testing-library/react";
@@ -11,9 +11,15 @@ const changeLanguage = async (lang: string) => {
 };
 
 describe("handleApiError - i18n", () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
   beforeEach(async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     // Reset to English before each test
     await changeLanguage("en");
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   // Test cases for different languages

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { axiosApiServiceSignUp, fetchApiServiceSignUp } from "../apiService";
 import axios from "axios";
 import { handleDjangoErrors } from "../../utils/djangoErrorHandler";
@@ -7,6 +7,15 @@ vi.mock("axios");
 const mockedAxios = vi.mocked(axios, { deep: true });
 
 describe("Django Error Handling", () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("axiosApiServiceSignUp", () => {
     it("should handle Django error response format correctly", async () => {
       // Mock Django error response format (array of errors)

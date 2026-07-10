@@ -1,7 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import globalErrorReducer, { setGlobalError, clearGlobalError } from './globalErrorSlice';
 
 describe('globalErrorSlice', () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   const initialState = {
     error: null,
   };

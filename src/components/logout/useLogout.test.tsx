@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
@@ -46,6 +46,8 @@ describe("useLogout Hook", () => {
       );
 
   beforeEach(() => {
+    // Suppress expected console.error from error handling tests to keep test output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.clearAllMocks();
     store = createStore();
     mockApiService = {
@@ -65,8 +67,13 @@ describe("useLogout Hook", () => {
         staff_access_granted: false,
         active_role: 'regular' as const,
         role_label: 'Regular',
-    })
+      })
     );
+  });
+
+  afterEach(() => {
+    // Use clearAllMocks instead of restoreAllMocks to avoid restoring module-level spies (e.g., window.dispatchEvent)
+    vi.clearAllMocks();
   });
 
   it("perform complete logout flow successfully", async () => {

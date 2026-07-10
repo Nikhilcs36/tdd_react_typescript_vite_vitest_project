@@ -84,6 +84,10 @@ const mockAuth = (
 
 describe("App", () => {
   beforeEach(async () => {
+    // Suppress expected console.error from error handling tests to keep test output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Suppress React Router "No routes matched" warnings from ProtectedRoute redirect tests
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     // Reset Redux auth state before each test
     store.dispatch(logoutSuccess());
     // Clear localStorage
@@ -95,6 +99,7 @@ describe("App", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     // Clean up and reset state after each test
     store.dispatch(logoutSuccess());
     window.localStorage.clear();
@@ -191,6 +196,10 @@ describe("Error Handling", () => {
 
 describe("Routing", () => {
   beforeEach(async () => {
+    // Suppress expected console.error from error handling tests to keep test output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Suppress React Router "No routes matched" warnings from ProtectedRoute redirect tests
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     // Make beforeEach async
     // Reset Redux auth state before each test
     store.dispatch(logoutSuccess());

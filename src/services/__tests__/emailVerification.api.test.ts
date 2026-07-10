@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import axios from "axios";
 import {
   axiosApiServiceVerifyEmail,
@@ -32,7 +32,13 @@ vi.mock("../../store", () => ({
 }));
 
 describe("Email Verification API Services", () => {
+  // Suppress expected console.error from error handling tests to keep test output clean
   beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
     vi.restoreAllMocks();
   });
 
