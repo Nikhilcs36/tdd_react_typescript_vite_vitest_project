@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import tw from 'twin.macro';
@@ -115,6 +116,24 @@ const ReportDownloadButton: React.FC<ReportDownloadButtonProps> = ({ isAdmin }) 
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const scrollPositionRef = useRef(0);
+
+  // Lock body scroll when modal is open, restore scroll position when modal closes
+  useEffect(() => {
+    if (showModal) {
+      scrollPositionRef.current = window.scrollY;
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      // Restore scroll position so user is back at the download button section
+      window.scrollTo(0, scrollPositionRef.current);
+    }
+
+    // Cleanup: ensure body overflow is restored on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showModal]);
 
   /**
    * Trigger the file download in the browser
@@ -264,8 +283,8 @@ const ReportDownloadButton: React.FC<ReportDownloadButtonProps> = ({ isAdmin }) 
         </ErrorBox>
       )}
 
-      {/* Admin Modal */}
-      {showModal && (
+      {/* Admin Modal - Rendered via portal to document.body to avoid fixed-position breakage from ancestor CSS transforms */}
+      {showModal && createPortal(
         <ModalOverlay
           data-testid="report-download-modal"
           onClick={(e) => {
@@ -326,7 +345,8 @@ const ReportDownloadButton: React.FC<ReportDownloadButtonProps> = ({ isAdmin }) 
               </DownloadActionButton>
             </ModalActions>
           </ModalCard>
-        </ModalOverlay>
+        </ModalOverlay>,
+        document.body
       )}
     </div>
   );
