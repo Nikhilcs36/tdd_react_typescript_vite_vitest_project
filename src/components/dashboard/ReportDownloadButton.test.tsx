@@ -998,4 +998,210 @@ describe('ReportDownloadButton', () => {
       expect(document.documentElement.classList.contains('dark')).toBe(true);
     });
   });
+
+  describe('Portal Rendering', () => {
+    beforeEach(() => {
+      // Reset any leftover body overflow
+      document.body.style.overflow = '';
+      // Stub URL.createObjectURL and revokeObjectURL directly (not via vi.fn)
+      // since parent beforeEach calls vi.clearAllMocks() which would undo vi.fn mocks
+      window.URL.createObjectURL = () => 'blob:test-download-url';
+      window.URL.revokeObjectURL = () => {};
+    });
+
+    it('should render modal overlay in document.body via portal when admin opens modal', () => {
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        {},
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      // Before click: modal should not be in document.body
+      expect(document.body.querySelector('[data-testid="report-download-modal"]')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+
+      // After click: modal should be rendered directly in document.body (portal), not nested deep
+      const modalInBody = document.body.querySelector('[data-testid="report-download-modal"]');
+      expect(modalInBody).toBeInTheDocument();
+      expect(modalInBody!.parentElement).toBe(document.body);
+    });
+
+    it('should remove modal from document.body when closed via cancel', () => {
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        {},
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(document.body.querySelector('[data-testid="report-download-modal"]')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('modal-cancel-button'));
+
+      expect(document.body.querySelector('[data-testid="report-download-modal"]')).not.toBeInTheDocument();
+    });
+
+    it('should keep download button in component tree, not as direct child of document.body', () => {
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        {},
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      // The download button should NOT be a direct child of document.body
+      const buttonInBody = screen.getByTestId('report-download-button');
+      // It should be contained within the rendered component, not as a direct body child
+      expect(buttonInBody.parentElement).not.toBe(document.body);
+      // Meanwhile the modal (when opened) should be a direct child of document.body
+      const modalInBody = document.body.querySelector('[data-testid="report-download-modal"]');
+      expect(modalInBody).toBeNull(); // because modal is not open yet
+    });
+
+    it('should remove modal from document.body when download completes (success or error)', async () => {
+      // Mock download to resolve quickly
+      vi.mocked(loginTrackingService.downloadReport).mockResolvedValue({
+        blob: new Blob(['test']),
+        filename: 'login_report_admin_individual_20260101_120000.xlsx',
+      });
+
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        { chartMode: 'individual' },
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(document.body.querySelector('[data-testid="report-download-modal"]')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('modal-download-button'));
+
+      await waitFor(() => {
+        expect(document.body.querySelector('[data-testid="report-download-modal"]')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should keep modal open on download failure so user can retry', async () => {
+      // Mock download to reject
+      vi.mocked(loginTrackingService.downloadReport).mockRejectedValue(
+        new Error('Download failed')
+      );
+
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        { chartMode: 'individual' },
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(document.body.querySelector('[data-testid="report-download-modal"]')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('modal-download-button'));
+
+      await waitFor(() => {
+        // Modal should stay open on failure so user can retry
+        expect(document.body.querySelector('[data-testid="report-download-modal"]')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Scroll Lock Behavior', () => {
+    beforeEach(() => {
+      // Reset body overflow before each test
+      document.body.style.overflow = '';
+      // Mock window.scrollY
+      Object.defineProperty(window, 'scrollY', { value: 500, writable: true, configurable: true });
+      window.scrollTo = vi.fn();
+    });
+
+    it('should lock body scroll when admin opens modal', () => {
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        {},
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      expect(document.body.style.overflow).toBe('');
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+
+      expect(document.body.style.overflow).toBe('hidden');
+    });
+
+    it('should restore body scroll when modal is closed via cancel', () => {
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        {},
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(document.body.style.overflow).toBe('hidden');
+
+      fireEvent.click(screen.getByTestId('modal-cancel-button'));
+      expect(document.body.style.overflow).toBe('');
+    });
+
+    it('should restore body scroll and scroll to saved position when modal is closed', () => {
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        {},
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(document.body.style.overflow).toBe('hidden');
+
+      fireEvent.click(screen.getByTestId('modal-cancel-button'));
+      expect(document.body.style.overflow).toBe('');
+      expect(window.scrollTo).toHaveBeenCalledWith(0, 500);
+    });
+
+    it('should not lock body scroll for regular user (no modal)', () => {
+      vi.mocked(loginTrackingService.downloadReport).mockResolvedValue({
+        blob: new Blob(['test']),
+        filename: 'login_report_testuser_individual_20260101_120000.xlsx',
+      });
+
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={false} />,
+        {},
+        { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
+      );
+
+      expect(document.body.style.overflow).toBe('');
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+
+      // Regular user triggers download directly, no modal, so scroll should not be locked
+      expect(document.body.style.overflow).toBe('');
+    });
+
+    it('should clean up body overflow on component unmount when modal was open', () => {
+      const { unmount } = renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        {},
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(document.body.style.overflow).toBe('hidden');
+
+      unmount();
+      expect(document.body.style.overflow).toBe('');
+    });
+
+    it('should not affect scroll when modal never opened', () => {
+      const { unmount } = renderWithProviders(
+        <ReportDownloadButton isAdmin={true} />,
+        {},
+        { user: { id: 1, username: 'admin', is_staff: true, is_superuser: false } }
+      );
+
+      expect(document.body.style.overflow).toBe('');
+
+      unmount();
+      expect(document.body.style.overflow).toBe('');
+    });
+  });
 });
