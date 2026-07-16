@@ -107,6 +107,7 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 ### Page & Language Transitions
 - **Page Transition Animations**: Smooth CSS keyframe animations when navigating between pages, implemented via `PageTransition` wrapper component
 - **Language Switch Animations**: Animated language switching with CSS keyframes via `LanguageTransition` component, providing a polished UX when toggling between EN, ML, and AR
+- **Auto Scroll-to-Top**: Automatically scrolls to the top of the page on every route navigation via the `ScrollToTop` component, ensuring users start at the top of each new page
 - **Reusable Animation System**: Centralized CSS keyframe definitions in `src/styles/animations.ts` for consistent, maintainable animations across the application
 
 ### Dark Mode
@@ -311,6 +312,7 @@ npm run dev
 │   │   ├── common/                # Shared components
 │   │   │   ├── LanguageTransition.tsx  # Language switch animation wrapper
 │   │   │   ├── Layout.tsx         # Standardized layout components
+│   │   │   ├── ScrollToTop.tsx    # Auto scroll-to-top on route navigation
 │   │   │   ├── Loading.tsx        # Loading spinner component
 │   │   │   └── PageTransition.tsx  # Page navigation animation wrapper
 │   │   ├── dashboard/             # Dashboard-specific components
