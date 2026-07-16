@@ -37,6 +37,7 @@ import GlobalErrorDisplay from "./components/GlobalErrorDisplay";
 import { ReactElement } from "react";
 import { PageTransition } from "./components/common/PageTransition";
 import { LanguageTransition } from "./components/common/LanguageTransition";
+import { ScrollToTop } from "./components/common/ScrollToTop";
 
 // Navbar styled components
 const NavBar = tw.nav`
@@ -514,6 +515,7 @@ export const AppContent = ({
 // Production version with Router
 const AppWithRouter = () => (
   <Router>
+    <ScrollToTop />
     <AppContent />
   </Router>
 );
