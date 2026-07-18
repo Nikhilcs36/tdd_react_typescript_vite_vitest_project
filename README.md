@@ -146,6 +146,69 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 - **Test Services**: Axios instance without global interceptors for testing component-level error handling in isolation
 - **Shared Error Handling**: Both implementations route through the same `handleApiError()` utility, ensuring consistent error processing regardless of HTTP client
 
+### API Service Layer — Architecture Deep Dive
+
+This project maintains **two HTTP client implementations for every API operation** — Axios for production/development and native `fetch()` for testing. This dual-layer approach exists because **MSW (Mock Service Worker) intercepts `fetch()` at the network level but cannot intercept `axios` (which uses `XMLHttpRequest`)** without additional adapters.
+
+#### Two Implementation Patterns
+
+The codebase intentionally uses **two different patterns** as architectural experiments to compare testing strategies:
+
+##### Pattern 1: Props Injection (`apiService.ts`)
+
+Each API operation exports **two separate implementations** — an Axios variant and a Fetch variant. The caller (component or test) explicitly chooses which to inject.
+
+```typescript
+// apiService.ts — two exports per operation
+export const axiosApiServiceLogin: ApiService = { post: (url, body) => axios.post(url, body) };
+export const fetchApiServiceLogin: ApiService = { post: (url, body) => fetch(url, { body }) };
+
+// Production (App.tsx) — uses Axios
+<LoginPage apiService={axiosApiServiceLogin} />
+
+// Unit test — spies on Axios
+<LoginPage apiService={axiosApiServiceLogin} />  // vi.mock('axios') works here
+
+// Integration test — uses Fetch + MSW handlers
+<LoginPage apiService={fetchApiServiceLogin} />   // MSW intercepts fetch()
+```
+
+**Key trait**: This pattern gives tests **maximum flexibility** — each test file can import whichever implementation suits its strategy. Unit tests mock Axios directly (`vi.mock('axios')`); integration tests use the Fetch variant so MSW handlers can intercept real network calls. Both strategies coexist in the same codebase.
+
+##### Pattern 2: Environment Switch (`gameService.ts`, `loginTrackingService.ts`)
+
+A single implementation switches automatically based on the runtime environment using `import.meta.env.VITEST`:
+
+```typescript
+// Single export, env-aware
+const api = import.meta.env.VITEST ? fetchGameApiService : axiosGameApiService;
+
+// Consumers call the same function regardless of environment
+export const gameService = {
+  saveGameScore: (payload) => api.post(API_ENDPOINTS.GAME_SCORES, payload),
+};
+```
+
+**Key trait**: This pattern keeps the public API surface minimal (one export per function) and makes environment detection automatic. *Downside:* in Vitest, the function always resolves to Fetch, so you cannot write a unit test that mocks Axios for these services.
+
+#### Design Rationale
+
+| Aspect | Details |
+|---|---|
+| **Why dual implementations at all** | MSW's `setupServer` (Node.js) intercepts native `fetch()` but not `axios`. Without the Fetch variants, MSW handlers would never fire, and all tests would need `vi.mock('axios')`. The Fetch layer enables true wire-level HTTP mocking. |
+| **Why two patterns** | This project intentionally experiments with both approaches. Pattern 1 (Props Injection) maximizes testing flexibility — you can test the same page with Axios mocks OR MSW handlers. Pattern 2 (Env Switch) minimizes boilerplate in production code. Seeing both patterns side-by-side helps evaluate which fits different scenarios. |
+| **Production behavior** | All components receive Axios-based implementations by default (`App.tsx` and page `defaultProps`). The Fetch variants are never used in production. |
+| **Error handling consistency** | Both Axios and Fetch implementations route through the same `handleApiError()` utility in `errorService.ts`, ensuring identical error processing regardless of which HTTP client is used. |
+
+#### Usage Guidance
+
+| Use case | Recommended pattern | Why |
+|---|---|---|
+| Unit test (component isolation) | Props Injection — import `axiosApiService*` | `vi.mock('axios')` is straightforward; no MSW setup needed |
+| Integration test (MSW wire-level mock) | Props Injection — import `fetchApiService*` | MSW intercepts `fetch()` natively |
+| New production service | Environment Switch | Single export, cleaner DX, automatic test compatibility |
+| Existing service with mixed unit+integration tests | Keep current pattern | Both patterns are valid and tested |
+
 ### Testing
 - **Comprehensive Test Suite**: Unit tests, component tests, and integration tests
 - **Vitest**: Fast test runner integrated with Vite
