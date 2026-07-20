@@ -1,9 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import SecureLS from "secure-ls";
 import { loginSuccess, logoutSuccess } from "./actions";
-
-// Initialize SecureLS
-const secureLS = new SecureLS({ encodingType: "aes" });
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -65,30 +61,12 @@ const authSlice = createSlice({
         state.accessToken = action.payload.access;
         state.refreshToken = action.payload.refresh;
         state.showLogoutMessage = false; // Ensure logout message is hidden on login
-        // Store tokens in secure storage
-        secureLS.set("authState", {
-          isAuthenticated: true,
-          user: {
-            id: action.payload.id,
-            username: action.payload.username,
-            is_staff: action.payload.is_staff,
-            is_superuser: action.payload.is_superuser,
-            logins_remaining_for_staff: action.payload.logins_remaining_for_staff,
-            staff_access_granted: action.payload.staff_access_granted,
-            active_role: action.payload.active_role,
-            role_label: action.payload.role_label,
-          },
-          accessToken: action.payload.access,
-          refreshToken: action.payload.refresh,
-          showLogoutMessage: false, // Ensure logout message is hidden in storage too
-        });
       })
       .addCase(logoutSuccess, (state) => {
         state.isAuthenticated = false;
         state.user = null;
         state.accessToken = null;
         state.refreshToken = null;
-        secureLS.remove("authState");
       });
   },
 });
