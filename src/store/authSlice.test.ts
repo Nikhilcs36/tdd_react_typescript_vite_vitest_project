@@ -66,6 +66,28 @@ describe("Auth Slice", () => {
     expect(newStore.getState().auth.user).toBeNull();
   });
 
+  it("should not duplicate SecureLS writes on login (redundancy check)", () => {
+    const store = createStore();
+    const testUser = {
+      id: 1,
+      username: "testuser",
+      is_staff: false,
+      is_superuser: false,
+      logins_remaining_for_staff: 0,
+      staff_access_granted: false,
+      active_role: 'regular' as const,
+      role_label: 'Regular',
+      access: "test-access-token",
+      refresh: "test-refresh-token",
+    };
+
+    store.dispatch(loginSuccess(testUser));
+
+    // SecureLS.set should be called exactly once (by store subscription, not by slice)
+    expect(mockSecureLS.setCalls.length).toBe(1);
+    expect(mockSecureLS.setCalls[0].key).toBe("authState");
+  });
+
   it("should store tokens in SecureLS and restore auth state from session storage on store creation", () => {
     const store = createStore();
     const testUser = {
