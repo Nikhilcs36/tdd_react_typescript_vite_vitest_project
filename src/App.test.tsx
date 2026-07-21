@@ -82,20 +82,21 @@ const mockAuth = (
   }
 };
 
+// Helper function to set up shared test environment state:
+// resets Redux auth, clears localStorage, and sets the i18n language.
+const setupTestEnvironment = async (language = "en") => {
+  await act(async () => { store.dispatch(logoutSuccess()); });
+  localStorage.clear();
+  await act(async () => { await i18n.changeLanguage(language); });
+};
+
 describe("App", () => {
   beforeEach(async () => {
     // Suppress expected console.error from error handling tests to keep test output clean
     vi.spyOn(console, 'error').mockImplementation(() => {});
     // Suppress React Router "No routes matched" warnings from ProtectedRoute redirect tests
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    // Reset Redux auth state before each test
-    store.dispatch(logoutSuccess());
-    // Clear localStorage
-    window.localStorage.clear();
-    // Set default language to English
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   afterEach(() => {
@@ -200,15 +201,7 @@ describe("Routing", () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     // Suppress React Router "No routes matched" warnings from ProtectedRoute redirect tests
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    // Make beforeEach async
-    // Reset Redux auth state before each test
-    store.dispatch(logoutSuccess());
-    // Clear localStorage
-    window.localStorage.clear();
-    // Set default language to English
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   /**
@@ -537,17 +530,7 @@ describe("Routing", () => {
 
 describe("Navbar styling and layout", () => {
   beforeEach(async () => {
-    // Reset Redux auth state before each test in this describe block
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-
-    // Clear localStorage as a precaution
-    localStorage.clear();
-    // Set default language to English
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   it("has content with proper top margin offset to prevent navbar overlap on small screens (2 rows)", () => {
@@ -634,13 +617,7 @@ describe("Navbar styling and layout", () => {
 
 describe("Malayalam language navbar layout", () => {
   beforeEach(async () => {
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-    localStorage.clear();
-    await act(async () => {
-      await i18n.changeLanguage("ml");
-    });
+    await setupTestEnvironment("ml");
   });
 
   it("renders NavRowScrollWrapper with flex justify-center for Malayalam", () => {
@@ -746,14 +723,7 @@ describe("Malayalam font-size", () => {
 
 describe("Navbar link border styles", () => {
   beforeEach(async () => {
-    // Reset Redux auth state before each test in this describe block
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-    localStorage.clear();
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   it("renders nav links with border and hover styles", () => {
@@ -837,13 +807,7 @@ describe("Navbar link border styles", () => {
 
 describe("Navbar active page indicator", () => {
   beforeEach(async () => {
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-    localStorage.clear();
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   it("highlights the active page link with visible border on signup page", () => {
@@ -876,18 +840,7 @@ describe("Navbar active page indicator", () => {
 
 describe("Language & direction tests for Navbar", () => {
   beforeEach(async () => {
-    // Make beforeEach async
-    // Reset Redux auth state before each test in this describe block
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-
-    // Clear localStorage as a precaution, though Redux is now primary
-    window.localStorage.clear();
-    // Set default language to English
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   it.each`
@@ -928,20 +881,8 @@ describe("Language & direction tests for Navbar", () => {
 });
 
 describe("Authentication navbar visible", () => {
-  // Set default language to English
   beforeEach(async () => {
-    // Make beforeEach async
-    // Reset Redux auth state
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-
-    // Clear localStorage
-    localStorage.clear();
-    // Set default language to English
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   const setup = (path: string, lang: string) => {
@@ -1478,17 +1419,7 @@ describe("Theme Functionality", () => {
 
 describe("Protected Route", () => {
   beforeEach(async () => {
-    // Reset Redux auth state before each test
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-
-    // Clear localStorage
-    localStorage.clear();
-    // Set default language to English
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   const TestComponent = () => <div data-testid="protected-content">Protected Content</div>;
@@ -1593,17 +1524,7 @@ describe("Protected Route", () => {
 
 describe("Navbar persistence with sessionStorage", () => {
   beforeEach(async () => {
-    // Reset Redux auth state before each test
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-
-    // Clear localStorage
-    localStorage.clear();
-    // Set default language to English
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   it("auth state is restored after page refresh within the same session", async () => {
@@ -1767,15 +1688,7 @@ describe("Navbar persistence with sessionStorage", () => {
 
 describe("Navbar Row 2 language-specific scroll behavior", () => {
   beforeEach(async () => {
-    // Reset Redux auth state before each test
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-    localStorage.clear();
-    // Set default language to English
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   it("uses normal NavRow (no scroll) when language is English in unauthenticated state", async () => {
@@ -1926,13 +1839,7 @@ describe("Navbar Row 2 language-specific scroll behavior", () => {
 
 describe("Navbar alignment for Malayalam language", () => {
   beforeEach(async () => {
-    await act(async () => {
-      store.dispatch(logoutSuccess());
-    });
-    localStorage.clear();
-    await act(async () => {
-      await i18n.changeLanguage("en");
-    });
+    await setupTestEnvironment();
   });
 
   it("uses NavRowScrollWrapper with proper structure for Malayalam right alignment", async () => {
