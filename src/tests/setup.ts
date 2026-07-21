@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { afterEach, beforeAll, afterAll } from "vitest";
+import { afterEach, beforeAll, afterAll, vi } from "vitest";
 import "jest-styled-components";
 
 // Import MSW server
@@ -12,6 +12,9 @@ class ResizeObserverMock {
   disconnect() {}
 }
 window.ResizeObserver = ResizeObserverMock as any;
+
+// Mock window.scrollTo for jsdom (used by ScrollToTop component)
+window.scrollTo = vi.fn() as any;
 
 // Start the server before all tests
 beforeAll(() => server.listen());
