@@ -6,6 +6,48 @@ import { page1 } from "../tests/mocks/handlers";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 
 /**
+ * Mock user type matching the user shape used across tests.
+ */
+export interface MockUser {
+  id: number;
+  username: string;
+  access: string;
+  refresh: string;
+  email: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+  logins_remaining_for_staff: number;
+  staff_access_granted: boolean;
+  active_role: 'regular' | 'staff' | 'superuser';
+  role_label: string;
+}
+
+/**
+ * Factory function to create mock user objects with sensible defaults.
+ * Any provided overrides will be spread on top of the defaults.
+ *
+ * @param overrides - Partial user properties to override defaults.
+ * @returns A complete MockUser object.
+ *
+ * @example
+ * createMockUser({ id: 2, username: "admin", is_staff: true })
+ */
+export const createMockUser = (overrides: Partial<MockUser> = {}): MockUser => ({
+  id: 1,
+  username: "user1",
+  access: "mock-jwt-access-token",
+  refresh: "mock-jwt-refresh-token",
+  email: "user1@mail.com",
+  is_staff: false,
+  is_superuser: false,
+  logins_remaining_for_staff: 0,
+  staff_access_granted: false,
+  active_role: 'regular' as const,
+  role_label: 'Regular',
+  ...overrides,
+});
+
+/**
  * Utility function to fill the sign-up form and optionally submit it.
  * @param formData - An object containing the form data.
  * @param submit - A boolean indicating whether to submit the form.

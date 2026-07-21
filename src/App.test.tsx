@@ -19,7 +19,7 @@ import {
   fetchApiServiceLogout,
 } from "./services/apiService";
 import { API_ENDPOINTS } from "./services/apiEndpoints";
-import { fillAndSubmitLoginForm } from "./tests/testUtils";
+import { createMockUser, fillAndSubmitLoginForm, MockUser } from "./tests/testUtils";
 import LoginPageWrapper from "./page/LoginPage";
 import ErrorBoundary from "./components/ErrorBoundary";
 import UserList from "./components/UserList";
@@ -59,22 +59,9 @@ vi.mock("./components/dashboard/DashboardContainer", () => ({
 // Helper function to set up authenticated state
 const mockAuth = (
   isAuthenticated: boolean,
-  userOverrides: Record<string, unknown> = {}
+  userOverrides: Partial<MockUser> = {}
 ) => {
-  const user = {
-    id: 1,
-    username: "user1",
-    access: "mock-jwt-access-token",
-    refresh: "mock-jwt-refresh-token",
-    email: "user1@mail.com",
-    is_staff: false,
-    is_superuser: false,
-    logins_remaining_for_staff: 0,
-    staff_access_granted: false,
-    active_role: 'regular' as const,
-    role_label: 'Regular',
-    ...userOverrides,
-  };
+  const user = createMockUser(userOverrides);
   if (isAuthenticated) {
     store.dispatch(loginSuccess(user as any));
   } else {
@@ -212,19 +199,7 @@ describe("Routing", () => {
     path: string,
     lang: string,
     authenticated = false,
-    user = {
-      id: 1,
-      username: "user1",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
-      email: "user1@mail.com",
-      is_staff: false,
-      is_superuser: false,
-      logins_remaining_for_staff: 0,
-      staff_access_granted: false,
-      active_role: 'regular' as const,
-      role_label: 'Regular',
-    }
+    user = createMockUser()
   ) => {
     // Updated user default
     // Reset Redux auth state before each test
@@ -244,19 +219,7 @@ describe("Routing", () => {
       // For user page paths, use the ID from the path if available, otherwise use the default user ID
       const userToDispatch =
         userMatch && userIdFromPath !== undefined
-          ? {
-              id: userIdFromPath,
-              username: user.username,
-              access: user.access,
-              refresh: user.refresh,
-              email: "user1@mail.com",
-              is_staff: false,
-              is_superuser: false,
-              logins_remaining_for_staff: 0,
-              staff_access_granted: false,
-              active_role: 'regular' as const,
-              role_label: 'Regular',
-            }
+          ? createMockUser({ id: userIdFromPath })
           : user;
       store.dispatch(loginSuccess(userToDispatch as any));
     }
@@ -376,19 +339,7 @@ describe("Routing", () => {
   // Integration test: Navigates to user profile via navbar link after simulating authenticated state
   it("navigates to user profile via navbar link after simulating authenticated state", async () => {
     // Simulate a logged-in state by dispatching the loginSuccess action with user ID and username
-    const mockUser = {
-      id: 1,
-      username: "user1",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
-      email: "user1@mail.com",
-      is_staff: false,
-      is_superuser: false,
-      logins_remaining_for_staff: 0,
-      staff_access_granted: false,
-      active_role: 'regular' as const,
-      role_label: 'Regular',
-    };
+    const mockUser = createMockUser();
     store.dispatch(loginSuccess(mockUser));
 
     // Render the App component (it will now render based on the authenticated state)
@@ -415,19 +366,16 @@ describe("Routing", () => {
 
   it("navigates to user page when clicking the username on user list", async () => {
     // Setup authenticated admin user as user2 (ID: 2) - this user will be filtered from the user list
-    const mockAdminUser2 = {
+    const mockAdminUser2 = createMockUser({
       id: 2,
       username: "user2",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
       email: "user2@mail.com",
       is_staff: true,
       is_superuser: true,
-      logins_remaining_for_staff: 0,
       staff_access_granted: true,
-      active_role: 'staff' as const,
+      active_role: 'staff',
       role_label: 'Staff',
-    };
+    });
     store.dispatch(loginSuccess(mockAdminUser2));
 
     // Navigate to the /users route where UserList is now located
@@ -937,14 +885,11 @@ describe("Authentication navbar visible", () => {
       it("shows 'User List' link for admin users", async () => {
         await act(async () => {
           mockAuth(true, {
-            id: 1,
             username: "admin",
-            access: "mock-jwt-access-token",
-            refresh: "mock-jwt-refresh-token",
             email: "admin@example.com",
             is_staff: true,
             is_superuser: true,
-            active_role: 'superuser' as const,
+            active_role: 'superuser',
             staff_access_granted: true,
             role_label: 'Superuser',
           });
@@ -961,13 +906,8 @@ describe("Authentication navbar visible", () => {
       it("hides 'User List' link for non-admin users", async () => {
         await act(async () => {
           mockAuth(true, {
-            id: 1,
             username: "regular",
-            access: "mock-jwt-access-token",
-            refresh: "mock-jwt-refresh-token",
             email: "regular@example.com",
-            is_staff: false,
-            is_superuser: false,
           });
         });
         setup("/", "en");
@@ -979,14 +919,11 @@ describe("Authentication navbar visible", () => {
     it("shows translated 'User List' link for admin users in different languages", async () => {
       await act(async () => {
         mockAuth(true, {
-          id: 1,
           username: "admin",
-          access: "mock-jwt-access-token",
-          refresh: "mock-jwt-refresh-token",
           email: "admin@example.com",
           is_staff: true,
           is_superuser: true,
-          active_role: 'superuser' as const,
+          active_role: 'superuser',
           staff_access_granted: true,
           role_label: 'Superuser',
         });
@@ -1067,11 +1004,7 @@ describe("Authentication navbar visible", () => {
           mockAuth(true, {
             id: 5,
             username: "regular",
-            access: "mock-jwt-access-token",
-            refresh: "mock-jwt-refresh-token",
             email: "regular@example.com",
-            is_staff: false,
-            is_superuser: false,
           });
         });
 
@@ -1171,8 +1104,6 @@ describe("Authentication navbar visible", () => {
           mockAuth(true, {
             id: 1,
             username: "admin",
-            access: "mock-jwt-access-token",
-            refresh: "mock-jwt-refresh-token",
             email: "admin@example.com",
             is_staff: true,
             is_superuser: true,
@@ -1213,11 +1144,7 @@ describe("Authentication navbar visible", () => {
           mockAuth(true, {
             id: 5,
             username: "regular",
-            access: "mock-jwt-access-token",
-            refresh: "mock-jwt-refresh-token",
             email: "regular@example.com",
-            is_staff: false,
-            is_superuser: false,
           });
         });
 
@@ -1314,15 +1241,7 @@ describe("Authentication navbar visible", () => {
 
 describe("Logout functionality", () => {
   const mockAuthenticatedUser = () => {
-    mockAuth(true, {
-      id: 1,
-      username: "user1",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
-      email: "user1@mail.com",
-      is_staff: false,
-      is_superuser: false,
-    });
+    mockAuth(true, createMockUser());
   };
 
   beforeEach(() => {
@@ -1425,19 +1344,15 @@ describe("Protected Route", () => {
   const TestComponent = () => <div data-testid="protected-content">Protected Content</div>;
 
   it("renders children when user is authenticated and has admin access", () => {
-    const adminUser = {
-      id: 1,
+    const adminUser = createMockUser({
       username: "admin",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
       email: "admin@example.com",
       is_staff: true,
       is_superuser: true,
-      logins_remaining_for_staff: 0,
       staff_access_granted: true,
-      active_role: 'staff' as const,
+      active_role: 'staff',
       role_label: 'Staff',
-    };
+    });
     store.dispatch(loginSuccess(adminUser));
 
     render(
@@ -1458,19 +1373,10 @@ describe("Protected Route", () => {
   });
 
   it("shows access denied message for non-admin authenticated users", async () => {
-    const regularUser = {
-      id: 1,
+    const regularUser = createMockUser({
       username: "regular",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
       email: "regular@example.com",
-      is_staff: false,
-      is_superuser: false,
-      logins_remaining_for_staff: 0,
-      staff_access_granted: false,
-      active_role: 'regular' as const,
-      role_label: 'Regular',
-    };
+    });
     store.dispatch(loginSuccess(regularUser));
 
     render(
@@ -1529,18 +1435,13 @@ describe("Navbar persistence with sessionStorage", () => {
 
   it("auth state is restored after page refresh within the same session", async () => {
     // Initial login (without token in state)
-    const loginUser = {
+    const loginUser = createMockUser({
       id: 5,
       username: "persistedUser",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
       is_staff: false,
       is_superuser: false,
-      logins_remaining_for_staff: 0,
       staff_access_granted: false,
-      active_role: 'regular' as const,
-      role_label: 'Regular',
-    };
+    });
     const expectedUser = {
       id: 5,
       username: "persistedUser",
@@ -1608,18 +1509,17 @@ describe("Navbar persistence with sessionStorage", () => {
 
   it("requires re-login after browser close or new session", async () => {
     // Initial admin login
-    const adminLoginUser = {
+    const adminLoginUser = createMockUser({
       id: 10,
       username: "adminUser",
       access: "mock-admin-access-token",
       refresh: "mock-admin-refresh-token",
       is_staff: true,
       is_superuser: true,
-      logins_remaining_for_staff: 0,
       staff_access_granted: true,
-      active_role: 'staff' as const,
+      active_role: 'staff',
       role_label: 'Staff',
-    };
+    });
 
     // Render the app with the Redux provider
     render(
@@ -1754,19 +1654,15 @@ describe("Navbar Row 2 language-specific scroll behavior", () => {
 
   it("uses normal NavRow when logged in as admin with English language", async () => {
     // Set up admin auth
-    const adminUser = {
-      id: 1,
+    const adminUser = createMockUser({
       username: "admin",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
       email: "admin@example.com",
       is_staff: true,
       is_superuser: true,
-      logins_remaining_for_staff: 0,
       staff_access_granted: true,
-      active_role: 'staff' as const,
+      active_role: 'staff',
       role_label: 'Staff',
-    };
+    });
     await act(async () => {
       store.dispatch(loginSuccess(adminUser));
       await i18n.changeLanguage("en");
@@ -1786,19 +1682,15 @@ describe("Navbar Row 2 language-specific scroll behavior", () => {
 
   it("uses NavRowScrollable when logged in as admin with Malayalam language", async () => {
     // Set up admin auth
-    const adminUser = {
-      id: 1,
+    const adminUser = createMockUser({
       username: "admin",
-      access: "mock-jwt-access-token",
-      refresh: "mock-jwt-refresh-token",
       email: "admin@example.com",
       is_staff: true,
       is_superuser: true,
-      logins_remaining_for_staff: 0,
       staff_access_granted: true,
-      active_role: 'staff' as const,
+      active_role: 'staff',
       role_label: 'Staff',
-    };
+    });
     await act(async () => {
       store.dispatch(loginSuccess(adminUser));
       await i18n.changeLanguage("ml");
