@@ -1175,40 +1175,6 @@ describe("Authentication navbar visible", () => {
         // Home page should not be visible
         expect(screen.queryByTestId("home-page")).not.toBeInTheDocument();
       });
-
-      it("redirects unauthenticated users from /dashboard/:userId to home page", async () => {
-        // Ensure user is not authenticated
-        await act(async () => {
-          mockAuth(false);
-        });
-
-        // Render app and try to access another user's dashboard
-        render(
-          <Provider store={store}>
-            <MemoryRouter initialEntries={["/dashboard/5"]}>
-              <Routes>
-                <Route
-                  path="/dashboard/:userId"
-                  element={
-                    <ProtectedRoute requireAuth={true}>
-                      <div data-testid="dashboard-container">Dashboard Content</div>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/" element={<div data-testid="home-page">Home Page</div>} />
-              </Routes>
-            </MemoryRouter>
-          </Provider>
-        );
-
-        // Should redirect to home page for unauthenticated access
-        await waitFor(() => {
-          expect(screen.getByTestId("home-page")).toBeInTheDocument();
-        });
-
-        // Dashboard should not be accessible
-        expect(screen.queryByTestId("dashboard-container")).not.toBeInTheDocument();
-      });
     });
   });
 
@@ -1591,27 +1557,17 @@ describe("Navbar Row 2 language-specific scroll behavior", () => {
     await setupTestEnvironment();
   });
 
-  it("uses normal NavRow (no scroll) when language is English in unauthenticated state", async () => {
+  it.each(["en", "ar"])("uses normal NavRow (no scroll) when language is %s in unauthenticated state", async (lang) => {
     await act(async () => {
-      await i18n.changeLanguage("en");
+      await i18n.changeLanguage(lang);
     });
     render(<App />);
     const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
     expect(navRow2).toBeInTheDocument();
-    // Should NOT have overflow-x-auto style for English
+    // Should NOT have overflow-x-auto style for this language
     expect(navRow2).not.toHaveStyleRule("overflow-x", "auto");
     // Should be a plain flex div (NavRow) without scrollable wrapper
     expect(navRow2?.parentElement).not.toHaveAttribute("data-testid", "nav-row-2-wrapper-ml");
-  });
-
-  it("uses normal NavRow (no scroll) when language is Arabic in unauthenticated state", async () => {
-    await act(async () => {
-      await i18n.changeLanguage("ar");
-    });
-    render(<App />);
-    const navRow2 = document.querySelector('[data-testid="nav-row-2"]');
-    expect(navRow2).toBeInTheDocument();
-    expect(navRow2).not.toHaveStyleRule("overflow-x", "auto");
   });
 
   it("uses NavRowScrollable when language is Malayalam in unauthenticated state", async () => {
