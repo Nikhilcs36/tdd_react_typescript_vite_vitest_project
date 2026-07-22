@@ -82,7 +82,9 @@ const ScrollArrow = tw.button`
   hover:bg-gray-600 transition-all duration-200 cursor-pointer
 `;
 const MobileMenu = tw.div`md:hidden absolute top-full left-0 right-0 bg-gray-400 dark:bg-dark-secondary shadow-lg py-2 px-4 flex flex-col gap-2`;
-const NavLink = tw(Link)`
+
+// Shared base styles for NavLink and StyledButton
+const baseNavItemCss = `
   font-semibold
   cursor-pointer
   px-3
@@ -99,23 +101,9 @@ const NavLink = tw(Link)`
   text-sm
   sm:text-base
 `;
-const StyledButton = tw.button`
-  font-semibold
-  cursor-pointer
-  px-3
-  sm:px-4
-  py-1.5
-  sm:py-2
-  rounded-lg
-  border
-  border-transparent
-  hover:border-white/50
-  hover:bg-white/10
-  transition-all
-  duration-200
-  text-sm
-  sm:text-base
-`;
+
+const NavLink = tw(Link)`${baseNavItemCss}`;
+const StyledButton = tw.button`${baseNavItemCss}`;
 const NavItemSeparator = tw.span`border-r border-white/20 mx-1 sm:mx-2 h-6 self-center`;
 const Content = tw.div`
   dark:bg-dark-primary
