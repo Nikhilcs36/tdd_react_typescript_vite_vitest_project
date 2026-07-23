@@ -96,25 +96,10 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         return this.props.fallback;
       }
 
-      // Handle null error case
-      if (!this.state.error) {
-        return (
-          <ErrorContainer>
-            <ErrorBoundaryDisplay
-              error={new Error('Unknown error occurred')}
-              title="Application Error"
-            />
-            <RetryButton onClick={this.handleRetry}>
-              Try Again
-            </RetryButton>
-          </ErrorContainer>
-        );
-      }
-
       return (
         <ErrorContainer>
           <ErrorBoundaryDisplay
-            error={this.state.error}
+            error={this.state.error ?? new Error('Unknown error occurred')}
             title="Application Error"
           />
           <RetryButton onClick={this.handleRetry}>
