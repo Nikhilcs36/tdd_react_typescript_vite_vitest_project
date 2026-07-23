@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import i18n from '../../../locale/i18n';
 import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
-import { loginSuccess, logoutSuccess } from '../../../store/actions';
+import { loginSuccess, logoutSuccess } from "../../../store/authSlice";
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(

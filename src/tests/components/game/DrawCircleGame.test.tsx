@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import i18n from '../../../locale/i18n';
 import store from '../../../store';
 import DrawCircleGame from '../../../components/game/DrawCircleGame';
-import { loginSuccess, logoutSuccess } from '../../../store/actions';
+import { loginSuccess, logoutSuccess } from "../../../store/authSlice";
 import { server } from '../../mocks/server';
 import { http, HttpResponse } from 'msw';
 import { API_ENDPOINTS } from '../../../services/apiEndpoints';

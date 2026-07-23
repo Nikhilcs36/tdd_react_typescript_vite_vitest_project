@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { refreshAccessToken, refreshAccessTokenWithRetry, startTokenRefreshTimer, stopTokenRefreshTimer, REFRESH_TOKEN_URL, isRefreshTokenRequestUrl } from "./tokenService";
 import store from "../store";
 import axios from "axios";
-import { loginSuccess, logoutSuccess } from "../store/actions";
+import { loginSuccess, logoutSuccess } from "../store/authSlice";
 
 // Mock axios with a factory that ensures axios.create() returns the same mock instance
 vi.mock("axios", () => {

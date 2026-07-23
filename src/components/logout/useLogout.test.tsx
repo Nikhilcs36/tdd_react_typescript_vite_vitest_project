@@ -27,7 +27,7 @@ vi.mock("react-router-dom", async (importOriginal) => ({
 vi.spyOn(window, "dispatchEvent").mockImplementation(mockDispatchEvent);
 
 import { createStore } from "../../store";
-import { loginSuccess } from "../../store/actions";
+import { loginSuccess } from "../../store/authSlice";
 import { useLogout } from "./useLogout";
 import type { ApiService } from "../../services/apiService";
 import { API_ENDPOINTS } from "../../services/apiEndpoints";

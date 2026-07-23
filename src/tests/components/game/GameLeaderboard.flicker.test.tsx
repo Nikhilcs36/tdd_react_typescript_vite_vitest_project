@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import i18n from '../../../locale/i18n';
 import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
-import { loginSuccess, logoutSuccess } from '../../../store/actions';
+import { loginSuccess, logoutSuccess } from "../../../store/authSlice";
 
 // renderWithProviders not used here — this test uses a custom Wrapper component
 

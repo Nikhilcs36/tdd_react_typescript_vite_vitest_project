@@ -13,7 +13,7 @@ import {
   getGameLeaderboardPage,
 } from '../../services/gameService';
 import store from '../../store';
-import { loginSuccess, logoutSuccess } from '../../store/actions';
+import { loginSuccess, logoutSuccess } from "../../store/authSlice";
 
 // Helper to set auth state in Redux store
 const setAuthState = (token: string | null, isStaff: boolean = false) => {

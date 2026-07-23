@@ -17,8 +17,8 @@ import i18n from "../locale/i18n";
 import { createUserListHandler } from "../tests/testUtils";
 import { Provider } from "react-redux";
 import store from "../store";
-import { loginSuccess } from "../store/actions";
-import { logoutSuccess } from "../store/actions";
+import { loginSuccess } from "../store/authSlice";
+import { logoutSuccess } from "../store/authSlice";
 
 // Global variable to control mock behavior
 let mockIsAdmin = false;

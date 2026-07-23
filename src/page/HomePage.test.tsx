@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import i18n from '../locale/i18n';
 import store from '../store';
 import HomePage from './HomePage';
-import { loginSuccess, logoutSuccess } from '../store/actions';
+import { loginSuccess, logoutSuccess } from "../store/authSlice";
 
 // Mock DrawCircleGame since it makes API calls
 vi.mock('../components/game/DrawCircleGame', () => ({

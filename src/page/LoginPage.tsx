@@ -6,7 +6,7 @@ import { withTranslation, WithTranslation } from "react-i18next";
 import { useNavigate} from "react-router-dom";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "../store/actions";
+import { loginSuccess } from "../store/authSlice";
 import { resetDashboardState } from "../store/dashboardSlice";
 import { startTokenRefreshTimer } from "../services/tokenService";
 import {

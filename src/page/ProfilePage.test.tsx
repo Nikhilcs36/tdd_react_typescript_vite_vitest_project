@@ -11,7 +11,7 @@ import { MemoryRouter } from "react-router-dom";
 import { createStore } from "../store";
 import { Provider } from "react-redux";
 import { ProfilePageWrapper } from "./ProfilePage";
-import { loginSuccess } from "../store/actions";
+import { loginSuccess } from "../store/authSlice";
 import i18n from "../locale/i18n";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { axiosApiServiceUpdateUserWithFile } from "../services/apiService";
