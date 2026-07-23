@@ -16,7 +16,7 @@ import { Form } from "./LoginPage.styles";
 import { MemoryRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "../store";
-import { logoutSuccess } from "../store/actions";
+import { logoutSuccess } from "../store/authSlice";
 import { resetDashboardState } from "../store/dashboardSlice";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
 import { http, HttpResponse } from "msw";

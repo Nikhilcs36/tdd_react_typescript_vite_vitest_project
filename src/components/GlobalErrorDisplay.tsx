@@ -5,7 +5,7 @@ import tw from 'twin.macro';
 import { useTranslation } from 'react-i18next';
 import { RootState } from '../store';
 import { clearGlobalError } from '../store/globalErrorSlice';
-import { logoutSuccess } from '../store/actions';
+import { logoutSuccess } from "../store/authSlice";
 
 // Styled components for the global error display (v2)
 const Overlay = tw.div`fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50`;

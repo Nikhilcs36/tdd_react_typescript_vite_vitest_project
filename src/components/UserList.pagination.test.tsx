@@ -8,7 +8,7 @@ import { fetchApiServiceLoadUserList } from "../services/apiService";
 import { server } from "../tests/mocks/server";
 import { http, HttpResponse } from "msw";
 import { API_ENDPOINTS } from "../services/apiEndpoints";
-import { loginSuccess } from "../store/actions";
+import { loginSuccess } from "../store/authSlice";
 import userEvent from "@testing-library/user-event";
 
 describe("UserList Pagination with 1-based indexing", () => {

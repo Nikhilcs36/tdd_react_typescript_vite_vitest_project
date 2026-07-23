@@ -1,6 +1,6 @@
 import axios from "axios";
 import store from "../store";
-import { loginSuccess } from "../store/actions";
+import { loginSuccess } from "../store/authSlice";
 import { setGlobalError } from "../store/globalErrorSlice";
 
 interface TokenResponse {

@@ -1,7 +1,7 @@
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { showLogoutMessage } from "../../store/authSlice";
-import { logoutSuccess } from "../../store/actions";
+import { logoutSuccess } from "../../store/authSlice";
 import { resetDashboardState } from "../../store/dashboardSlice";
 import { resetUserState } from "../../store/userSlice";
 import { clearGlobalError } from "../../store/globalErrorSlice";

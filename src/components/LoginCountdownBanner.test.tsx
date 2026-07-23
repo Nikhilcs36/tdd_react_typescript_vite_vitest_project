@@ -3,7 +3,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { I18nextProvider } from "react-i18next";
 import { createStore } from "../store";
-import { loginSuccess, logoutSuccess } from "../store/actions";
+import { loginSuccess, logoutSuccess } from "../store/authSlice";
 import i18n from "../locale/i18n";
 import { LoginCountdownBanner } from "./LoginCountdownBanner";
 

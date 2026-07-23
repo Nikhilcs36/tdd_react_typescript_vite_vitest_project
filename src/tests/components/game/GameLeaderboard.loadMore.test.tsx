@@ -7,7 +7,7 @@ import { server } from '../../mocks/server';
 import i18n from '../../../locale/i18n';
 import store from '../../../store';
 import GameLeaderboard from '../../../components/game/GameLeaderboard';
-import { loginSuccess, logoutSuccess } from '../../../store/actions';
+import { loginSuccess, logoutSuccess } from "../../../store/authSlice";
 import { API_ENDPOINTS } from '../../../services/apiEndpoints';
 
 const renderWithProviders = (ui: React.ReactElement) => {

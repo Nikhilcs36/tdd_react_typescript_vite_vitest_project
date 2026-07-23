@@ -2,7 +2,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../../App";
 import { expect, describe, beforeEach, it } from "vitest";
-import { loginSuccess } from "../../store/actions";
+import { loginSuccess } from "../../store/authSlice";
 import { hideLogoutMessage } from "../../store/authSlice";
 import store from "../../store";
 import { server } from "../../tests/mocks/server";

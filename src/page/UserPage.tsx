@@ -11,7 +11,7 @@ import {
 } from "../services/apiService";
 import defaultProfileImage from "../assets/profile.png";
 import { connect } from "react-redux";
-import { logoutSuccess } from "../store/actions";
+import { logoutSuccess } from "../store/authSlice";
 import { updateUserSuccess } from "../store/userSlice";
 import { updateUserStart, updateUserFailure } from "../store/userSlice";
 import {

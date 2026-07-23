@@ -11,7 +11,7 @@ import App, { AppContent, ProtectedRoute } from "./App";
 import i18n from "./locale/i18n";
 import userEvent from "@testing-library/user-event";
 import store, { createStore } from "./store";
-import { loginSuccess, logoutSuccess } from "./store/actions";
+import { loginSuccess, logoutSuccess } from "./store/authSlice";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {

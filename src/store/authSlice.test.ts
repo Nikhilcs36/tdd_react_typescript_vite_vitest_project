@@ -6,7 +6,7 @@ import createSecureLSMock from "../tests/mocks/secureLsMockFactory";
 vi.mock("secure-ls", () => createSecureLSMock(mockSecureLS));
 
 // Import modules that use secure-ls after the mock is set up
-import { loginSuccess, logoutSuccess } from "./actions";
+import { loginSuccess, logoutSuccess } from "./authSlice";
 import { createStore } from "./index";
 
 describe("Auth Slice", () => {
