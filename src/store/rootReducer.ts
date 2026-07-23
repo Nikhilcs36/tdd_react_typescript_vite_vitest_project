@@ -11,5 +11,4 @@ const rootReducer = combineReducers({
   dashboard: dashboardReducer,
 });
 
-export type RootState = ReturnType<typeof rootReducer>;
 export default rootReducer;
