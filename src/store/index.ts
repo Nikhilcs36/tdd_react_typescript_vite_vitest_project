@@ -1,38 +1,22 @@
 import { configureStore } from "@reduxjs/toolkit";
 import rootReducer from "./rootReducer";
 import SecureLS from "secure-ls";
+import { AuthState } from "./types";
 
 const secureLS = new SecureLS({ encodingType: "aes" });
 
-interface PersistedAuthState {
-  isAuthenticated: boolean;
-  user: {
-    id: number;
-    username: string;
-    is_staff: boolean;
-    is_superuser: boolean;
-    logins_remaining_for_staff: number;
-    staff_access_granted: boolean;
-    active_role: 'regular' | 'staff' | 'superuser';
-    role_label: string;
-  } | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  showLogoutMessage: boolean;
-}
-
 interface RootStateForPersistence {
-  auth: PersistedAuthState;
+  auth: AuthState;
 }
 
 const AUTH_STORAGE_KEY = "authState";
 
-const isPersistedAuthState = (value: unknown): value is PersistedAuthState => {
+const isPersistedAuthState = (value: unknown): value is AuthState => {
   if (!value || typeof value !== "object") {
     return false;
   }
 
-  const authValue = value as Partial<PersistedAuthState>;
+  const authValue = value as Partial<AuthState>;
   const userValue = authValue.user;
 
   const isValidUser =
@@ -60,7 +44,7 @@ const DEFAULT_AUTH_FIELDS = {
   role_label: "Regular",
 };
 
-const migrateAuthUser = (user: PersistedAuthState["user"]): PersistedAuthState["user"] => {
+const migrateAuthUser = (user: AuthState["user"]): AuthState["user"] => {
   if (!user) return null;
   return {
     ...DEFAULT_AUTH_FIELDS,
