@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import React from 'react';
 import ErrorBoundary from './ErrorBoundary';
 import { shouldDisplayErrorToUser } from '../services/errorService';
 import * as loggingService from '../services/loggingService';
@@ -156,5 +157,25 @@ describe('ErrorBoundary', () => {
     );
 
     expect(logSpy).toHaveBeenCalled();
+  });
+
+  it('should display fallback error message when error state is null', () => {
+    vi.mocked(shouldDisplayErrorToUser).mockReturnValue(true);
+    const ref = React.createRef<ErrorBoundary>();
+
+    render(
+      <ErrorBoundary ref={ref}>
+        <NormalComponent />
+      </ErrorBoundary>
+    );
+
+    // Manually set error boundary state to simulate null error edge case
+    act(() => {
+      ref.current?.setState({ hasError: true, error: null });
+    });
+
+    // Should show the fallback "Unknown error occurred" message
+    expect(screen.getByText('Application Error')).toBeInTheDocument();
+    expect(screen.getByText('Try Again')).toBeInTheDocument();
   });
 });
