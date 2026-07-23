@@ -15,7 +15,35 @@ export interface UserState {
   error: string | null;
 }
 
-// Represents the payload for the updateSuccess action
-export type UpdateSuccessPayload = {
-  user: User;
-};
+// Auth State Interfaces
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: {
+    id: number;
+    username: string;
+    image?: string;
+    is_staff: boolean;
+    is_superuser: boolean;
+    logins_remaining_for_staff: number;
+    staff_access_granted: boolean;
+    active_role: 'regular' | 'staff' | 'superuser';
+    role_label: string;
+  } | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  showLogoutMessage: boolean;
+}
+
+export interface LoginPayload {
+  id: number;
+  username: string;
+  access: string;
+  refresh: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+  logins_remaining_for_staff: number;
+  staff_access_granted: boolean;
+  active_role: 'regular' | 'staff' | 'superuser';
+  role_label: string;
+}
