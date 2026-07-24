@@ -49,6 +49,23 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 - **Chart Mode Toggle**: Toggle between different chart visualization modes
 - **Excel Report Downloads**: Download detailed login activity reports in Excel format with individual and grouped modes, date range filtering, and admin-specific filters (admin only, regular users, me, all)
 
+### Draw-a-Circle Accuracy Mini-Game
+- **Canvas-Based Drawing Game**: Interactive HTML5 canvas where users draw circles and are scored on circular accuracy — a fun, playful break from analytics
+- **Score Persistence**: Save accuracy scores to the backend with best-score tracking per user. See your personal best and try to beat it
+- **Leaderboard**: Top scores across all users with rank, username, score, and last-played date. Supports pagination with "Load More" for browsing large leaderboards
+- **Feature Flag**: The game section can be disabled server-side (403 response). When disabled, a localized message is shown to the user
+- **Rating System**: Scores are rated in four tiers — Excellent (≥90%), Good (≥75%), Fair (≥50%), Poor (<50%) — with color-coded display
+- **Full i18n Support**: All game text, ratings, leaderboard labels, and messages translated into English, Malayalam, and Arabic
+- **Role-Based Access**: Game is playable by any authenticated user; the leaderboard is restricted to staff and admin users only
+- **Reusable Components**: Modular component architecture — `DrawCircleGame`, `GameControls`, `GameAccuracyDisplay`, `GameBestScore`, `GameLeaderboard` — each with its own styles and tests
+
+### Mobile Navigation
+- **Hamburger Menu**: Collapsible mobile navigation with hamburger toggle button and slide-down menu for responsive layouts
+- **Horizontal Scrollable Navigation**: Navigation links in a horizontally scrollable row with smooth overflow scrolling
+- **Scroll Arrows**: Left/right arrow indicators (`‹` / `›`) that appear when navigation overflows horizontally, with click-to-scroll support
+- **Dynamic Gradient Fade Masking**: CSS gradient masks applied to scrollable navigation edges only when scroll arrows are visible, providing a polished fade effect that indicates scrollable content
+- **Malayalam Scroll Support**: Scrollable navigation handles longer Malayalam text labels gracefully
+
 ### Staff Auto Permission & Role Switching
 - **Auto Staff Access**: After 3 successful logins, users automatically unlock staff privileges. A countdown banner shows remaining logins needed
 - **Role Switching**: Switch your active role between Regular, Staff, and Superuser from the Profile page. Staff users can toggle between regular/staff, Superusers have access to all three roles
@@ -83,6 +100,8 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 | Access user list | ❌ | ✅ | ✅ |
 | View any user's dashboard | ❌ | ✅ | ✅ |
 | Use user selector dropdown | ❌ | ✅ | ✅ |
+| Play Draw-a-Circle game | ✅ | ✅ | ✅ |
+| View game leaderboard | ❌ | ✅ | ✅ |
 
 ### Authentication & Security
 - **JWT Token Authentication**: Secure token-based authentication with access and refresh tokens
@@ -511,6 +530,11 @@ The frontend communicates with the [backend REST API](https://github.com/Nikhilc
 
 #### Report Download Endpoint
 - `GET /api/user/dashboard/report/download/` - Download login activity report as Excel file with support for individual/grouped modes, date filtering, user selection, admin filters, and role filters
+
+#### Game Endpoints
+- `POST /api/game/scores/` - Save a Draw-a-Circle game score (accuracy percentage)
+- `GET /api/game/scores/me/` - Get own game scores with best score
+- `GET /api/game/leaderboard/` - Get paginated leaderboard (staff/admin only)
 
 ### Authentication Flow
 
