@@ -128,7 +128,7 @@ The TDD approach was particularly valuable for building the Login Tracking Dashb
 
 ### State Management
 - **Redux Toolkit**: Centralized state management with slices
-- **Auth Slice**: Manages authentication state, tokens, and user session
+- **Auth Slice**: Manages authentication state, tokens, user session, and auth action creators (`loginSuccess`, `logoutSuccess`)
 - **Dashboard Slice**: Manages dashboard filters, chart modes, and UI state
 - **User Slice**: Manages user profile data and updates
 - **Global Error Slice**: Manages global application errors
@@ -423,8 +423,7 @@ npm run dev
 │   ├── store/                     # Redux state management
 │   │   ├── index.ts               # Store configuration with persistence
 │   │   ├── rootReducer.ts         # Combined reducer
-│   │   ├── actions.ts             # Action creators
-│   │   ├── types.ts               # Action type constants
+│   │   ├── types.ts               # Shared auth types (AuthState, LoginPayload) and action type constants
 │   │   ├── authSlice.ts           # Authentication state slice
 │   │   ├── dashboardSlice.ts      # Dashboard UI state slice
 │   │   ├── globalErrorSlice.ts    # Global error state slice
