@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { UserState, User } from './types';
+import type { UserState, User } from './types';
+export type { UserState, User };
 
 // Manages state related to user profile data and updates
 // Initial state configuration for user slice

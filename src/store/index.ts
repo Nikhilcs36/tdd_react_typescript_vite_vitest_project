@@ -1,7 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import rootReducer from "./rootReducer";
 import SecureLS from "secure-ls";
-import { AuthState } from "./types";
+import type { AuthState } from "./types";
+export type { AuthState };
 
 const secureLS = new SecureLS({ encodingType: "aes" });
 
