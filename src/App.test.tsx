@@ -36,19 +36,18 @@ vi.mock("secure-ls", () => ({
 
 // Mock the UserPageWrapper component to prevent state updates in tests
 // Provide realistic content for integration tests that expect specific elements
+const { MockUserPage } = vi.hoisted(() => ({
+  MockUserPage: () => (
+    <div data-testid="user-page">
+      <div data-testid="username">user1</div>
+      <div data-testid="email">user1@mail.com</div>
+    </div>
+  ),
+}));
+
 vi.mock("./page/UserPage", () => ({
-  UserPageWrapper: () => (
-    <div data-testid="user-page">
-      <div data-testid="username">user1</div>
-      <div data-testid="email">user1@mail.com</div>
-    </div>
-  ),
-  default: () => (
-    <div data-testid="user-page">
-      <div data-testid="username">user1</div>
-      <div data-testid="email">user1@mail.com</div>
-    </div>
-  ),
+  UserPageWrapper: MockUserPage,
+  default: MockUserPage,
 }));
 
 // Mock the DashboardContainer component
