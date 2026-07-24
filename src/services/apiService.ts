@@ -77,11 +77,6 @@ export const fetchApiServiceSignUp: ApiService<SignUpRequestBody> = {
   },
 };
 
-// Password Reset API request body types
-export interface ForgotPasswordRequestBody {
-  email: string;
-}
-
 export interface ResetPasswordRequestBody {
   password: string;
   passwordRepeat: string;
@@ -680,11 +675,6 @@ export interface EmailVerificationRequestBody {
 export interface VerifyEmailRequestBody {
   email: string;
   token: string;
-}
-
-// Resend verification request body type
-export interface ResendVerificationRequestBody {
-  email: string;
 }
 
 // Axios implementation for email verification

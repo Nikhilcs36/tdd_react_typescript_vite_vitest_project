@@ -185,17 +185,15 @@ export const AppContent = ({
   const navbarRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
-  useEffect(() => {
-    if (theme === "dark") {
+  const handleThemeSwitch = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    if (newTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const handleThemeSwitch = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    localStorage.setItem("theme", newTheme);
   };
 
   const changeLanguage = (lang: string) => {
