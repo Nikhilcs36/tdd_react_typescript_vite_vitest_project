@@ -5,6 +5,16 @@ import "jest-styled-components";
 // Import MSW server
 import { server } from "../tests/mocks/server";
 
+// Polyfill crypto.subtle for jsdom environment using Node.js Web Crypto API
+if (!globalThis.crypto?.subtle) {
+  const { webcrypto } = await import('node:crypto');
+  Object.defineProperty(globalThis, 'crypto', {
+    value: webcrypto,
+    writable: true,
+    configurable: true,
+  });
+}
+
 // Polyfill ResizeObserver for jsdom environment
 class ResizeObserverMock {
   observe() {}
