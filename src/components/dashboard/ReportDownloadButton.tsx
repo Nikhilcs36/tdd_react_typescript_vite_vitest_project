@@ -244,15 +244,11 @@ const ReportDownloadButton: React.FC<ReportDownloadButtonProps> = ({ isAdmin }) 
   }, [dashboardState, t, triggerDownload, getFilterParam, getRoleParam, isAdmin]);
 
   /**
-   * Handle button click based on user role
+   * Handle button click - always show confirmation modal for all users
    */
   const onButtonClick = useCallback(() => {
-    if (isAdmin) {
-      setShowModal(true);
-    } else {
-      handleDownload();
-    }
-  }, [isAdmin, handleDownload]);
+    setShowModal(true);
+  }, []);
 
   /**
    * Close the modal
