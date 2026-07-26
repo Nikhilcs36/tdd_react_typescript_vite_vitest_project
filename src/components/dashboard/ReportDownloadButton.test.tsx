@@ -92,7 +92,7 @@ describe('ReportDownloadButton', () => {
       expect(screen.getByText('Download Report')).toBeInTheDocument();
     });
 
-    it('should call downloadReport with individual mode when clicked for regular user', async () => {
+    it('should call downloadReport with individual mode when confirming in modal for regular user', async () => {
       vi.mocked(loginTrackingService.downloadReport).mockResolvedValue({
         blob: new Blob(['test']),
         filename: 'login_report_testuser_individual_20260101_120000.xlsx',
@@ -104,7 +104,12 @@ describe('ReportDownloadButton', () => {
         { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
       );
 
+      // Open modal
       fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // Click download in modal
+      fireEvent.click(screen.getByTestId('modal-download-button'));
 
       await waitFor(() => {
         expect(loginTrackingService.downloadReport).toHaveBeenCalledWith({
@@ -113,7 +118,7 @@ describe('ReportDownloadButton', () => {
       });
     });
 
-    it('should pass startDate and endDate from dashboard state', async () => {
+    it('should pass startDate and endDate from dashboard state when confirming in modal', async () => {
       vi.mocked(loginTrackingService.downloadReport).mockResolvedValue({
         blob: new Blob(['test']),
         filename: 'login_report_testuser_individual_20260101_120000.xlsx',
@@ -125,7 +130,12 @@ describe('ReportDownloadButton', () => {
         { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
       );
 
+      // Open modal
       fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // Click download in modal
+      fireEvent.click(screen.getByTestId('modal-download-button'));
 
       await waitFor(() => {
         expect(loginTrackingService.downloadReport).toHaveBeenCalledWith({
@@ -136,7 +146,7 @@ describe('ReportDownloadButton', () => {
       });
     });
 
-    it('should show downloading state while download is in progress', async () => {
+    it('should show downloading state while modal download is in progress', async () => {
       let resolvePromise: ((value: any) => void) | null = null;
       vi.mocked(loginTrackingService.downloadReport).mockImplementation(() => 
         new Promise(resolve => { resolvePromise = resolve; })
@@ -148,11 +158,19 @@ describe('ReportDownloadButton', () => {
         { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
       );
 
+      // Open modal
       fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // Click download in modal
+      fireEvent.click(screen.getByTestId('modal-download-button'));
 
       await waitFor(() => {
-        expect(screen.getByText('Downloading...')).toBeInTheDocument();
+        // Both the main button and modal button show "Downloading..." text
+        const allDownloadingTexts = screen.getAllByText('Downloading...');
+        expect(allDownloadingTexts.length).toBeGreaterThanOrEqual(1);
         expect(screen.getByTestId('report-download-button')).toBeDisabled();
+        expect(screen.getByTestId('modal-download-button')).toBeDisabled();
       });
 
       // Clean up by resolving the promise
@@ -173,14 +191,19 @@ describe('ReportDownloadButton', () => {
         { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
       );
 
+      // Open modal
       fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // Click download in modal
+      fireEvent.click(screen.getByTestId('modal-download-button'));
 
       await waitFor(() => {
         expect(screen.getByText('Failed to download report. Please try again.')).toBeInTheDocument();
       });
     });
 
-    it('should not open modal for regular user on click', () => {
+    it('should open confirmation modal for regular user when clicked', () => {
       renderWithProviders(
         <ReportDownloadButton isAdmin={false} />,
         {},
@@ -189,8 +212,61 @@ describe('ReportDownloadButton', () => {
 
       fireEvent.click(screen.getByTestId('report-download-button'));
 
-      // Modal should not appear for regular user
-      expect(screen.queryByTestId('report-download-modal')).not.toBeInTheDocument();
+      // Modal should now appear for regular user
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+    });
+
+    it('should show readonly mode info from dashboard state in regular user modal', () => {
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={false} />,
+        { chartMode: 'individual' },
+        { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
+      );
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+      const modeText = screen.getByTestId('mode-label-text').textContent;
+      expect(modeText).toContain('Individual');
+    });
+
+    it('should show date range in regular user modal when dates are set', () => {
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={false} />,
+        { chartMode: 'individual', startDate: '2025-06-01', endDate: '2025-06-30' },
+        { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
+      );
+
+      fireEvent.click(screen.getByTestId('report-download-button'));
+
+      expect(screen.getByText(/2025-06-01/)).toBeInTheDocument();
+      expect(screen.getByText(/2025-06-30/)).toBeInTheDocument();
+    });
+
+    it('should download report when confirming in modal for regular user', async () => {
+      vi.mocked(loginTrackingService.downloadReport).mockResolvedValue({
+        blob: new Blob(['test']),
+        filename: 'login_report_testuser_individual_20260101_120000.xlsx',
+      });
+
+      renderWithProviders(
+        <ReportDownloadButton isAdmin={false} />,
+        {},
+        { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
+      );
+
+      // Open modal
+      fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // Click download in modal
+      fireEvent.click(screen.getByTestId('modal-download-button'));
+
+      await waitFor(() => {
+        expect(loginTrackingService.downloadReport).toHaveBeenCalledWith({
+          mode: 'individual',
+        });
+      });
     });
   });
 
@@ -736,7 +812,12 @@ describe('ReportDownloadButton', () => {
         { user: { id: 1, username: 'regular', is_staff: false, is_superuser: false } }
       );
 
+      // Open modal
       fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // Click download in modal
+      fireEvent.click(screen.getByTestId('modal-download-button'));
 
       await waitFor(() => {
         expect(loginTrackingService.downloadReport).toHaveBeenCalledWith({
@@ -848,7 +929,12 @@ describe('ReportDownloadButton', () => {
         { user: { id: 1, username: 'regular', is_staff: false, is_superuser: false } }
       );
 
+      // Open modal
       fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // Click download in modal
+      fireEvent.click(screen.getByTestId('modal-download-button'));
 
       await waitFor(() => {
         expect(loginTrackingService.downloadReport).toHaveBeenCalledWith({
@@ -912,14 +998,18 @@ describe('ReportDownloadButton', () => {
         { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
       );
 
-      // First click - should fail
+      // Open modal
       fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // First download attempt - should fail
+      fireEvent.click(screen.getByTestId('modal-download-button'));
       await waitFor(() => {
         expect(screen.getByText('Failed to download report. Please try again.')).toBeInTheDocument();
       });
 
-      // Second click - should succeed and clear error
-      fireEvent.click(screen.getByTestId('report-download-button'));
+      // Click download button again to retry (modal stays open on failure)
+      fireEvent.click(screen.getByTestId('modal-download-button'));
       await waitFor(() => {
         expect(screen.queryByText('Failed to download report. Please try again.')).not.toBeInTheDocument();
       });
@@ -971,7 +1061,12 @@ describe('ReportDownloadButton', () => {
         { user: { id: 1, username: 'testuser', is_staff: false, is_superuser: false } }
       );
 
+      // Open modal
       fireEvent.click(screen.getByTestId('report-download-button'));
+      expect(screen.getByTestId('report-download-modal')).toBeInTheDocument();
+
+      // Click download in modal to trigger the error
+      fireEvent.click(screen.getByTestId('modal-download-button'));
 
       await waitFor(() => {
         const errorMessage = screen.getByTestId('download-error-message');
@@ -1157,12 +1252,7 @@ describe('ReportDownloadButton', () => {
       expect(window.scrollTo).toHaveBeenCalledWith(0, 500);
     });
 
-    it('should not lock body scroll for regular user (no modal)', () => {
-      vi.mocked(loginTrackingService.downloadReport).mockResolvedValue({
-        blob: new Blob(['test']),
-        filename: 'login_report_testuser_individual_20260101_120000.xlsx',
-      });
-
+    it('should lock body scroll when regular user opens modal', () => {
       renderWithProviders(
         <ReportDownloadButton isAdmin={false} />,
         {},
@@ -1173,8 +1263,8 @@ describe('ReportDownloadButton', () => {
 
       fireEvent.click(screen.getByTestId('report-download-button'));
 
-      // Regular user triggers download directly, no modal, so scroll should not be locked
-      expect(document.body.style.overflow).toBe('');
+      // Regular user now opens modal, so scroll should be locked
+      expect(document.body.style.overflow).toBe('hidden');
     });
 
     it('should clean up body overflow on component unmount when modal was open', () => {
