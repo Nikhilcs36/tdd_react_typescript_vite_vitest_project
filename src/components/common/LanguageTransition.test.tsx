@@ -60,4 +60,32 @@ describe("LanguageTransition", () => {
     // Content should still be rendered
     expect(screen.getByTestId("lang-content")).toBeInTheDocument();
   });
+
+  it("preserves the same DOM element when language changes (prevents scroll position reset)", async () => {
+    // Render with English
+    const { container } = render(
+      <LanguageTransition>
+        <div data-testid="lang-content">Content</div>
+      </LanguageTransition>
+    );
+
+    // Get the actual FadeIn wrapper element (the LanguageTransition wrapper)
+    const fadeInBefore = container.querySelector('[class*="FadeIn"]') as HTMLElement;
+    expect(fadeInBefore).toBeTruthy();
+
+    // Change language - this triggers a re-render of LanguageTransition
+    // In the real app, i18n.changeLanguage() causes the component to re-render
+    // with a new langKey value, but the DOM element should NOT be replaced
+    await act(async () => {
+      await i18n.changeLanguage("ml");
+    });
+
+    // Get the FadeIn element again after language change
+    const fadeInAfter = container.querySelector('[class*="FadeIn"]') as HTMLElement;
+
+    // The DOM element MUST be the same (not unmounted/remounted)
+    // If the key prop on FadeIn causes remounting, these will differ
+    expect(fadeInAfter).toBe(fadeInBefore);
+    expect(screen.getByTestId("lang-content")).toBeInTheDocument();
+  });
 });
