@@ -345,6 +345,33 @@ This frontend connects to the backend API at `http://backend:8000` over the shar
 
 The frontend container will automatically connect to the backend container on the same network.
 
+#### Demo Users (Seed Data)
+
+When the backend starts with Docker, the `seed_data` management command runs automatically on a fresh database, populating it with demo users, realistic login activity (last 3 months), and sample game scores. You can log into the frontend immediately with any of these credentials to explore the dashboard:
+
+| Username   | Email               | Password       | Role       | Notes |
+|------------|---------------------|----------------|------------|-------|
+| `admin`    | admin@demo.com      | `Admin@123`    | Superuser  | Full access, 100 login records, 6 game scores |
+| `normal`   | normal@demo.com     | `Test@123456`  | Regular    | Verified, staff access granted, 25 login records, 4 game scores |
+| `staff`    | staff@demo.com      | `Test@123456`  | Staff      | Verified, 10 login records, 3 game scores |
+| `abcd`     | abcd@demo.com       | `Test@123456`  | Regular    | **Unverified** — verify via Django admin (see tip below) |
+| `testuser` | testuser@demo.com   | `Test@123456`  | Regular    | Verified, **no login activity** — clean slate dashboard |
+
+> **Tip:** `abcd` is intentionally unverified and `abcd@demo.com` is not a real inbox. To manually verify `abcd`, log into the Django admin at `http://localhost:8000/admin/` with `admin@demo.com` / `Admin@123`, edit the `abcd` user, and check **Email verified**.
+
+These demo users let you jump straight into the login tracking dashboard, charts, user management, game leaderboard, and Excel report downloads without creating new accounts.
+
+#### Normal Registration (Real Steps Experience)
+
+While the demo users let you jump straight into the dashboard, we recommend going through the normal registration flow to experience the complete lifecycle:
+
+1. **Sign up** a new account from the frontend Sign Up page
+2. **Verify your email** via the verification link sent to your inbox (requires SMTP configured on the backend `.env`)
+3. **Log in** — after 3 successful logins, you'll see the staff access countdown banner and automatically receive staff access
+4. **Explore** your personal dashboard, charts, game leaderboard, and login activity as it builds up naturally
+
+This flow gives you the full picture of how the application works end-to-end, including email verification, welcome emails, auto staff access, role switching, and real-time login tracking.
+
 ### Alternative: Local Development Setup
 
 This setup is optional and can be used if you prefer running the application directly on your system.
