@@ -1,7 +1,6 @@
 import axios from "axios";
 import store from "../store";
 import { loginSuccess } from "../store/authSlice";
-import { setGlobalError } from "../store/globalErrorSlice";
 
 interface TokenResponse {
   access: string;
@@ -10,17 +9,53 @@ interface TokenResponse {
 
 export const REFRESH_TOKEN_URL = '/api/user/token/refresh/';
 
-// Maximum number of retry attempts for refresh token
-export const MAX_RETRIES = 5;
-// Delay between retries in milliseconds
-export const RETRY_DELAY_MS = 1000;
-
 /**
  * Dedicated axios instance for refresh token calls.
  * This bypasses the global error interceptor in apiService.ts
  * to prevent the global error modal from appearing on every refresh failure.
  */
 const refreshAxios = axios.create();
+
+/**
+ * Mutex flag to prevent concurrent refresh token calls.
+ * When true, other 401 requests will be queued instead of triggering another refresh.
+ */
+let isRefreshing = false;
+
+/**
+ * Queue of pending requests that arrived while a refresh was in progress.
+ * Each entry contains resolve/reject functions to retry the request with the new token.
+ */
+interface QueuedRequest {
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+}
+let failedQueue: QueuedRequest[] = [];
+
+/**
+ * Reset the mutex and queue state.
+ * Exported for testing purposes.
+ */
+export const _resetRefreshState = (): void => {
+  isRefreshing = false;
+  failedQueue = [];
+};
+
+/**
+ * Process all queued requests after a refresh attempt.
+ * On success, all requests are retried with the new access token.
+ * On failure, all requests are rejected.
+ */
+const processQueue = (error: unknown, token: string | null = null): void => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else if (token) {
+      resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 /**
  * Check if a URL is the token refresh endpoint.
@@ -61,42 +96,53 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 };
 
 /**
- * Attempts to refresh the access token with retry logic.
- * Retries up to MAX_RETRIES times with a delay between each attempt.
- * If all attempts fail, dispatches a global error to inform the user.
- * @returns Promise<boolean> true if refresh succeeded, false if all retries failed
+ * Handle a 401 response error with request queue/mutex logic.
+ * This is the core of the axios response interceptor, extracted for testability.
+ *
+ * @param error - The original axios error (must have response.status === 401)
+ * @param originalRequest - The axios request config (error.config), mutated in place
+ * @returns The result of retrying the request, or the rejected promise
  */
-export const refreshAccessTokenWithRetry = async (): Promise<boolean> => {
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const success = await refreshAccessToken();
-    if (success) {
-      return true;
-    }
-
-    // If no refresh token is available, fail immediately
-    if (!store.getState().auth.refreshToken) {
-      return false;
-    }
-
-    // Wait before retrying (only if not the last attempt)
-    if (attempt < MAX_RETRIES) {
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-    }
+export const _handle401Error = async (error: unknown, originalRequest: any): Promise<any> => {
+  // IMPORTANT: Prevent infinite loop when the refresh token endpoint itself returns 401.
+  if (isRefreshTokenRequestUrl(originalRequest.url)) {
+    throw error;
   }
 
-  // All retries failed - dispatch global error to inform the user
-  store.dispatch(
-    setGlobalError({
-      response: {
-        status: 401,
-        data: {
-          message: "Your session refresh failed after multiple attempts. Please log in again.",
-          translationKey: "errors.401.token_invalid_or_expired",
-        },
-      },
-    })
-  );
-  return false;
+  // If a refresh is already in progress, queue this request
+  if (isRefreshing) {
+    return new Promise<string>((resolve, reject) => {
+      failedQueue.push({ resolve, reject });
+    }).then((token) => {
+      originalRequest.headers.Authorization = `JWT ${token}`;
+      return axios(originalRequest);
+    });
+  }
+
+  originalRequest._retry = true;
+  isRefreshing = true;
+
+  try {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      const newToken = store.getState().auth.accessToken;
+      // Process all queued requests with the new token
+      processQueue(null, newToken);
+      // Retry the original request
+      originalRequest.headers.Authorization = `JWT ${newToken}`;
+      return axios(originalRequest);
+    } else {
+      // Refresh failed - reject all queued requests
+      processQueue(error, null);
+      throw error;
+    }
+  } catch (_refreshError) {
+    // Refresh threw an exception - reject all queued requests
+    processQueue(_refreshError, null);
+    throw error;
+  } finally {
+    isRefreshing = false;
+  }
 };
 
 // Global variable to store the refresh timer
@@ -138,35 +184,15 @@ export const stopTokenRefreshTimer = (): void => {
   }
 };
 
-// Create axios interceptor to handle token expiration
+// Create axios interceptor to handle token expiration with request queue
 axios.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  async (error: any) => {
     const originalRequest = error.config;
 
-    // If error is unauthorized and we haven't tried to refresh yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // IMPORTANT: Prevent infinite loop when the refresh token endpoint itself returns 401.
-      // Without this guard, a 401 on the refresh endpoint would trigger another refresh
-      // attempt, creating an infinite retry loop that floods the console with 401 errors.
-      if (isRefreshTokenRequestUrl(originalRequest.url)) {
-        return Promise.reject(error);
-      }
-
-      originalRequest._retry = true;
-
-      try {
-        const refreshed = await refreshAccessToken();
-        if (refreshed) {
-          // Update the authorization header with new access token
-          originalRequest.headers.Authorization = `JWT ${
-            store.getState().auth.accessToken
-          }`;
-          return axios(originalRequest);
-        }
-      } catch (_refreshError) {
-        // Handle refresh error
-      }
+    // Only handle 401 errors that haven't been retried yet
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      return _handle401Error(error, originalRequest);
     }
 
     return Promise.reject(error);
