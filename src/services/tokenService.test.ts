@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { refreshAccessToken, _handle401Error, _resetRefreshState, startTokenRefreshTimer, stopTokenRefreshTimer, REFRESH_TOKEN_URL, isRefreshTokenRequestUrl } from "./tokenService";
 import store from "../store";
 import axios from "axios";
+import type { AxiosRequestHeaders } from "axios";
 import { loginSuccess, logoutSuccess } from "../store/authSlice";
 
 // Create a callable mock axios instance that can be invoked as a function
@@ -33,7 +34,7 @@ const mockedAxios = axios as any;
 
 // Helper to create a 401 error with config for _handle401Error
 const create401Error = (url: string) => {
-  const config = { url, headers: {}, _retry: false };
+  const config = { url, headers: {} as AxiosRequestHeaders, _retry: false };
   return {
     response: { status: 401, data: {} },
     config,
