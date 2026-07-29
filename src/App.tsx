@@ -427,19 +427,23 @@ export const AppContent = ({
             <Route
               path="/user/:id"
               element={
-                <UserPageWrapper
-                  ApiGetService={axiosApiServiceGetUser}
-                  ApiPutService={axiosApiServiceUpdateUser}
-                />
+                <ProtectedRoute requireAuth={true}>
+                  <UserPageWrapper
+                    ApiGetService={axiosApiServiceGetUser}
+                    ApiPutService={axiosApiServiceUpdateUser}
+                  />
+                </ProtectedRoute>
               }
             />
             <Route
               path="/profile"
               element={
-                <ProfilePageWrapper
-                  ApiGetService={axiosApiServiceGetCurrentUser}
-                  ApiPutService={axiosApiServiceUpdateUser}
-                />
+                <ProtectedRoute requireAuth={true}>
+                  <ProfilePageWrapper
+                    ApiGetService={axiosApiServiceGetCurrentUser}
+                    ApiPutService={axiosApiServiceUpdateUser}
+                  />
+                </ProtectedRoute>
               }
             />
             <Route
@@ -487,6 +491,8 @@ export const AppContent = ({
                 </ProtectedRoute>
               }
             />
+            {/* Catch-all route - redirect any unknown URL to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </PageTransition>
           </LanguageTransition>

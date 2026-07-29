@@ -473,6 +473,85 @@ describe("Routing", () => {
       );
     });
   });
+
+  // ==========================================================
+  // NEW TESTS: Route Protection for /profile, /user/:id, and unknown URLs
+  // ==========================================================
+
+  it("redirects unauthenticated users from /profile to home page", async () => {
+    // Ensure user is not authenticated
+    await act(async () => {
+      mockAuth(false);
+    });
+
+    // Navigate to /profile
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/profile"]}>
+          <Routes>
+            <Route path="/*" element={<AppContent />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Should redirect to home page
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
+
+    // Profile page should NOT be accessible
+    expect(screen.queryByTestId("profile-page")).not.toBeInTheDocument();
+  });
+
+  it("redirects unauthenticated users from /user/1 to home page", async () => {
+    // Ensure user is not authenticated
+    await act(async () => {
+      mockAuth(false);
+    });
+
+    // Navigate to /user/1
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/user/1"]}>
+          <Routes>
+            <Route path="/*" element={<AppContent />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Should redirect to home page
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
+
+    // User page should NOT be accessible
+    expect(screen.queryByTestId("user-page")).not.toBeInTheDocument();
+  });
+
+  it("redirects unknown URLs to home page", async () => {
+    // Ensure user is not authenticated
+    await act(async () => {
+      mockAuth(false);
+    });
+
+    // Navigate to a random unknown URL
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={["/fkfkfkkfk"]}>
+          <Routes>
+            <Route path="/*" element={<AppContent />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    // Should redirect to home page (via catch-all route)
+    await waitFor(() => {
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    });
+  });
 });
 
 describe("Navbar styling and layout", () => {
