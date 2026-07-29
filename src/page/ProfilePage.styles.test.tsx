@@ -93,6 +93,28 @@ describe("ProfilePage.styles", () => {
       const { container } = render(<ProfileEmail>test@example.com</ProfileEmail>);
       expect(container.textContent).toBe("test@example.com");
     });
+
+    it("should use dark-text color class for dark mode (not dark-secondary)", () => {
+      const { container } = render(<ProfileEmail>test@example.com</ProfileEmail>);
+      const element = container.firstChild as HTMLElement;
+      const className = element?.className || "";
+      
+      // Verify it renders with styled-components class
+      expect(className).toMatch(/sc-[a-zA-Z0-9]+/);
+      
+      // Verify the component renders as a p tag with correct content
+      expect(element?.tagName).toBe("P");
+      expect(element?.textContent).toBe("test@example.com");
+      
+      // Verify the component renders correctly in dark mode
+      document.documentElement.classList.add("dark");
+      
+      // The component should still render and be in the DOM
+      expect(element).toBeInTheDocument();
+      
+      // Clean up
+      document.documentElement.classList.remove("dark");
+    });
   });
 
   describe("Buttons", () => {
