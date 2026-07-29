@@ -1655,8 +1655,8 @@ describe('DashboardContainer UI/UX Improvements', () => {
       // Now the individual fetch has completed (fast, since mock resolves immediately)
       // But the grouped fetch is still pending (controlled promises)
       // The individual mode sends undefined (backend returns current user's data)
-      let trendCalls = vi.mocked(getLoginTrends).mock.calls;
-      let lastCallUserIds = trendCalls[trendCalls.length - 1][0];
+      const trendCalls = vi.mocked(getLoginTrends).mock.calls;
+      const lastCallUserIds = trendCalls[trendCalls.length - 1][0];
       expect(lastCallUserIds).toBeUndefined();
 
       // Now resolve the stale grouped responses (simulating slow network response arriving late)
