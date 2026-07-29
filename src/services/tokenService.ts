@@ -1,6 +1,11 @@
-import axios from "axios";
+import axios, { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import store from "../store";
 import { loginSuccess } from "../store/authSlice";
+
+// Extend InternalAxiosRequestConfig to include custom _retry property
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 interface TokenResponse {
   access: string;
@@ -103,7 +108,7 @@ export const refreshAccessToken = async (): Promise<boolean> => {
  * @param originalRequest - The axios request config (error.config), mutated in place
  * @returns The result of retrying the request, or the rejected promise
  */
-export const _handle401Error = async (error: unknown, originalRequest: any): Promise<any> => {
+export const _handle401Error = async (error: unknown, originalRequest: ExtendedAxiosRequestConfig): Promise<AxiosResponse> => {
   // IMPORTANT: Prevent infinite loop when the refresh token endpoint itself returns 401.
   if (isRefreshTokenRequestUrl(originalRequest.url)) {
     throw error;
@@ -187,12 +192,13 @@ export const stopTokenRefreshTimer = (): void => {
 // Create axios interceptor to handle token expiration with request queue
 axios.interceptors.response.use(
   (response) => response,
-  async (error: any) => {
-    const originalRequest = error.config;
+  async (error: unknown) => {
+    const axiosError = error as import("axios").AxiosError;
+    const originalRequest = axiosError.config as ExtendedAxiosRequestConfig | undefined;
 
     // Only handle 401 errors that haven't been retried yet
-    if (error.response?.status === 401 && !originalRequest?._retry) {
-      return _handle401Error(error, originalRequest);
+    if (axiosError.response?.status === 401 && !originalRequest?._retry) {
+      return _handle401Error(error, originalRequest!);
     }
 
     return Promise.reject(error);
