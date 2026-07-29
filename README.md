@@ -2,11 +2,31 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
+## Project Overview
+
+The Login Tracking Dashboard Frontend is a modern Single-Page Application (SPA) built with React and TypeScript. It provides administrators and users with an intuitive interface for monitoring authentication activity, analyzing login patterns, managing users, and viewing interactive dashboards powered by secure REST APIs.
+
+## Key Purposes
+
+- **Visualize Authentication Activity**: Present login history, authentication statistics, and user activity through interactive dashboards and charts.
+
+- **Analyze Login Patterns**: Display daily, weekly, and monthly login analytics, trend comparisons, and distribution charts to help administrators review authentication activity.
+
+- **Role-Based User Experience**: Provide role-specific dashboards and navigation for regular users, staff, and administrators.
+
+- **Manage Users Efficiently**: Enable administrators to manage user accounts, roles, and profile information through an intuitive interface.
+
+- **Provide a Secure User Experience**: Deliver secure authentication, protected routes, and seamless session management while interacting with the backend APIs.
+
+- **Deliver a Modern User Interface**: Offer a responsive, accessible, and dark mode experience across desktop and mobile devices.
+
+- **Internationalization (i18n)**: Support multiple languages — English, Malayalam, and Arabic — with dynamic language switching, animated transitions, RTL layout, and Chrome Translate prevention.
+
+- **Draw-a-Circle Mini-Game**: Engage users with an interactive HTML5 canvas circle-drawing game featuring accuracy scoring, tiered ratings, best-score tracking, and a paginated leaderboard.
+
 ## Description
 
-This repository contains the frontend code for a comprehensive **Login Tracking Dashboard** built using React 18, TypeScript, Vite, and Vitest. The project is developed using **Test-Driven Development (TDD)** methodology and provides an interactive, responsive user interface for monitoring user login activities, viewing analytics dashboards, and managing authentication flows. This frontend seamlessly integrates with the [backend REST API](https://github.com/Nikhilcs36/tdd_backend_python_django_project) to deliver real-time login tracking and dashboard functionality.
-
-The primary focus of this project is the **Login Tracking Dashboard**, which offers real-time analytics and statistics about user login behavior, trends, and patterns through interactive charts, data tables, and comprehensive filtering capabilities. The system includes secure JWT authentication, role-based access control, internationalization, dark mode support, and comprehensive error handling.
+This repository contains the frontend implementation of the Login Tracking Dashboard, built with React, TypeScript, Vite, and Test-Driven Development (TDD). It delivers a responsive Single-Page Application that visualizes authentication data, user analytics, and administrative insights while securely interacting with the Django REST Framework backend through REST APIs.
 
 ## Backend
 
