@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import tw from 'twin.macro';
 import { RootState } from '../../store';
 import { UserStats, LoginActivityResponse, ChartData, AdminDashboardData } from '../../types/loginTracking';
@@ -17,6 +17,7 @@ import DashboardUserList from './DashboardUserList';
 import DateRangePicker from './DateRangePicker';
 import UserSelectorDropdown from './UserSelectorDropdown';
 import ChartModeToggle from './ChartModeToggle';
+import { setChartMode } from '../../store/dashboardSlice';
 import ReportDownloadButton from './ReportDownloadButton';
 import {
   DashboardContainerWrapper,
@@ -52,6 +53,7 @@ interface DashboardContainerProps {
  */
 const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const { t } = useTranslation();
+  const dispatch = useDispatch();
   const { isAdmin, canAccessUserData } = useUserAuthorization();
   const authState = useSelector((state: RootState) => state.auth);
   const dashboardState = useSelector((state: RootState) => state.dashboard);
@@ -72,6 +74,16 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
   const [adminDashboardLoading, setAdminDashboardLoading] = useState(true);
 
   const [_error, setError] = useState<string | null>(null);
+
+  // BUG FIX: Auto-reset chart mode to 'individual' when user is not an admin
+  // This handles the case where a superuser switches to regular role via ProfilePage
+  // but chartMode remains 'grouped' in Redux state, which would cause charts to
+  // incorrectly fetch data for ALL dropdown users instead of just the current user
+  useEffect(() => {
+    if (!isAdmin() && dashboardState.chartMode === 'grouped') {
+      dispatch(setChartMode('individual'));
+    }
+  }, [isAdmin, dashboardState.chartMode, dispatch]);
 
   // Refs to prevent multiple concurrent API calls
   const dashboardDataFetchedRef = useRef<string>('');
@@ -203,8 +215,16 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
     }
   };
 
+  // Ref to track chart fetch ID for race condition prevention
+  // When chartMode changes (e.g. from 'grouped' to 'individual' due to role switch),
+  // a stale grouped response may complete after the individual response and overwrite it.
+  // This ref ensures only the latest fetch's response is applied.
+  const chartFetchIdRef = useRef(0);
+
   // Fetch charts - triggered by chart mode, user selection, and global date range changes
   useEffect(() => {
+    const currentFetchId = ++chartFetchIdRef.current;
+
     const fetchCharts = async () => {
       setChartsLoading(true);
 
@@ -225,6 +245,13 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           getLoginDistribution(chartUserIds, startDate, endDate)
         ]);
 
+        // BUG FIX: Race condition prevention - only apply responses from the latest fetch
+        // This prevents stale grouped responses from overwriting correct individual data
+        // when chartMode changes during role switch
+        if (currentFetchId !== chartFetchIdRef.current) {
+          return; // Stale response, ignore it
+        }
+
         if (trendsResponse.status === 'fulfilled') {
           setLoginTrends(trendsResponse.value);
         }
@@ -235,16 +262,21 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ userId }) => {
           setLoginDistribution(distributionResponse.value);
         }
       } catch (_err: unknown) {
+        if (currentFetchId !== chartFetchIdRef.current) {
+          return; // Stale error, ignore it
+        }
         setLoginTrends(null);
         setLoginComparison(null);
         setLoginDistribution(null);
       } finally {
-        setChartsLoading(false);
+        if (currentFetchId === chartFetchIdRef.current) {
+          setChartsLoading(false);
+        }
       }
     };
 
     fetchCharts();
-  }, [dashboardState.chartMode, dashboardState.selectedDashboardUserId, dashboardState.currentDropdownUsers, dashboardState.startDate, dashboardState.endDate]);
+  }, [dashboardState.chartMode, dashboardState.selectedDashboardUserId, dashboardState.currentDropdownUsers, dashboardState.startDate, dashboardState.endDate, currentUserId, isAdmin]);
 
   // Fetch admin dashboard - triggered by admin filters, user selection, and date range changes
   useEffect(() => {

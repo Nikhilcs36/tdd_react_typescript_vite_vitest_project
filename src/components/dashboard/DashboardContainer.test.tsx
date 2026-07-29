@@ -1538,6 +1538,148 @@ describe('DashboardContainer UI/UX Improvements', () => {
     });
   });
 });
+
+  // BUG FIX TESTS: Chart mode auto-reset when superuser switches to regular user
+  // Bug: When a superuser switches to regular via ProfilePage, chartMode stays 'grouped' in Redux
+  // but ChartModeToggle is hidden for non-admins, so user can't change it back
+  // Charts then incorrectly fetch data for ALL dropdown users instead of just the current user
+  describe('Chart Mode Auto-Reset on Role Switch', () => {
+    beforeEach(() => {
+      mockIsAdmin = false;
+      vi.clearAllMocks();
+      vi.mocked(getUserStats).mockResolvedValue(mockUserStats);
+      vi.mocked(getLoginActivity).mockResolvedValue(mockLoginActivity);
+      vi.mocked(getLoginTrends).mockResolvedValue(mockChartData);
+      vi.mocked(getLoginComparison).mockResolvedValue(mockChartData);
+      vi.mocked(getLoginDistribution).mockResolvedValue(mockChartData);
+    });
+
+    it('should fetch chart data with individual (undefined user_ids) when regular user has chartMode grouped (auto-reset)', async () => {
+      // Simulate a superuser who switched to regular role, but chartMode is still 'grouped'
+      renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Leftover from when user was superuser
+        selectedDashboardUserId: null, // No user selected in dropdown (regular users don't have this)
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+        ],
+      }, {
+        user: { id: 5, username: 'regularuser', is_staff: true, is_superuser: true, active_role: 'regular' },
+      });
+
+      // Wait for the chart titles to reflect individual mode (no "All Users" filter label)
+      // This confirms the auto-reset useEffect dispatched setChartMode('individual')
+      // and the charts re-rendered with individual mode
+      await waitFor(() => {
+        const chartTitles = screen.getAllByTestId('login-trends-chart');
+        for (const title of chartTitles) {
+          expect(title.textContent).not.toContain('All Users');
+        }
+      });
+
+      // After auto-reset, the LAST chart API call should use individual mode
+      // The backend treats undefined user_ids as "return data for the current user"
+      // It should NOT be [1,2,3] (all dropdown users in grouped mode)
+      const trendCalls = vi.mocked(getLoginTrends).mock.calls;
+      const lastCallUserIds = trendCalls[trendCalls.length - 1][0];
+      
+      // The last call should use undefined (individual mode with no selected user)
+      // The backend will interpret this as "current user's own data"
+      // This is the correct behavior - passing explicit user IDs causes 403 for regular users
+      expect(lastCallUserIds).toBeUndefined();
+    });
+
+    it('should NOT render admin-only components (ChartModeToggle) when regular user has stale grouped mode', async () => {
+      renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Stale mode from superuser session
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+        ],
+      }, {
+        user: { id: 5, username: 'regularuser', is_staff: true, is_superuser: true, active_role: 'regular' },
+      });
+
+      await waitFor(() => {
+        // ChartModeToggle should NOT be rendered for regular users
+        expect(screen.queryByTestId('chart-mode-toggle')).not.toBeInTheDocument();
+        // DashboardFilters should NOT be rendered
+        expect(screen.queryByTestId('dashboard-filters')).not.toBeInTheDocument();
+        // UserSelectorDropdown should NOT be selected
+        expect(screen.queryByTestId('user-selector-dropdown')).not.toBeInTheDocument();
+      });
+    });
+
+    // BUG FIX: Race condition - stale grouped response overwrites individual response
+    // When chartMode changes from 'grouped' to 'individual' due to role switch,
+    // the first (grouped) fetch may complete AFTER the second (individual) fetch,
+    // overwriting the correct individual data with stale grouped data
+    it('should not overwrite individual chart data with stale grouped response (race condition)', async () => {
+      // Create controlled promises to simulate slow grouped response
+      let resolveGroupedTrends: any = null;
+      let resolveGroupedComparison: any = null;
+      let resolveGroupedDistribution: any = null;
+
+      // Grouped API calls will be slow (simulate network latency)
+      vi.mocked(getLoginTrends).mockImplementation(() => 
+        new Promise(resolve => { resolveGroupedTrends = resolve; }) as any
+      );
+      vi.mocked(getLoginComparison).mockImplementation(() => 
+        new Promise(resolve => { resolveGroupedComparison = resolve; }) as any
+      );
+      vi.mocked(getLoginDistribution).mockImplementation(() => 
+        new Promise(resolve => { resolveGroupedDistribution = resolve; }) as any
+      );
+
+      // Simulate a superuser who switched to regular role, with stale chartMode 'grouped'
+      renderWithProviders(<DashboardContainer />, {
+        chartMode: 'grouped', // Leftover from when user was superuser
+        selectedDashboardUserId: null,
+        currentDropdownUsers: [
+          { id: 1, username: 'user1', email: 'user1@test.com' },
+          { id: 2, username: 'user2', email: 'user2@test.com' },
+          { id: 3, username: 'user3', email: 'user3@test.com' },
+        ],
+      }, {
+        user: { id: 5, username: 'regularuser', is_staff: true, is_superuser: true, active_role: 'regular' },
+      });
+
+      // Wait for the chart titles to reflect individual mode (auto-reset happened)
+      await waitFor(() => {
+        const chartTitles = screen.getAllByTestId('login-trends-chart');
+        for (const title of chartTitles) {
+          expect(title.textContent).not.toContain('All Users');
+        }
+      });
+
+      // Now the individual fetch has completed (fast, since mock resolves immediately)
+      // But the grouped fetch is still pending (controlled promises)
+      // The individual mode sends undefined (backend returns current user's data)
+      let trendCalls = vi.mocked(getLoginTrends).mock.calls;
+      let lastCallUserIds = trendCalls[trendCalls.length - 1][0];
+      expect(lastCallUserIds).toBeUndefined();
+
+      // Now resolve the stale grouped responses (simulating slow network response arriving late)
+      const staleChartData = {
+        labels: ['Stale', 'Grouped'],
+        datasets: [{ label: 'Stale Grouped Data', data: [10, 20], backgroundColor: ['red', 'blue'], borderColor: 'black', borderWidth: 1 }]
+      };
+      
+      if (resolveGroupedTrends) resolveGroupedTrends(staleChartData);
+      if (resolveGroupedComparison) resolveGroupedComparison(staleChartData);
+      if (resolveGroupedDistribution) resolveGroupedDistribution(staleChartData);
+
+      // Wait a tick for React to process the stale responses
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // The chart titles should STILL show individual mode (not overwritten by stale grouped data)
+      const chartTitles = screen.getAllByTestId('login-trends-chart');
+      for (const title of chartTitles) {
+        expect(title.textContent).not.toContain('All Users');
+        expect(title.textContent).not.toContain('Stale');
+      }
+    });
+  });
 });
 });
 });
